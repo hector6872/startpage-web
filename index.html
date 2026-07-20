@@ -121,30 +121,43 @@
       <!-- Column 3: Tasks List (CRUD) -->
       <section class="grid-col" id="col-tasks">
         <h2 class="col-title" data-i18n="col-tasks">Tasks</h2>
-        <div class="col-content todo-wrapper">
-          <!-- Add Task Form -->
-          <form id="todo-form" class="todo-form">
-            <input type="text" id="todo-input" placeholder="Add a new task..." required data-i18n-placeholder="todo-placeholder">
-            <div class="form-row">
-              <input type="date" id="todo-date" title="Due Date">
-              <select id="todo-priority" title="Priority">
-                <option value="low" data-i18n="priority-low">Low</option>
-                <option value="medium" selected data-i18n="priority-medium">Medium</option>
-                <option value="high" data-i18n="priority-high">High</option>
-              </select>
-              <button type="submit" class="btn-primary" data-i18n="add-btn">Add</button>
+        <div class="col-content">
+          <!-- Focus Task Card -->
+          <div id="todo-focus-card" class="todo-wrapper todo-focus-card hidden" style="margin-bottom: 1.25rem;">
+            <h3 class="card-subtitle">
+              <span data-i18n="focus-card-title">Current Focus</span>
+            </h3>
+            <div id="focus-card-item-container">
+              <!-- Reused todo item layout rendered dynamically -->
             </div>
-          </form>
+          </div>
 
-          <!-- Todo List Container -->
-          <div class="todo-list-container">
-            <div class="todo-filters">
-              <button class="filter-btn active" data-filter="pending" data-i18n="filter-pending">Pending</button>
-              <button class="filter-btn" data-filter="completed" data-i18n="filter-completed">Completed</button>
+          <!-- Main Tasks Card -->
+          <div class="todo-wrapper">
+            <!-- Add Task Form -->
+            <form id="todo-form" class="todo-form">
+              <input type="text" id="todo-input" placeholder="Add a new task..." required data-i18n-placeholder="todo-placeholder">
+              <div class="form-row">
+                <input type="date" id="todo-date" title="Due Date">
+                <select id="todo-priority" title="Priority">
+                  <option value="low" data-i18n="priority-low">Low</option>
+                  <option value="medium" selected data-i18n="priority-medium">Medium</option>
+                  <option value="high" data-i18n="priority-high">High</option>
+                </select>
+                <button type="submit" class="btn-primary" data-i18n="add-btn">Add</button>
+              </div>
+            </form>
+
+            <!-- Todo List Container -->
+            <div class="todo-list-container">
+              <div class="todo-filters">
+                <button class="filter-btn active" data-filter="pending" data-i18n="filter-pending">Pending</button>
+                <button class="filter-btn" data-filter="completed" data-i18n="filter-completed">Completed</button>
+              </div>
+              <ul id="todo-list" class="todo-list">
+                <!-- Dynamically populated -->
+              </ul>
             </div>
-            <ul id="todo-list" class="todo-list">
-              <!-- Dynamically populated -->
-            </ul>
           </div>
         </div>
       </section>
@@ -449,6 +462,8 @@
       <polyline points="18 15 12 9 6 15"></polyline>
     </svg>
   </button>
+
+
 
   <!-- Load script -->
   <script src="app.js" type="module"></script>

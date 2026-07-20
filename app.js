@@ -78,6 +78,7 @@ const translations = {
     "timezone-unconfigured": "No timezone selected",
     "world-clock-unconfigured": "Timezone not set.",
     "world-clock-title": "World Clock",
+    "focus-card-title": "Current Focus",
     "quote-loading": "Loading quote...",
     "status-unconfigured": "Unconfigured",
     "storage-desc": "Configure where your data is stored. You can select a JSON file in your Google Drive or local sync folder to share tasks across devices.",
@@ -177,6 +178,7 @@ const translations = {
     "timezone-unconfigured": "Sin zona horaria",
     "world-clock-unconfigured": "Zona horaria sin configurar.",
     "world-clock-title": "Reloj Mundial",
+    "focus-card-title": "Tarea en Enfoque",
     "quote-loading": "Cargando frase...",
     "status-unconfigured": "Sin configurar",
     "storage-desc": "Configura dónde se guardan tus datos. Puedes seleccionar un archivo JSON en tu Google Drive o carpeta local sincronizada para compartir tareas entre dispositivos.",
@@ -976,7 +978,7 @@ function renderTodos() {
 
   filteredTodos.forEach(todo => {
     const li = document.createElement('li');
-    li.className = `todo-item ${todo.completed ? 'completed' : ''}`;
+    li.className = `todo-item ${todo.completed ? 'completed' : ''} ${todo.isFocused ? 'focused' : ''}`;
     
     // Check if task is overdue
     let dateBadgeHTML = '';
@@ -1025,6 +1027,14 @@ function renderTodos() {
         </div>
       </div>
       <div class="todo-actions">
+        ${!todo.completed ? `
+        <button class="btn-item-action focus-btn ${todo.isFocused ? 'active' : ''}" data-id="${todo.id}" title="${state.lang === 'es' ? 'Trabajando en esta tarea' : 'Focus on this task'}">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/>
+            <circle cx="12" cy="12" r="3"/>
+          </svg>
+        </button>
+        ` : ''}
         <button class="btn-item-action edit-btn" data-id="${todo.id}">
           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
         </button>
@@ -1039,6 +1049,12 @@ function renderTodos() {
       toggleTodo(todo.id);
     });
 
+    if (!todo.completed) {
+      li.querySelector('.focus-btn').addEventListener('click', () => {
+        toggleFocusTodo(todo.id);
+      });
+    }
+
     li.querySelector('.edit-btn').addEventListener('click', () => {
       openEditModal(todo);
     });
@@ -1049,6 +1065,94 @@ function renderTodos() {
 
     todoList.appendChild(li);
   });
+
+  // Update todo focus card
+  const focusedTodo = state.todos.find(todo => todo.isFocused && !todo.completed);
+  const focusCard = document.getElementById('todo-focus-card');
+  const focusContainer = document.getElementById('focus-card-item-container');
+  if (focusCard && focusContainer) {
+    if (focusedTodo) {
+      focusContainer.innerHTML = '';
+      
+      let dateBadgeHTML = '';
+      if (focusedTodo.dueDate) {
+        const todayStr = getLocalDateString(new Date());
+        const due = new Date(focusedTodo.dueDate + 'T00:00:00');
+        const today = new Date(todayStr + 'T00:00:00');
+        const timeDiff = due.getTime() - today.getTime();
+        const diffDays = Math.ceil(timeDiff / (1000 * 3600 * 24));
+        
+        let badgeClass = '';
+        let badgeText = '';
+        const dict = translations[state.lang];
+
+        if (diffDays < 0) {
+          badgeClass = 'overdue';
+          badgeText = `${dict['task-overdue']} (${formatDateShort(focusedTodo.dueDate)})`;
+        } else if (diffDays === 0) {
+          badgeText = dict['task-today'];
+        } else if (diffDays === 1) {
+          badgeText = dict['task-tomorrow'];
+        } else {
+          badgeText = formatDateShort(focusedTodo.dueDate);
+        }
+
+        dateBadgeHTML = `
+          <span class="todo-date-badge ${badgeClass}">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            ${badgeText}
+          </span>`;
+      }
+
+      const focusItemDiv = document.createElement('div');
+      focusItemDiv.className = 'todo-item borderless-todo-item';
+      focusItemDiv.innerHTML = `
+        <div class="todo-item-left">
+          <input type="checkbox" class="todo-checkbox" data-id="${focusedTodo.id}">
+          <div class="todo-item-details">
+            <span class="todo-text">${escapeHtml(focusedTodo.text)}</span>
+            <div class="todo-meta">
+              <span class="todo-priority-badge priority-${focusedTodo.priority}">${translations[state.lang]['priority-' + focusedTodo.priority]}</span>
+              ${dateBadgeHTML}
+            </div>
+          </div>
+        </div>
+        <div class="todo-actions">
+          <button class="btn-item-action focus-btn active" data-id="${focusedTodo.id}" title="${state.lang === 'es' ? 'Quitar del enfoque' : 'Clear focus'}">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"/>
+              <circle cx="12" cy="12" r="3"/>
+            </svg>
+          </button>
+          <button class="btn-item-action edit-btn" data-id="${focusedTodo.id}">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+          </button>
+          <button class="btn-item-action delete-btn" data-id="${focusedTodo.id}">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+          </button>
+        </div>
+      `;
+
+      focusItemDiv.querySelector('.todo-checkbox').addEventListener('change', () => {
+        toggleTodo(focusedTodo.id);
+      });
+      focusItemDiv.querySelector('.focus-btn').addEventListener('click', () => {
+        toggleFocusTodo(focusedTodo.id);
+      });
+      focusItemDiv.querySelector('.edit-btn').addEventListener('click', () => {
+        openEditModal(focusedTodo);
+      });
+      focusItemDiv.querySelector('.delete-btn').addEventListener('click', () => {
+        deleteTodo(focusedTodo.id);
+      });
+
+      focusContainer.appendChild(focusItemDiv);
+      focusCard.classList.remove('hidden');
+    } else {
+      focusCard.classList.add('hidden');
+      focusContainer.innerHTML = '';
+    }
+  }
 
   // Re-sync dashboard columns so they reflect task items
   syncDashboardColumns();
@@ -1077,9 +1181,25 @@ async function addTodo(text, dueDate, priority) {
 async function toggleTodo(id) {
   state.todos = state.todos.map(todo => {
     if (todo.id === id) {
-      return { ...todo, completed: !todo.completed };
+      const nextCompleted = !todo.completed;
+      return { 
+        ...todo, 
+        completed: nextCompleted,
+        isFocused: nextCompleted ? false : todo.isFocused 
+      };
     }
     return todo;
+  });
+  await saveTodos();
+  renderTodos();
+}
+
+async function toggleFocusTodo(id) {
+  state.todos = state.todos.map(todo => {
+    if (todo.id === id) {
+      return { ...todo, isFocused: !todo.isFocused };
+    }
+    return { ...todo, isFocused: false };
   });
   await saveTodos();
   renderTodos();
@@ -1649,6 +1769,8 @@ function setupEventListeners() {
       if (eventsTab) eventsTab.click();
     });
   }
+
+
 
   // Click weather widget to open settings (General tab) and focus City field
   const weatherWidgetEl = document.getElementById('weather-widget');
