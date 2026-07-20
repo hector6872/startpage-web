@@ -576,6 +576,12 @@ async function toggleTheme() {
   applyTheme();
 }
 
+function toSentenceCase(str) {
+  if (!str) return '';
+  const lower = str.toLowerCase();
+  return lower.replace(/(^\s*|[.!?]\s+)([a-z])/g, (match, separator, char) => separator + char.toUpperCase());
+}
+
 // Quotes System
 function loadQuote() {
   const dictionary = translations[state.lang];
@@ -595,7 +601,7 @@ function loadQuote() {
         // Fallback to local Spanish quotes to keep translation quality
         useLocalQuote();
       } else {
-        quoteWidget.querySelector('.quote-text').textContent = `"${data.quote}"`;
+        quoteWidget.querySelector('.quote-text').textContent = `"${toSentenceCase(data.quote)}"`;
         quoteWidget.querySelector('.quote-author').textContent = `-- ${data.author}`;
       }
     })
@@ -606,7 +612,7 @@ function loadQuote() {
   function useLocalQuote() {
     const list = quotesDb[state.lang] || quotesDb['en'];
     const randomQuote = list[Math.floor(Math.random() * list.length)];
-    quoteWidget.querySelector('.quote-text').textContent = `"${randomQuote.text}"`;
+    quoteWidget.querySelector('.quote-text').textContent = `"${toSentenceCase(randomQuote.text)}"`;
     quoteWidget.querySelector('.quote-author').textContent = `-- ${randomQuote.author}`;
   }
 }
@@ -725,16 +731,25 @@ function renderTodos() {
     return true;
   });
 
-  // Sort: Incomplete first, then by priority (high -> medium -> low), then by date
+  // Sort: Incomplete first, then by due date (descending), then by priority (high -> medium -> low), then by creation date (ascending)
   filteredTodos.sort((a, b) => {
     if (a.completed !== b.completed) return a.completed ? 1 : -1;
+    
+    // 1. Due date descending (no due date goes to the bottom of the dates)
+    const dateA = a.dueDate ? new Date(a.dueDate).getTime() : 0;
+    const dateB = b.dueDate ? new Date(b.dueDate).getTime() : 0;
+    if (dateA !== dateB) {
+      return dateB - dateA;
+    }
+    
+    // 2. Priority descending
     const priorityWeights = { high: 3, medium: 2, low: 1 };
     if (priorityWeights[b.priority] !== priorityWeights[a.priority]) {
       return priorityWeights[b.priority] - priorityWeights[a.priority];
     }
-    if (!a.dueDate) return 1;
-    if (!b.dueDate) return -1;
-    return new Date(a.dueDate) - new Date(b.dueDate);
+    
+    // 3. Creation date ascending (older/earlier timestamp first)
+    return Number(a.id) - Number(b.id);
   });
 
   if (filteredTodos.length === 0) {
@@ -1352,6 +1367,33 @@ async function fetchGoogleCalendar() {
 // EVENT LISTENERS & MODALS SETUP
 // -------------------------------------------------------------
 function setupEventListeners() {
+  // Copy Quote Event Listener
+  const copyBtn = document.getElementById('copy-quote-btn');
+  if (copyBtn) {
+    copyBtn.addEventListener('click', () => {
+      const quoteText = document.querySelector('#quote-widget .quote-text').textContent;
+      const quoteAuthor = document.querySelector('#quote-widget .quote-author').textContent;
+      const textToCopy = `${quoteText} ${quoteAuthor}`;
+      
+      navigator.clipboard.writeText(textToCopy).then(() => {
+        // Change icon temporarily to indicate success
+        const originalSVG = copyBtn.innerHTML;
+        copyBtn.innerHTML = `
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="20 6 9 17 4 12"></polyline>
+          </svg>
+        `;
+        copyBtn.classList.add('copied');
+        setTimeout(() => {
+          copyBtn.innerHTML = originalSVG;
+          copyBtn.classList.remove('copied');
+        }, 2000);
+      }).catch(err => {
+        console.error('Failed to copy quote: ', err);
+      });
+    });
+  }
+
   // Weather/Clock settings checkboxes visibility toggle
   const toggleWeatherInputs = () => {
     const show = document.getElementById('settings-show-weather').checked;

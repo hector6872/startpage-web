@@ -872,6 +872,43 @@ html.dark .priority-low {
   color: var(--text-secondary);
 }
 
+.quote-footer {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.copy-quote-btn {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-sm);
+  transition: all 0.2s ease;
+  opacity: 0.6;
+}
+
+.copy-quote-btn:hover {
+  color: var(--accent);
+  opacity: 1;
+  background: rgba(0, 0, 0, 0.05);
+}
+
+html.dark .copy-quote-btn:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.copy-quote-btn.copied {
+  color: #10b981 !important;
+  opacity: 1;
+}
+
 /* Modal / Dialog styling */
 .modal-dialog {
   border: none;
