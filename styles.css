@@ -1632,7 +1632,6 @@ html.dark .event-banner.soon {
   box-shadow: 0 4px 15px rgba(47, 128, 237, 0.1);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   animation: slideDownFocus 0.4s ease;
-  margin-bottom: 1.25rem;
 }
 
 .todo-focus-card.hidden {

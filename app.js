@@ -59,6 +59,7 @@ const translations = {
     "label-due-date": "Due Date",
     "label-priority": "Priority",
     "cancel-btn": "Cancel",
+    "delete-btn": "Delete",
     "save-btn": "Save Changes",
     "no-events": "No events scheduled.",
     "no-emails": "No unread emails.",
@@ -79,6 +80,8 @@ const translations = {
     "world-clock-unconfigured": "Timezone not set.",
     "world-clock-title": "World Clock",
     "focus-card-title": "Current Focus",
+    "confirm-delete-title": "Delete Task",
+    "confirm-delete-desc": "Are you sure you want to delete this task?",
     "quote-loading": "Loading quote...",
     "status-unconfigured": "Unconfigured",
     "storage-desc": "Configure where your data is stored. You can select a JSON file in your Google Drive or local sync folder to share tasks across devices.",
@@ -159,6 +162,7 @@ const translations = {
     "label-due-date": "Fecha de Vencimiento",
     "label-priority": "Prioridad",
     "cancel-btn": "Cancelar",
+    "delete-btn": "Eliminar",
     "save-btn": "Guardar Cambios",
     "no-events": "No hay eventos programados.",
     "no-emails": "No hay correos sin leer.",
@@ -179,6 +183,8 @@ const translations = {
     "world-clock-unconfigured": "Zona horaria sin configurar.",
     "world-clock-title": "Reloj Mundial",
     "focus-card-title": "Tarea en Enfoque",
+    "confirm-delete-title": "Confirmar Eliminación",
+    "confirm-delete-desc": "¿Estás seguro de que quieres eliminar esta tarea?",
     "quote-loading": "Cargando frase...",
     "status-unconfigured": "Sin configurar",
     "storage-desc": "Configura dónde se guardan tus datos. Puedes seleccionar un archivo JSON en tu Google Drive o carpeta local sincronizada para compartir tareas entre dispositivos.",
@@ -1205,10 +1211,31 @@ async function toggleFocusTodo(id) {
   renderTodos();
 }
 
-async function deleteTodo(id) {
-  state.todos = state.todos.filter(todo => todo.id !== id);
-  await saveTodos();
-  renderTodos();
+let todoIdToDelete = null;
+
+function deleteTodo(id) {
+  todoIdToDelete = id;
+  const todo = state.todos.find(t => t.id === id);
+  if (!todo) return;
+
+  const modal = document.getElementById('confirm-delete-modal');
+  if (modal) {
+    const dict = translations[state.lang];
+    modal.querySelector('[data-i18n="confirm-delete-title"]').textContent = dict['confirm-delete-title'];
+    
+    const descEl = modal.querySelector('[data-i18n="confirm-delete-desc"]');
+    if (descEl) {
+      if (state.lang === 'es') {
+        descEl.innerHTML = `¿Estás seguro de que quieres eliminar la tarea: <strong>"${escapeHtml(todo.text)}"</strong>?`;
+      } else {
+        descEl.innerHTML = `Are you sure you want to delete the task: <strong>"${escapeHtml(todo.text)}"</strong>?`;
+      }
+    }
+
+    modal.querySelector('[data-i18n="cancel-btn"]').textContent = dict['cancel-btn'];
+    modal.querySelector('[data-i18n="delete-btn"]').textContent = dict['delete-btn'];
+    modal.showModal();
+  }
 }
 
 async function updateTodo(id, newText, newDueDate, newPriority) {
@@ -1770,7 +1797,29 @@ function setupEventListeners() {
     });
   }
 
+  // Confirm Delete Modal Listeners
+  const confirmDeleteModal = document.getElementById('confirm-delete-modal');
+  if (confirmDeleteModal) {
+    document.getElementById('btn-cancel-delete').addEventListener('click', () => {
+      confirmDeleteModal.close();
+      todoIdToDelete = null;
+    });
+    
+    document.getElementById('close-delete-modal').addEventListener('click', () => {
+      confirmDeleteModal.close();
+      todoIdToDelete = null;
+    });
 
+    document.getElementById('btn-confirm-delete').addEventListener('click', async () => {
+      if (todoIdToDelete !== null) {
+        state.todos = state.todos.filter(todo => todo.id !== todoIdToDelete);
+        await saveTodos();
+        renderTodos();
+        confirmDeleteModal.close();
+        todoIdToDelete = null;
+      }
+    });
+  }
 
   // Click weather widget to open settings (General tab) and focus City field
   const weatherWidgetEl = document.getElementById('weather-widget');
