@@ -60,6 +60,7 @@ const translations = {
     "label-priority": "Priority",
     "cancel-btn": "Cancel",
     "delete-btn": "Delete",
+    "clear-completed-btn": "Clear All",
     "save-btn": "Save Changes",
     "no-events": "No events scheduled.",
     "no-emails": "No unread emails.",
@@ -82,6 +83,7 @@ const translations = {
     "focus-card-title": "Current Focus",
     "confirm-delete-title": "Delete Task",
     "confirm-delete-desc": "Are you sure you want to delete this task?",
+    "completed-tasks-note": "Only tasks completed within the last 7 days are displayed.",
     "quote-loading": "Loading quote...",
     "status-unconfigured": "Unconfigured",
     "storage-desc": "Configure where your data is stored. You can select a JSON file in your Google Drive or local sync folder to share tasks across devices.",
@@ -163,6 +165,7 @@ const translations = {
     "label-priority": "Prioridad",
     "cancel-btn": "Cancelar",
     "delete-btn": "Eliminar",
+    "clear-completed-btn": "Limpiar todas",
     "save-btn": "Guardar Cambios",
     "no-events": "No hay eventos programados.",
     "no-emails": "No hay correos sin leer.",
@@ -185,6 +188,7 @@ const translations = {
     "focus-card-title": "Tarea en Enfoque",
     "confirm-delete-title": "Confirmar Eliminación",
     "confirm-delete-desc": "¿Estás seguro de que quieres eliminar esta tarea?",
+    "completed-tasks-note": "Solo se mostrarán las completadas en los últimos 7 días.",
     "quote-loading": "Cargando frase...",
     "status-unconfigured": "Sin configurar",
     "storage-desc": "Configura dónde se guardan tus datos. Puedes seleccionar un archivo JSON en tu Google Drive o carpeta local sincronizada para compartir tareas entre dispositivos.",
@@ -481,6 +485,32 @@ async function loadState() {
   // Initialize file sync if enabled
   if (state.settings.storageMode === 'file') {
     await initializeFileSync();
+  }
+
+  // Clean up completed todos older than 7 days upon loading
+  await cleanupOldCompletedTodos();
+}
+
+async function cleanupOldCompletedTodos() {
+  const sevenDaysAgo = Date.now() - (7 * 24 * 60 * 60 * 1000);
+  let changed = false;
+  state.todos = state.todos.filter(todo => {
+    if (todo.completed) {
+      if (!todo.completedAt) {
+        todo.completedAt = new Date().toISOString();
+        changed = true;
+        return true;
+      }
+      const completedTime = new Date(todo.completedAt).getTime();
+      if (completedTime < sevenDaysAgo) {
+        changed = true;
+        return false;
+      }
+    }
+    return true;
+  });
+  if (changed) {
+    await saveTodos();
   }
 }
 
@@ -949,7 +979,12 @@ function renderTodos() {
   
   const filteredTodos = state.todos.filter(todo => {
     if (activeFilter === 'pending') return !todo.completed;
-    if (activeFilter === 'completed') return todo.completed;
+    if (activeFilter === 'completed') {
+      if (!todo.completed) return false;
+      if (!todo.completedAt) return true;
+      const sevenDaysAgo = Date.now() - (7 * 24 * 60 * 60 * 1000);
+      return new Date(todo.completedAt).getTime() >= sevenDaysAgo;
+    }
     return true;
   });
 
@@ -1021,6 +1056,19 @@ function renderTodos() {
         </span>`;
     }
 
+    let completedBadgeHTML = '';
+    if (todo.completed && todo.completedAt) {
+      const compDate = new Date(todo.completedAt);
+      const formattedCompDate = formatDateShort(getLocalDateString(compDate));
+      completedBadgeHTML = `
+        <span class="todo-completed-badge" title="${compDate.toLocaleString()}">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="20 6 9 17 4 12"></polyline>
+          </svg>
+          ${state.lang === 'es' ? 'Completada el' : 'Completed on'} ${formattedCompDate}
+        </span>`;
+    }
+
     li.innerHTML = `
       <div class="todo-item-left">
         <input type="checkbox" class="todo-checkbox" ${todo.completed ? 'checked' : ''} data-id="${todo.id}">
@@ -1030,6 +1078,7 @@ function renderTodos() {
             <span class="todo-priority-badge priority-${todo.priority}">${translations[state.lang]['priority-' + todo.priority]}</span>
             ${dateBadgeHTML}
           </div>
+          ${completedBadgeHTML}
         </div>
       </div>
       <div class="todo-actions">
@@ -1160,6 +1209,29 @@ function renderTodos() {
     }
   }
 
+  // Update Clear Completed button
+  const clearBtn = document.getElementById('btn-clear-completed');
+  if (clearBtn) {
+    const hasCompleted = state.todos.some(todo => todo.completed);
+    if (activeFilter === 'completed' && hasCompleted) {
+      clearBtn.textContent = translations[state.lang]['clear-completed-btn'];
+      clearBtn.classList.remove('hidden');
+    } else {
+      clearBtn.classList.add('hidden');
+    }
+  }
+
+  // Update Completed Tasks Note
+  const completedNote = document.getElementById('completed-tasks-note');
+  if (completedNote) {
+    if (activeFilter === 'completed') {
+      completedNote.textContent = translations[state.lang]['completed-tasks-note'];
+      completedNote.classList.remove('hidden');
+    } else {
+      completedNote.classList.add('hidden');
+    }
+  }
+
   // Re-sync dashboard columns so they reflect task items
   syncDashboardColumns();
 }
@@ -1191,6 +1263,7 @@ async function toggleTodo(id) {
       return { 
         ...todo, 
         completed: nextCompleted,
+        completedAt: nextCompleted ? new Date().toISOString() : null,
         isFocused: nextCompleted ? false : todo.isFocused 
       };
     }
@@ -1211,9 +1284,31 @@ async function toggleFocusTodo(id) {
   renderTodos();
 }
 
+let confirmActionType = null;
 let todoIdToDelete = null;
 
+function showClearCompletedConfirmation() {
+  confirmActionType = 'clear-completed';
+  const modal = document.getElementById('confirm-delete-modal');
+  if (modal) {
+    const dict = translations[state.lang];
+    modal.querySelector('[data-i18n="confirm-delete-title"]').textContent = state.lang === 'es' ? 'Limpiar Tareas' : 'Clear Tasks';
+    
+    const descEl = modal.querySelector('[data-i18n="confirm-delete-desc"]');
+    if (descEl) {
+      descEl.innerHTML = state.lang === 'es' 
+        ? '¿Estás seguro de que quieres eliminar todas las tareas completadas?' 
+        : 'Are you sure you want to delete all completed tasks?';
+    }
+    
+    modal.querySelector('[data-i18n="cancel-btn"]').textContent = dict['cancel-btn'];
+    modal.querySelector('[data-i18n="delete-btn"]').textContent = state.lang === 'es' ? 'Eliminar todas' : 'Delete all';
+    modal.showModal();
+  }
+}
+
 function deleteTodo(id) {
+  confirmActionType = 'delete-single';
   todoIdToDelete = id;
   const todo = state.todos.find(t => t.id === id);
   if (!todo) return;
@@ -1811,13 +1906,28 @@ function setupEventListeners() {
     });
 
     document.getElementById('btn-confirm-delete').addEventListener('click', async () => {
-      if (todoIdToDelete !== null) {
+      if (confirmActionType === 'delete-single' && todoIdToDelete !== null) {
         state.todos = state.todos.filter(todo => todo.id !== todoIdToDelete);
         await saveTodos();
         renderTodos();
         confirmDeleteModal.close();
         todoIdToDelete = null;
+        confirmActionType = null;
+      } else if (confirmActionType === 'clear-completed') {
+        state.todos = state.todos.filter(todo => !todo.completed);
+        await saveTodos();
+        renderTodos();
+        confirmDeleteModal.close();
+        confirmActionType = null;
       }
+    });
+  }
+
+  // Clear Completed Tasks Click Listener
+  const clearCompletedBtn = document.getElementById('btn-clear-completed');
+  if (clearCompletedBtn) {
+    clearCompletedBtn.addEventListener('click', () => {
+      showClearCompletedConfirmation();
     });
   }
 

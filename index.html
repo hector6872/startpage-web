@@ -151,12 +151,18 @@
             <!-- Todo List Container -->
             <div class="todo-list-container">
               <div class="todo-filters">
-                <button class="filter-btn active" data-filter="pending" data-i18n="filter-pending">Pending</button>
-                <button class="filter-btn" data-filter="completed" data-i18n="filter-completed">Completed</button>
+                <div class="filter-group">
+                  <button class="filter-btn active" data-filter="pending" data-i18n="filter-pending">Pending</button>
+                  <button class="filter-btn" data-filter="completed" data-i18n="filter-completed">Completed</button>
+                </div>
+                <button id="btn-clear-completed" class="clear-completed-btn hidden" data-i18n="clear-completed-btn">Clear All</button>
               </div>
               <ul id="todo-list" class="todo-list">
                 <!-- Dynamically populated -->
               </ul>
+              <div id="completed-tasks-note" class="completed-tasks-note hidden" data-i18n="completed-tasks-note">
+                 Only tasks completed within the last 7 days are displayed.
+              </div>
             </div>
           </div>
         </div>
