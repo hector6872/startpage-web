@@ -39,29 +39,30 @@
       <div class="header-right">
         <!-- Weather Widget -->
         <div id="weather-widget" class="weather-widget loading">
-          <div class="weather-temp">--°C</div>
           <div class="weather-info">
-            <span class="weather-desc">Loading weather...</span>
             <span class="weather-loc">--</span>
+            <div class="weather-details-grid">
+              <div class="weather-col-1">
+                <div class="weather-temp">--°C</div>
+                <span class="weather-feels">--</span>
+              </div>
+              <div class="weather-col-2">
+                <span class="weather-desc">Loading weather...</span>
+                <span class="weather-precip"></span>
+              </div>
+            </div>
           </div>
         </div>
         <!-- World Clock Widget -->
         <div id="world-clock-widget" class="world-clock-widget hidden">
-          <div class="clock-time">--:--</div>
           <div class="clock-info">
             <span class="clock-label">--</span>
-            <span class="clock-tz-sub" data-i18n="world-clock-sub">World Time</span>
+            <div class="clock-time">--:--</div>
+            <span class="clock-greeting">--</span>
           </div>
         </div>
-        <!-- Theme & Language Toggles -->
+        <!-- Settings Toggle -->
         <div class="control-buttons">
-          <button id="lang-toggle" class="btn-icon" title="Change Language">ES</button>
-          <button id="theme-toggle" class="btn-icon" title="Toggle Theme">
-            <!-- Sun Icon -->
-            <svg class="sun-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
-            <!-- Moon Icon -->
-            <svg class="moon-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
-          </button>
           <button id="settings-toggle" class="btn-icon" title="Settings">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
           </button>
@@ -244,13 +245,32 @@
                 <div class="form-group">
                   <label for="settings-world-clock-tz" data-i18n="label-world-clock-tz">World Clock Timezone</label>
                   <select id="settings-world-clock-tz">
-                    <option value="America/New_York">New York (EST/EDT)</option>
-                    <option value="Europe/London">London (GMT/BST)</option>
-                    <option value="Asia/Tokyo">Tokyo (JST)</option>
-                    <option value="Europe/Paris">Paris/Madrid (CET/CEST)</option>
-                    <option value="America/Los_Angeles">Los Angeles (PST/PDT)</option>
-                    <option value="Asia/Singapore">Singapore (SGT)</option>
-                    <option value="Australia/Sydney">Sydney (AEST/AEDT)</option>
+                     <!-- Americas -->
+                     <option value="America/Los_Angeles">Los Angeles / Vancouver (PST/PDT)</option>
+                     <option value="America/Denver">Denver (MST/MDT)</option>
+                     <option value="America/Chicago">Chicago / Mexico City (CST/CDT)</option>
+                     <option value="America/New_York">New York / Toronto (EST/EDT)</option>
+                     <option value="America/Bogota">Bogotá / Lima / Quito (COT/PET)</option>
+                     <option value="America/Sao_Paulo">São Paulo / Buenos Aires (BRT/ART)</option>
+                     
+                     <!-- Europe -->
+                     <option value="Europe/London">London / Dublin (GMT/BST)</option>
+                     <option value="Europe/Paris">Paris / Madrid / Berlin / Rome (CET/CEST)</option>
+                     <option value="Europe/Kyiv">Kyiv / Athens / Bucharest (EET/EEST)</option>
+                     <option value="Europe/Moscow">Moscow / Istanbul (MSK/TRT)</option>
+                     
+                     <!-- Africa / Middle East -->
+                     <option value="Africa/Cairo">Cairo / Johannesburg (EET/SAST)</option>
+                     <option value="Asia/Riyadh">Riyadh / Nairobi (AST)</option>
+                     <option value="Asia/Dubai">Dubai (GST)</option>
+                     
+                     <!-- Asia / Oceania -->
+                     <option value="Asia/Kolkata">Mumbai / New Delhi (IST)</option>
+                     <option value="Asia/Bangkok">Bangkok / Jakarta (ICT/WIB)</option>
+                     <option value="Asia/Singapore">Singapore / Hong Kong / Beijing (SGT/CST)</option>
+                     <option value="Asia/Tokyo">Tokyo / Seoul (JST/KST)</option>
+                     <option value="Australia/Sydney">Sydney / Melbourne (AEST/AEDT)</option>
+                     <option value="Pacific/Auckland">Auckland (NZST/NZDT)</option>
                   </select>
                 </div>
                 <div class="form-group">

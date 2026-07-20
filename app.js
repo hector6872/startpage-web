@@ -89,7 +89,12 @@ const translations = {
     "btn-import": "Import JSON",
     "file-unsupported": "File System Access API is not supported in this browser. Using manual backup instead.",
     "file-read-error": "Failed to read the selected file.",
-    "file-write-error": "Failed to write data to file."
+    "file-write-error": "Failed to write data to file.",
+    "weather-rain": "Rain expected: {prob}%",
+    "weather-snow": "Snow expected: {prob}%",
+    "weather-storm": "Storms expected: {prob}%",
+    "weather-no-precip": "No precip. next 24h",
+    "weather-feels-like": "Feels like: {temp}°C"
   },
   es: {
     "col-today": "Hoy",
@@ -180,7 +185,12 @@ const translations = {
     "btn-import": "Importar JSON",
     "file-unsupported": "La API de Acceso a Archivos no está soportada en este navegador. Utiliza la copia manual en su lugar.",
     "file-read-error": "Error al leer el archivo seleccionado.",
-    "file-write-error": "Error al escribir datos en el archivo."
+    "file-write-error": "Error al escribir datos en el archivo.",
+    "weather-rain": "Lluvia esperada: {prob}%",
+    "weather-snow": "Nieve esperada: {prob}%",
+    "weather-storm": "Tormentas esperadas: {prob}%",
+    "weather-no-precip": "Sin precip. próximas 24h",
+    "weather-feels-like": "Sensación: {temp}°C"
   }
 };
 
@@ -490,8 +500,11 @@ function translatePage() {
     }
   });
 
-  // Update UI lang toggle button text
-  document.getElementById('lang-toggle').textContent = state.lang.toUpperCase();
+  // Update UI lang toggle button text if exists
+  const langToggle = document.getElementById('lang-toggle');
+  if (langToggle) {
+    langToggle.textContent = state.lang.toUpperCase();
+  }
 }
 
 // DateTime / Greeting System
@@ -541,6 +554,21 @@ function updateWorldClock() {
     });
     widget.querySelector('.clock-time').textContent = formatter.format(now);
     widget.querySelector('.clock-label').textContent = state.settings.worldClockLabel || state.settings.worldClockTz.split('/').pop().replace('_', ' ');
+    
+    const tzHour = parseInt(now.toLocaleTimeString("en-US", {
+      timeZone: state.settings.worldClockTz,
+      hour: '2-digit',
+      hour12: false,
+      hourCycle: 'h23'
+    }), 10);
+    
+    let tzGreetingKey = 'greeting-morning';
+    if (tzHour >= 12 && tzHour < 19) {
+      tzGreetingKey = 'greeting-afternoon';
+    } else if (tzHour >= 19 || tzHour < 6) {
+      tzGreetingKey = 'greeting-evening';
+    }
+    widget.querySelector('.clock-greeting').textContent = translations[state.lang][tzGreetingKey];
   } catch (e) {
     console.error("Error updating world clock:", e);
     widget.classList.add('hidden');
@@ -650,21 +678,63 @@ async function loadWeather() {
       throw err;
     }
 
-    const weatherRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`);
+    const weatherRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,apparent_temperature,weather_code&hourly=precipitation_probability,weathercode`);
     const weatherData = await weatherRes.json();
     
-    if (weatherData.current_weather) {
-      const temp = Math.round(weatherData.current_weather.temperature);
-      const code = weatherData.current_weather.weathercode;
+    if (weatherData.current) {
+      const temp = Math.round(weatherData.current.temperature_2m);
+      const apparentTemp = Math.round(weatherData.current.apparent_temperature);
+      const code = weatherData.current.weather_code;
       const desc = getWeatherDesc(code);
       
       weatherWidget.querySelector('.weather-temp').textContent = `${temp}°C`;
+      weatherWidget.querySelector('.weather-feels').textContent = dict['weather-feels-like'].replace('{temp}', apparentTemp);
       weatherWidget.querySelector('.weather-desc').textContent = desc;
       weatherWidget.querySelector('.weather-loc').textContent = cityName;
+
+      // Calculate precipitation in next 24h
+      let precipHTML = '';
+      if (weatherData.hourly && weatherData.hourly.precipitation_probability && weatherData.hourly.weathercode) {
+        const currentHourStr = weatherData.current.time;
+        const startIndex = weatherData.hourly.time.indexOf(currentHourStr);
+        const start = startIndex !== -1 ? startIndex : 0;
+        const next24Probs = weatherData.hourly.precipitation_probability.slice(start, start + 24);
+        const next24Codes = weatherData.hourly.weathercode.slice(start, start + 24);
+        const maxProb = Math.max(...next24Probs);
+
+        if (maxProb > 0) {
+          let hasStorm = false;
+          let hasSnow = false;
+          for (let i = 0; i < next24Codes.length; i++) {
+            if (next24Probs[i] > 10) {
+              const c = next24Codes[i];
+              if (c >= 95 && c <= 99) hasStorm = true;
+              else if ((c >= 71 && c <= 77) || (c >= 85 && c <= 86)) hasSnow = true;
+            }
+          }
+
+          let typeKey = 'weather-rain';
+          let icon = '☔';
+          if (hasStorm) {
+            typeKey = 'weather-storm';
+            icon = '⛈️';
+          } else if (hasSnow) {
+            typeKey = 'weather-snow';
+            icon = '❄️';
+          }
+
+          const label = dict[typeKey].replace('{prob}', maxProb);
+          precipHTML = `<span class="weather-precip-badge" title="${label}">${icon} ${label}</span>`;
+        } else {
+          precipHTML = `<span class="weather-precip-badge none" title="${dict['weather-no-precip']}">☀️ ${dict['weather-no-precip']}</span>`;
+        }
+      }
+      weatherWidget.querySelector('.weather-precip').innerHTML = precipHTML;
       weatherWidget.classList.remove('loading');
     }
   } catch (err) {
     weatherWidget.querySelector('.weather-temp').textContent = '--';
+    weatherWidget.querySelector('.weather-feels').textContent = '';
     if (err.isUnconfigured) {
       weatherWidget.querySelector('.weather-desc').innerHTML = `
         ${dict['weather-unconfigured']} 
@@ -1406,21 +1476,6 @@ function setupEventListeners() {
     document.getElementById('world-clock-settings-group').classList.toggle('collapsed', !show);
   };
   document.getElementById('settings-show-world-clock').addEventListener('change', toggleClockInputs);
-
-  // Theme Toggle Button
-  document.getElementById('theme-toggle').addEventListener('click', toggleTheme);
-
-  // Language Toggle Button
-  document.getElementById('lang-toggle').addEventListener('click', async () => {
-    state.lang = state.lang === 'en' ? 'es' : 'en';
-    state.settings.lang = state.lang;
-    await saveSettings();
-    translatePage();
-    updateTimeAndGreeting();
-    renderTodos();
-    loadQuote();
-    loadWeather();
-  });
 
   // Settings Modal Open
   const settingsModal = document.getElementById('settings-modal');

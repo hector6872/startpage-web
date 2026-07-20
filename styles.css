@@ -236,21 +236,52 @@ body {
   border-radius: var(--radius-sm);
   box-shadow: var(--shadow-sm);
   transition: all 0.3s ease;
+  align-self: stretch;
 }
 
 .weather-widget.loading {
   opacity: 0.7;
 }
 
+.weather-details-grid {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.75rem;
+  align-items: flex-start;
+  margin-top: 4px;
+}
+
+.weather-col-1, .weather-col-2 {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.weather-col-2 {
+  border-left: 1px dashed var(--border-color);
+  padding-left: 0.75rem;
+  min-height: 2.2rem;
+  justify-content: center;
+}
+
 .weather-temp {
   font-family: var(--font-title);
   font-size: 1.5rem;
   font-weight: 600;
+  line-height: 1.1;
+}
+
+.weather-feels {
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+  white-space: nowrap;
 }
 
 .weather-info {
   display: flex;
   flex-direction: column;
+  align-items: flex-start;
 }
 
 .weather-desc {
@@ -261,7 +292,29 @@ body {
 
 .weather-loc {
   font-size: 0.75rem;
+  font-weight: 600;
   color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.weather-precip {
+  margin-top: 2px;
+}
+
+.weather-precip-badge {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--accent);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.weather-precip-badge.none {
+  color: var(--text-secondary);
+  font-weight: normal;
+  opacity: 0.75;
 }
 
 /* World Clock Widget Styles */
@@ -277,6 +330,7 @@ body {
   border-radius: var(--radius-sm);
   box-shadow: var(--shadow-sm);
   transition: all 0.3s ease;
+  align-self: stretch;
 }
 
 .world-clock-widget.hidden {
@@ -287,22 +341,29 @@ body {
   font-family: var(--font-title);
   font-size: 1.5rem;
   font-weight: 600;
+  line-height: 1.1;
+  margin-bottom: 2px;
 }
 
 .clock-info {
   display: flex;
   flex-direction: column;
+  align-items: flex-start;
 }
 
 .clock-label {
-  font-size: 0.85rem;
-  font-weight: 500;
-  text-transform: capitalize;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 2px;
 }
 
-.clock-tz-sub {
-  font-size: 0.75rem;
+.clock-greeting {
+  font-size: 0.72rem;
   color: var(--text-secondary);
+  font-weight: 500;
 }
 
 /* Control Buttons */
