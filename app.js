@@ -1477,6 +1477,25 @@ function setupEventListeners() {
   };
   document.getElementById('settings-show-world-clock').addEventListener('change', toggleClockInputs);
 
+  // Scroll to Top Listener
+  const scrollToTopBtn = document.getElementById('scroll-to-top');
+  if (scrollToTopBtn) {
+    window.addEventListener('scroll', () => {
+      if (window.scrollY > 200) {
+        scrollToTopBtn.classList.remove('hidden');
+      } else {
+        scrollToTopBtn.classList.add('hidden');
+      }
+    });
+
+    scrollToTopBtn.addEventListener('click', () => {
+      window.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+      });
+    });
+  }
+
   // Settings Modal Open
   const settingsModal = document.getElementById('settings-modal');
   document.getElementById('settings-toggle').addEventListener('click', () => {
