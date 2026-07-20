@@ -719,7 +719,7 @@ function getWeatherDesc(code) {
 // -------------------------------------------------------------
 // TODO LIST SYSTEM (CRUD)
 // -------------------------------------------------------------
-let activeFilter = 'all';
+let activeFilter = 'pending';
 
 function renderTodos() {
   const todoList = document.getElementById('todo-list');
