@@ -29,9 +29,10 @@ const translations = {
     "theme-light": "Light",
     "theme-dark": "Dark",
     "label-world-clock-tz": "World Clock Timezone",
-    "world-clock-disabled": "Disabled",
     "label-world-clock-label": "World Clock Label",
     "world-clock-sub": "World Time",
+    "label-show-weather": "Show Weather Widget",
+    "label-show-world-clock": "Show World Clock Widget",
     "label-city": "Weather City",
     "city-desc": "Leave empty for automatic geolocation.",
     "google-desc": "Requires a Google Cloud Console project with OAuth credentials. Remember to add your local origin (e.g. http://localhost:5173) under Authorized JavaScript Origins.",
@@ -119,9 +120,10 @@ const translations = {
     "theme-light": "Claro",
     "theme-dark": "Oscuro",
     "label-world-clock-tz": "Zona Horaria del Reloj Mundial",
-    "world-clock-disabled": "Desactivado",
     "label-world-clock-label": "Etiqueta del Reloj Mundial",
     "world-clock-sub": "Hora Mundial",
+    "label-show-weather": "Mostrar Clima",
+    "label-show-world-clock": "Mostrar Reloj Mundial",
     "label-city": "Ciudad para el clima",
     "city-desc": "Déjalo vacío para usar la geolocalización automática del navegador.",
     "google-desc": "Requiere un proyecto en Google Cloud Console con credenciales OAuth. Recuerda añadir tu origen local (ej. http://localhost:5173) en los orígenes de JavaScript autorizados.",
@@ -218,8 +220,10 @@ let state = {
     lang: 'en',
     theme: 'system',
     city: '',
-    worldClockTz: '',
+    worldClockTz: 'Europe/London',
     worldClockLabel: '',
+    showWeather: true,
+    showWorldClock: true,
     storageMode: 'local', // local or file
     googleClientId: '',
     githubToken: '',
@@ -521,7 +525,7 @@ function updateTimeAndGreeting() {
 // World Clock System
 function updateWorldClock() {
   const widget = document.getElementById('world-clock-widget');
-  if (!state.settings.worldClockTz) {
+  if (state.settings.showWorldClock === false || !state.settings.worldClockTz) {
     widget.classList.add('hidden');
     return;
   }
@@ -610,6 +614,11 @@ function loadQuote() {
 // Weather System (Open-Meteo)
 async function loadWeather() {
   const weatherWidget = document.getElementById('weather-widget');
+  if (state.settings.showWeather === false) {
+    weatherWidget.classList.add('hidden');
+    return;
+  }
+  weatherWidget.classList.remove('hidden');
   weatherWidget.classList.add('loading');
 
   const dict = translations[state.lang];
@@ -630,27 +639,9 @@ async function loadWeather() {
         throw new Error("City not found");
       }
     } else {
-      // Auto Geolocating
-      const coords = await new Promise((resolve, reject) => {
-        if (!navigator.geolocation) {
-          const err = new Error("Unsupported");
-          err.isGeolocationError = true;
-          reject(err);
-          return;
-        }
-        navigator.geolocation.getCurrentPosition(
-          pos => resolve(pos.coords),
-          err => {
-            const error = new Error(err.message);
-            error.isGeolocationError = true;
-            reject(error);
-          },
-          { timeout: 5000 }
-        );
-      });
-      lat = coords.latitude;
-      lon = coords.longitude;
-      cityName = state.lang === 'es' ? 'Mi Ubicación' : 'My Location';
+      const err = new Error("Unconfigured");
+      err.isUnconfigured = true;
+      throw err;
     }
 
     const weatherRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`);
@@ -668,7 +659,7 @@ async function loadWeather() {
     }
   } catch (err) {
     weatherWidget.querySelector('.weather-temp').textContent = '--';
-    if (err.isGeolocationError) {
+    if (err.isUnconfigured) {
       weatherWidget.querySelector('.weather-desc').innerHTML = `
         ${dict['weather-unconfigured']} 
         <span class="weather-settings-link" style="text-decoration: underline; cursor: pointer; color: var(--accent); font-weight: 500;">
@@ -1361,6 +1352,19 @@ async function fetchGoogleCalendar() {
 // EVENT LISTENERS & MODALS SETUP
 // -------------------------------------------------------------
 function setupEventListeners() {
+  // Weather/Clock settings checkboxes visibility toggle
+  const toggleWeatherInputs = () => {
+    const show = document.getElementById('settings-show-weather').checked;
+    document.getElementById('weather-city-group').classList.toggle('collapsed', !show);
+  };
+  document.getElementById('settings-show-weather').addEventListener('change', toggleWeatherInputs);
+
+  const toggleClockInputs = () => {
+    const show = document.getElementById('settings-show-world-clock').checked;
+    document.getElementById('world-clock-settings-group').classList.toggle('collapsed', !show);
+  };
+  document.getElementById('settings-show-world-clock').addEventListener('change', toggleClockInputs);
+
   // Theme Toggle Button
   document.getElementById('theme-toggle').addEventListener('click', toggleTheme);
 
@@ -1383,8 +1387,14 @@ function setupEventListeners() {
     document.getElementById('settings-lang').value = state.settings.lang;
     document.getElementById('settings-theme').value = state.settings.theme || 'system';
     document.getElementById('settings-city').value = state.settings.city;
-    document.getElementById('settings-world-clock-tz').value = state.settings.worldClockTz || '';
+    document.getElementById('settings-world-clock-tz').value = state.settings.worldClockTz || 'Europe/London';
     document.getElementById('settings-world-clock-label').value = state.settings.worldClockLabel || '';
+    document.getElementById('settings-show-weather').checked = state.settings.showWeather !== false;
+    document.getElementById('settings-show-world-clock').checked = state.settings.showWorldClock !== false;
+    
+    toggleWeatherInputs();
+    toggleClockInputs();
+    
     document.getElementById('settings-storage-mode').value = state.settings.storageMode || 'local';
     document.getElementById('google-client-id').value = state.settings.googleClientId;
     document.getElementById('github-token').value = state.settings.githubToken;
@@ -1547,6 +1557,8 @@ function setupEventListeners() {
     state.settings.jiraToken = document.getElementById('jira-token').value.trim();
     state.settings.worldClockTz = document.getElementById('settings-world-clock-tz').value;
     state.settings.worldClockLabel = document.getElementById('settings-world-clock-label').value.trim();
+    state.settings.showWeather = document.getElementById('settings-show-weather').checked;
+    state.settings.showWorldClock = document.getElementById('settings-show-world-clock').checked;
 
     state.lang = state.settings.lang;
 
