@@ -320,12 +320,38 @@ body {
   padding: 0.5rem 1rem;
   border-radius: var(--radius-sm);
   box-shadow: var(--shadow-sm);
-  transition: all 0.3s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   align-self: stretch;
+  cursor: pointer;
+  user-select: none;
+}
+
+.weather-widget:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+  border-color: var(--accent);
 }
 
 .weather-widget.loading {
   opacity: 0.7;
+}
+
+.weather-unconfigured-text {
+  display: none;
+}
+
+.weather-widget.unconfigured .weather-loc,
+.weather-widget.unconfigured .weather-details-grid {
+  display: none;
+}
+
+.weather-widget.unconfigured .weather-unconfigured-text,
+.world-clock-widget.unconfigured .clock-greeting {
+  display: inline-block;
+  font-family: var(--font-sans);
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--text-secondary);
 }
 
 .weather-details-grid {
@@ -414,12 +440,25 @@ body {
   padding: 0.5rem 1rem;
   border-radius: var(--radius-sm);
   box-shadow: var(--shadow-sm);
-  transition: all 0.3s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   align-self: stretch;
+  cursor: pointer;
+  user-select: none;
+}
+
+.world-clock-widget:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+  border-color: var(--accent);
 }
 
 .world-clock-widget.hidden {
   display: none !important;
+}
+
+.world-clock-widget.unconfigured .clock-time,
+.world-clock-widget.unconfigured .clock-label {
+  display: none;
 }
 
 .clock-time {

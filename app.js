@@ -75,6 +75,9 @@ const translations = {
     "weather-error": "Weather unavailable",
     "weather-unconfigured": "Location not set.",
     "weather-configure-btn": "Configure",
+    "timezone-unconfigured": "No timezone selected",
+    "world-clock-unconfigured": "Timezone not set.",
+    "world-clock-title": "World Clock",
     "quote-loading": "Loading quote...",
     "status-unconfigured": "Unconfigured",
     "storage-desc": "Configure where your data is stored. You can select a JSON file in your Google Drive or local sync folder to share tasks across devices.",
@@ -171,6 +174,9 @@ const translations = {
     "weather-error": "Clima no disponible",
     "weather-unconfigured": "Ubicación sin configurar.",
     "weather-configure-btn": "Configurar",
+    "timezone-unconfigured": "Sin zona horaria",
+    "world-clock-unconfigured": "Zona horaria sin configurar.",
+    "world-clock-title": "Reloj Mundial",
     "quote-loading": "Cargando frase...",
     "status-unconfigured": "Sin configurar",
     "storage-desc": "Configura dónde se guardan tus datos. Puedes seleccionar un archivo JSON en tu Google Drive o carpeta local sincronizada para compartir tareas entre dispositivos.",
@@ -682,12 +688,21 @@ function updateTimeAndGreeting() {
 // World Clock System
 function updateWorldClock() {
   const widget = document.getElementById('world-clock-widget');
-  if (state.settings.showWorldClock === false || !state.settings.worldClockTz) {
+  if (state.settings.showWorldClock === false) {
     widget.classList.add('hidden');
     return;
   }
   
   widget.classList.remove('hidden');
+  const dict = translations[state.lang];
+
+  if (!state.settings.worldClockTz) {
+    widget.classList.add('unconfigured');
+    widget.querySelector('.clock-greeting').textContent = dict['world-clock-unconfigured'];
+    return;
+  }
+  widget.classList.remove('unconfigured');
+
   try {
     const now = new Date();
     const formatter = new Intl.DateTimeFormat(state.lang === 'es' ? 'es-ES' : 'en-US', {
@@ -826,6 +841,7 @@ async function loadWeather() {
     const weatherData = await weatherRes.json();
     
     if (weatherData.current) {
+      weatherWidget.classList.remove('unconfigured');
       const temp = Math.round(weatherData.current.temperature_2m);
       const apparentTemp = Math.round(weatherData.current.apparent_temperature);
       const code = weatherData.current.weather_code;
@@ -877,26 +893,10 @@ async function loadWeather() {
       weatherWidget.classList.remove('loading');
     }
   } catch (err) {
-    weatherWidget.querySelector('.weather-temp').textContent = '--';
-    weatherWidget.querySelector('.weather-feels').textContent = '';
-    if (err.isUnconfigured) {
-      weatherWidget.querySelector('.weather-desc').innerHTML = `
-        ${dict['weather-unconfigured']} 
-        <span class="weather-settings-link" style="text-decoration: underline; cursor: pointer; color: var(--accent); font-weight: 500;">
-          ${dict['weather-configure-btn']}
-        </span>
-      `;
-      const link = weatherWidget.querySelector('.weather-settings-link');
-      if (link) {
-        link.addEventListener('click', (e) => {
-          e.stopPropagation();
-          document.getElementById('settings-toggle').click();
-        });
-      }
-    } else {
-      weatherWidget.querySelector('.weather-desc').textContent = dict['weather-error'];
-    }
-    weatherWidget.querySelector('.weather-loc').textContent = '';
+    weatherWidget.classList.add('unconfigured');
+    weatherWidget.querySelector('.weather-unconfigured-text').textContent = err.isUnconfigured
+      ? dict['weather-unconfigured']
+      : dict['weather-error'];
     weatherWidget.classList.remove('loading');
   }
 }
@@ -1650,6 +1650,36 @@ function setupEventListeners() {
     });
   }
 
+  // Click weather widget to open settings (General tab) and focus City field
+  const weatherWidgetEl = document.getElementById('weather-widget');
+  if (weatherWidgetEl) {
+    weatherWidgetEl.addEventListener('click', () => {
+      document.getElementById('settings-toggle').click();
+      const generalTab = document.querySelector('.tab-btn[data-tab="tab-general"]');
+      if (generalTab) generalTab.click();
+      
+      const cityInput = document.getElementById('settings-city');
+      if (cityInput) {
+        setTimeout(() => cityInput.focus(), 150);
+      }
+    });
+  }
+
+  // Click world clock widget to open settings (General tab) and focus Clock select field
+  const clockWidgetEl = document.getElementById('world-clock-widget');
+  if (clockWidgetEl) {
+    clockWidgetEl.addEventListener('click', () => {
+      document.getElementById('settings-toggle').click();
+      const generalTab = document.querySelector('.tab-btn[data-tab="tab-general"]');
+      if (generalTab) generalTab.click();
+      
+      const clockSelect = document.getElementById('settings-world-clock-tz');
+      if (clockSelect) {
+        setTimeout(() => clockSelect.focus(), 150);
+      }
+    });
+  }
+
   // Settings Modal Open
   const settingsModal = document.getElementById('settings-modal');
   document.getElementById('settings-toggle').addEventListener('click', () => {
@@ -1657,7 +1687,7 @@ function setupEventListeners() {
     document.getElementById('settings-lang').value = state.settings.lang;
     document.getElementById('settings-theme').value = state.settings.theme || 'system';
     document.getElementById('settings-city').value = state.settings.city;
-    document.getElementById('settings-world-clock-tz').value = state.settings.worldClockTz || 'Europe/London';
+    document.getElementById('settings-world-clock-tz').value = state.settings.worldClockTz !== undefined ? state.settings.worldClockTz : '';
     document.getElementById('settings-world-clock-label').value = state.settings.worldClockLabel || '';
     document.getElementById('settings-show-weather').checked = state.settings.showWeather !== false;
     document.getElementById('settings-show-world-clock').checked = state.settings.showWorldClock !== false;
