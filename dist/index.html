@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard</title>
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <!-- Google Identity Services for client-side OAuth -->
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <!-- Anti-FOUC script for theme -->
+  <meta name="color-scheme" content="light dark">
+  <script>
+    {
+      const theme = localStorage.getItem('theme') || 'system';
+      if (theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        document.documentElement.classList.add('dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+      }
+    }
+  </script>
+  <script type="module" crossorigin src="/assets/index-BHAfX75l.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/index-CdE0VvrL.css">
+</head>
+<body>
+  <!-- Background Decorative Elements -->
+  <div class="bg-glow bg-glow-1"></div>
+  <div class="bg-glow bg-glow-2"></div>
+
+  <div class="container">
+    <!-- Header -->
+    <header class="app-header">
+      <div class="header-left">
+        <h1 id="greeting" class="greeting">Hello</h1>
+        <p id="current-date" class="date-subtitle">Monday, 20 July</p>
+      </div>
+      <div class="header-right">
+        <!-- Weather Widget -->
+        <div id="weather-widget" class="weather-widget loading">
+          <div class="weather-temp">--°C</div>
+          <div class="weather-info">
+            <span class="weather-desc">Loading weather...</span>
+            <span class="weather-loc">--</span>
+          </div>
+        </div>
+        <!-- Theme & Language Toggles -->
+        <div class="control-buttons">
+          <button id="lang-toggle" class="btn-icon" title="Change Language">ES</button>
+          <button id="theme-toggle" class="btn-icon" title="Toggle Theme">
+            <!-- Sun Icon -->
+            <svg class="sun-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+            <!-- Moon Icon -->
+            <svg class="moon-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+          </button>
+          <button id="settings-toggle" class="btn-icon" title="Settings">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Grid -->
+    <main class="dashboard-grid">
+      <!-- Column 1: Today -->
+      <section class="grid-col" id="col-today">
+        <h2 class="col-title" data-i18n="col-today">Today</h2>
+        <div class="col-content">
+          <!-- Calendar and tasks summaries will go here -->
+          <div class="section-card">
+            <h3 class="card-subtitle" data-i18n="calendar-events">Events</h3>
+            <div id="google-events-container" class="integration-list">
+              <!-- Dynamically populated -->
+              <p class="empty-msg" data-i18n="no-events">No events scheduled.</p>
+            </div>
+          </div>
+          <div class="section-card">
+            <h3 class="card-subtitle" data-i18n="urgent-emails">Urgent Emails</h3>
+            <div id="gmail-container" class="integration-list">
+              <!-- Dynamically populated -->
+              <p class="empty-msg" data-i18n="no-emails">No unread emails.</p>
+            </div>
+          </div>
+          <div class="section-card">
+            <h3 class="card-subtitle" data-i18n="pending-prs">Pull Requests (Git)</h3>
+            <div id="prs-container" class="integration-list">
+              <!-- Dynamically populated -->
+              <p class="empty-msg" data-i18n="no-prs">No pending PRs.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Column 2: This Week -->
+      <section class="grid-col" id="col-week">
+        <h2 class="col-title" data-i18n="col-week">This Week</h2>
+        <div class="col-content">
+          <div class="section-card">
+            <h3 class="card-subtitle" data-i18n="weekly-schedule">Weekly Schedule</h3>
+            <div id="weekly-events-container" class="integration-list">
+              <!-- Dynamically populated -->
+              <p class="empty-msg" data-i18n="no-weekly-events">No events this week.</p>
+            </div>
+          </div>
+          <div class="section-card">
+            <h3 class="card-subtitle" data-i18n="jira-tasks">Jira Tasks</h3>
+            <div id="jira-container" class="integration-list">
+              <!-- Dynamically populated -->
+              <p class="empty-msg" data-i18n="no-jira-tasks">No Jira tasks assigned.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Column 3: Tasks List (CRUD) -->
+      <section class="grid-col" id="col-tasks">
+        <h2 class="col-title" data-i18n="col-tasks">Tasks</h2>
+        <div class="col-content todo-wrapper">
+          <!-- Add Task Form -->
+          <form id="todo-form" class="todo-form">
+            <input type="text" id="todo-input" placeholder="Add a new task..." required data-i18n-placeholder="todo-placeholder">
+            <div class="form-row">
+              <input type="date" id="todo-date" title="Due Date">
+              <select id="todo-priority" title="Priority">
+                <option value="low" data-i18n="priority-low">Low</option>
+                <option value="medium" selected data-i18n="priority-medium">Medium</option>
+                <option value="high" data-i18n="priority-high">High</option>
+              </select>
+              <button type="submit" class="btn-primary" data-i18n="add-btn">Add</button>
+            </div>
+          </form>
+
+          <!-- Todo List Container -->
+          <div class="todo-list-container">
+            <div class="todo-filters">
+              <button class="filter-btn active" data-filter="all" data-i18n="filter-all">All</button>
+              <button class="filter-btn" data-filter="pending" data-i18n="filter-pending">Pending</button>
+              <button class="filter-btn" data-filter="completed" data-i18n="filter-completed">Completed</button>
+            </div>
+            <ul id="todo-list" class="todo-list">
+              <!-- Dynamically populated -->
+            </ul>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Footer Quote -->
+    <footer class="app-footer">
+      <div id="quote-widget" class="quote-widget">
+        <p class="quote-text">"Loading quote of the day..."</p>
+        <p class="quote-author">--</p>
+      </div>
+    </footer>
+  </div>
+
+  <!-- Settings Modal -->
+  <dialog id="settings-modal" class="modal-dialog">
+    <div class="modal-content">
+      <header class="modal-header">
+        <h2 data-i18n="settings-title">Dashboard Settings</h2>
+        <button id="close-settings" class="btn-close">&times;</button>
+      </header>
+      <div class="modal-body">
+        <nav class="settings-tabs">
+          <button class="tab-btn active" data-tab="tab-general" data-i18n="tab-general">General</button>
+          <button class="tab-btn" data-tab="tab-google" data-i18n="tab-google">Google</button>
+          <button class="tab-btn" data-tab="tab-git" data-i18n="tab-git">GitHub & Bitbucket</button>
+          <button class="tab-btn" data-tab="tab-jira" data-i18n="tab-jira">Jira</button>
+        </nav>
+
+        <form id="settings-form">
+          <!-- Tab: General -->
+          <div id="tab-general" class="tab-pane active">
+            <div class="form-group">
+              <label for="settings-lang" data-i18n="label-language">Default Language</label>
+              <select id="settings-lang">
+                <option value="en">English</option>
+                <option value="es">Español</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="settings-city" data-i18n="label-city">Weather Location (City)</label>
+              <input type="text" id="settings-city" placeholder="e.g. Madrid">
+              <span class="field-desc" data-i18n="city-desc">Leave empty to use automatic geolocation.</span>
+            </div>
+          </div>
+
+          <!-- Tab: Google -->
+          <div id="tab-google" class="tab-pane">
+            <p class="tab-desc" data-i18n="google-desc">Requires a Google Cloud project with OAuth credentials. Ensure you add your local origin (e.g. http://localhost:5173 or the server URL) in Google Console.</p>
+            <div class="form-group">
+              <label for="google-client-id" data-i18n="label-client-id">Google Client ID</label>
+              <input type="text" id="google-client-id" placeholder="xxxxxxxx.apps.googleusercontent.com">
+            </div>
+            <div class="form-group row-align">
+              <label data-i18n="google-status">Authentication Status:</label>
+              <span id="google-auth-status" class="auth-status disconnected" data-i18n="disconnected">Disconnected</span>
+            </div>
+            <div class="google-auth-actions">
+              <button type="button" id="google-login-btn" class="btn-secondary" data-i18n="google-login">Log In with Google</button>
+              <button type="button" id="google-logout-btn" class="btn-danger hidden" data-i18n="google-logout">Log Out</button>
+            </div>
+          </div>
+
+          <!-- Tab: Git -->
+          <div id="tab-git" class="tab-pane">
+            <h3 data-i18n="github-settings">GitHub</h3>
+            <div class="form-group">
+              <label for="github-token" data-i18n="label-token">Personal Access Token (PAT)</label>
+              <input type="password" id="github-token" placeholder="ghp_xxxxxxxx">
+            </div>
+            <div class="form-group">
+              <label for="github-username" data-i18n="label-username">Username</label>
+              <input type="text" id="github-username" placeholder="octocat">
+            </div>
+
+            <hr class="form-divider">
+
+            <h3 data-i18n="bitbucket-settings">Bitbucket</h3>
+            <div class="form-group">
+              <label for="bitbucket-workspace" data-i18n="label-workspace">Workspace ID / Username</label>
+              <input type="text" id="bitbucket-workspace" placeholder="my-workspace">
+            </div>
+            <div class="form-group">
+              <label for="bitbucket-username" data-i18n="label-bb-username">App Username</label>
+              <input type="text" id="bitbucket-username" placeholder="bb-username">
+            </div>
+            <div class="form-group">
+              <label for="bitbucket-token" data-i18n="label-bb-token">App Password / Token</label>
+              <input type="password" id="bitbucket-token" placeholder="App password">
+            </div>
+          </div>
+
+          <!-- Tab: Jira -->
+          <div id="tab-jira" class="tab-pane">
+            <p class="tab-desc" data-i18n="jira-cors-warning">Note: Jira API requires CORS. If tasks fail to load, you may need a browser CORS extension or configure your Jira Cloud to allow local requests.</p>
+            <div class="form-group">
+              <label for="jira-host" data-i18n="label-jira-host">Jira Host URL</label>
+              <input type="url" id="jira-host" placeholder="https://your-company.atlassian.net">
+            </div>
+            <div class="form-group">
+              <label for="jira-email" data-i18n="label-jira-email">Account Email</label>
+              <input type="email" id="jira-email" placeholder="name@company.com">
+            </div>
+            <div class="form-group">
+              <label for="jira-token" data-i18n="label-jira-token">API Token</label>
+              <input type="password" id="jira-token" placeholder="API token from Atlassian Account">
+            </div>
+          </div>
+
+          <div class="modal-footer">
+            <button type="submit" class="btn-primary" data-i18n="save-settings">Save Configurations</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- Edit Task Modal -->
+  <dialog id="edit-task-modal" class="modal-dialog">
+    <div class="modal-content">
+      <header class="modal-header">
+        <h2 data-i18n="edit-task-title">Edit Task</h2>
+        <button id="close-edit-modal" class="btn-close">&times;</button>
+      </header>
+      <div class="modal-body">
+        <form id="edit-task-form">
+          <input type="hidden" id="edit-task-id">
+          <div class="form-group">
+            <label for="edit-task-text" data-i18n="label-task-text">Task Name</label>
+            <input type="text" id="edit-task-text" required placeholder="Task text...">
+          </div>
+          <div class="form-group">
+            <label for="edit-task-date" data-i18n="label-due-date">Due Date</label>
+            <input type="date" id="edit-task-date">
+          </div>
+          <div class="form-group">
+            <label for="edit-task-priority" data-i18n="label-priority">Priority</label>
+            <select id="edit-task-priority">
+              <option value="low" data-i18n="priority-low">Low</option>
+              <option value="medium" data-i18n="priority-medium">Medium</option>
+              <option value="high" data-i18n="priority-high">High</option>
+            </select>
+          </div>
+          <div class="modal-footer">
+            <button type="button" id="cancel-edit-btn" class="btn-secondary" data-i18n="cancel-btn">Cancel</button>
+            <button type="submit" class="btn-primary" data-i18n="save-btn">Save Changes</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- Load script -->
+</body>
+</html>

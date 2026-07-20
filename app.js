@@ -1,0 +1,1730 @@
+// Internationalization (i18n) Dictionary
+const translations = {
+  en: {
+    "col-today": "Today",
+    "col-week": "This Week",
+    "col-tasks": "My Tasks",
+    "calendar-events": "Events & Meetings",
+    "urgent-emails": "Urgent Emails (Gmail)",
+    "pending-prs": "Pull Requests",
+    "weekly-schedule": "Weekly Schedule",
+    "jira-tasks": "Jira Assigned Tasks",
+    "todo-placeholder": "Add a new task...",
+    "priority-low": "Low",
+    "priority-medium": "Medium",
+    "priority-high": "High",
+    "add-btn": "Add",
+    "filter-all": "All",
+    "filter-pending": "Pending",
+    "filter-completed": "Completed",
+    "settings-title": "Dashboard Settings",
+    "tab-general": "General",
+    "tab-google": "Google APIs",
+    "tab-git": "Git Integrations",
+    "tab-jira": "Jira Cloud",
+    "tab-storage": "Storage",
+    "label-language": "Language",
+    "label-theme": "Default Theme",
+    "theme-system": "System Default",
+    "theme-light": "Light",
+    "theme-dark": "Dark",
+    "label-world-clock-tz": "World Clock Timezone",
+    "world-clock-disabled": "Disabled",
+    "label-world-clock-label": "World Clock Label",
+    "world-clock-sub": "World Time",
+    "label-city": "Weather City",
+    "city-desc": "Leave empty for automatic geolocation.",
+    "google-desc": "Requires a Google Cloud Console project with OAuth credentials. Remember to add your local origin (e.g. http://localhost:5173) under Authorized JavaScript Origins.",
+    "label-client-id": "Google OAuth Client ID",
+    "google-status": "Authentication:",
+    "disconnected": "Disconnected",
+    "connected": "Connected",
+    "google-login": "Log In with Google",
+    "google-logout": "Log Out",
+    "github-settings": "GitHub Configuration",
+    "label-token": "Personal Access Token (PAT)",
+    "label-username": "GitHub Username",
+    "bitbucket-settings": "Bitbucket Configuration",
+    "label-workspace": "Workspace ID",
+    "label-bb-username": "Bitbucket Username",
+    "label-bb-token": "App Password / Token",
+    "jira-cors-warning": "Note: Jira API requires CORS. Ensure you use a browser extension to bypass CORS (e.g. 'Allow CORS' extension) when running locally.",
+    "label-jira-host": "Jira Host URL",
+    "label-jira-email": "Atlassian Account Email",
+    "label-jira-token": "Jira API Token",
+    "save-settings": "Save Settings",
+    "edit-task-title": "Edit Task",
+    "label-task-text": "Task Name",
+    "label-due-date": "Due Date",
+    "label-priority": "Priority",
+    "cancel-btn": "Cancel",
+    "save-btn": "Save Changes",
+    "no-events": "No events scheduled.",
+    "no-emails": "No unread emails.",
+    "no-prs": "No pending PRs.",
+    "no-weekly-events": "No events this week.",
+    "no-jira-tasks": "No Jira tasks assigned.",
+    "task-overdue": "Overdue",
+    "task-today": "Today",
+    "task-tomorrow": "Tomorrow",
+    "greeting-morning": "Good morning",
+    "greeting-afternoon": "Good afternoon",
+    "greeting-evening": "Good evening",
+    "weather-loading": "Loading weather...",
+    "weather-error": "Weather unavailable",
+    "weather-unconfigured": "Location not set.",
+    "weather-configure-btn": "Configure",
+    "quote-loading": "Loading quote...",
+    "status-unconfigured": "Unconfigured",
+    "storage-desc": "Configure where your data is stored. You can select a JSON file in your Google Drive or local sync folder to share tasks across devices.",
+    "label-storage-mode": "Storage Mode",
+    "storage-local": "Browser Local Storage only",
+    "storage-file": "Local JSON File Sync (Auto-Sync)",
+    "label-sync-file": "Sync File",
+    "no-file-selected": "No file selected.",
+    "btn-select-file": "Select File...",
+    "label-backup": "Manual Backup (Import/Export)",
+    "btn-export": "Export JSON",
+    "btn-import": "Import JSON",
+    "file-unsupported": "File System Access API is not supported in this browser. Using manual backup instead.",
+    "file-read-error": "Failed to read the selected file.",
+    "file-write-error": "Failed to write data to file."
+  },
+  es: {
+    "col-today": "Hoy",
+    "col-week": "Esta Semana",
+    "col-tasks": "Mis Tareas",
+    "calendar-events": "Eventos y Reuniones",
+    "urgent-emails": "Correos Urgentes (Gmail)",
+    "pending-prs": "Pull Requests",
+    "weekly-schedule": "Agenda Semanal",
+    "jira-tasks": "Tareas de Jira",
+    "todo-placeholder": "Añadir una nueva tarea...",
+    "priority-low": "Baja",
+    "priority-medium": "Media",
+    "priority-high": "Alta",
+    "add-btn": "Añadir",
+    "filter-all": "Todas",
+    "filter-pending": "Pendientes",
+    "filter-completed": "Completadas",
+    "settings-title": "Configuración del Panel",
+    "tab-general": "General",
+    "tab-google": "APIs de Google",
+    "tab-git": "Integración Git",
+    "tab-jira": "Jira Cloud",
+    "tab-storage": "Almacenamiento",
+    "label-language": "Idioma",
+    "label-theme": "Tema Predeterminado",
+    "theme-system": "Predeterminado del Sistema",
+    "theme-light": "Claro",
+    "theme-dark": "Oscuro",
+    "label-world-clock-tz": "Zona Horaria del Reloj Mundial",
+    "world-clock-disabled": "Desactivado",
+    "label-world-clock-label": "Etiqueta del Reloj Mundial",
+    "world-clock-sub": "Hora Mundial",
+    "label-city": "Ciudad para el clima",
+    "city-desc": "Déjalo vacío para usar la geolocalización automática del navegador.",
+    "google-desc": "Requiere un proyecto en Google Cloud Console con credenciales OAuth. Recuerda añadir tu origen local (ej. http://localhost:5173) en los orígenes de JavaScript autorizados.",
+    "label-client-id": "Cliente ID de Google OAuth",
+    "google-status": "Autenticación:",
+    "disconnected": "Desconectado",
+    "connected": "Conectado",
+    "google-login": "Iniciar Sesión con Google",
+    "google-logout": "Cerrar Sesión",
+    "github-settings": "Configuración de GitHub",
+    "label-token": "Token de Acceso Personal (PAT)",
+    "label-username": "Usuario de GitHub",
+    "bitbucket-settings": "Configuración de Bitbucket",
+    "label-workspace": "ID del Espacio de Trabajo",
+    "label-bb-username": "Usuario de Bitbucket",
+    "label-bb-token": "Contraseña de App / Token",
+    "jira-cors-warning": "Nota: La API de Jira requiere CORS. Asegúrate de usar una extensión del navegador para omitir CORS (como 'Allow CORS') al ejecutarlo localmente.",
+    "label-jira-host": "URL del Servidor Jira",
+    "label-jira-email": "Correo de Atlassian",
+    "label-jira-token": "Token de API de Jira",
+    "save-settings": "Guardar Configuración",
+    "edit-task-title": "Editar Tarea",
+    "label-task-text": "Nombre de la Tarea",
+    "label-due-date": "Fecha de Vencimiento",
+    "label-priority": "Prioridad",
+    "cancel-btn": "Cancelar",
+    "save-btn": "Guardar Cambios",
+    "no-events": "No hay eventos programados.",
+    "no-emails": "No hay correos sin leer.",
+    "no-prs": "No hay PRs pendientes.",
+    "no-weekly-events": "No hay eventos esta semana.",
+    "no-jira-tasks": "No hay tareas de Jira asignadas.",
+    "task-overdue": "Vencida",
+    "task-today": "Hoy",
+    "task-tomorrow": "Mañana",
+    "greeting-morning": "Buenos días",
+    "greeting-afternoon": "Buenas tardes",
+    "greeting-evening": "Buenas noches",
+    "weather-loading": "Cargando clima...",
+    "weather-error": "Clima no disponible",
+    "weather-unconfigured": "Ubicación sin configurar.",
+    "weather-configure-btn": "Configurar",
+    "quote-loading": "Cargando frase...",
+    "status-unconfigured": "Sin configurar",
+    "storage-desc": "Configura dónde se guardan tus datos. Puedes seleccionar un archivo JSON en tu Google Drive o carpeta local sincronizada para compartir tareas entre dispositivos.",
+    "label-storage-mode": "Modo de Almacenamiento",
+    "storage-local": "Solo memoria local del navegador (LocalStorage)",
+    "storage-file": "Sincronización con archivo JSON (Google Drive / Dropbox)",
+    "label-sync-file": "Archivo de Sincronización",
+    "no-file-selected": "Ningún archivo seleccionado.",
+    "btn-select-file": "Seleccionar archivo...",
+    "label-backup": "Copia de Seguridad Manual (Importar/Exportar)",
+    "btn-export": "Exportar JSON",
+    "btn-import": "Importar JSON",
+    "file-unsupported": "La API de Acceso a Archivos no está soportada en este navegador. Utiliza la copia manual en su lugar.",
+    "file-read-error": "Error al leer el archivo seleccionado.",
+    "file-write-error": "Error al escribir datos en el archivo."
+  }
+};
+
+// Curated Quotes Database (High quality fallback & offline support)
+const quotesDb = {
+  en: [
+    { text: "The only way to do great work is to love what you do.", author: "Steve Jobs" },
+    { text: "Simplify, then add lightness.", author: "Colin Chapman" },
+    { text: "Focus is a matter of deciding what things you're not going to do.", author: "John Carmack" },
+    { text: "Have no fear of perfection - you'll never reach it.", author: "Salvador Dalí" },
+    { text: "Simplicity is the ultimate sophistication.", author: "Leonardo da Vinci" },
+    { text: "Make it simple, but significant.", author: "Don Draper" },
+    { text: "Done is better than perfect.", author: "Sheryl Sandberg" },
+    { text: "The best error message is the one that never shows up.", author: "Thomas Fuchs" },
+    { text: "Perfection is achieved, not when there is nothing more to add, but when there is nothing left to take away.", author: "Antoine de Saint-Exupéry" }
+  ],
+  es: [
+    { text: "La única forma de hacer un gran trabajo es amar lo que haces.", author: "Steve Jobs" },
+    { text: "Simplifica, luego añade ligereza.", author: "Colin Chapman" },
+    { text: "El enfoque consiste en decidir qué cosas no vas a hacer.", author: "John Carmack" },
+    { text: "No temas a la perfección, nunca la alcanzarás.", author: "Salvador Dalí" },
+    { text: "La simplicidad es la sofisticación suprema.", author: "Leonardo da Vinci" },
+    { text: "Hazlo simple, pero significativo.", author: "Don Draper" },
+    { text: "Hecho es mejor que perfecto.", author: "Sheryl Sandberg" },
+    { text: "El mejor mensaje de error es el que nunca aparece.", author: "Thomas Fuchs" },
+    { text: "La perfección se logra no cuando no hay nada más que añadir, sino cuando no queda nada más que quitar.", author: "Antoine de Saint-Exupéry" }
+  ]
+};
+
+// Application State
+let state = {
+  lang: 'en',
+  theme: 'system',
+  todos: [],
+  googleClientToken: sessionStorage.getItem('google_access_token') || null,
+  settings: {
+    lang: 'en',
+    theme: 'system',
+    city: '',
+    worldClockTz: '',
+    worldClockLabel: '',
+    storageMode: 'local', // local or file
+    googleClientId: '',
+    githubToken: '',
+    githubUsername: '',
+    bitbucketWorkspace: '',
+    bitbucketUsername: '',
+    bitbucketToken: '',
+    jiraHost: '',
+    jiraEmail: '',
+    jiraToken: ''
+  }
+};
+
+// -------------------------------------------------------------
+// INDEXEDDB FILE HANDLE PERSISTENCE
+// -------------------------------------------------------------
+const DB_NAME = 'dashboard-db';
+const STORE_NAME = 'file-handles';
+
+function getDB() {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open(DB_NAME, 1);
+    request.onupgradeneeded = (e) => {
+      const db = e.target.result;
+      if (!db.objectStoreNames.contains(STORE_NAME)) {
+        db.createObjectStore(STORE_NAME);
+      }
+    };
+    request.onsuccess = (e) => resolve(e.target.result);
+    request.onerror = (e) => reject(e.target.error);
+  });
+}
+
+async function saveFileHandle(handle) {
+  const db = await getDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE_NAME, 'readwrite');
+    const store = tx.objectStore(STORE_NAME);
+    const request = store.put(handle, 'sync-file');
+    request.onsuccess = () => resolve();
+    request.onerror = () => reject(request.error);
+  });
+}
+
+async function getFileHandle() {
+  const db = await getDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE_NAME, 'readonly');
+    const store = tx.objectStore(STORE_NAME);
+    const request = store.get('sync-file');
+    request.onsuccess = (e) => resolve(e.target.result);
+    request.onerror = () => reject(request.error);
+  });
+}
+
+async function clearFileHandle() {
+  const db = await getDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE_NAME, 'readwrite');
+    const store = tx.objectStore(STORE_NAME);
+    const request = store.delete('sync-file');
+    request.onsuccess = () => resolve();
+    request.onerror = () => reject(request.error);
+  });
+}
+
+// File Sync state variables
+let fileHandle = null;
+
+async function verifyPermission(handle, readWrite) {
+  const options = {};
+  if (readWrite) {
+    options.mode = 'readwrite';
+  }
+  try {
+    if ((await handle.queryPermission(options)) === 'granted') {
+      return true;
+    }
+    if ((await handle.requestPermission(options)) === 'granted') {
+      return true;
+    }
+  } catch (e) {
+    console.error("Error requesting file permission", e);
+  }
+  return false;
+}
+
+async function writeDataToFile() {
+  if (state.settings.storageMode !== 'file' || !fileHandle) return;
+  try {
+    const hasPermission = await verifyPermission(fileHandle, true);
+    if (!hasPermission) return;
+    const writable = await fileHandle.createWritable();
+    const dataToSave = {
+      todos: state.todos,
+      settings: state.settings
+    };
+    await writable.write(JSON.stringify(dataToSave, null, 2));
+    await writable.close();
+  } catch (err) {
+    console.error("Error writing file:", err);
+  }
+}
+
+async function readDataFromFile() {
+  if (!fileHandle) return null;
+  try {
+    const hasPermission = await verifyPermission(fileHandle, false);
+    if (!hasPermission) return null;
+    const file = await fileHandle.getFile();
+    const contents = await file.text();
+    if (!contents.trim()) return null;
+    return JSON.parse(contents);
+  } catch (err) {
+    console.error("Error reading file:", err);
+    return null;
+  }
+}
+
+async function initializeFileSync() {
+  if (state.settings.storageMode !== 'file') {
+    const el = document.getElementById('file-sync-settings');
+    if (el) el.classList.add('hidden');
+    return;
+  }
+
+  const el = document.getElementById('file-sync-settings');
+  if (el) el.classList.remove('hidden');
+
+  try {
+    fileHandle = await getFileHandle();
+    if (fileHandle) {
+      const nameEl = document.getElementById('sync-file-name');
+      if (nameEl) nameEl.textContent = fileHandle.name;
+      
+      // Read data and apply it
+      const fileData = await readDataFromFile();
+      if (fileData) {
+        if (fileData.todos) state.todos = fileData.todos;
+        if (fileData.settings) {
+          state.settings = { ...state.settings, ...fileData.settings, storageMode: 'file' };
+        }
+        if (state.settings.lang) state.lang = state.settings.lang;
+        if (state.settings.theme) state.theme = state.settings.theme;
+        
+        // Cache to localStorage
+        localStorage.setItem('todos', JSON.stringify(state.todos));
+        localStorage.setItem('dashboard_settings', JSON.stringify(state.settings));
+        localStorage.setItem('theme', state.theme);
+        
+        // Refresh views
+        applyTheme();
+        renderTodos();
+        translatePage();
+        updateTimeAndGreeting();
+        loadWeather();
+        fetchGitHub();
+        fetchBitbucket();
+        fetchJira();
+      }
+    } else {
+      const nameEl = document.getElementById('sync-file-name');
+      if (nameEl) nameEl.textContent = translations[state.lang]['no-file-selected'];
+    }
+  } catch (err) {
+    console.error("Failed to restore file sync:", err);
+    const nameEl = document.getElementById('sync-file-name');
+    if (nameEl) nameEl.textContent = "Error: Permission denied";
+  }
+}
+
+// Export state to a JSON file
+function exportStateToFile() {
+  const dataToSave = {
+    todos: state.todos,
+    settings: state.settings
+  };
+  const blob = new Blob([JSON.stringify(dataToSave, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `dashboard-data-${new Date().toISOString().split('T')[0]}.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+// Import state from a JSON file
+function importStateFromFile(file) {
+  const reader = new FileReader();
+  reader.onload = async (e) => {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (data.todos) state.todos = data.todos;
+      if (data.settings) state.settings = { ...state.settings, ...data.settings };
+      
+      await saveSettings();
+      renderTodos();
+      translatePage();
+      updateTimeAndGreeting();
+      loadWeather();
+      
+      fetchGitHub();
+      fetchBitbucket();
+      fetchJira();
+      
+      alert(state.lang === 'es' ? 'Datos importados con éxito.' : 'Data imported successfully.');
+    } catch (err) {
+      alert(state.lang === 'es' ? 'Archivo inválido.' : 'Invalid file.');
+    }
+  };
+  reader.readAsText(file);
+}
+
+// Load settings and todos from localStorage
+async function loadState() {
+  const storedSettings = localStorage.getItem('dashboard_settings');
+  if (storedSettings) {
+    state.settings = { ...state.settings, ...JSON.parse(storedSettings) };
+  }
+  state.lang = state.settings.lang || 'en';
+  state.theme = state.settings.theme || localStorage.getItem('theme') || 'system';
+
+  const storedTodos = localStorage.getItem('todos');
+  if (storedTodos) {
+    state.todos = JSON.parse(storedTodos);
+  }
+
+  // Initialize file sync if enabled
+  if (state.settings.storageMode === 'file') {
+    await initializeFileSync();
+  }
+}
+
+// Save settings to localStorage
+async function saveSettings() {
+  state.settings.theme = state.theme;
+  localStorage.setItem('dashboard_settings', JSON.stringify(state.settings));
+  localStorage.setItem('theme', state.theme);
+
+  if (state.settings.storageMode === 'file') {
+    await writeDataToFile();
+  }
+}
+
+// i18n Translation Engine
+function translatePage() {
+  const dictionary = translations[state.lang] || translations['en'];
+  
+  // Translate standard content elements
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    if (dictionary[key]) {
+      el.textContent = dictionary[key];
+    }
+  });
+
+  // Translate input placeholders
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+    const key = el.getAttribute('data-i18n-placeholder');
+    if (dictionary[key]) {
+      el.setAttribute('placeholder', dictionary[key]);
+    }
+  });
+
+  // Update UI lang toggle button text
+  document.getElementById('lang-toggle').textContent = state.lang.toUpperCase();
+}
+
+// DateTime / Greeting System
+function updateTimeAndGreeting() {
+  const now = new Date();
+  
+  // Format Clock
+  const hours = String(now.getHours()).padStart(2, '0');
+  const minutes = String(now.getMinutes()).padStart(2, '0');
+  
+  // Format Date
+  const dateOptions = { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' };
+  const locale = state.lang === 'es' ? 'es-ES' : 'en-US';
+  document.getElementById('current-date').textContent = now.toLocaleDateString(locale, dateOptions);
+
+  // Greeting
+  const hour = now.getHours();
+  let greetingKey = 'greeting-morning';
+  if (hour >= 12 && hour < 19) {
+    greetingKey = 'greeting-afternoon';
+  } else if (hour >= 19 || hour < 6) {
+    greetingKey = 'greeting-evening';
+  }
+  const greetingText = translations[state.lang][greetingKey];
+  document.getElementById('greeting').textContent = `${greetingText}`;
+
+  // Update World Clock
+  updateWorldClock();
+}
+
+// World Clock System
+function updateWorldClock() {
+  const widget = document.getElementById('world-clock-widget');
+  if (!state.settings.worldClockTz) {
+    widget.classList.add('hidden');
+    return;
+  }
+  
+  widget.classList.remove('hidden');
+  try {
+    const now = new Date();
+    const formatter = new Intl.DateTimeFormat(state.lang === 'es' ? 'es-ES' : 'en-US', {
+      timeZone: state.settings.worldClockTz,
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false
+    });
+    widget.querySelector('.clock-time').textContent = formatter.format(now);
+    widget.querySelector('.clock-label').textContent = state.settings.worldClockLabel || state.settings.worldClockTz.split('/').pop().replace('_', ' ');
+  } catch (e) {
+    console.error("Error updating world clock:", e);
+    widget.classList.add('hidden');
+  }
+}
+
+// Theme management
+function applyTheme() {
+  const html = document.documentElement;
+  html.classList.remove('dark', 'light');
+  
+  if (state.theme === 'dark') {
+    html.classList.add('dark');
+  } else if (state.theme === 'light') {
+    html.classList.add('light');
+  } else {
+    // System Theme detection
+    const isSystemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    if (isSystemDark) {
+      html.classList.add('dark');
+    }
+  }
+}
+
+// Theme switch action
+async function toggleTheme() {
+  if (state.theme === 'system') {
+    state.theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'light' : 'dark';
+  } else {
+    state.theme = state.theme === 'dark' ? 'light' : 'dark';
+  }
+  await saveSettings();
+  applyTheme();
+}
+
+// Quotes System
+function loadQuote() {
+  const dictionary = translations[state.lang];
+  const quoteWidget = document.getElementById('quote-widget');
+  quoteWidget.querySelector('.quote-text').textContent = dictionary['quote-loading'];
+  quoteWidget.querySelector('.quote-author').textContent = '';
+
+  // Attempt to fetch from public API, fallback to curated local list
+  fetch('https://dummyjson.com/quotes/random')
+    .then(res => {
+      if (!res.ok) throw new Error();
+      return res.json();
+    })
+    .then(data => {
+      // API provides quotes in English. If page is in Spanish, translate or use local
+      if (state.lang === 'es') {
+        // Fallback to local Spanish quotes to keep translation quality
+        useLocalQuote();
+      } else {
+        quoteWidget.querySelector('.quote-text').textContent = `"${data.quote}"`;
+        quoteWidget.querySelector('.quote-author').textContent = `-- ${data.author}`;
+      }
+    })
+    .catch(() => {
+      useLocalQuote();
+    });
+
+  function useLocalQuote() {
+    const list = quotesDb[state.lang] || quotesDb['en'];
+    const randomQuote = list[Math.floor(Math.random() * list.length)];
+    quoteWidget.querySelector('.quote-text').textContent = `"${randomQuote.text}"`;
+    quoteWidget.querySelector('.quote-author').textContent = `-- ${randomQuote.author}`;
+  }
+}
+
+// Weather System (Open-Meteo)
+async function loadWeather() {
+  const weatherWidget = document.getElementById('weather-widget');
+  weatherWidget.classList.add('loading');
+
+  const dict = translations[state.lang];
+
+  try {
+    let lat, lon, cityName = 'Madrid';
+    
+    if (state.settings.city) {
+      cityName = state.settings.city;
+      // Geocoding city name via Open-Meteo
+      const geoRes = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(cityName)}&count=1&language=${state.lang}`);
+      const geoData = await geoRes.json();
+      if (geoData.results && geoData.results.length > 0) {
+        lat = geoData.results[0].latitude;
+        lon = geoData.results[0].longitude;
+        cityName = geoData.results[0].name;
+      } else {
+        throw new Error("City not found");
+      }
+    } else {
+      // Auto Geolocating
+      const coords = await new Promise((resolve, reject) => {
+        if (!navigator.geolocation) {
+          const err = new Error("Unsupported");
+          err.isGeolocationError = true;
+          reject(err);
+          return;
+        }
+        navigator.geolocation.getCurrentPosition(
+          pos => resolve(pos.coords),
+          err => {
+            const error = new Error(err.message);
+            error.isGeolocationError = true;
+            reject(error);
+          },
+          { timeout: 5000 }
+        );
+      });
+      lat = coords.latitude;
+      lon = coords.longitude;
+      cityName = state.lang === 'es' ? 'Mi Ubicación' : 'My Location';
+    }
+
+    const weatherRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`);
+    const weatherData = await weatherRes.json();
+    
+    if (weatherData.current_weather) {
+      const temp = Math.round(weatherData.current_weather.temperature);
+      const code = weatherData.current_weather.weathercode;
+      const desc = getWeatherDesc(code);
+      
+      weatherWidget.querySelector('.weather-temp').textContent = `${temp}°C`;
+      weatherWidget.querySelector('.weather-desc').textContent = desc;
+      weatherWidget.querySelector('.weather-loc').textContent = cityName;
+      weatherWidget.classList.remove('loading');
+    }
+  } catch (err) {
+    weatherWidget.querySelector('.weather-temp').textContent = '--';
+    if (err.isGeolocationError) {
+      weatherWidget.querySelector('.weather-desc').innerHTML = `
+        ${dict['weather-unconfigured']} 
+        <span class="weather-settings-link" style="text-decoration: underline; cursor: pointer; color: var(--accent); font-weight: 500;">
+          ${dict['weather-configure-btn']}
+        </span>
+      `;
+      const link = weatherWidget.querySelector('.weather-settings-link');
+      if (link) {
+        link.addEventListener('click', (e) => {
+          e.stopPropagation();
+          document.getElementById('settings-toggle').click();
+        });
+      }
+    } else {
+      weatherWidget.querySelector('.weather-desc').textContent = dict['weather-error'];
+    }
+    weatherWidget.querySelector('.weather-loc').textContent = '';
+    weatherWidget.classList.remove('loading');
+  }
+}
+
+// Map WMO codes to human readable weather
+function getWeatherDesc(code) {
+  const codes = {
+    0: { en: "Clear sky", es: "Cielo despejado" },
+    1: { en: "Mainly clear", es: "Mayormente despejado" },
+    2: { en: "Partly cloudy", es: "Parcialmente nublado" },
+    3: { en: "Overcast", es: "Cubierto" },
+    45: { en: "Fog", es: "Niebla" },
+    48: { en: "Fog", es: "Niebla" },
+    51: { en: "Light drizzle", es: "Llovizna ligera" },
+    53: { en: "Moderate drizzle", es: "Llovizna moderada" },
+    55: { en: "Dense drizzle", es: "Llovizna densa" },
+    61: { en: "Slight rain", es: "Lluvia ligera" },
+    63: { en: "Moderate rain", es: "Lluvia moderada" },
+    65: { en: "Heavy rain", es: "Lluvia fuerte" },
+    71: { en: "Slight snow", es: "Nieve ligera" },
+    73: { en: "Moderate snow", es: "Nieve moderada" },
+    75: { en: "Heavy snow", es: "Nieve fuerte" },
+    77: { en: "Snow grains", es: "Granizo suave" },
+    80: { en: "Slight rain showers", es: "Chubascos de lluvia leves" },
+    81: { en: "Moderate rain showers", es: "Chubascos de lluvia moderados" },
+    82: { en: "Violent rain showers", es: "Chubascos de lluvia violentos" },
+    95: { en: "Thunderstorm", es: "Tormenta" },
+    96: { en: "Thunderstorm with hail", es: "Tormenta con granizo" },
+    99: { en: "Thunderstorm with heavy hail", es: "Tormenta con granizo fuerte" }
+  };
+  return (codes[code] ? codes[code][state.lang] : codes[0][state.lang]);
+}
+
+// -------------------------------------------------------------
+// TODO LIST SYSTEM (CRUD)
+// -------------------------------------------------------------
+let activeFilter = 'all';
+
+function renderTodos() {
+  const todoList = document.getElementById('todo-list');
+  todoList.innerHTML = '';
+  
+  const filteredTodos = state.todos.filter(todo => {
+    if (activeFilter === 'pending') return !todo.completed;
+    if (activeFilter === 'completed') return todo.completed;
+    return true;
+  });
+
+  // Sort: Incomplete first, then by priority (high -> medium -> low), then by date
+  filteredTodos.sort((a, b) => {
+    if (a.completed !== b.completed) return a.completed ? 1 : -1;
+    const priorityWeights = { high: 3, medium: 2, low: 1 };
+    if (priorityWeights[b.priority] !== priorityWeights[a.priority]) {
+      return priorityWeights[b.priority] - priorityWeights[a.priority];
+    }
+    if (!a.dueDate) return 1;
+    if (!b.dueDate) return -1;
+    return new Date(a.dueDate) - new Date(b.dueDate);
+  });
+
+  if (filteredTodos.length === 0) {
+    const emptyMsg = document.createElement('p');
+    emptyMsg.className = 'empty-msg';
+    emptyMsg.textContent = state.lang === 'es' ? 'No hay tareas.' : 'No tasks.';
+    todoList.appendChild(emptyMsg);
+    return;
+  }
+
+  filteredTodos.forEach(todo => {
+    const li = document.createElement('li');
+    li.className = `todo-item ${todo.completed ? 'completed' : ''}`;
+    
+    // Check if task is overdue
+    let dateBadgeHTML = '';
+    if (todo.dueDate) {
+      const todayStr = getLocalDateString(new Date());
+      const due = new Date(todo.dueDate + 'T00:00:00');
+      const today = new Date(todayStr + 'T00:00:00');
+      const timeDiff = due.getTime() - today.getTime();
+      const diffDays = Math.ceil(timeDiff / (1000 * 3600 * 24));
+      
+      let badgeClass = '';
+      let badgeText = '';
+
+      const dict = translations[state.lang];
+
+      if (todo.completed) {
+        // Just format normally
+        badgeText = formatDateShort(todo.dueDate);
+      } else if (diffDays < 0) {
+        badgeClass = 'overdue';
+        badgeText = `${dict['task-overdue']} (${formatDateShort(todo.dueDate)})`;
+      } else if (diffDays === 0) {
+        badgeText = dict['task-today'];
+      } else if (diffDays === 1) {
+        badgeText = dict['task-tomorrow'];
+      } else {
+        badgeText = formatDateShort(todo.dueDate);
+      }
+
+      dateBadgeHTML = `
+        <span class="todo-date-badge ${badgeClass}">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          ${badgeText}
+        </span>`;
+    }
+
+    li.innerHTML = `
+      <div class="todo-item-left">
+        <input type="checkbox" class="todo-checkbox" ${todo.completed ? 'checked' : ''} data-id="${todo.id}">
+        <div class="todo-item-details">
+          <span class="todo-text">${escapeHtml(todo.text)}</span>
+          <div class="todo-meta">
+            <span class="todo-priority-badge priority-${todo.priority}">${translations[state.lang]['priority-' + todo.priority]}</span>
+            ${dateBadgeHTML}
+          </div>
+        </div>
+      </div>
+      <div class="todo-actions">
+        <button class="btn-item-action edit-btn" data-id="${todo.id}">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+        </button>
+        <button class="btn-item-action delete-btn" data-id="${todo.id}">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+        </button>
+      </div>
+    `;
+
+    // Listeners for checkbox and buttons
+    li.querySelector('.todo-checkbox').addEventListener('change', (e) => {
+      toggleTodo(todo.id);
+    });
+
+    li.querySelector('.edit-btn').addEventListener('click', () => {
+      openEditModal(todo);
+    });
+
+    li.querySelector('.delete-btn').addEventListener('click', () => {
+      deleteTodo(todo.id);
+    });
+
+    todoList.appendChild(li);
+  });
+
+  // Re-sync dashboard columns so they reflect task items
+  syncDashboardColumns();
+}
+
+async function saveTodos() {
+  localStorage.setItem('todos', JSON.stringify(state.todos));
+  if (state.settings.storageMode === 'file') {
+    await writeDataToFile();
+  }
+}
+
+async function addTodo(text, dueDate, priority) {
+  const newTodo = {
+    id: Date.now().toString(),
+    text,
+    completed: false,
+    dueDate: dueDate || null,
+    priority: priority || 'medium'
+  };
+  state.todos.push(newTodo);
+  await saveTodos();
+  renderTodos();
+}
+
+async function toggleTodo(id) {
+  state.todos = state.todos.map(todo => {
+    if (todo.id === id) {
+      return { ...todo, completed: !todo.completed };
+    }
+    return todo;
+  });
+  await saveTodos();
+  renderTodos();
+}
+
+async function deleteTodo(id) {
+  state.todos = state.todos.filter(todo => todo.id !== id);
+  await saveTodos();
+  renderTodos();
+}
+
+async function updateTodo(id, newText, newDueDate, newPriority) {
+  state.todos = state.todos.map(todo => {
+    if (todo.id === id) {
+      return { ...todo, text: newText, dueDate: newDueDate || null, priority: newPriority };
+    }
+    return todo;
+  });
+  await saveTodos();
+  renderTodos();
+}
+
+// -------------------------------------------------------------
+// DASHBOARD SYNC & INTEGRATIONS
+// -------------------------------------------------------------
+function syncDashboardColumns() {
+  // Clear any existing local task rows from Hoy/Esta Semana columns
+  const localTodaySection = document.getElementById('local-today-events');
+  if (localTodaySection) localTodaySection.remove();
+  
+  const localWeekSection = document.getElementById('local-week-events');
+  if (localWeekSection) localWeekSection.remove();
+
+  const todayStr = getLocalDateString(new Date());
+  
+  // Tasks for Today
+  const todayTasks = state.todos.filter(todo => !todo.completed && todo.dueDate === todayStr);
+  
+  // Tasks for This Week (Next 7 days, excluding today)
+  const next7Days = [];
+  for (let i = 1; i <= 7; i++) {
+    const d = new Date();
+    d.setDate(d.getDate() + i);
+    next7Days.push(getLocalDateString(d));
+  }
+  const weekTasks = state.todos.filter(todo => !todo.completed && next7Days.includes(todo.dueDate));
+
+  // Insert Local Tasks into Today column content
+  if (todayTasks.length > 0) {
+    const container = document.querySelector('#col-today .col-content');
+    const card = document.createElement('div');
+    card.id = 'local-today-events';
+    card.className = 'section-card';
+    card.innerHTML = `
+      <h3 class="card-subtitle">${state.lang === 'es' ? 'Tareas de Hoy' : 'Today\'s Tasks'}</h3>
+      <div class="integration-list">
+        ${todayTasks.map(t => `
+          <div class="integration-item urgent">
+            <span class="item-title">${escapeHtml(t.text)}</span>
+            <div class="item-meta">
+              <span class="item-badge priority-${t.priority}">${translations[state.lang]['priority-' + t.priority]}</span>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    `;
+    container.insertBefore(card, container.firstChild);
+  }
+
+  // Insert Local Tasks into This Week column content
+  if (weekTasks.length > 0) {
+    const container = document.querySelector('#col-week .col-content');
+    const card = document.createElement('div');
+    card.id = 'local-week-events';
+    card.className = 'section-card';
+    card.innerHTML = `
+      <h3 class="card-subtitle">${state.lang === 'es' ? 'Tareas de esta Semana' : 'This Week\'s Tasks'}</h3>
+      <div class="integration-list">
+        ${weekTasks.map(t => `
+          <div class="integration-item">
+            <span class="item-title">${escapeHtml(t.text)}</span>
+            <div class="item-meta">
+              <span>${formatDateShort(t.dueDate)}</span>
+              <span class="item-badge priority-${t.priority}">${translations[state.lang]['priority-' + t.priority]}</span>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    `;
+    container.insertBefore(card, container.firstChild);
+  }
+}
+
+// -------------------------------------------------------------
+// EXTERNAL SERVICES INTEGRATIONS
+// -------------------------------------------------------------
+
+// General helper to encode Jira Basic Auth
+function getJiraAuthHeader() {
+  if (!state.settings.jiraEmail || !state.settings.jiraToken) return null;
+  return 'Basic ' + btoa(`${state.settings.jiraEmail}:${state.settings.jiraToken}`);
+}
+
+// Fetch Jira Tasks
+async function fetchJira() {
+  const container = document.getElementById('jira-container');
+  if (!state.settings.jiraHost || !state.settings.jiraEmail || !state.settings.jiraToken) {
+    container.innerHTML = `<p class="empty-msg">${translations[state.lang]['status-unconfigured']}</p>`;
+    return;
+  }
+
+  try {
+    const domain = state.settings.jiraHost.replace(/\/$/, "");
+    const jql = encodeURIComponent("assignee = currentUser() AND statusCategory != Done");
+    const response = await fetch(`${domain}/rest/api/3/search?jql=${jql}&maxResults=5`, {
+      headers: {
+        'Authorization': getJiraAuthHeader(),
+        'Accept': 'application/json'
+      }
+    });
+
+    if (!response.ok) throw new Error();
+    const data = await response.json();
+
+    if (!data.issues || data.issues.length === 0) {
+      container.innerHTML = `<p class="empty-msg">${translations[state.lang]['no-jira-tasks']}</p>`;
+      return;
+    }
+
+    container.innerHTML = data.issues.map(issue => {
+      const summary = issue.fields.summary;
+      const key = issue.key;
+      const url = `${domain}/browse/${key}`;
+      const priority = issue.fields.priority ? issue.fields.priority.name : 'medium';
+      return `
+        <a href="${url}" target="_blank" class="integration-item">
+          <span class="item-title">[${key}] ${escapeHtml(summary)}</span>
+          <div class="item-meta">
+            <span>${escapeHtml(issue.fields.status.name)}</span>
+            <span class="item-badge">${escapeHtml(priority)}</span>
+          </div>
+        </a>
+      `;
+    }).join('');
+
+  } catch (error) {
+    container.innerHTML = `<p class="empty-msg" style="color:var(--danger)">API Error / CORS Blocked</p>`;
+  }
+}
+
+// Fetch GitHub PRs
+async function fetchGitHub() {
+  const container = document.getElementById('prs-container');
+  if (!state.settings.githubToken || !state.settings.githubUsername) {
+    container.innerHTML = `<p class="empty-msg">${translations[state.lang]['status-unconfigured']}</p>`;
+    return;
+  }
+
+  try {
+    const q = encodeURIComponent(`is:pr is:open review-requested:${state.settings.githubUsername} assignee:${state.settings.githubUsername}`);
+    const response = await fetch(`https://api.github.com/search/issues?q=${q}&per_page=5`, {
+      headers: {
+        'Authorization': `token ${state.settings.githubToken}`,
+        'Accept': 'application/vnd.github.v3+json'
+      }
+    });
+
+    if (!response.ok) throw new Error();
+    const data = await response.json();
+
+    if (!data.items || data.items.length === 0) {
+      container.innerHTML = `<p class="empty-msg">${translations[state.lang]['no-prs']}</p>`;
+      return;
+    }
+
+    container.innerHTML = data.items.map(pr => {
+      const repo = pr.repository_url.split('/').slice(-1)[0];
+      return `
+        <a href="${pr.html_url}" target="_blank" class="integration-item">
+          <span class="item-title">${escapeHtml(pr.title)}</span>
+          <div class="item-meta">
+            <span>${escapeHtml(repo)}</span>
+            <span class="item-badge">#${pr.number}</span>
+          </div>
+        </a>
+      `;
+    }).join('');
+
+  } catch (error) {
+    container.innerHTML = `<p class="empty-msg" style="color:var(--danger)">GitHub Auth / Connection Error</p>`;
+  }
+}
+
+// Fetch Bitbucket PRs
+async function fetchBitbucket() {
+  // If GitHub has loaded, let's append Bitbucket PRs to the same container, or clear it
+  const container = document.getElementById('prs-container');
+  
+  if (!state.settings.bitbucketWorkspace || !state.settings.bitbucketToken || !state.settings.bitbucketUsername) {
+    // If GitHub is also unconfigured, show unconfigured
+    if (!state.settings.githubToken) {
+      container.innerHTML = `<p class="empty-msg">${translations[state.lang]['status-unconfigured']}</p>`;
+    }
+    return;
+  }
+
+  try {
+    const auth = btoa(`${state.settings.bitbucketUsername}:${state.settings.bitbucketToken}`);
+    // Fetch pull requests for workspace
+    const workspace = state.settings.bitbucketWorkspace;
+    const response = await fetch(`https://api.bitbucket.org/2.0/pullrequests/${state.settings.bitbucketUsername}`, {
+      headers: {
+        'Authorization': `Basic ${auth}`,
+        'Accept': 'application/json'
+      }
+    });
+
+    if (!response.ok) throw new Error();
+    const data = await response.json();
+
+    const prs = data.values || [];
+    if (prs.length === 0) return; // let GitHub messages remain
+
+    // Append to existing HTML or replace if empty
+    const currentHTML = container.innerHTML.includes('empty-msg') || container.innerHTML.includes('Unconfigured') ? '' : container.innerHTML;
+    
+    const bbHTML = prs.map(pr => {
+      return `
+        <a href="${pr.links.html.href}" target="_blank" class="integration-item">
+          <span class="item-title">[Bitbucket] ${escapeHtml(pr.title)}</span>
+          <div class="item-meta">
+            <span>${escapeHtml(pr.source.repository.name)}</span>
+            <span class="item-badge">#${pr.id}</span>
+          </div>
+        </a>
+      `;
+    }).join('');
+
+    container.innerHTML = currentHTML + bbHTML;
+  } catch (error) {
+    // only write error if container was empty
+    if (container.innerHTML.includes('empty-msg')) {
+      container.innerHTML = `<p class="empty-msg" style="color:var(--danger)">Bitbucket Auth / Connection Error</p>`;
+    }
+  }
+}
+
+// Google APIs Integrations (Gmail, Tasks, Calendar)
+let googleTokenClient;
+
+function initGoogleOAuth() {
+  if (typeof google === 'undefined' || !state.settings.googleClientId) {
+    return;
+  }
+
+  googleTokenClient = google.accounts.oauth2.initTokenClient({
+    client_id: state.settings.googleClientId,
+    scope: 'https://www.googleapis.com/auth/gmail.readonly https://www.googleapis.com/auth/tasks.readonly https://www.googleapis.com/auth/calendar.readonly',
+    callback: async (response) => {
+      if (response.error) {
+        console.error(response.error);
+        return;
+      }
+      state.googleClientToken = response.access_token;
+      sessionStorage.setItem('google_access_token', response.access_token);
+      updateGoogleAuthStatus(true);
+      await fetchGoogleData();
+    }
+  });
+
+  if (state.googleClientToken) {
+    updateGoogleAuthStatus(true);
+    fetchGoogleData();
+  }
+}
+
+function updateGoogleAuthStatus(connected) {
+  const statusEl = document.getElementById('google-auth-status');
+  const loginBtn = document.getElementById('google-login-btn');
+  const logoutBtn = document.getElementById('google-logout-btn');
+  const dict = translations[state.lang];
+
+  if (connected) {
+    statusEl.textContent = dict['connected'];
+    statusEl.className = "auth-status connected";
+    loginBtn.classList.add('hidden');
+    logoutBtn.classList.remove('hidden');
+  } else {
+    statusEl.textContent = dict['disconnected'];
+    statusEl.className = "auth-status disconnected";
+    loginBtn.classList.remove('hidden');
+    logoutBtn.classList.add('hidden');
+  }
+}
+
+async function fetchGoogleData() {
+  if (!state.googleClientToken) return;
+
+  // Run in parallel
+  fetchGmail();
+  fetchGoogleTasks();
+  fetchGoogleCalendar();
+}
+
+async function fetchGmail() {
+  const container = document.getElementById('gmail-container');
+  try {
+    const res = await fetch('https://gmail.googleapis.com/v1/users/me/messages?q=is:unread&maxResults=5', {
+      headers: { 'Authorization': `Bearer ${state.googleClientToken}` }
+    });
+    if (!res.ok) throw new Error();
+    const data = await res.json();
+
+    if (!data.messages || data.messages.length === 0) {
+      container.innerHTML = `<p class="empty-msg">${translations[state.lang]['no-emails']}</p>`;
+      return;
+    }
+
+    // Fetch details for each message
+    const detailsPromises = data.messages.map(msg => 
+      fetch(`https://gmail.googleapis.com/v1/users/me/messages/${msg.id}`, {
+        headers: { 'Authorization': `Bearer ${state.googleClientToken}` }
+      }).then(r => r.json())
+    );
+
+    const messagesDetails = await Promise.all(detailsPromises);
+    
+    container.innerHTML = messagesDetails.map(msg => {
+      const headers = msg.payload.headers;
+      const subjectHeader = headers.find(h => h.name.toLowerCase() === 'subject');
+      const fromHeader = headers.find(h => h.name.toLowerCase() === 'from');
+      const subject = subjectHeader ? subjectHeader.value : '(No Subject)';
+      const from = fromHeader ? fromHeader.value.split('<')[0].trim() : 'Unknown';
+      const snippet = msg.snippet;
+
+      return `
+        <div class="integration-item">
+          <span class="item-title">${escapeHtml(subject)}</span>
+          <div class="item-meta">
+            <span>${escapeHtml(from)}</span>
+            <span class="item-badge" title="${escapeHtml(snippet)}">Gmail</span>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+  } catch (err) {
+    container.innerHTML = `<p class="empty-msg" style="color:var(--danger)">Gmail Loading Error</p>`;
+  }
+}
+
+async function fetchGoogleTasks() {
+  // We can merge Google Tasks into our standard ToDo list visually, or display them separately.
+  // Let's merge them under Hoy / Esta Semana if they have dates, or list them.
+  // For simplicity, let's fetch Google Tasks and show them as uncompleted items in Hoy / Esta semana.
+  try {
+    // 1. Get task lists
+    const listsRes = await fetch('https://tasks.googleapis.com/v1/users/@me/lists', {
+      headers: { 'Authorization': `Bearer ${state.googleClientToken}` }
+    });
+    if (!listsRes.ok) throw new Error();
+    const listsData = await listsRes.json();
+    if (!listsData.items || listsData.items.length === 0) return;
+
+    // 2. Fetch tasks from primary list (first one usually)
+    const listId = listsData.items[0].id;
+    const tasksRes = await fetch(`https://tasks.googleapis.com/v1/lists/${listId}/tasks?showCompleted=false`, {
+      headers: { 'Authorization': `Bearer ${state.googleClientToken}` }
+    });
+    const tasksData = await tasksRes.json();
+    const gTasks = tasksData.items || [];
+
+    // Store in global state or overlay on UI
+    // We will render Google Tasks directly into the columns!
+    const todayStr = getLocalDateString(new Date());
+    const next7Days = [];
+    for (let i = 1; i <= 7; i++) {
+      const d = new Date();
+      d.setDate(d.getDate() + i);
+      next7Days.push(getLocalDateString(d));
+    }
+
+    const todayGTasks = gTasks.filter(t => t.due && t.due.startsWith(todayStr));
+    const weekGTasks = gTasks.filter(t => t.due && next7Days.some(day => t.due.startsWith(day)));
+
+    // Insert into DOM
+    if (todayGTasks.length > 0) {
+      // Find today list container or append
+      let gTodayCard = document.getElementById('gtasks-today');
+      if (!gTodayCard) {
+        gTodayCard = document.createElement('div');
+        gTodayCard.id = 'gtasks-today';
+        gTodayCard.className = 'section-card';
+        document.querySelector('#col-today .col-content').appendChild(gTodayCard);
+      }
+      gTodayCard.innerHTML = `
+        <h3 class="card-subtitle">Google Tasks (Hoy)</h3>
+        <div class="integration-list">
+          ${todayGTasks.map(t => `
+            <div class="integration-item urgent">
+              <span class="item-title">${escapeHtml(t.title)}</span>
+              <div class="item-meta">
+                <span class="item-badge">Google</span>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      `;
+    }
+
+    if (weekGTasks.length > 0) {
+      let gWeekCard = document.getElementById('gtasks-week');
+      if (!gWeekCard) {
+        gWeekCard = document.createElement('div');
+        gWeekCard.id = 'gtasks-week';
+        gWeekCard.className = 'section-card';
+        document.querySelector('#col-week .col-content').appendChild(gWeekCard);
+      }
+      gWeekCard.innerHTML = `
+        <h3 class="card-subtitle">Google Tasks (Semana)</h3>
+        <div class="integration-list">
+          ${weekGTasks.map(t => `
+            <div class="integration-item">
+              <span class="item-title">${escapeHtml(t.title)}</span>
+              <div class="item-meta">
+                <span>${formatDateShort(t.due.split('T')[0])}</span>
+                <span class="item-badge">Google</span>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      `;
+    }
+
+  } catch (err) {
+    console.error("Error fetching Google Tasks", err);
+  }
+}
+
+async function fetchGoogleCalendar() {
+  const todayEventsContainer = document.getElementById('google-events-container');
+  const weeklyEventsContainer = document.getElementById('weekly-events-container');
+
+  try {
+    const timeMin = new Date().toISOString();
+    const timeMax = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(); // 7 days ahead
+
+    const url = `https://www.googleapis.com/calendar/v3/calendars/primary/events?timeMin=${timeMin}&timeMax=${timeMax}&singleEvents=true&orderBy=startTime`;
+    const res = await fetch(url, {
+      headers: { 'Authorization': `Bearer ${state.googleClientToken}` }
+    });
+    if (!res.ok) throw new Error();
+    const data = await res.json();
+
+    const events = data.items || [];
+
+    if (events.length === 0) {
+      todayEventsContainer.innerHTML = `<p class="empty-msg">${translations[state.lang]['no-events']}</p>`;
+      weeklyEventsContainer.innerHTML = `<p class="empty-msg">${translations[state.lang]['no-weekly-events']}</p>`;
+      return;
+    }
+
+    const todayStr = getLocalDateString(new Date());
+
+    const todayEvents = [];
+    const weeklyEvents = [];
+
+    events.forEach(evt => {
+      const startStr = evt.start.dateTime || evt.start.date;
+      const isToday = startStr.startsWith(todayStr);
+      
+      const eventHTML = `
+        <div class="integration-item">
+          <span class="item-title">${escapeHtml(evt.summary)}</span>
+          <div class="item-meta">
+            <span>${formatEventTime(evt)}</span>
+            <span class="item-badge">Cal</span>
+          </div>
+        </div>
+      `;
+
+      if (isToday) {
+        todayEvents.push(eventHTML);
+      } else {
+        weeklyEvents.push(eventHTML);
+      }
+    });
+
+    todayEventsContainer.innerHTML = todayEvents.length > 0 ? todayEvents.join('') : `<p class="empty-msg">${translations[state.lang]['no-events']}</p>`;
+    weeklyEventsContainer.innerHTML = weeklyEvents.length > 0 ? weeklyEvents.join('') : `<p class="empty-msg">${translations[state.lang]['no-weekly-events']}</p>`;
+
+  } catch (err) {
+    todayEventsContainer.innerHTML = `<p class="empty-msg" style="color:var(--danger)">Calendar Loading Error</p>`;
+    weeklyEventsContainer.innerHTML = `<p class="empty-msg" style="color:var(--danger)">Calendar Loading Error</p>`;
+  }
+}
+
+// -------------------------------------------------------------
+// EVENT LISTENERS & MODALS SETUP
+// -------------------------------------------------------------
+function setupEventListeners() {
+  // Theme Toggle Button
+  document.getElementById('theme-toggle').addEventListener('click', toggleTheme);
+
+  // Language Toggle Button
+  document.getElementById('lang-toggle').addEventListener('click', async () => {
+    state.lang = state.lang === 'en' ? 'es' : 'en';
+    state.settings.lang = state.lang;
+    await saveSettings();
+    translatePage();
+    updateTimeAndGreeting();
+    renderTodos();
+    loadQuote();
+    loadWeather();
+  });
+
+  // Settings Modal Open
+  const settingsModal = document.getElementById('settings-modal');
+  document.getElementById('settings-toggle').addEventListener('click', () => {
+    // Fill form fields with current settings
+    document.getElementById('settings-lang').value = state.settings.lang;
+    document.getElementById('settings-theme').value = state.settings.theme || 'system';
+    document.getElementById('settings-city').value = state.settings.city;
+    document.getElementById('settings-world-clock-tz').value = state.settings.worldClockTz || '';
+    document.getElementById('settings-world-clock-label').value = state.settings.worldClockLabel || '';
+    document.getElementById('settings-storage-mode').value = state.settings.storageMode || 'local';
+    document.getElementById('google-client-id').value = state.settings.googleClientId;
+    document.getElementById('github-token').value = state.settings.githubToken;
+    document.getElementById('github-username').value = state.settings.githubUsername;
+    document.getElementById('bitbucket-workspace').value = state.settings.bitbucketWorkspace;
+    document.getElementById('bitbucket-username').value = state.settings.bitbucketUsername;
+    document.getElementById('bitbucket-token').value = state.settings.bitbucketToken;
+    document.getElementById('jira-host').value = state.settings.jiraHost;
+    document.getElementById('jira-email').value = state.settings.jiraEmail;
+    document.getElementById('jira-token').value = state.settings.jiraToken;
+
+    // Toggle sync details visibility depending on current storageMode
+    if (state.settings.storageMode === 'file') {
+      document.getElementById('file-sync-settings').classList.remove('hidden');
+      if (fileHandle) {
+        document.getElementById('sync-file-name').textContent = fileHandle.name;
+      } else {
+        document.getElementById('sync-file-name').textContent = translations[state.lang]['no-file-selected'];
+      }
+    } else {
+      document.getElementById('file-sync-settings').classList.add('hidden');
+    }
+
+    settingsModal.showModal();
+  });
+
+  // Close Settings Modal
+  document.getElementById('close-settings').addEventListener('click', () => {
+    settingsModal.close();
+  });
+
+  // Storage Mode Change Handler
+  document.getElementById('settings-storage-mode').addEventListener('change', (e) => {
+    if (e.target.value === 'file') {
+      document.getElementById('file-sync-settings').classList.remove('hidden');
+      if (fileHandle) {
+        document.getElementById('sync-file-name').textContent = fileHandle.name;
+      } else {
+        document.getElementById('sync-file-name').textContent = translations[state.lang]['no-file-selected'];
+      }
+    } else {
+      document.getElementById('file-sync-settings').classList.add('hidden');
+    }
+  });
+
+  // Select File Button Handler
+  document.getElementById('btn-select-file').addEventListener('click', async () => {
+    if (!('showOpenFilePicker' in window)) {
+      alert(translations[state.lang]['file-unsupported']);
+      return;
+    }
+    try {
+      const [handle] = await window.showOpenFilePicker({
+        types: [{
+          description: 'JSON Files',
+          accept: {
+            'application/json': ['.json']
+          }
+        }],
+        multiple: false
+      });
+      if (handle) {
+        fileHandle = handle;
+        await saveFileHandle(handle);
+        document.getElementById('sync-file-name').textContent = handle.name;
+        
+        // Read file contents
+        const fileData = await readDataFromFile();
+        if (fileData) {
+          // File has data, offer to load it or overwrite it
+          const confirmLoad = confirm(
+            state.lang === 'es' 
+              ? 'El archivo seleccionado contiene datos. ¿Deseas cargarlos y reemplazar los datos actuales en el navegador?' 
+              : 'The selected file contains data. Do you want to load it and overwrite current browser data?'
+          );
+          if (confirmLoad) {
+            if (fileData.todos) state.todos = fileData.todos;
+            if (fileData.settings) {
+              state.settings = { ...state.settings, ...fileData.settings, storageMode: 'file' };
+            }
+            renderTodos();
+            translatePage();
+            updateTimeAndGreeting();
+            loadWeather();
+            fetchGitHub();
+            fetchBitbucket();
+            fetchJira();
+          } else {
+            // Overwrite file with current state
+            await writeDataToFile();
+          }
+        } else {
+          // File is empty, write current state
+          await writeDataToFile();
+        }
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  });
+
+  // Backup handlers
+  document.getElementById('btn-export-data').addEventListener('click', () => {
+    exportStateToFile();
+  });
+
+  const importTrigger = document.getElementById('btn-import-trigger');
+  const importInput = document.getElementById('file-import-input');
+  
+  importTrigger.addEventListener('click', () => {
+    importInput.click();
+  });
+
+  importInput.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      importStateFromFile(file);
+    }
+  });
+
+  // Settings Tabs Switch
+  const tabButtons = document.querySelectorAll('.settings-tabs .tab-btn');
+  tabButtons.forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      const targetTab = btn.getAttribute('data-tab');
+      
+      tabButtons.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+
+      document.querySelectorAll('.tab-pane').forEach(pane => pane.classList.remove('active'));
+      document.getElementById(targetTab).classList.add('active');
+    });
+  });
+
+  // Save Settings Form
+  document.getElementById('settings-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    state.settings.lang = document.getElementById('settings-lang').value;
+    state.settings.city = document.getElementById('settings-city').value.trim();
+    state.settings.theme = document.getElementById('settings-theme').value;
+    
+    state.theme = state.settings.theme;
+    
+    const newStorageMode = document.getElementById('settings-storage-mode').value;
+    if (newStorageMode !== 'file') {
+      fileHandle = null;
+      await clearFileHandle();
+    }
+    state.settings.storageMode = newStorageMode;
+    
+    state.settings.googleClientId = document.getElementById('google-client-id').value.trim();
+    state.settings.githubToken = document.getElementById('github-token').value.trim();
+    state.settings.githubUsername = document.getElementById('github-username').value.trim();
+    state.settings.bitbucketWorkspace = document.getElementById('bitbucket-workspace').value.trim();
+    state.settings.bitbucketUsername = document.getElementById('bitbucket-username').value.trim();
+    state.settings.bitbucketToken = document.getElementById('bitbucket-token').value.trim();
+    state.settings.jiraHost = document.getElementById('jira-host').value.trim();
+    state.settings.jiraEmail = document.getElementById('jira-email').value.trim();
+    state.settings.jiraToken = document.getElementById('jira-token').value.trim();
+    state.settings.worldClockTz = document.getElementById('settings-world-clock-tz').value;
+    state.settings.worldClockLabel = document.getElementById('settings-world-clock-label').value.trim();
+
+    state.lang = state.settings.lang;
+
+    await saveSettings();
+    
+    // If we just toggled file-sync on, let's initialize it
+    if (state.settings.storageMode === 'file') {
+      await initializeFileSync();
+    }
+
+    applyTheme();
+    translatePage();
+    updateTimeAndGreeting();
+    loadWeather();
+    
+    // Refresh integrations
+    fetchGitHub();
+    fetchBitbucket();
+    fetchJira();
+
+    if (state.settings.googleClientId) {
+      initGoogleOAuth();
+    }
+
+    settingsModal.close();
+  });
+
+  // Google OAuth Login Action
+  document.getElementById('google-login-btn').addEventListener('click', () => {
+    if (!state.settings.googleClientId) {
+      alert(state.lang === 'es' ? 'Por favor, configura primero tu Google Client ID.' : 'Please configure your Google Client ID first.');
+      return;
+    }
+    if (googleTokenClient) {
+      googleTokenClient.requestAccessToken();
+    } else {
+      initGoogleOAuth();
+      googleTokenClient.requestAccessToken();
+    }
+  });
+
+  // Google OAuth Logout Action
+  document.getElementById('google-logout-btn').addEventListener('click', () => {
+    if (state.googleClientToken) {
+      google.accounts.oauth2.revokeToken(state.googleClientToken, () => {});
+    }
+    state.googleClientToken = null;
+    sessionStorage.removeItem('google_access_token');
+    updateGoogleAuthStatus(false);
+    
+    // Clear Google components
+    document.getElementById('google-events-container').innerHTML = `<p class="empty-msg">${translations[state.lang]['no-events']}</p>`;
+    document.getElementById('gmail-container').innerHTML = `<p class="empty-msg">${translations[state.lang]['no-emails']}</p>`;
+    document.getElementById('weekly-events-container').innerHTML = `<p class="empty-msg">${translations[state.lang]['no-weekly-events']}</p>`;
+    const gT1 = document.getElementById('gtasks-today');
+    const gT2 = document.getElementById('gtasks-week');
+    if (gT1) gT1.remove();
+    if (gT2) gT2.remove();
+  });
+
+  // Todo Form Submit (Add Task)
+  document.getElementById('todo-form').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const input = document.getElementById('todo-input');
+    const dateInput = document.getElementById('todo-date');
+    const prioritySelect = document.getElementById('todo-priority');
+
+    addTodo(input.value.trim(), dateInput.value, prioritySelect.value);
+
+    // Reset Form
+    input.value = '';
+    dateInput.value = '';
+    prioritySelect.value = 'medium';
+  });
+
+  // Todo Filters
+  document.querySelectorAll('.filter-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      activeFilter = btn.getAttribute('data-filter');
+      renderTodos();
+    });
+  });
+
+  // Edit Task Form Close & Submit
+  const editModal = document.getElementById('edit-task-modal');
+  document.getElementById('close-edit-modal').addEventListener('click', () => editModal.close());
+  document.getElementById('cancel-edit-btn').addEventListener('click', () => editModal.close());
+  
+  document.getElementById('edit-task-form').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const id = document.getElementById('edit-task-id').value;
+    const text = document.getElementById('edit-task-text').value.trim();
+    const date = document.getElementById('edit-task-date').value;
+    const priority = document.getElementById('edit-task-priority').value;
+
+    updateTodo(id, text, date, priority);
+    editModal.close();
+  });
+}
+
+function openEditModal(todo) {
+  document.getElementById('edit-task-id').value = todo.id;
+  document.getElementById('edit-task-text').value = todo.text;
+  document.getElementById('edit-task-date').value = todo.dueDate || '';
+  document.getElementById('edit-task-priority').value = todo.priority;
+  document.getElementById('edit-task-modal').showModal();
+}
+
+// -------------------------------------------------------------
+// UTILITIES AND HELPERS
+// -------------------------------------------------------------
+function escapeHtml(text) {
+  if (!text) return '';
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+function getLocalDateString(date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+function formatDateShort(dateStr) {
+  if (!dateStr) return '';
+  const parts = dateStr.split('-');
+  if (parts.length !== 3) return dateStr;
+  const d = new Date(dateStr + 'T00:00:00');
+  const locale = state.lang === 'es' ? 'es-ES' : 'en-US';
+  return d.toLocaleDateString(locale, { day: 'numeric', month: 'short' });
+}
+
+function formatEventTime(evt) {
+  if (evt.start.date) {
+    return state.lang === 'es' ? 'Todo el día' : 'All day';
+  }
+  const date = new Date(evt.start.dateTime);
+  const options = { hour: '2-digit', minute: '2-digit', hour12: false };
+  return date.toLocaleTimeString(state.lang === 'es' ? 'es-ES' : 'en-US', options);
+}
+
+// -------------------------------------------------------------
+// APP INITIALIZATION
+// -------------------------------------------------------------
+async function init() {
+  await loadState();
+  applyTheme();
+  translatePage();
+  updateTimeAndGreeting();
+  setupEventListeners();
+  
+  // Real-time Clock tick
+  setInterval(updateTimeAndGreeting, 60000);
+
+  // Load weather and quotes
+  loadWeather();
+  loadQuote();
+
+  // Render initial tasks
+  renderTodos();
+
+  // Fetch API data for configured integrations
+  fetchGitHub();
+  fetchBitbucket();
+  fetchJira();
+
+  // If Client ID is present, wait and load Google Auth
+  if (state.settings.googleClientId) {
+    setTimeout(initGoogleOAuth, 1000);
+  }
+}
+
+// Start application
+window.addEventListener('DOMContentLoaded', init);
+window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+  if (state.theme === 'system') applyTheme();
+});
