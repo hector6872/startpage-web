@@ -35,6 +35,7 @@
       <div class="header-left">
         <h1 id="greeting" class="greeting">Hello</h1>
         <p id="current-date" class="date-subtitle">Monday, 20 July</p>
+        <div id="upcoming-event" class="event-banner hidden"></div>
       </div>
       <div class="header-right">
         <!-- Weather Widget -->
@@ -151,9 +152,9 @@
     <!-- Footer Quote -->
     <footer class="app-footer">
       <div id="quote-widget" class="quote-widget">
-        <p class="quote-text">"Loading quote of the day..."</p>
-        <div class="quote-footer">
-          <span class="quote-author">--</span>
+        <div class="quote-container">
+          <span class="quote-text">"Loading quote of the day..."</span>
+          <span class="quote-author"></span>
           <button id="copy-quote-btn" class="copy-quote-btn" title="Copy quote" aria-label="Copy quote">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
@@ -175,6 +176,7 @@
       <div class="modal-body">
         <nav class="settings-tabs">
           <button class="tab-btn active" data-tab="tab-general" data-i18n="tab-general">General</button>
+          <button class="tab-btn" data-tab="tab-events" data-i18n="tab-events">Events</button>
           <button class="tab-btn" data-tab="tab-google" data-i18n="tab-google">Google</button>
           <button class="tab-btn" data-tab="tab-git" data-i18n="tab-git">GitHub & Bitbucket</button>
           <button class="tab-btn" data-tab="tab-jira" data-i18n="tab-jira">Jira</button>
@@ -368,6 +370,26 @@
                 <button type="button" id="btn-import-trigger" class="btn-secondary" data-i18n="btn-import" style="flex: 1;">Import JSON</button>
                 <input type="file" id="file-import-input" class="hidden" accept=".json">
               </div>
+            </div>
+          </div>
+
+          <!-- Tab: Events -->
+          <div id="tab-events" class="tab-pane">
+            <p class="tab-desc">Configure birthdays or important events. If an event falls on today, it will be displayed prominently. Otherwise, the closest upcoming event is shown.</p>
+            <div class="form-group">
+              <label>Add New Event</label>
+              <div style="display: grid; grid-template-columns: 1fr auto auto; gap: 0.5rem; margin-top: 0.5rem; width: 100%;">
+                <input type="text" id="event-name-input" placeholder="e.g. Hector's Birthday" style="margin-bottom: 0;">
+                <input type="date" id="event-date-input" style="margin-bottom: 0;">
+                <button type="button" id="btn-add-event" class="btn-primary" style="padding: 0 1rem;">Add</button>
+              </div>
+            </div>
+
+            <div class="form-group" style="margin-top: 1.5rem;">
+              <label>Configured Events</label>
+              <ul id="settings-events-list" class="settings-list" style="list-style: none; padding: 0; margin-top: 0.5rem; max-height: 180px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: var(--radius-sm); background: rgba(255,255,255,0.02); padding: 0.5rem;">
+                <!-- Dynamically populated -->
+              </ul>
             </div>
           </div>
 

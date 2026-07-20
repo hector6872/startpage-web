@@ -455,6 +455,7 @@ async function loadState() {
   if (storedSettings) {
     state.settings = { ...state.settings, ...JSON.parse(storedSettings) };
   }
+  state.settings.customEvents = state.settings.customEvents || [];
   state.lang = state.settings.lang || 'en';
   state.theme = state.settings.theme || localStorage.getItem('theme') || 'system';
 
@@ -478,6 +479,146 @@ async function saveSettings() {
   if (state.settings.storageMode === 'file') {
     await writeDataToFile();
   }
+}
+
+function updateUpcomingEventBanner() {
+  const banner = document.getElementById('upcoming-event');
+  if (!banner) return;
+
+  const events = state.settings.customEvents || [];
+  if (events.length === 0) {
+    banner.classList.add('hidden');
+    return;
+  }
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const currentYear = today.getFullYear();
+
+  let todayEvents = [];
+  let upcomingEvents = [];
+
+  events.forEach(evt => {
+    const [year, monthStr, dayStr] = evt.date.split('-');
+    const month = parseInt(monthStr, 10) - 1;
+    const day = parseInt(dayStr, 10);
+
+    // Calculate occurrence in current year
+    let eventDateThisYear = new Date(currentYear, month, day);
+    
+    if (today.getMonth() === month && today.getDate() === day) {
+      todayEvents.push(evt);
+    } else {
+      if (eventDateThisYear < today) {
+        eventDateThisYear.setFullYear(currentYear + 1);
+      }
+      const timeDiff = eventDateThisYear.getTime() - today.getTime();
+      const daysLeft = Math.ceil(timeDiff / (1000 * 3600 * 24));
+      upcomingEvents.push({
+        ...evt,
+        daysLeft
+      });
+    }
+  });
+
+  if (todayEvents.length > 0) {
+    banner.className = 'event-banner today';
+    const names = todayEvents.map(e => e.name).join(', ');
+    const labelText = state.lang === 'es' 
+      ? `🎉 Hoy: ¡${names}! 🎂`
+      : `🎉 Today: ${names}! 🎂`;
+    banner.textContent = labelText;
+  } else if (upcomingEvents.length > 0) {
+    upcomingEvents.sort((a, b) => a.daysLeft - b.daysLeft);
+    const closest = upcomingEvents[0];
+    if (closest.daysLeft <= 7) {
+      banner.className = 'event-banner soon';
+    } else {
+      banner.className = 'event-banner upcoming';
+    }
+    
+    const isBirthday = closest.name.toLowerCase().includes('birthday') || closest.name.toLowerCase().includes('cumpleaños');
+    const icon = isBirthday ? '🎈' : '📅';
+    
+    let timeText = '';
+    if (state.lang === 'es') {
+      timeText = closest.daysLeft === 1 ? 'mañana' : `en ${closest.daysLeft} días`;
+    } else {
+      timeText = closest.daysLeft === 1 ? 'tomorrow' : `in ${closest.daysLeft} days`;
+    }
+    const labelText = `${icon} ${closest.name} (${timeText})`;
+    
+    banner.textContent = labelText;
+  } else {
+    banner.classList.add('hidden');
+  }
+}
+
+function renderSettingsEventsList() {
+  const listEl = document.getElementById('settings-events-list');
+  if (!listEl) return;
+  listEl.innerHTML = '';
+
+  const events = state.settings.customEvents || [];
+  if (events.length === 0) {
+    const emptyMsg = document.createElement('li');
+    emptyMsg.style.color = 'var(--text-secondary)';
+    emptyMsg.style.fontSize = '0.8rem';
+    emptyMsg.style.justifyContent = 'center';
+    emptyMsg.textContent = state.lang === 'es' ? 'No hay acontecimientos.' : 'No events configured.';
+    listEl.appendChild(emptyMsg);
+    return;
+  }
+
+  // Sort events chronologically (January -> December)
+  const sortedEvents = [...events].sort((a, b) => {
+    const [, mA, dA] = a.date.split('-').map(Number);
+    const [, mB, dB] = b.date.split('-').map(Number);
+    if (mA !== mB) return mA - mB;
+    return dA - dB;
+  });
+
+  sortedEvents.forEach((evt) => {
+    const li = document.createElement('li');
+    
+    const infoDiv = document.createElement('div');
+    infoDiv.className = 'event-item-info';
+    
+    const nameSpan = document.createElement('span');
+    nameSpan.className = 'event-item-name';
+    nameSpan.textContent = evt.name;
+    
+    const dateSpan = document.createElement('span');
+    dateSpan.className = 'event-item-date';
+    const [y, m, d] = evt.date.split('-');
+    const dateObj = new Date(y, parseInt(m, 10) - 1, d);
+    dateSpan.textContent = dateObj.toLocaleDateString(state.lang === 'es' ? 'es-ES' : 'en-US', { day: 'numeric', month: 'short' });
+    
+    infoDiv.appendChild(nameSpan);
+    infoDiv.appendChild(dateSpan);
+    
+    const deleteBtn = document.createElement('button');
+    deleteBtn.type = 'button';
+    deleteBtn.className = 'btn-delete-event';
+    deleteBtn.innerHTML = `
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="3 6 5 6 21 6"></polyline>
+        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+      </svg>
+    `;
+    deleteBtn.addEventListener('click', async (e) => {
+      e.preventDefault();
+      // Filter out by ID instead of index
+      state.settings.customEvents = state.settings.customEvents.filter(item => item.id !== evt.id);
+      await saveSettings();
+      renderSettingsEventsList();
+      updateUpcomingEventBanner();
+    });
+    
+    li.appendChild(infoDiv);
+    li.appendChild(deleteBtn);
+    listEl.appendChild(li);
+  });
 }
 
 // i18n Translation Engine
@@ -533,6 +674,9 @@ function updateTimeAndGreeting() {
 
   // Update World Clock
   updateWorldClock();
+
+  // Update Upcoming Event Banner
+  updateUpcomingEventBanner();
 }
 
 // World Clock System
@@ -630,7 +774,7 @@ function loadQuote() {
         useLocalQuote();
       } else {
         quoteWidget.querySelector('.quote-text').textContent = `"${toSentenceCase(data.quote)}"`;
-        quoteWidget.querySelector('.quote-author').textContent = `-- ${data.author}`;
+        quoteWidget.querySelector('.quote-author').textContent = ` – ${data.author}`;
       }
     })
     .catch(() => {
@@ -641,7 +785,7 @@ function loadQuote() {
     const list = quotesDb[state.lang] || quotesDb['en'];
     const randomQuote = list[Math.floor(Math.random() * list.length)];
     quoteWidget.querySelector('.quote-text').textContent = `"${toSentenceCase(randomQuote.text)}"`;
-    quoteWidget.querySelector('.quote-author').textContent = `-- ${randomQuote.author}`;
+    quoteWidget.querySelector('.quote-author').textContent = ` – ${randomQuote.author}`;
   }
 }
 
@@ -1443,7 +1587,7 @@ function setupEventListeners() {
     copyBtn.addEventListener('click', () => {
       const quoteText = document.querySelector('#quote-widget .quote-text').textContent;
       const quoteAuthor = document.querySelector('#quote-widget .quote-author').textContent;
-      const textToCopy = `${quoteText} ${quoteAuthor}`;
+      const textToCopy = `${quoteText}${quoteAuthor}`;
       
       navigator.clipboard.writeText(textToCopy).then(() => {
         // Change icon temporarily to indicate success
@@ -1496,6 +1640,16 @@ function setupEventListeners() {
     });
   }
 
+  // Click banner to open Events settings directly
+  const eventBanner = document.getElementById('upcoming-event');
+  if (eventBanner) {
+    eventBanner.addEventListener('click', () => {
+      document.getElementById('settings-toggle').click();
+      const eventsTab = document.querySelector('.tab-btn[data-tab="tab-events"]');
+      if (eventsTab) eventsTab.click();
+    });
+  }
+
   // Settings Modal Open
   const settingsModal = document.getElementById('settings-modal');
   document.getElementById('settings-toggle').addEventListener('click', () => {
@@ -1534,6 +1688,7 @@ function setupEventListeners() {
       document.getElementById('file-sync-settings').classList.add('hidden');
     }
 
+    renderSettingsEventsList();
     settingsModal.showModal();
   });
 
@@ -1645,6 +1800,59 @@ function setupEventListeners() {
       document.getElementById(targetTab).classList.add('active');
     });
   });
+
+  // Event tab Add Event handler
+  const addEventBtn = document.getElementById('btn-add-event');
+  if (addEventBtn) {
+    addEventBtn.addEventListener('click', async (e) => {
+      e.preventDefault();
+      const nameInput = document.getElementById('event-name-input');
+      const dateInput = document.getElementById('event-date-input');
+      
+      nameInput.classList.remove('invalid-field');
+      dateInput.classList.remove('invalid-field');
+      nameInput.setCustomValidity('');
+      dateInput.setCustomValidity('');
+
+      if (!nameInput.value.trim()) {
+        nameInput.classList.add('invalid-field');
+        nameInput.setCustomValidity(state.lang === 'es' ? 'Por favor, rellene este campo.' : 'Please fill out this field.');
+        nameInput.reportValidity();
+        nameInput.addEventListener('input', () => {
+          nameInput.classList.remove('invalid-field');
+          nameInput.setCustomValidity('');
+        }, { once: true });
+        return;
+      }
+      if (!dateInput.value) {
+        dateInput.classList.add('invalid-field');
+        dateInput.setCustomValidity(state.lang === 'es' ? 'Por favor, rellene este campo.' : 'Please fill out this field.');
+        dateInput.reportValidity();
+        dateInput.addEventListener('input', () => {
+          dateInput.classList.remove('invalid-field');
+          dateInput.setCustomValidity('');
+        }, { once: true });
+        return;
+      }
+
+      const name = nameInput.value.trim();
+      const date = dateInput.value;
+      
+      state.settings.customEvents = state.settings.customEvents || [];
+      state.settings.customEvents.push({
+        id: Date.now().toString(),
+        name,
+        date
+      });
+      
+      nameInput.value = '';
+      dateInput.value = '';
+      
+      await saveSettings();
+      renderSettingsEventsList();
+      updateUpcomingEventBanner();
+    });
+  }
 
   // Save Settings Form
   document.getElementById('settings-form').addEventListener('submit', async (e) => {
