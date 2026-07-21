@@ -1639,9 +1639,13 @@ html.dark .event-banner.today {
 }
 
 .event-banner.upcoming {
-  background: rgba(59, 130, 246, 0.1);
-  border: 1px solid rgba(59, 130, 246, 0.2);
-  color: var(--accent);
+  background: rgba(0, 0, 0, 0.02);
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+}
+
+html.dark .event-banner.upcoming {
+  background: rgba(255, 255, 255, 0.02);
 }
 
 .event-banner.soon {
@@ -1734,4 +1738,171 @@ html.dark .event-banner.soon {
   padding: 0.15rem 0.4rem;
   border-radius: 10px;
   margin-top: 0.5rem;
+}
+
+/* ============================================================
+   COUNTDOWNS
+   ============================================================ */
+
+.countdown-wrapper {
+  margin-bottom: 0;
+}
+
+.countdown-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 0.9rem;
+}
+
+.countdown-header .card-subtitle {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0;
+}
+
+.countdown-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  max-height: 240px;
+  overflow-y: auto;
+  padding: 0;
+  margin: 0;
+}
+
+.countdown-item {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 0.55rem 0.75rem;
+  background: rgba(0, 0, 0, 0.015);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  transition: border-color 0.2s ease;
+  animation: fadeIn 0.3s ease;
+  gap: 0.5rem;
+}
+
+html.dark .countdown-item {
+  background: rgba(255, 255, 255, 0.015);
+}
+
+.countdown-item:hover {
+  border-color: var(--accent);
+}
+
+.countdown-item-left {
+  display: flex;
+  flex-direction: column;
+  gap: 0rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.countdown-title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.75rem;
+  width: 100%;
+}
+
+.countdown-title {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  word-break: break-word;
+  line-height: 1.3;
+}
+
+.countdown-title-past {
+  text-decoration: line-through;
+  color: var(--text-tertiary);
+}
+
+.countdown-date {
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+}
+
+.countdown-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  flex-shrink: 0;
+  align-self: flex-start;
+  margin-top: 0.05rem;
+}
+
+.countdown-actions .delete-countdown-btn {
+  width: 20px;
+  height: 20px;
+  padding: 0;
+}
+
+.countdown-badge {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.22rem 0.55rem;
+  border-radius: var(--radius-sm);
+  white-space: nowrap;
+  letter-spacing: 0.01em;
+  display: inline-flex;
+  align-items: center;
+  line-height: 1;
+}
+
+/* Red / less than a week (< 7 days) */
+.countdown-badge-red {
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  color: #ef4444;
+}
+html.dark .countdown-badge-red {
+  color: #fca5a5;
+}
+
+/* Amber / less than 31 days (< 31 days) */
+.countdown-badge-amber {
+  background: rgba(245, 158, 11, 0.15);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  color: #d97706;
+}
+html.dark .countdown-badge-amber {
+  color: #fbbf24;
+}
+
+/* No color / more than 31 days (>= 31 days) */
+.countdown-badge-neutral {
+  background: rgba(0, 0, 0, 0.02);
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+}
+html.dark .countdown-badge-neutral {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+/* Strikethrough / already passed (< 0 days) */
+.countdown-badge-past {
+  background: rgba(0, 0, 0, 0.04);
+  border: 1px solid var(--border-color);
+  color: var(--text-tertiary);
+  text-decoration: line-through;
+}
+html.dark .countdown-badge-past {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.countdown-empty {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  text-align: center;
+  margin: 0.5rem 0 0;
+  padding: 0;
+}
+
+.countdown-empty.hidden {
+  display: none !important;
 }

@@ -3,13 +3,17 @@ const translations = {
   en: {
     "col-today": "Today",
     "col-week": "This Week",
-    "col-tasks": "My Tasks",
+    "col-tasks": "Workspace",
+    "tasks-card-title": "My Tasks",
     "calendar-events": "Events & Meetings",
     "urgent-emails": "Urgent Emails (Gmail)",
     "pending-prs": "Pull Requests",
     "weekly-schedule": "Weekly Schedule",
     "jira-tasks": "Jira Assigned Tasks",
     "todo-placeholder": "Add a new task...",
+    "countdown-placeholder": "Countdown title...",
+    "col-countdowns": "My Countdowns",
+    "countdown-empty": "No countdowns yet.",
     "priority-low": "Low",
     "priority-medium": "Medium",
     "priority-high": "High",
@@ -108,13 +112,17 @@ const translations = {
   es: {
     "col-today": "Hoy",
     "col-week": "Esta Semana",
-    "col-tasks": "Mis Tareas",
+    "col-tasks": "Espacio de Trabajo",
+    "tasks-card-title": "Mis Tareas",
     "calendar-events": "Eventos y Reuniones",
     "urgent-emails": "Correos Urgentes (Gmail)",
     "pending-prs": "Pull Requests",
     "weekly-schedule": "Agenda Semanal",
     "jira-tasks": "Tareas de Jira",
-    "todo-placeholder": "Añadir una nueva tarea...",
+    "todo-placeholder": "Añadir nueva tarea...",
+    "countdown-placeholder": "Título del countdown...",
+    "col-countdowns": "Mis Countdowns",
+    "countdown-empty": "Sin countdowns todavía.",
     "priority-low": "Baja",
     "priority-medium": "Media",
     "priority-high": "Alta",
@@ -243,6 +251,7 @@ let state = {
   lang: 'en',
   theme: 'system',
   todos: [],
+  countdowns: [],
   googleClientToken: sessionStorage.getItem('google_access_token') || null,
   settings: {
     lang: 'en',
@@ -482,6 +491,11 @@ async function loadState() {
     state.todos = JSON.parse(storedTodos);
   }
 
+  const storedCountdowns = localStorage.getItem('countdowns');
+  if (storedCountdowns) {
+    state.countdowns = JSON.parse(storedCountdowns);
+  }
+
   // Initialize file sync if enabled
   if (state.settings.storageMode === 'file') {
     await initializeFileSync();
@@ -575,8 +589,10 @@ function updateUpcomingEventBanner() {
   } else if (upcomingEvents.length > 0) {
     upcomingEvents.sort((a, b) => a.daysLeft - b.daysLeft);
     const closest = upcomingEvents[0];
-    if (closest.daysLeft <= 7) {
+    if (closest.daysLeft < 7) {
       banner.className = 'event-banner soon';
+    } else if (closest.daysLeft < 31) {
+      banner.className = 'event-banner today';
     } else {
       banner.className = 'event-banner upcoming';
     }
@@ -1243,6 +1259,116 @@ async function saveTodos() {
   }
 }
 
+// ------------------------------------------------------------
+// COUNTDOWNS
+// ------------------------------------------------------------
+
+async function saveCountdowns() {
+  localStorage.setItem('countdowns', JSON.stringify(state.countdowns));
+}
+
+function renderCountdowns() {
+  const list = document.getElementById('countdown-list');
+  const emptyEl = document.getElementById('countdown-empty');
+  if (!list) return;
+
+  list.innerHTML = '';
+
+  const todayStr = getLocalDateString(new Date());
+  const todayMs = new Date(todayStr + 'T00:00:00').getTime();
+
+  if (state.countdowns.length === 0) {
+    if (emptyEl) emptyEl.classList.remove('hidden');
+    return;
+  }
+  if (emptyEl) emptyEl.classList.add('hidden');
+
+  // Sort by target date ascending
+  const sorted = [...state.countdowns].sort((a, b) => a.targetDate.localeCompare(b.targetDate));
+
+  sorted.forEach(countdown => {
+    const targetMs = new Date(countdown.targetDate + 'T00:00:00').getTime();
+    const diffDays = Math.ceil((targetMs - todayMs) / (1000 * 60 * 60 * 24));
+
+    let daysLabel, badgeClass;
+    if (diffDays < 0) {
+      daysLabel = state.lang === 'es' ? `Hace ${Math.abs(diffDays)} días` : `${Math.abs(diffDays)} days ago`;
+      badgeClass = 'countdown-badge-past';
+    } else if (diffDays === 0) {
+      daysLabel = state.lang === 'es' ? '¡Hoy!' : 'Today!';
+      badgeClass = 'countdown-badge-red';
+    } else if (diffDays === 1) {
+      daysLabel = state.lang === 'es' ? 'Mañana' : 'Tomorrow';
+      badgeClass = 'countdown-badge-red';
+    } else if (diffDays < 7) {
+      daysLabel = state.lang === 'es' ? `En ${diffDays} días` : `In ${diffDays} days`;
+      badgeClass = 'countdown-badge-red';
+    } else if (diffDays < 31) {
+      daysLabel = state.lang === 'es' ? `En ${diffDays} días` : `In ${diffDays} days`;
+      badgeClass = 'countdown-badge-amber';
+    } else {
+      daysLabel = state.lang === 'es' ? `En ${diffDays} días` : `In ${diffDays} days`;
+      badgeClass = 'countdown-badge-neutral';
+    }
+
+    const isPast = diffDays < 0;
+    const titleClass = isPast ? 'countdown-title countdown-title-past' : 'countdown-title';
+
+    const li = document.createElement('li');
+    li.className = 'countdown-item';
+    li.innerHTML = `
+      <div class="todo-item-left">
+        <div class="todo-item-details">
+          <span class="${titleClass}">${escapeHtml(countdown.title)}</span>
+          <span class="countdown-date" style="margin-top: 0.15rem; display: block;">${formatDateShort(countdown.targetDate)}</span>
+        </div>
+      </div>
+      <div class="todo-actions countdown-actions">
+        <span class="countdown-badge ${badgeClass}">${daysLabel}</span>
+        <button class="btn-item-action delete-countdown-btn" data-id="${countdown.id}" title="${state.lang === 'es' ? 'Eliminar' : 'Delete'}">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+        </button>
+      </div>
+    `;
+
+    li.querySelector('.delete-countdown-btn').addEventListener('click', () => {
+      deleteCountdown(countdown.id);
+    });
+
+    list.appendChild(li);
+  });
+}
+
+async function addCountdown(title, targetDate) {
+  state.countdowns.push({ id: Date.now().toString(), title, targetDate });
+  await saveCountdowns();
+  renderCountdowns();
+}
+
+let countdownIdToDelete = null;
+
+function deleteCountdown(id) {
+  countdownIdToDelete = id;
+  const countdown = state.countdowns.find(c => c.id === id);
+  if (!countdown) return;
+
+  const modal = document.getElementById('confirm-delete-modal');
+  if (modal) {
+    const dict = translations[state.lang];
+    confirmActionType = 'delete-countdown';
+    modal.querySelector('[data-i18n="confirm-delete-title"]').textContent = state.lang === 'es' ? 'Eliminar Countdown' : 'Delete Countdown';
+    const descEl = modal.querySelector('[data-i18n="confirm-delete-desc"]');
+    if (descEl) {
+      descEl.innerHTML = state.lang === 'es'
+        ? `¿Estás seguro de que quieres eliminar el countdown: <strong>"${escapeHtml(countdown.title)}"</strong>?`
+        : `Are you sure you want to delete the countdown: <strong>"${escapeHtml(countdown.title)}"</strong>?`;
+    }
+    modal.querySelector('[data-i18n="cancel-btn"]').textContent = dict['cancel-btn'];
+    modal.querySelector('[data-i18n="delete-btn"]').textContent = dict['delete-btn'];
+    modal.showModal();
+  }
+}
+
 async function addTodo(text, dueDate, priority) {
   const newTodo = {
     id: Date.now().toString(),
@@ -1903,6 +2029,7 @@ function setupEventListeners() {
     document.getElementById('close-delete-modal').addEventListener('click', () => {
       confirmDeleteModal.close();
       todoIdToDelete = null;
+      countdownIdToDelete = null;
     });
 
     document.getElementById('btn-confirm-delete').addEventListener('click', async () => {
@@ -1919,6 +2046,13 @@ function setupEventListeners() {
         renderTodos();
         confirmDeleteModal.close();
         confirmActionType = null;
+      } else if (confirmActionType === 'delete-countdown' && countdownIdToDelete !== null) {
+        state.countdowns = state.countdowns.filter(c => c.id !== countdownIdToDelete);
+        await saveCountdowns();
+        renderCountdowns();
+        confirmDeleteModal.close();
+        countdownIdToDelete = null;
+        confirmActionType = null;
       }
     });
   }
@@ -1928,6 +2062,22 @@ function setupEventListeners() {
   if (clearCompletedBtn) {
     clearCompletedBtn.addEventListener('click', () => {
       showClearCompletedConfirmation();
+    });
+  }
+
+  // Countdown Form
+  const countdownForm = document.getElementById('countdown-form');
+  if (countdownForm) {
+    countdownForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const titleInput = document.getElementById('countdown-title-input');
+      const dateInput = document.getElementById('countdown-date-input');
+      const title = titleInput.value.trim();
+      const date = dateInput.value;
+      if (!title || !date) return;
+      await addCountdown(title, date);
+      titleInput.value = '';
+      dateInput.value = '';
     });
   }
 
@@ -2358,6 +2508,9 @@ async function init() {
 
   // Render initial tasks
   renderTodos();
+
+  // Render initial countdowns
+  renderCountdowns();
 
   // Fetch API data for configured integrations
   fetchGitHub();
