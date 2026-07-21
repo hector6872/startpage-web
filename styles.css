@@ -1915,3 +1915,45 @@ html.dark .countdown-badge-past {
 .countdown-empty.hidden {
   display: none !important;
 }
+
+/* Section Header & Add Buttons next to Column Titles */
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+.section-header.hidden {
+  display: none !important;
+}
+
+.add-section-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  padding: 0;
+}
+
+.add-section-btn:hover {
+  border-color: var(--accent);
+  background: rgba(47, 128, 237, 0.1);
+  color: var(--accent);
+  transform: scale(1.05);
+}
+
+html.dark .add-section-btn:hover {
+  background: rgba(47, 128, 237, 0.2);
+}
+
+.countdown-empty.hidden {
+  display: none !important;
+}

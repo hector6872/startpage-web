@@ -61,6 +61,8 @@ const translations = {
     "label-jira-token": "Jira API Token",
     "save-settings": "Save Settings",
     "edit-task-title": "Edit Task",
+    "add-countdown-title": "Add New Countdown",
+    "add-task-title-modal": "Add New Task",
     "label-task-text": "Task Name",
     "label-due-date": "Due Date",
     "label-priority": "Priority",
@@ -172,6 +174,8 @@ const translations = {
     "label-jira-token": "Token de API de Jira",
     "save-settings": "Guardar Configuración",
     "edit-task-title": "Editar Tarea",
+    "add-countdown-title": "Añadir nuevo countdown",
+    "add-task-title-modal": "Añadir nueva tarea",
     "label-task-text": "Nombre de la Tarea",
     "label-due-date": "Fecha de Vencimiento",
     "label-priority": "Prioridad",
@@ -1270,16 +1274,16 @@ function updateOrganizerVisibility() {
   const showCountdowns = state.settings.showCountdowns !== false;
   const showTasks = state.settings.showTasks !== false;
 
-  const countdownTitle = document.getElementById('countdown-section-title');
+  const countdownHeader = document.getElementById('countdown-section-header');
   const countdownCard = document.querySelector('.countdown-wrapper');
-  if (countdownTitle) countdownTitle.classList.toggle('hidden', !showCountdowns);
+  if (countdownHeader) countdownHeader.classList.toggle('hidden', !showCountdowns);
   if (countdownCard) countdownCard.classList.toggle('hidden', !showCountdowns);
 
-  const tasksTitle = document.getElementById('tasks-section-title');
+  const tasksHeader = document.getElementById('tasks-section-header');
   const mainTasksCard = document.getElementById('main-tasks-card');
   const focusCard = document.getElementById('todo-focus-card');
   
-  if (tasksTitle) tasksTitle.classList.toggle('hidden', !showTasks);
+  if (tasksHeader) tasksHeader.classList.toggle('hidden', !showTasks);
   if (mainTasksCard) mainTasksCard.classList.toggle('hidden', !showTasks);
   if (focusCard) {
     if (!showTasks) {
@@ -2107,6 +2111,50 @@ function setupEventListeners() {
     });
   }
 
+  // Add Countdown Modal Toggle
+  const addCountdownModal = document.getElementById('add-countdown-modal');
+  const showAddCountdownBtn = document.getElementById('btn-show-add-countdown');
+  const closeAddCountdownBtn = document.getElementById('close-add-countdown-modal');
+  const cancelAddCountdownBtn = document.getElementById('btn-cancel-add-countdown');
+
+  if (showAddCountdownBtn && addCountdownModal) {
+    showAddCountdownBtn.addEventListener('click', () => {
+      addCountdownModal.showModal();
+    });
+  }
+  if (closeAddCountdownBtn && addCountdownModal) {
+    closeAddCountdownBtn.addEventListener('click', () => {
+      addCountdownModal.close();
+    });
+  }
+  if (cancelAddCountdownBtn && addCountdownModal) {
+    cancelAddCountdownBtn.addEventListener('click', () => {
+      addCountdownModal.close();
+    });
+  }
+
+  // Add Task Modal Toggle
+  const addTaskModal = document.getElementById('add-task-modal');
+  const showAddTaskBtn = document.getElementById('btn-show-add-task');
+  const closeAddTaskBtn = document.getElementById('close-add-task-modal');
+  const cancelAddTaskBtn = document.getElementById('btn-cancel-add-task');
+
+  if (showAddTaskBtn && addTaskModal) {
+    showAddTaskBtn.addEventListener('click', () => {
+      addTaskModal.showModal();
+    });
+  }
+  if (closeAddTaskBtn && addTaskModal) {
+    closeAddTaskBtn.addEventListener('click', () => {
+      addTaskModal.close();
+    });
+  }
+  if (cancelAddTaskBtn && addTaskModal) {
+    cancelAddTaskBtn.addEventListener('click', () => {
+      addTaskModal.close();
+    });
+  }
+
   // Countdown Form
   const countdownForm = document.getElementById('countdown-form');
   if (countdownForm) {
@@ -2120,6 +2168,7 @@ function setupEventListeners() {
       await addCountdown(title, date);
       titleInput.value = '';
       dateInput.value = '';
+      if (addCountdownModal) addCountdownModal.close();
     });
   }
 
@@ -2464,6 +2513,9 @@ function setupEventListeners() {
     input.value = '';
     dateInput.value = '';
     prioritySelect.value = 'medium';
+
+    const addTaskModal = document.getElementById('add-task-modal');
+    if (addTaskModal) addTaskModal.close();
   });
 
   // Todo Filters

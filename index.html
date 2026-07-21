@@ -120,17 +120,15 @@
 
       <!-- Column 3: Tasks List (CRUD) -->
       <section class="grid-col" id="col-tasks">
-        <h2 class="col-title" id="countdown-section-title" data-i18n="col-countdowns">My Countdowns</h2>
+        <div class="section-header" id="countdown-section-header">
+          <h2 class="col-title" id="countdown-section-title" data-i18n="col-countdowns">My Countdowns</h2>
+          <button id="btn-show-add-countdown" class="add-section-btn" title="Add Countdown" aria-label="Add Countdown">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          </button>
+        </div>
         <div class="col-content">
           <!-- Countdowns Card -->
           <div class="todo-wrapper countdown-wrapper">
-            <form id="countdown-form" class="todo-form">
-              <input type="text" id="countdown-title-input" placeholder="Countdown title..." required data-i18n-placeholder="countdown-placeholder">
-              <div class="form-row">
-                <input type="date" id="countdown-date-input" required title="Target Date">
-                <button type="submit" class="btn-primary" data-i18n="add-btn">Add</button>
-              </div>
-            </form>
             <ul id="countdown-list" class="countdown-list">
               <!-- Dynamically populated -->
             </ul>
@@ -138,7 +136,12 @@
           </div>
 
           <!-- Tasks Section Header -->
-          <h2 class="col-title" id="tasks-section-title" data-i18n="tasks-card-title">My Tasks</h2>
+          <div class="section-header" id="tasks-section-header">
+            <h2 class="col-title" id="tasks-section-title" data-i18n="tasks-card-title">My Tasks</h2>
+            <button id="btn-show-add-task" class="add-section-btn" title="Add Task" aria-label="Add Task">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            </button>
+          </div>
 
           <!-- Focus Task Card -->
           <div id="todo-focus-card" class="todo-wrapper todo-focus-card hidden">
@@ -152,20 +155,6 @@
 
           <!-- Main Tasks Card -->
           <div id="main-tasks-card" class="todo-wrapper">
-            <!-- Add Task Form -->
-            <form id="todo-form" class="todo-form">
-              <input type="text" id="todo-input" placeholder="Add a new task..." required data-i18n-placeholder="todo-placeholder">
-              <div class="form-row">
-                <input type="date" id="todo-date" title="Due Date">
-                <select id="todo-priority" title="Priority">
-                  <option value="low" data-i18n="priority-low">Low</option>
-                  <option value="medium" selected data-i18n="priority-medium">Medium</option>
-                  <option value="high" data-i18n="priority-high">High</option>
-                </select>
-                <button type="submit" class="btn-primary" data-i18n="add-btn">Add</button>
-              </div>
-            </form>
-
             <!-- Todo List Container -->
             <div class="todo-list-container">
               <div class="todo-filters">
@@ -460,8 +449,68 @@
             </div>
           </div>
 
-          <div class="modal-footer">
+          <div class="modal-footer" style="padding: 1rem 0 0 0; margin-top: 1.5rem; border-top: 1px solid var(--border-color);">
             <button type="submit" class="btn-primary" data-i18n="save-settings">Save Configurations</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- Add Countdown Modal -->
+  <dialog id="add-countdown-modal" class="modal-dialog">
+    <div class="modal-content" style="max-width: 450px;">
+      <header class="modal-header">
+        <h2 data-i18n="add-countdown-title">Add New Countdown</h2>
+        <button id="close-add-countdown-modal" class="btn-close">&times;</button>
+      </header>
+      <div class="modal-body" style="padding-bottom: 1rem;">
+        <form id="countdown-form" class="todo-form" style="gap: 1.25rem; margin-bottom: 0;">
+          <div class="form-group">
+            <label for="countdown-title-input" data-i18n="countdown-placeholder">Countdown Title</label>
+            <input type="text" id="countdown-title-input" placeholder="e.g. Vacation!" required>
+          </div>
+          <div class="form-group">
+            <label for="countdown-date-input">Target Date</label>
+            <input type="date" id="countdown-date-input" required>
+          </div>
+          <div class="modal-footer" style="padding: 1rem 0 0 0; margin-top: 1rem; border-top: 1px solid var(--border-color);">
+            <button type="button" id="btn-cancel-add-countdown" class="btn-secondary" data-i18n="cancel-btn">Cancel</button>
+            <button type="submit" class="btn-primary" data-i18n="add-btn">Add</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- Add Task Modal -->
+  <dialog id="add-task-modal" class="modal-dialog">
+    <div class="modal-content" style="max-width: 450px;">
+      <header class="modal-header">
+        <h2 data-i18n="add-task-title-modal">Add New Task</h2>
+        <button id="close-add-task-modal" class="btn-close">&times;</button>
+      </header>
+      <div class="modal-body" style="padding-bottom: 1rem;">
+        <form id="todo-form" class="todo-form" style="gap: 1.25rem; margin-bottom: 0;">
+          <div class="form-group">
+            <label for="todo-input" data-i18n="label-task-text">Task Name</label>
+            <input type="text" id="todo-input" placeholder="Task text..." required>
+          </div>
+          <div class="form-group">
+            <label for="todo-date" data-i18n="label-due-date">Due Date</label>
+            <input type="date" id="todo-date">
+          </div>
+          <div class="form-group">
+            <label for="todo-priority" data-i18n="label-priority">Priority</label>
+            <select id="todo-priority">
+              <option value="low" data-i18n="priority-low">Low</option>
+              <option value="medium" selected data-i18n="priority-medium">Medium</option>
+              <option value="high" data-i18n="priority-high">High</option>
+            </select>
+          </div>
+          <div class="modal-footer" style="padding: 1rem 0 0 0; margin-top: 1rem; border-top: 1px solid var(--border-color);">
+            <button type="button" id="btn-cancel-add-task" class="btn-secondary" data-i18n="cancel-btn">Cancel</button>
+            <button type="submit" class="btn-primary" data-i18n="add-btn">Add</button>
           </div>
         </form>
       </div>
@@ -494,7 +543,7 @@
               <option value="high" data-i18n="priority-high">High</option>
             </select>
           </div>
-          <div class="modal-footer">
+          <div class="modal-footer" style="padding: 1rem 0 0 0; margin-top: 1rem; border-top: 1px solid var(--border-color);">
             <button type="button" id="cancel-edit-btn" class="btn-secondary" data-i18n="cancel-btn">Cancel</button>
             <button type="submit" class="btn-primary" data-i18n="save-btn">Save Changes</button>
           </div>
