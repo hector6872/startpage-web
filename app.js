@@ -37,6 +37,8 @@ const translations = {
     "world-clock-sub": "World Time",
     "label-show-weather": "Show Weather Widget",
     "label-show-world-clock": "Show World Clock Widget",
+    "label-show-countdowns": "Show Countdowns",
+    "label-show-tasks": "Show Tasks",
     "label-city": "Weather City",
     "city-desc": "Leave empty for automatic geolocation.",
     "google-desc": "Requires a Google Cloud Console project with OAuth credentials. Remember to add your local origin (e.g. http://localhost:5173) under Authorized JavaScript Origins.",
@@ -146,6 +148,8 @@ const translations = {
     "world-clock-sub": "Hora Mundial",
     "label-show-weather": "Mostrar Clima",
     "label-show-world-clock": "Mostrar Reloj Mundial",
+    "label-show-countdowns": "Mostrar Countdowns",
+    "label-show-tasks": "Mostrar Tareas",
     "label-city": "Ciudad para el clima",
     "city-desc": "Déjalo vacío para usar la geolocalización automática del navegador.",
     "google-desc": "Requiere un proyecto en Google Cloud Console con credenciales OAuth. Recuerda añadir tu origen local (ej. http://localhost:5173) en los orígenes de JavaScript autorizados.",
@@ -503,6 +507,9 @@ async function loadState() {
 
   // Clean up completed todos older than 7 days upon loading
   await cleanupOldCompletedTodos();
+
+  // Initialize organizer visibility settings
+  updateOrganizerVisibility();
 }
 
 async function cleanupOldCompletedTodos() {
@@ -1256,6 +1263,41 @@ async function saveTodos() {
   localStorage.setItem('todos', JSON.stringify(state.todos));
   if (state.settings.storageMode === 'file') {
     await writeDataToFile();
+  }
+}
+
+function updateOrganizerVisibility() {
+  const showCountdowns = state.settings.showCountdowns !== false;
+  const showTasks = state.settings.showTasks !== false;
+
+  const countdownTitle = document.getElementById('countdown-section-title');
+  const countdownCard = document.querySelector('.countdown-wrapper');
+  if (countdownTitle) countdownTitle.classList.toggle('hidden', !showCountdowns);
+  if (countdownCard) countdownCard.classList.toggle('hidden', !showCountdowns);
+
+  const tasksTitle = document.getElementById('tasks-section-title');
+  const mainTasksCard = document.getElementById('main-tasks-card');
+  const focusCard = document.getElementById('todo-focus-card');
+  
+  if (tasksTitle) tasksTitle.classList.toggle('hidden', !showTasks);
+  if (mainTasksCard) mainTasksCard.classList.toggle('hidden', !showTasks);
+  if (focusCard) {
+    if (!showTasks) {
+      focusCard.classList.add('hidden');
+    } else {
+      const focusedTodo = state.todos.find(todo => todo.isFocused && !todo.completed);
+      focusCard.classList.toggle('hidden', !focusedTodo);
+    }
+  }
+
+  const colTasks = document.getElementById('col-tasks');
+  const dashboardGrid = document.querySelector('.dashboard-grid');
+  const bothHidden = !showCountdowns && !showTasks;
+  if (colTasks) {
+    colTasks.classList.toggle('hidden', bothHidden);
+  }
+  if (dashboardGrid) {
+    dashboardGrid.classList.toggle('two-cols', bothHidden);
   }
 }
 
@@ -2122,6 +2164,8 @@ function setupEventListeners() {
     document.getElementById('settings-world-clock-label').value = state.settings.worldClockLabel || '';
     document.getElementById('settings-show-weather').checked = state.settings.showWeather !== false;
     document.getElementById('settings-show-world-clock').checked = state.settings.showWorldClock !== false;
+    document.getElementById('settings-show-countdowns').checked = state.settings.showCountdowns !== false;
+    document.getElementById('settings-show-tasks').checked = state.settings.showTasks !== false;
     
     toggleWeatherInputs();
     toggleClockInputs();
@@ -2344,10 +2388,13 @@ function setupEventListeners() {
     state.settings.worldClockLabel = document.getElementById('settings-world-clock-label').value.trim();
     state.settings.showWeather = document.getElementById('settings-show-weather').checked;
     state.settings.showWorldClock = document.getElementById('settings-show-world-clock').checked;
+    state.settings.showCountdowns = document.getElementById('settings-show-countdowns').checked;
+    state.settings.showTasks = document.getElementById('settings-show-tasks').checked;
 
     state.lang = state.settings.lang;
 
     await saveSettings();
+    updateOrganizerVisibility();
     
     // If we just toggled file-sync on, let's initialize it
     if (state.settings.storageMode === 'file') {

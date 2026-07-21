@@ -548,6 +548,10 @@ html:not(.dark) .moon-icon { display: block; }
   flex: 1;
 }
 
+.dashboard-grid.two-cols {
+  grid-template-columns: repeat(2, 1fr);
+}
+
 @media (max-width: 1024px) {
   .dashboard-grid {
     grid-template-columns: 1fr;
@@ -1256,6 +1260,7 @@ html.dark .modal-content {
   display: flex;
   justify-content: flex-end;
   gap: 0.75rem;
+  margin-top: 1.5rem;
 }
 
 /* Settings Tabs */
@@ -1449,7 +1454,7 @@ html.dark .form-group select {
   border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
   padding: 1rem;
-  margin-bottom: 1.25rem;
+  margin-bottom: 0.35rem;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   display: flex;
   flex-direction: column;
@@ -1568,6 +1573,10 @@ html.dark .settings-section-card {
 
 .settings-list li:last-child {
   border-bottom: none;
+}
+
+.tab-pane > *:last-child {
+  margin-bottom: 0 !important;
 }
 
 .settings-list .event-item-info {
