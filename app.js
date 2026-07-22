@@ -53,6 +53,14 @@ const translations = {
     "weather-url-placeholder": "e.g. https://weather.com or leave empty for Google Weather",
     "label-world-clock-url": "World Clock Web URL (Optional)",
     "clock-url-placeholder": "e.g. https://time.is or leave empty for Google Time",
+    "label-timer-url": "Timer Web URL",
+    "timer-url-placeholder": "e.g. https://www.google.com/search?q=countdown+timer",
+    "label-stopwatch-url": "Stopwatch Web URL",
+    "stopwatch-url-placeholder": "e.g. https://www.google.com/search?q=stopwatch",
+    "timer-btn-title": "Timer",
+    "stopwatch-btn-title": "Stopwatch",
+    "tab-shortcuts": "Shortcuts",
+    "shortcuts-card-title": "Quick Action Shortcuts",
     "city-desc": "Leave empty for automatic geolocation.",
     "google-desc": "Requires a Google Cloud Console project with OAuth credentials. Remember to add your local origin (e.g. http://localhost:5173) under Authorized JavaScript Origins.",
     "label-client-id": "Google OAuth Client ID",
@@ -180,6 +188,14 @@ const translations = {
     "weather-url-placeholder": "ej. https://eltiempo.es o dejar vacío para Google Clima",
     "label-world-clock-url": "URL de la web del reloj (Opcional)",
     "clock-url-placeholder": "ej. https://time.is o dejar vacío para Google Hora",
+    "label-timer-url": "URL del Temporizador",
+    "timer-url-placeholder": "ej. https://www.google.com/search?q=countdown+timer",
+    "label-stopwatch-url": "URL del Cronómetro",
+    "stopwatch-url-placeholder": "ej. https://www.google.com/search?q=stopwatch",
+    "timer-btn-title": "Temporizador",
+    "stopwatch-btn-title": "Cronómetro",
+    "tab-shortcuts": "Atajos",
+    "shortcuts-card-title": "Atajos de Acción Rápida",
     "city-desc": "Déjalo vacío para usar la geolocalización automática del navegador.",
     "google-desc": "Requiere un proyecto en Google Cloud Console con credenciales OAuth. Recuerda añadir tu origen local (ej. http://localhost:5173) en los orígenes de JavaScript autorizados.",
     "label-client-id": "Cliente ID de Google OAuth",
@@ -298,6 +314,8 @@ let state = {
     worldClockTz: 'Europe/London',
     worldClockLabel: '',
     worldClockUrl: '',
+    timerUrl: 'https://www.google.com/search?q=countdown+timer',
+    stopwatchUrl: 'https://www.google.com/search?q=stopwatch',
     showWeather: true,
     showWorldClock: true,
     storageMode: 'local', // local or file
@@ -2423,6 +2441,36 @@ function setupEventListeners() {
     });
   }
 
+  // Click Timer button (header or floating)
+  const timerBtnEl = document.getElementById('timer-btn-header') || document.getElementById('timer-btn-floating');
+  if (timerBtnEl) {
+    timerBtnEl.addEventListener('click', (e) => {
+      e.stopPropagation();
+      let targetUrl = '';
+      if (state.settings.timerUrl && state.settings.timerUrl.trim()) {
+        targetUrl = ensureHttpUrl(state.settings.timerUrl);
+      } else {
+        targetUrl = 'https://www.google.com/search?q=countdown+timer';
+      }
+      window.open(targetUrl, '_blank', 'noopener,noreferrer');
+    });
+  }
+
+  // Click Stopwatch button (header or floating)
+  const stopwatchBtnEl = document.getElementById('stopwatch-btn-header') || document.getElementById('stopwatch-btn-floating');
+  if (stopwatchBtnEl) {
+    stopwatchBtnEl.addEventListener('click', (e) => {
+      e.stopPropagation();
+      let targetUrl = '';
+      if (state.settings.stopwatchUrl && state.settings.stopwatchUrl.trim()) {
+        targetUrl = ensureHttpUrl(state.settings.stopwatchUrl);
+      } else {
+        targetUrl = 'https://www.google.com/search?q=stopwatch';
+      }
+      window.open(targetUrl, '_blank', 'noopener,noreferrer');
+    });
+  }
+
   // Settings Modal Open
   let isSettingsFormSaved = false;
   const settingsModal = document.getElementById('settings-modal');
@@ -2443,6 +2491,12 @@ function setupEventListeners() {
     document.getElementById('settings-world-clock-label').value = state.settings.worldClockLabel || '';
     const clockUrlInput = document.getElementById('settings-world-clock-url');
     if (clockUrlInput) clockUrlInput.value = state.settings.worldClockUrl || '';
+    
+    const timerUrlInput = document.getElementById('settings-timer-url');
+    if (timerUrlInput) timerUrlInput.value = state.settings.timerUrl !== undefined ? state.settings.timerUrl : 'https://www.google.com/search?q=countdown+timer';
+    const stopwatchUrlInput = document.getElementById('settings-stopwatch-url');
+    if (stopwatchUrlInput) stopwatchUrlInput.value = state.settings.stopwatchUrl !== undefined ? state.settings.stopwatchUrl : 'https://www.google.com/search?q=stopwatch';
+
     document.getElementById('settings-show-weather').checked = state.settings.showWeather !== false;
     document.getElementById('settings-show-world-clock').checked = state.settings.showWorldClock !== false;
     document.getElementById('settings-show-countdowns').checked = state.settings.showCountdowns !== false;
@@ -2730,6 +2784,10 @@ function setupEventListeners() {
     if (wUrlEl) state.settings.weatherUrl = wUrlEl.value.trim();
     const cUrlEl = document.getElementById('settings-world-clock-url');
     if (cUrlEl) state.settings.worldClockUrl = cUrlEl.value.trim();
+    const tUrlEl = document.getElementById('settings-timer-url');
+    if (tUrlEl) state.settings.timerUrl = tUrlEl.value.trim();
+    const swUrlEl = document.getElementById('settings-stopwatch-url');
+    if (swUrlEl) state.settings.stopwatchUrl = swUrlEl.value.trim();
     state.settings.showWeather = document.getElementById('settings-show-weather').checked;
     state.settings.showWorldClock = document.getElementById('settings-show-world-clock').checked;
     state.settings.showCountdowns = document.getElementById('settings-show-countdowns').checked;
