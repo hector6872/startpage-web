@@ -100,6 +100,7 @@ const translations = {
     "weather-configure-btn": "Configure",
     "timezone-unconfigured": "No timezone selected",
     "world-clock-unconfigured": "Timezone not set.",
+    "world-clock-same-time": "Same time",
     "world-clock-title": "World Clock",
     "focus-card-title": "Current Focus",
     "confirm-delete-title": "Delete Task",
@@ -226,6 +227,7 @@ const translations = {
     "weather-configure-btn": "Configurar",
     "timezone-unconfigured": "Sin zona horaria",
     "world-clock-unconfigured": "Zona horaria sin configurar.",
+    "world-clock-same-time": "Misma hora",
     "world-clock-title": "Reloj Mundial",
     "focus-card-title": "Tarea en Enfoque",
     "confirm-delete-title": "Confirmar Eliminación",
@@ -793,6 +795,45 @@ function updateTimeAndGreeting() {
 }
 
 // World Clock System
+function getTzDifference(targetTz) {
+  try {
+    const now = new Date();
+    const formatter = new Intl.DateTimeFormat('en-US', {
+      timeZone: targetTz,
+      year: 'numeric',
+      month: 'numeric',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: 'numeric',
+      hour12: false
+    });
+    
+    const parts = formatter.formatToParts(now);
+    const p = {};
+    for (const part of parts) {
+      if (part.type !== 'literal') {
+        p[part.type] = parseInt(part.value, 10);
+      }
+    }
+    const targetHour = (p.hour || 0) % 24;
+    
+    const localMs = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate(), now.getHours(), now.getMinutes());
+    const targetMs = Date.UTC(p.year, p.month - 1, p.day, targetHour, p.minute);
+    
+    const diffMinutes = Math.round((targetMs - localMs) / (1000 * 60));
+    const diffHours = Math.round(diffMinutes / 60);
+    
+    const localDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const targetDate = new Date(p.year, p.month - 1, p.day);
+    const dayDiffDays = Math.round((targetDate - localDate) / (1000 * 3600 * 24));
+    
+    return { diffHours, dayDiffDays };
+  } catch (e) {
+    console.error("Error computing tz difference:", e);
+    return { diffHours: 0, dayDiffDays: 0 };
+  }
+}
+
 function updateWorldClock() {
   const widget = document.getElementById('world-clock-widget');
   if (state.settings.showWorldClock === false) {
@@ -805,7 +846,11 @@ function updateWorldClock() {
 
   if (!state.settings.worldClockTz) {
     widget.classList.add('unconfigured');
-    widget.querySelector('.clock-greeting').textContent = dict['world-clock-unconfigured'];
+    widget.removeAttribute('title');
+    const clockLabelEl = widget.querySelector('.clock-label');
+    if (clockLabelEl) clockLabelEl.removeAttribute('title');
+    const unconfEl = widget.querySelector('.clock-unconfigured-text');
+    if (unconfEl) unconfEl.textContent = dict['world-clock-unconfigured'];
     return;
   }
   widget.classList.remove('unconfigured');
@@ -819,22 +864,67 @@ function updateWorldClock() {
       hour12: false
     });
     widget.querySelector('.clock-time').textContent = formatter.format(now);
-    widget.querySelector('.clock-label').textContent = state.settings.worldClockLabel || state.settings.worldClockTz.split('/').pop().replace('_', ' ');
     
-    const tzHour = parseInt(now.toLocaleTimeString("en-US", {
-      timeZone: state.settings.worldClockTz,
-      hour: '2-digit',
-      hour12: false,
-      hourCycle: 'h23'
-    }), 10);
+    // Label logic: custom label if set, otherwise cities without acronyms. Tooltip is ALWAYS the full timezone string.
+    let customLabel = state.settings.worldClockLabel ? state.settings.worldClockLabel.trim() : '';
+    let optionText = '';
     
-    let tzGreetingKey = 'greeting-morning';
-    if (tzHour >= 12 && tzHour < 19) {
-      tzGreetingKey = 'greeting-afternoon';
-    } else if (tzHour >= 19 || tzHour < 6) {
-      tzGreetingKey = 'greeting-evening';
+    if (state.settings.worldClockTz) {
+      const tzSelect = document.getElementById('settings-world-clock-tz');
+      if (tzSelect) {
+        const option = tzSelect.querySelector(`option[value="${state.settings.worldClockTz}"]`);
+        if (option && option.textContent) {
+          optionText = option.textContent.trim();
+        }
+      }
+      if (!optionText) {
+        optionText = state.settings.worldClockTz.split('/').pop().replace(/_/g, ' ');
+      }
     }
-    widget.querySelector('.clock-greeting').textContent = translations[state.lang][tzGreetingKey];
+
+    const fullTooltip = optionText;
+    let labelText = customLabel;
+    if (!labelText) {
+      labelText = optionText.replace(/\s*\([^)]*\)/g, '').trim();
+    }
+    
+    widget.title = fullTooltip;
+    const clockLabelEl = widget.querySelector('.clock-label');
+    if (clockLabelEl) {
+      clockLabelEl.textContent = labelText;
+      clockLabelEl.title = fullTooltip;
+    }
+    
+    // Calculate and update time difference text below clock time
+    const diffInfo = getTzDifference(state.settings.worldClockTz);
+    const diffEl = widget.querySelector('.clock-diff');
+    if (diffEl) {
+      if (diffInfo.diffHours === 0 && diffInfo.dayDiffDays === 0) {
+        diffEl.textContent = dict['world-clock-same-time'] || (state.lang === 'es' ? 'Misma hora' : 'Same time');
+      } else {
+        let diffStr = '';
+        if (diffInfo.diffHours > 0) {
+          diffStr = `+${diffInfo.diffHours}h`;
+        } else if (diffInfo.diffHours < 0) {
+          diffStr = `${diffInfo.diffHours}h`;
+        } else {
+          diffStr = `0h`;
+        }
+        
+        let dayStr = '';
+        if (diffInfo.dayDiffDays === 1) {
+          dayStr = state.lang === 'es' ? ' (mañana)' : ' (tomorrow)';
+        } else if (diffInfo.dayDiffDays === -1) {
+          dayStr = state.lang === 'es' ? ' (ayer)' : ' (yesterday)';
+        } else if (diffInfo.dayDiffDays > 1) {
+          dayStr = ` (+${diffInfo.dayDiffDays}d)`;
+        } else if (diffInfo.dayDiffDays < -1) {
+          dayStr = ` (${diffInfo.dayDiffDays}d)`;
+        }
+        
+        diffEl.textContent = `${diffStr}${dayStr}`;
+      }
+    }
   } catch (e) {
     console.error("Error updating world clock:", e);
     widget.classList.add('hidden');
@@ -899,7 +989,11 @@ function loadQuote() {
   const dictionary = translations[state.lang];
   const quoteWidget = document.getElementById('quote-widget');
   quoteWidget.querySelector('.quote-text').textContent = dictionary['quote-loading'];
-  quoteWidget.querySelector('.quote-author').textContent = '';
+  const authorEl = quoteWidget.querySelector('.quote-author');
+  if (authorEl) {
+    authorEl.textContent = '';
+    authorEl.removeAttribute('href');
+  }
 
   // Attempt to fetch from public API, fallback to curated local list
   fetch('https://dummyjson.com/quotes/random')
@@ -910,11 +1004,9 @@ function loadQuote() {
     .then(data => {
       // API provides quotes in English. If page is in Spanish, translate or use local
       if (state.lang === 'es') {
-        // Fallback to local Spanish quotes to keep translation quality
         useLocalQuote();
       } else {
-        quoteWidget.querySelector('.quote-text').textContent = `"${toSentenceCase(data.quote)}"`;
-        quoteWidget.querySelector('.quote-author').textContent = ` – ${data.author}`;
+        updateQuoteDisplay(data.quote, data.author);
       }
     })
     .catch(() => {
@@ -924,8 +1016,26 @@ function loadQuote() {
   function useLocalQuote() {
     const list = quotesDb[state.lang] || quotesDb['en'];
     const randomQuote = list[Math.floor(Math.random() * list.length)];
-    quoteWidget.querySelector('.quote-text').textContent = `"${toSentenceCase(randomQuote.text)}"`;
-    quoteWidget.querySelector('.quote-author').textContent = ` – ${randomQuote.author}`;
+    updateQuoteDisplay(randomQuote.text, randomQuote.author);
+  }
+
+  function updateQuoteDisplay(text, author) {
+    const quoteTextEl = quoteWidget.querySelector('.quote-text');
+    const quoteSepEl = quoteWidget.querySelector('.quote-sep');
+    quoteTextEl.textContent = `"${toSentenceCase(text)}"`;
+    if (author && authorEl) {
+      const cleanAuthor = author.replace(/^[\s–—-]+/, '').trim();
+      const wikiLang = state.lang === 'es' ? 'es' : 'en';
+      if (quoteSepEl) quoteSepEl.style.display = 'inline';
+      authorEl.href = `https://${wikiLang}.wikipedia.org/wiki/Special:Search?search=${encodeURIComponent(cleanAuthor)}`;
+      authorEl.textContent = cleanAuthor;
+      authorEl.title = state.lang === 'es' ? `Ver ${cleanAuthor} en Wikipedia` : `View ${cleanAuthor} on Wikipedia`;
+      authorEl.style.display = 'inline';
+    } else if (authorEl) {
+      if (quoteSepEl) quoteSepEl.style.display = 'none';
+      authorEl.textContent = '';
+      authorEl.style.display = 'none';
+    }
   }
 }
 
@@ -2059,9 +2169,10 @@ function setupEventListeners() {
   const copyBtn = document.getElementById('copy-quote-btn');
   if (copyBtn) {
     copyBtn.addEventListener('click', () => {
-      const quoteText = document.querySelector('#quote-widget .quote-text').textContent;
-      const quoteAuthor = document.querySelector('#quote-widget .quote-author').textContent;
-      const textToCopy = `${quoteText}${quoteAuthor}`;
+      const quoteText = document.querySelector('#quote-widget .quote-text')?.textContent || '';
+      const quoteSep = document.querySelector('#quote-widget .quote-sep')?.textContent || ' – ';
+      const quoteAuthor = document.querySelector('#quote-widget .quote-author')?.textContent || '';
+      const textToCopy = quoteAuthor ? `${quoteText}${quoteSep}${quoteAuthor}` : quoteText;
       
       navigator.clipboard.writeText(textToCopy).then(() => {
         // Change icon temporarily to indicate success

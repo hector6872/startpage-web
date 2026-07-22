@@ -346,17 +346,21 @@ body {
   opacity: 0.7;
 }
 
-.weather-unconfigured-text {
+.weather-unconfigured-text,
+.clock-unconfigured-text {
   display: none;
 }
 
 .weather-widget.unconfigured .weather-loc,
-.weather-widget.unconfigured .weather-details-grid {
+.weather-widget.unconfigured .weather-details-grid,
+.world-clock-widget.unconfigured .clock-label,
+.world-clock-widget.unconfigured .clock-time,
+.world-clock-widget.unconfigured .clock-diff {
   display: none;
 }
 
 .weather-widget.unconfigured .weather-unconfigured-text,
-.world-clock-widget.unconfigured .clock-greeting {
+.world-clock-widget.unconfigured .clock-unconfigured-text {
   display: inline-block;
   font-family: var(--font-sans);
   font-size: 0.8rem;
@@ -476,7 +480,14 @@ body {
   font-size: 1.5rem;
   font-weight: 600;
   line-height: 1.1;
-  margin-bottom: 2px;
+}
+
+.clock-diff {
+  font-size: 0.72rem;
+  color: var(--accent);
+  font-weight: 600;
+  white-space: nowrap;
+  margin-top: 2px;
 }
 
 .clock-info {
@@ -1104,9 +1115,9 @@ html.dark .priority-low {
 /* Quote Section */
 .quote-widget {
   text-align: center;
-  max-width: 700px;
-  margin: 2.5rem auto 1rem;
-  padding: 1.5rem;
+  max-width: 650px;
+  margin: 2rem auto 1rem;
+  padding: 0.85rem 1.25rem;
   border-top: 1px solid var(--border-color);
   animation: fadeIn 0.6s ease;
 }
@@ -1116,36 +1127,59 @@ html.dark .priority-low {
   align-items: center;
   justify-content: center;
   flex-wrap: wrap;
-  gap: 0.4rem;
-  line-height: 1.6;
+  gap: 0.25rem;
+  line-height: 1.5;
+  font-family: var(--font-sans);
+  font-size: 0.85rem;
+  color: var(--text-secondary);
 }
 
 .quote-text {
-  font-family: var(--font-title);
-  font-size: 1.1rem;
-  font-style: italic;
-  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-size: 0.85rem;
+  font-style: normal;
+  font-weight: 400;
+  color: var(--text-secondary);
+}
+
+.quote-sep {
+  font-family: var(--font-sans);
+  font-size: 0.85rem;
+  color: var(--text-tertiary);
+  pointer-events: none;
+  margin: 0 0.1rem;
 }
 
 .quote-author {
-  font-family: var(--font-title);
-  font-size: 1.1rem;
+  font-family: var(--font-sans);
+  font-size: 0.85rem;
+  font-style: normal;
   font-weight: 500;
-  color: var(--text-secondary);
+  color: var(--text-primary);
+  text-decoration: none;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  border-bottom: 1px dotted var(--text-tertiary);
+}
+
+.quote-author:hover {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
 }
 
 .copy-quote-btn {
   background: none;
   border: none;
-  color: var(--text-secondary);
+  color: var(--text-tertiary);
   cursor: pointer;
-  padding: 4px;
+  padding: 3px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   border-radius: var(--radius-sm);
   transition: all 0.2s ease;
   opacity: 0.6;
+  margin-left: 0.25rem;
 }
 
 .copy-quote-btn:hover {
