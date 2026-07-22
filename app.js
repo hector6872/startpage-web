@@ -28,6 +28,15 @@ const translations = {
     "tab-jira": "Jira Cloud",
     "tab-storage": "Storage",
     "label-language": "Language",
+    "label-primary-color": "Primary Color",
+    "color-blue": "Blue",
+    "color-indigo": "Indigo",
+    "color-purple": "Purple",
+    "color-pink": "Pink",
+    "color-red": "Red",
+    "color-orange": "Orange",
+    "color-green": "Green",
+    "color-teal": "Teal",
     "label-theme": "Default Theme",
     "theme-system": "System Default",
     "theme-light": "Light",
@@ -40,6 +49,10 @@ const translations = {
     "label-show-countdowns": "Show Countdowns",
     "label-show-tasks": "Show Tasks",
     "label-city": "Weather City",
+    "label-weather-url": "Weather Web URL (Optional)",
+    "weather-url-placeholder": "e.g. https://weather.com or leave empty for Google Weather",
+    "label-world-clock-url": "World Clock Web URL (Optional)",
+    "clock-url-placeholder": "e.g. https://time.is or leave empty for Google Time",
     "city-desc": "Leave empty for automatic geolocation.",
     "google-desc": "Requires a Google Cloud Console project with OAuth credentials. Remember to add your local origin (e.g. http://localhost:5173) under Authorized JavaScript Origins.",
     "label-client-id": "Google OAuth Client ID",
@@ -141,6 +154,15 @@ const translations = {
     "tab-jira": "Jira Cloud",
     "tab-storage": "Almacenamiento",
     "label-language": "Idioma",
+    "label-primary-color": "Color Primario",
+    "color-blue": "Azul",
+    "color-indigo": "Índigo",
+    "color-purple": "Púrpura",
+    "color-pink": "Rosa",
+    "color-red": "Rojo",
+    "color-orange": "Naranja",
+    "color-green": "Verde",
+    "color-teal": "Turquesa",
     "label-theme": "Tema Predeterminado",
     "theme-system": "Predeterminado del Sistema",
     "theme-light": "Claro",
@@ -153,6 +175,10 @@ const translations = {
     "label-show-countdowns": "Mostrar Countdowns",
     "label-show-tasks": "Mostrar Tareas",
     "label-city": "Ciudad para el clima",
+    "label-weather-url": "URL de la web del clima (Opcional)",
+    "weather-url-placeholder": "ej. https://eltiempo.es o dejar vacío para Google Clima",
+    "label-world-clock-url": "URL de la web del reloj (Opcional)",
+    "clock-url-placeholder": "ej. https://time.is o dejar vacío para Google Hora",
     "city-desc": "Déjalo vacío para usar la geolocalización automática del navegador.",
     "google-desc": "Requiere un proyecto en Google Cloud Console con credenciales OAuth. Recuerda añadir tu origen local (ej. http://localhost:5173) en los orígenes de JavaScript autorizados.",
     "label-client-id": "Cliente ID de Google OAuth",
@@ -264,9 +290,12 @@ let state = {
   settings: {
     lang: 'en',
     theme: 'system',
+    primaryColor: 'blue',
     city: '',
+    weatherUrl: '',
     worldClockTz: 'Europe/London',
     worldClockLabel: '',
+    worldClockUrl: '',
     showWeather: true,
     showWorldClock: true,
     storageMode: 'local', // local or file
@@ -413,6 +442,7 @@ async function initializeFileSync() {
         }
         if (state.settings.lang) state.lang = state.settings.lang;
         if (state.settings.theme) state.theme = state.settings.theme;
+        if (state.settings.primaryColor) applyPrimaryColor(state.settings.primaryColor);
         
         // Cache to localStorage
         localStorage.setItem('todos', JSON.stringify(state.todos));
@@ -465,6 +495,7 @@ function importStateFromFile(file) {
       const data = JSON.parse(e.target.result);
       if (data.todos) state.todos = data.todos;
       if (data.settings) state.settings = { ...state.settings, ...data.settings };
+      if (state.settings.primaryColor) applyPrimaryColor(state.settings.primaryColor);
       
       await saveSettings();
       renderTodos();
@@ -491,8 +522,11 @@ async function loadState() {
     state.settings = { ...state.settings, ...JSON.parse(storedSettings) };
   }
   state.settings.customEvents = state.settings.customEvents || [];
+  state.settings.primaryColor = state.settings.primaryColor || 'blue';
   state.lang = state.settings.lang || 'en';
   state.theme = state.settings.theme || localStorage.getItem('theme') || 'system';
+
+  applyPrimaryColor(state.settings.primaryColor);
 
   const storedTodos = localStorage.getItem('todos');
   if (storedTodos) {
@@ -712,6 +746,14 @@ function translatePage() {
     }
   });
 
+  // Translate titles
+  document.querySelectorAll('[data-i18n-title]').forEach(el => {
+    const key = el.getAttribute('data-i18n-title');
+    if (dictionary[key]) {
+      el.setAttribute('title', dictionary[key]);
+    }
+  });
+
   // Update UI lang toggle button text if exists
   const langToggle = document.getElementById('lang-toggle');
   if (langToggle) {
@@ -797,6 +839,24 @@ function updateWorldClock() {
     console.error("Error updating world clock:", e);
     widget.classList.add('hidden');
   }
+}
+
+// Primary Color Accent Management
+function applyPrimaryColor(colorName = 'blue') {
+  const validColors = ['blue', 'indigo', 'purple', 'pink', 'red', 'orange', 'green', 'teal'];
+  const color = validColors.includes(colorName) ? colorName : 'blue';
+  document.documentElement.setAttribute('data-accent', color);
+}
+
+function updateSwatchActiveState(selectedColor) {
+  const swatches = document.querySelectorAll('#color-picker-swatches .color-swatch-btn');
+  swatches.forEach(btn => {
+    if (btn.getAttribute('data-color') === selectedColor) {
+      btn.classList.add('active');
+    } else {
+      btn.classList.remove('active');
+    }
+  });
 }
 
 // Theme management
@@ -2035,6 +2095,18 @@ function setupEventListeners() {
   };
   document.getElementById('settings-show-world-clock').addEventListener('change', toggleClockInputs);
 
+  // Color swatches click handlers
+  const swatches = document.querySelectorAll('#color-picker-swatches .color-swatch-btn');
+  swatches.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const selectedColor = btn.getAttribute('data-color');
+      const hiddenInput = document.getElementById('settings-primary-color');
+      if (hiddenInput) hiddenInput.value = selectedColor;
+      updateSwatchActiveState(selectedColor);
+      applyPrimaryColor(selectedColor);
+    });
+  });
+
   // Scroll to Top Listener
   const scrollToTopBtn = document.getElementById('scroll-to-top');
   if (scrollToTopBtn) {
@@ -2172,45 +2244,94 @@ function setupEventListeners() {
     });
   }
 
-  // Click weather widget to open settings (General tab) and focus City field
+  // Helper to ensure proper HTTP/HTTPS URL
+  function ensureHttpUrl(url) {
+    if (!url) return '';
+    let trimmed = url.trim();
+    if (!trimmed) return '';
+    if (!/^https?:\/\//i.test(trimmed)) {
+      trimmed = 'https://' + trimmed;
+    }
+    return trimmed;
+  }
+
+  // Click weather widget to open web page in new tab
   const weatherWidgetEl = document.getElementById('weather-widget');
   if (weatherWidgetEl) {
-    weatherWidgetEl.addEventListener('click', () => {
-      document.getElementById('settings-toggle').click();
-      const generalTab = document.querySelector('.tab-btn[data-tab="tab-general"]');
-      if (generalTab) generalTab.click();
-      
-      const cityInput = document.getElementById('settings-city');
-      if (cityInput) {
-        setTimeout(() => cityInput.focus(), 150);
+    weatherWidgetEl.addEventListener('click', (e) => {
+      e.stopPropagation();
+      let targetUrl = '';
+      if (state.settings.weatherUrl && state.settings.weatherUrl.trim()) {
+        targetUrl = ensureHttpUrl(state.settings.weatherUrl);
+      } else {
+        const city = state.settings.city ? state.settings.city.trim() : '';
+        const langQuery = state.lang === 'es' ? 'tiempo' : 'weather';
+        if (city) {
+          targetUrl = `https://www.google.com/search?q=${encodeURIComponent(langQuery + ' ' + city)}`;
+        } else {
+          targetUrl = `https://www.google.com/search?q=${encodeURIComponent(langQuery)}`;
+        }
+      }
+      if (targetUrl) {
+        window.open(targetUrl, '_blank', 'noopener,noreferrer');
+      } else {
+        document.getElementById('settings-toggle').click();
       }
     });
   }
 
-  // Click world clock widget to open settings (General tab) and focus Clock select field
+  // Click world clock widget to open web page in new tab
   const clockWidgetEl = document.getElementById('world-clock-widget');
   if (clockWidgetEl) {
-    clockWidgetEl.addEventListener('click', () => {
-      document.getElementById('settings-toggle').click();
-      const generalTab = document.querySelector('.tab-btn[data-tab="tab-general"]');
-      if (generalTab) generalTab.click();
-      
-      const clockSelect = document.getElementById('settings-world-clock-tz');
-      if (clockSelect) {
-        setTimeout(() => clockSelect.focus(), 150);
+    clockWidgetEl.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (!state.settings.worldClockTz && !state.settings.worldClockUrl) {
+        document.getElementById('settings-toggle').click();
+        const generalTab = document.querySelector('.tab-btn[data-tab="tab-general"]');
+        if (generalTab) generalTab.click();
+        const clockSelect = document.getElementById('settings-world-clock-tz');
+        if (clockSelect) setTimeout(() => clockSelect.focus(), 150);
+        return;
+      }
+
+      let targetUrl = '';
+      if (state.settings.worldClockUrl && state.settings.worldClockUrl.trim()) {
+        targetUrl = ensureHttpUrl(state.settings.worldClockUrl);
+      } else {
+        const tzCity = state.settings.worldClockTz ? state.settings.worldClockTz.split('/').pop().replace(/_/g, ' ') : '';
+        const langQuery = state.lang === 'es' ? 'hora en' : 'time in';
+        if (tzCity) {
+          targetUrl = `https://www.google.com/search?q=${encodeURIComponent(langQuery + ' ' + tzCity)}`;
+        } else {
+          targetUrl = `https://www.google.com/search?q=${encodeURIComponent(langQuery)}`;
+        }
+      }
+      if (targetUrl) {
+        window.open(targetUrl, '_blank', 'noopener,noreferrer');
       }
     });
   }
 
   // Settings Modal Open
+  let isSettingsFormSaved = false;
   const settingsModal = document.getElementById('settings-modal');
   document.getElementById('settings-toggle').addEventListener('click', () => {
+    isSettingsFormSaved = false;
     // Fill form fields with current settings
     document.getElementById('settings-lang').value = state.settings.lang;
     document.getElementById('settings-theme').value = state.settings.theme || 'system';
+    const currentColor = state.settings.primaryColor || 'blue';
+    const colorInput = document.getElementById('settings-primary-color');
+    if (colorInput) colorInput.value = currentColor;
+    updateSwatchActiveState(currentColor);
+
     document.getElementById('settings-city').value = state.settings.city;
+    const weatherUrlInput = document.getElementById('settings-weather-url');
+    if (weatherUrlInput) weatherUrlInput.value = state.settings.weatherUrl || '';
     document.getElementById('settings-world-clock-tz').value = state.settings.worldClockTz !== undefined ? state.settings.worldClockTz : '';
     document.getElementById('settings-world-clock-label').value = state.settings.worldClockLabel || '';
+    const clockUrlInput = document.getElementById('settings-world-clock-url');
+    if (clockUrlInput) clockUrlInput.value = state.settings.worldClockUrl || '';
     document.getElementById('settings-show-weather').checked = state.settings.showWeather !== false;
     document.getElementById('settings-show-world-clock').checked = state.settings.showWorldClock !== false;
     document.getElementById('settings-show-countdowns').checked = state.settings.showCountdowns !== false;
@@ -2246,9 +2367,61 @@ function setupEventListeners() {
     settingsModal.showModal();
   });
 
+  // Live Preview Handlers for Language and Theme
+  const settingsLangSelect = document.getElementById('settings-lang');
+  if (settingsLangSelect) {
+    settingsLangSelect.addEventListener('change', (e) => {
+      state.lang = e.target.value;
+      translatePage();
+      updateTimeAndGreeting();
+      loadWeather();
+      loadQuote();
+    });
+  }
+
+  const settingsThemeSelect = document.getElementById('settings-theme');
+  if (settingsThemeSelect) {
+    settingsThemeSelect.addEventListener('change', (e) => {
+      state.theme = e.target.value;
+      applyTheme();
+    });
+  }
+
   // Close Settings Modal
   document.getElementById('close-settings').addEventListener('click', () => {
     settingsModal.close();
+  });
+
+  settingsModal.addEventListener('close', () => {
+    if (!isSettingsFormSaved) {
+      // Revert Language
+      state.lang = state.settings.lang || 'en';
+      const langSelect = document.getElementById('settings-lang');
+      if (langSelect) langSelect.value = state.lang;
+      translatePage();
+      updateTimeAndGreeting();
+      loadWeather();
+      loadQuote();
+
+      // Revert Theme
+      state.theme = state.settings.theme || 'system';
+      const themeSelect = document.getElementById('settings-theme');
+      if (themeSelect) themeSelect.value = state.theme;
+      applyTheme();
+
+      // Revert Primary Color
+      const savedColor = state.settings.primaryColor || 'blue';
+      applyPrimaryColor(savedColor);
+      const colorInput = document.getElementById('settings-primary-color');
+      if (colorInput) colorInput.value = savedColor;
+      updateSwatchActiveState(savedColor);
+
+      // Revert URLs
+      const wUrlInput = document.getElementById('settings-weather-url');
+      if (wUrlInput) wUrlInput.value = state.settings.weatherUrl || '';
+      const cUrlInput = document.getElementById('settings-world-clock-url');
+      if (cUrlInput) cUrlInput.value = state.settings.worldClockUrl || '';
+    }
   });
 
   // Storage Mode Change Handler
@@ -2300,6 +2473,7 @@ function setupEventListeners() {
             if (fileData.settings) {
               state.settings = { ...state.settings, ...fileData.settings, storageMode: 'file' };
             }
+            if (state.settings.primaryColor) applyPrimaryColor(state.settings.primaryColor);
             renderTodos();
             translatePage();
             updateTimeAndGreeting();
@@ -2411,9 +2585,15 @@ function setupEventListeners() {
   // Save Settings Form
   document.getElementById('settings-form').addEventListener('submit', async (e) => {
     e.preventDefault();
+    isSettingsFormSaved = true;
     state.settings.lang = document.getElementById('settings-lang').value;
     state.settings.city = document.getElementById('settings-city').value.trim();
     state.settings.theme = document.getElementById('settings-theme').value;
+    const colorInput = document.getElementById('settings-primary-color');
+    if (colorInput) {
+      state.settings.primaryColor = colorInput.value;
+      applyPrimaryColor(state.settings.primaryColor);
+    }
     
     state.theme = state.settings.theme;
     
@@ -2435,6 +2615,10 @@ function setupEventListeners() {
     state.settings.jiraToken = document.getElementById('jira-token').value.trim();
     state.settings.worldClockTz = document.getElementById('settings-world-clock-tz').value;
     state.settings.worldClockLabel = document.getElementById('settings-world-clock-label').value.trim();
+    const wUrlEl = document.getElementById('settings-weather-url');
+    if (wUrlEl) state.settings.weatherUrl = wUrlEl.value.trim();
+    const cUrlEl = document.getElementById('settings-world-clock-url');
+    if (cUrlEl) state.settings.worldClockUrl = cUrlEl.value.trim();
     state.settings.showWeather = document.getElementById('settings-show-weather').checked;
     state.settings.showWorldClock = document.getElementById('settings-show-world-clock').checked;
     state.settings.showCountdowns = document.getElementById('settings-show-countdowns').checked;

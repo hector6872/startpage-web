@@ -11,7 +11,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <!-- Google Identity Services for client-side OAuth -->
   <script src="https://accounts.google.com/gsi/client" async defer></script>
-  <!-- Anti-FOUC script for theme -->
+  <!-- Anti-FOUC script for theme and primary color -->
   <meta name="color-scheme" content="light dark">
   <script>
     {
@@ -21,6 +21,12 @@
       } else {
         document.documentElement.classList.remove('dark');
       }
+      try {
+        const storedSettings = JSON.parse(localStorage.getItem('dashboard_settings') || '{}');
+        if (storedSettings.primaryColor) {
+          document.documentElement.setAttribute('data-accent', storedSettings.primaryColor);
+        }
+      } catch (e) {}
     }
   </script>
 </head>
@@ -198,19 +204,18 @@
     <div class="modal-content">
       <header class="modal-header">
         <h2 data-i18n="settings-title">Dashboard Settings</h2>
-        <button id="close-settings" class="btn-close">&times;</button>
+        <button id="close-settings" class="btn-close" type="button">&times;</button>
       </header>
-      <div class="modal-body">
+      <form id="settings-form" style="display: flex; flex-direction: column; flex: 1; min-height: 0; overflow: hidden;">
         <nav class="settings-tabs">
-          <button class="tab-btn active" data-tab="tab-general" data-i18n="tab-general">General</button>
-          <button class="tab-btn" data-tab="tab-events" data-i18n="tab-events">Events</button>
-          <button class="tab-btn" data-tab="tab-google" data-i18n="tab-google">Google</button>
-          <button class="tab-btn" data-tab="tab-git" data-i18n="tab-git">GitHub & Bitbucket</button>
-          <button class="tab-btn" data-tab="tab-jira" data-i18n="tab-jira">Jira</button>
-          <button class="tab-btn" data-tab="tab-storage" data-i18n="tab-storage">Storage</button>
+          <button type="button" class="tab-btn active" data-tab="tab-general" data-i18n="tab-general">General</button>
+          <button type="button" class="tab-btn" data-tab="tab-events" data-i18n="tab-events">Events</button>
+          <button type="button" class="tab-btn" data-tab="tab-google" data-i18n="tab-google">Google</button>
+          <button type="button" class="tab-btn" data-tab="tab-git" data-i18n="tab-git">GitHub & Bitbucket</button>
+          <button type="button" class="tab-btn" data-tab="tab-jira" data-i18n="tab-jira">Jira</button>
+          <button type="button" class="tab-btn" data-tab="tab-storage" data-i18n="tab-storage">Storage</button>
         </nav>
-
-        <form id="settings-form">
+        <div class="modal-body">
           <!-- Tab: General -->
           <div id="tab-general" class="tab-pane active">
             <!-- Language and Theme Group -->
@@ -232,6 +237,22 @@
               </div>
             </div>
 
+            <!-- Primary Color Group -->
+            <div class="form-group" style="margin-bottom: 1.25rem;">
+              <label data-i18n="label-primary-color">Primary Color</label>
+              <div class="color-picker-grid" id="color-picker-swatches">
+                <button type="button" class="color-swatch-btn active" data-color="blue" data-i18n-title="color-blue" title="Blue" style="--swatch-color: #3b82f6;"></button>
+                <button type="button" class="color-swatch-btn" data-color="indigo" data-i18n-title="color-indigo" title="Indigo" style="--swatch-color: #6366f1;"></button>
+                <button type="button" class="color-swatch-btn" data-color="purple" data-i18n-title="color-purple" title="Purple" style="--swatch-color: #8b5cf6;"></button>
+                <button type="button" class="color-swatch-btn" data-color="pink" data-i18n-title="color-pink" title="Pink" style="--swatch-color: #ec4899;"></button>
+                <button type="button" class="color-swatch-btn" data-color="red" data-i18n-title="color-red" title="Red" style="--swatch-color: #ef4444;"></button>
+                <button type="button" class="color-swatch-btn" data-color="orange" data-i18n-title="color-orange" title="Orange" style="--swatch-color: #f97316;"></button>
+                <button type="button" class="color-swatch-btn" data-color="green" data-i18n-title="color-green" title="Green" style="--swatch-color: #10b981;"></button>
+                <button type="button" class="color-swatch-btn" data-color="teal" data-i18n-title="color-teal" title="Teal" style="--swatch-color: #06b6d4;"></button>
+              </div>
+              <input type="hidden" id="settings-primary-color" value="blue">
+            </div>
+
             <!-- Weather Card -->
             <div class="settings-section-card">
               <div class="card-toggle-header">
@@ -248,6 +269,10 @@
                 <div class="form-group">
                   <label for="settings-city" data-i18n="label-city">Weather Location (City)</label>
                   <input type="text" id="settings-city" placeholder="e.g. Madrid">
+                </div>
+                <div class="form-group" style="margin-top: 0.75rem;">
+                  <label for="settings-weather-url" data-i18n="label-weather-url">Weather Web URL (Optional)</label>
+                  <input type="url" id="settings-weather-url" data-i18n-placeholder="weather-url-placeholder" placeholder="e.g. https://weather.com or leave empty for Google Weather">
                 </div>
               </div>
             </div>
@@ -300,6 +325,10 @@
                 <div class="form-group">
                   <label for="settings-world-clock-label" data-i18n="label-world-clock-label">World Clock Label</label>
                   <input type="text" id="settings-world-clock-label" placeholder="e.g. London">
+                </div>
+                <div class="form-group" style="margin-top: 0.75rem;">
+                  <label for="settings-world-clock-url" data-i18n="label-world-clock-url">World Clock Web URL (Optional)</label>
+                  <input type="url" id="settings-world-clock-url" data-i18n-placeholder="clock-url-placeholder" placeholder="e.g. https://time.is or leave empty for Google Time">
                 </div>
               </div>
             </div>
@@ -448,12 +477,12 @@
               </ul>
             </div>
           </div>
+        </div>
 
-          <div class="modal-footer" style="padding: 1rem 0 0 0; margin-top: 1.5rem; border-top: 1px solid var(--border-color);">
-            <button type="submit" class="btn-primary" data-i18n="save-settings">Save Configurations</button>
-          </div>
-        </form>
-      </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn-primary" data-i18n="save-settings">Save Settings</button>
+        </div>
+      </form>
     </div>
   </dialog>
 
