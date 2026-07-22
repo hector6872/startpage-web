@@ -143,6 +143,12 @@ html.dark {
   padding: 0;
 }
 
+html {
+  overflow-x: hidden;
+  max-width: 100%;
+  width: 100%;
+}
+
 body {
   font-family: var(--font-sans);
   background-color: var(--bg-base);
@@ -150,6 +156,8 @@ body {
   min-height: 100vh;
   position: relative;
   overflow-x: hidden;
+  max-width: 100%;
+  width: 100%;
   display: flex;
   flex-direction: column;
   transition: background-color 0.3s ease, color 0.3s ease;
@@ -306,6 +314,8 @@ body {
   display: flex;
   align-items: center;
   gap: 1.5rem;
+  flex-wrap: wrap;
+  max-width: 100%;
 }
 
 /* Weather Widget Styles */
@@ -1449,18 +1459,46 @@ html.dark .form-group select {
 @media (max-width: 600px) {
   .app-header {
     flex-direction: column;
-    align-items: flex-start;
+    align-items: stretch;
+    width: 100%;
+    max-width: 100%;
+    gap: 1rem;
+  }
+  .header-left {
+    width: 100%;
+    max-width: 100%;
   }
   .header-right {
     width: 100%;
-    justify-content: space-between;
+    max-width: 100%;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+  }
+  .weather-widget,
+  .world-clock-widget {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
   }
   .container {
-    padding: 1.5rem 1rem;
+    padding: 1.25rem 1rem;
+    max-width: 100%;
+    overflow-x: hidden;
+    box-sizing: border-box;
+  }
+  .modal-dialog {
+    width: 100%;
+    height: 100%;
+    max-width: 100%;
   }
   .modal-content {
-    max-height: 95vh;
+    width: calc(100% - 1.5rem);
+    max-width: 100%;
+    max-height: 90vh;
+    margin: 0 auto;
     border-radius: var(--radius-md);
+    box-sizing: border-box;
   }
 }
 
