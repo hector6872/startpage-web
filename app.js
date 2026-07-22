@@ -1119,11 +1119,12 @@ async function loadWeather() {
         const next24Codes = weatherData.hourly.weathercode.slice(start, start + 24);
         const maxProb = Math.max(...next24Probs);
 
-        if (maxProb > 0) {
+        // Only show precipitation expected badge if probability is at least 20%
+        if (maxProb >= 20) {
           let hasStorm = false;
           let hasSnow = false;
           for (let i = 0; i < next24Codes.length; i++) {
-            if (next24Probs[i] > 10) {
+            if (next24Probs[i] >= 20) {
               const c = next24Codes[i];
               if (c >= 95 && c <= 99) hasStorm = true;
               else if ((c >= 71 && c <= 77) || (c >= 85 && c <= 86)) hasSnow = true;
