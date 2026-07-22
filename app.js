@@ -37,6 +37,8 @@ const translations = {
     "color-orange": "Orange",
     "color-green": "Green",
     "color-teal": "Teal",
+    "color-slate": "Slate Gray",
+    "color-black": "Black / Onyx",
     "label-theme": "Default Theme",
     "theme-system": "System Default",
     "theme-light": "Light",
@@ -172,6 +174,8 @@ const translations = {
     "color-orange": "Naranja",
     "color-green": "Verde",
     "color-teal": "Turquesa",
+    "color-slate": "Gris Pizarra",
+    "color-black": "Negro / Ónice",
     "label-theme": "Tema Predeterminado",
     "theme-system": "Predeterminado del Sistema",
     "theme-light": "Claro",
@@ -951,7 +955,7 @@ function updateWorldClock() {
 
 // Primary Color Accent Management
 function applyPrimaryColor(colorName = 'blue') {
-  const validColors = ['blue', 'indigo', 'purple', 'pink', 'red', 'orange', 'green', 'teal'];
+  const validColors = ['blue', 'indigo', 'purple', 'pink', 'red', 'orange', 'green', 'teal', 'slate', 'black'];
   const color = validColors.includes(colorName) ? colorName : 'blue';
   document.documentElement.setAttribute('data-accent', color);
 }

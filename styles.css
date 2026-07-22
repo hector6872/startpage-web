@@ -352,7 +352,7 @@ body {
 .header-right {
   display: flex;
   align-items: center;
-  gap: 1.5rem;
+  gap: 0.75rem;
   flex-wrap: wrap;
   max-width: 100%;
 }
@@ -366,7 +366,7 @@ body {
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border: 1px solid var(--border-color);
-  padding: 0.5rem 1rem;
+  padding: 0.5rem 0.75rem;
   border-radius: var(--radius-sm);
   box-shadow: var(--shadow-sm);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -490,7 +490,7 @@ body {
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border: 1px solid var(--border-color);
-  padding: 0.5rem 1rem;
+  padding: 0.5rem 0.75rem;
   border-radius: var(--radius-sm);
   box-shadow: var(--shadow-sm);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -1585,7 +1585,7 @@ html.dark .form-group select {
   border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
   padding: 1.15rem;
-  margin-bottom: 0.75rem;
+  margin-bottom: 0.25rem;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   display: flex;
   flex-direction: column;
@@ -1684,6 +1684,7 @@ html.dark .settings-section-card {
 }
 
 .card-collapsible-content.collapsed {
+  display: none;
   max-height: 0;
   opacity: 0;
   padding: 0;
@@ -2219,6 +2220,38 @@ html.dark[data-accent="teal"] {
   --accent-bg: rgba(34, 211, 238, 0.15);
   --accent-bg-hover: rgba(34, 211, 238, 0.25);
   --glow-1: rgba(34, 211, 238, 0.12);
+}
+
+/* Slate */
+html[data-accent="slate"], :root[data-accent="slate"] {
+  --accent: #475569;
+  --accent-hover: #334155;
+  --accent-bg: rgba(71, 85, 105, 0.1);
+  --accent-bg-hover: rgba(71, 85, 105, 0.15);
+  --glow-1: rgba(71, 85, 105, 0.05);
+}
+html.dark[data-accent="slate"] {
+  --accent: #94a3b8;
+  --accent-hover: #cbd5e1;
+  --accent-bg: rgba(148, 163, 184, 0.15);
+  --accent-bg-hover: rgba(148, 163, 184, 0.25);
+  --glow-1: rgba(148, 163, 184, 0.12);
+}
+
+/* Black / Onyx */
+html[data-accent="black"], :root[data-accent="black"] {
+  --accent: #18181b;
+  --accent-hover: #09090b;
+  --accent-bg: rgba(24, 24, 27, 0.08);
+  --accent-bg-hover: rgba(24, 24, 27, 0.14);
+  --glow-1: rgba(24, 24, 27, 0.05);
+}
+html.dark[data-accent="black"] {
+  --accent: #e4e4e7;
+  --accent-hover: #ffffff;
+  --accent-bg: rgba(228, 228, 231, 0.15);
+  --accent-bg-hover: rgba(228, 228, 231, 0.25);
+  --glow-1: rgba(228, 228, 231, 0.12);
 }
 
 /* Color Swatches Component */
