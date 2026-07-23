@@ -1476,6 +1476,32 @@ html.dark .form-group select {
   box-shadow: 0 0 0 3px var(--accent-bg-hover);
 }
 
+.notes-textarea {
+  width: 100%;
+  min-height: 220px;
+  padding: 0.85rem;
+  border: 1px solid var(--border-color);
+  background: #f4f4f7;
+  color: var(--text-primary);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-sans);
+  font-size: 0.92rem;
+  line-height: 1.6;
+  outline: none;
+  resize: vertical;
+  transition: all 0.2s ease;
+}
+
+html.dark .notes-textarea {
+  background: #27272a;
+}
+
+.notes-textarea:focus {
+  border-color: var(--accent);
+  background: var(--bg-card);
+  box-shadow: 0 0 0 3px var(--accent-bg-hover);
+}
+
 .field-desc {
   font-size: 0.75rem;
   color: var(--text-secondary);

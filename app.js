@@ -62,6 +62,10 @@ const translations = {
     "label-stopwatch-url": "Stopwatch Web URL",
     "stopwatch-url-placeholder": "e.g. https://www.google.com/search?q=stopwatch",
     "notes-btn-title": "Notes",
+    "notes-modal-title": "Quick Notes",
+    "notes-placeholder": "Write your notes here...",
+    "clear-notes-btn": "Clear Notes",
+    "close-btn": "Close",
     "finance-btn-title": "Finance",
     "timer-btn-title": "Timer",
     "stopwatch-btn-title": "Stopwatch",
@@ -203,6 +207,10 @@ const translations = {
     "label-stopwatch-url": "URL del Cronómetro",
     "stopwatch-url-placeholder": "ej. https://www.google.com/search?q=stopwatch",
     "notes-btn-title": "Notas",
+    "notes-modal-title": "Notas Rápidas",
+    "notes-placeholder": "Escribe tus notas aquí...",
+    "clear-notes-btn": "Vaciar",
+    "close-btn": "Cerrar",
     "finance-btn-title": "Finanzas",
     "timer-btn-title": "Temporizador",
     "stopwatch-btn-title": "Cronómetro",
@@ -326,6 +334,7 @@ let state = {
     worldClockTz: 'Europe/London',
     worldClockLabel: '',
     worldClockUrl: '',
+    notes: '',
     financeUrl: 'https://www.google.com/finance/beta/quote/.INX:INDEXSP?window=1M',
     timerUrl: 'https://www.google.com/search?q=countdown+timer',
     stopwatchUrl: 'https://www.google.com/search?q=stopwatch',
@@ -2452,6 +2461,53 @@ function setupEventListeners() {
       if (targetUrl) {
         window.open(targetUrl, '_blank', 'noopener,noreferrer');
       }
+    });
+  }
+
+  // Click Notes button (header or floating)
+  const notesBtnEl = document.getElementById('notes-btn-header') || document.getElementById('notes-btn-floating');
+  const notesModal = document.getElementById('notes-modal');
+  const notesTextarea = document.getElementById('notes-textarea');
+  const closeNotesModalBtn = document.getElementById('close-notes-modal');
+  const closeNotesFooterBtn = document.getElementById('btn-close-notes-footer');
+  const clearNotesBtn = document.getElementById('btn-clear-notes');
+
+  if (notesBtnEl && notesModal) {
+    notesBtnEl.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (notesTextarea) {
+        notesTextarea.value = state.settings.notes || '';
+      }
+      notesModal.showModal();
+    });
+  }
+
+  if (notesTextarea) {
+    notesTextarea.addEventListener('input', () => {
+      state.settings.notes = notesTextarea.value;
+      saveSettings();
+    });
+  }
+
+  if (clearNotesBtn) {
+    clearNotesBtn.addEventListener('click', () => {
+      if (notesTextarea) {
+        notesTextarea.value = '';
+      }
+      state.settings.notes = '';
+      saveSettings();
+    });
+  }
+
+  if (closeNotesModalBtn && notesModal) {
+    closeNotesModalBtn.addEventListener('click', () => {
+      notesModal.close();
+    });
+  }
+
+  if (closeNotesFooterBtn && notesModal) {
+    closeNotesFooterBtn.addEventListener('click', () => {
+      notesModal.close();
     });
   }
 

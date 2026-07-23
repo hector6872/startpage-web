@@ -28,8 +28,8 @@
       } catch (e) {}
     }
   </script>
-  <script type="module" crossorigin src="/assets/index-BcY4-bvv.js"></script>
-  <link rel="stylesheet" crossorigin href="/assets/index-CggcDS9V.css">
+  <script type="module" crossorigin src="/assets/index-_dfmFGI2.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/index-Dg6FqHef.css">
 </head>
 <body>
   <!-- Background Decorative Elements -->
@@ -551,6 +551,23 @@
           <button type="submit" class="btn-primary" data-i18n="save-settings">Save Settings</button>
         </div>
       </form>
+    </div>
+  </dialog>
+
+  <!-- Notes Modal -->
+  <dialog id="notes-modal" class="modal-dialog">
+    <div class="modal-content" style="max-width: 550px;">
+      <header class="modal-header">
+        <h2 data-i18n="notes-modal-title">Notas Rápidas</h2>
+        <button id="close-notes-modal" class="btn-close">&times;</button>
+      </header>
+      <div class="modal-body" style="display: flex; flex-direction: column;">
+        <textarea id="notes-textarea" class="notes-textarea" rows="12" placeholder="Escribe tus notas aquí..." data-i18n-placeholder="notes-placeholder"></textarea>
+      </div>
+      <div class="modal-footer" style="justify-content: space-between;">
+        <button type="button" id="btn-clear-notes" class="btn-danger" data-i18n="clear-notes-btn">Vaciar</button>
+        <button type="button" id="btn-close-notes-footer" class="btn-secondary" data-i18n="close-btn">Cerrar</button>
+      </div>
     </div>
   </dialog>
 
