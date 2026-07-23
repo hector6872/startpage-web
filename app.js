@@ -55,10 +55,14 @@ const translations = {
     "weather-url-placeholder": "e.g. https://weather.com or leave empty for Google Weather",
     "label-world-clock-url": "World Clock Web URL (Optional)",
     "clock-url-placeholder": "e.g. https://time.is or leave empty for Google Time",
+    "label-finance-url": "Finance Web URL",
+    "finance-url-placeholder": "e.g. https://www.google.com/finance/beta/quote/.INX:INDEXSP?window=1M",
     "label-timer-url": "Timer Web URL",
     "timer-url-placeholder": "e.g. https://www.google.com/search?q=countdown+timer",
     "label-stopwatch-url": "Stopwatch Web URL",
     "stopwatch-url-placeholder": "e.g. https://www.google.com/search?q=stopwatch",
+    "notes-btn-title": "Notes",
+    "finance-btn-title": "Finance",
     "timer-btn-title": "Timer",
     "stopwatch-btn-title": "Stopwatch",
     "tab-shortcuts": "Shortcuts",
@@ -192,10 +196,14 @@ const translations = {
     "weather-url-placeholder": "ej. https://eltiempo.es o dejar vacío para Google Clima",
     "label-world-clock-url": "URL de la web del reloj (Opcional)",
     "clock-url-placeholder": "ej. https://time.is o dejar vacío para Google Hora",
+    "label-finance-url": "URL de Finanzas / Bolsa",
+    "finance-url-placeholder": "ej. https://www.google.com/finance/beta/quote/.INX:INDEXSP?window=1M",
     "label-timer-url": "URL del Temporizador",
     "timer-url-placeholder": "ej. https://www.google.com/search?q=countdown+timer",
     "label-stopwatch-url": "URL del Cronómetro",
     "stopwatch-url-placeholder": "ej. https://www.google.com/search?q=stopwatch",
+    "notes-btn-title": "Notas",
+    "finance-btn-title": "Finanzas",
     "timer-btn-title": "Temporizador",
     "stopwatch-btn-title": "Cronómetro",
     "tab-shortcuts": "Atajos",
@@ -318,6 +326,7 @@ let state = {
     worldClockTz: 'Europe/London',
     worldClockLabel: '',
     worldClockUrl: '',
+    financeUrl: 'https://www.google.com/finance/beta/quote/.INX:INDEXSP?window=1M',
     timerUrl: 'https://www.google.com/search?q=countdown+timer',
     stopwatchUrl: 'https://www.google.com/search?q=stopwatch',
     showWeather: true,
@@ -2461,6 +2470,21 @@ function setupEventListeners() {
     });
   }
 
+  // Click Finance button (header or floating)
+  const financeBtnEl = document.getElementById('finance-btn-header') || document.getElementById('finance-btn-floating');
+  if (financeBtnEl) {
+    financeBtnEl.addEventListener('click', (e) => {
+      e.stopPropagation();
+      let targetUrl = '';
+      if (state.settings.financeUrl && state.settings.financeUrl.trim()) {
+        targetUrl = ensureHttpUrl(state.settings.financeUrl);
+      } else {
+        targetUrl = 'https://www.google.com/finance/beta/quote/.INX:INDEXSP?window=1M';
+      }
+      window.open(targetUrl, '_blank', 'noopener,noreferrer');
+    });
+  }
+
   // Click Stopwatch button (header or floating)
   const stopwatchBtnEl = document.getElementById('stopwatch-btn-header') || document.getElementById('stopwatch-btn-floating');
   if (stopwatchBtnEl) {
@@ -2497,6 +2521,8 @@ function setupEventListeners() {
     const clockUrlInput = document.getElementById('settings-world-clock-url');
     if (clockUrlInput) clockUrlInput.value = state.settings.worldClockUrl || '';
     
+    const financeUrlInput = document.getElementById('settings-finance-url');
+    if (financeUrlInput) financeUrlInput.value = state.settings.financeUrl !== undefined ? state.settings.financeUrl : 'https://www.google.com/finance/beta/quote/.INX:INDEXSP?window=1M';
     const timerUrlInput = document.getElementById('settings-timer-url');
     if (timerUrlInput) timerUrlInput.value = state.settings.timerUrl !== undefined ? state.settings.timerUrl : 'https://www.google.com/search?q=countdown+timer';
     const stopwatchUrlInput = document.getElementById('settings-stopwatch-url');
@@ -2789,6 +2815,8 @@ function setupEventListeners() {
     if (wUrlEl) state.settings.weatherUrl = wUrlEl.value.trim();
     const cUrlEl = document.getElementById('settings-world-clock-url');
     if (cUrlEl) state.settings.worldClockUrl = cUrlEl.value.trim();
+    const finUrlEl = document.getElementById('settings-finance-url');
+    if (finUrlEl) state.settings.financeUrl = finUrlEl.value.trim();
     const tUrlEl = document.getElementById('settings-timer-url');
     if (tUrlEl) state.settings.timerUrl = tUrlEl.value.trim();
     const swUrlEl = document.getElementById('settings-stopwatch-url');

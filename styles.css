@@ -220,8 +220,8 @@ body {
 }
 
 .shortcut-buttons-column {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
   gap: 0.35rem;
   justify-content: center;
   align-self: center;
