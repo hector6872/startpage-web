@@ -620,9 +620,21 @@ async function saveSettings() {
   state.settings.theme = state.theme;
   localStorage.setItem('dashboard_settings', JSON.stringify(state.settings));
   localStorage.setItem('theme', state.theme);
+  updateNotesBadge();
 
   if (state.settings.storageMode === 'file') {
     await writeDataToFile();
+  }
+}
+
+function updateNotesBadge() {
+  const badge = document.getElementById('notes-badge');
+  if (!badge) return;
+  const hasNotes = state.settings.notes && state.settings.notes.trim().length > 0;
+  if (hasNotes) {
+    badge.classList.remove('hidden');
+  } else {
+    badge.classList.add('hidden');
   }
 }
 
@@ -2464,7 +2476,7 @@ function setupEventListeners() {
     });
   }
 
-  // Click Notes button (header or floating)
+  // Click Notes button (header or floating) & Undo/Redo History
   const notesBtnEl = document.getElementById('notes-btn-header') || document.getElementById('notes-btn-floating');
   const notesModal = document.getElementById('notes-modal');
   const notesTextarea = document.getElementById('notes-textarea');
@@ -2472,11 +2484,24 @@ function setupEventListeners() {
   const closeNotesFooterBtn = document.getElementById('btn-close-notes-footer');
   const clearNotesBtn = document.getElementById('btn-clear-notes');
 
+  let notesHistory = [];
+  let notesHistoryIndex = -1;
+  let historyDebounceTimeout = null;
+
+  function pushNotesHistory(text) {
+    if (notesHistoryIndex >= 0 && notesHistory[notesHistoryIndex] === text) return;
+    notesHistory = notesHistory.slice(0, notesHistoryIndex + 1);
+    notesHistory.push(text);
+    notesHistoryIndex = notesHistory.length - 1;
+  }
+
   if (notesBtnEl && notesModal) {
     notesBtnEl.addEventListener('click', (e) => {
       e.stopPropagation();
       if (notesTextarea) {
         notesTextarea.value = state.settings.notes || '';
+        notesHistory = [notesTextarea.value];
+        notesHistoryIndex = 0;
       }
       notesModal.showModal();
     });
@@ -2486,6 +2511,53 @@ function setupEventListeners() {
     notesTextarea.addEventListener('input', () => {
       state.settings.notes = notesTextarea.value;
       saveSettings();
+      updateNotesBadge();
+
+      clearTimeout(historyDebounceTimeout);
+      const val = notesTextarea.value;
+      historyDebounceTimeout = setTimeout(() => {
+        pushNotesHistory(val);
+      }, 300);
+    });
+
+    notesTextarea.addEventListener('keydown', (e) => {
+      const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+      const isCmdOrCtrl = isMac ? e.metaKey : e.ctrlKey;
+      const key = e.key.toLowerCase();
+
+      if (isCmdOrCtrl && key === 'z') {
+        if (e.shiftKey) {
+          // Redo (Cmd+Shift+Z)
+          if (notesHistoryIndex < notesHistory.length - 1) {
+            notesHistoryIndex++;
+            notesTextarea.value = notesHistory[notesHistoryIndex];
+            state.settings.notes = notesTextarea.value;
+            saveSettings();
+            updateNotesBadge();
+          }
+          e.preventDefault();
+        } else {
+          // Undo (Cmd+Z)
+          if (notesHistoryIndex > 0) {
+            notesHistoryIndex--;
+            notesTextarea.value = notesHistory[notesHistoryIndex];
+            state.settings.notes = notesTextarea.value;
+            saveSettings();
+            updateNotesBadge();
+          }
+          e.preventDefault();
+        }
+      } else if (isCmdOrCtrl && key === 'y') {
+        // Redo (Ctrl+Y)
+        if (notesHistoryIndex < notesHistory.length - 1) {
+          notesHistoryIndex++;
+          notesTextarea.value = notesHistory[notesHistoryIndex];
+          state.settings.notes = notesTextarea.value;
+          saveSettings();
+          updateNotesBadge();
+        }
+        e.preventDefault();
+      }
     });
   }
 
@@ -2493,9 +2565,11 @@ function setupEventListeners() {
     clearNotesBtn.addEventListener('click', () => {
       if (notesTextarea) {
         notesTextarea.value = '';
+        pushNotesHistory('');
       }
       state.settings.notes = '';
       saveSettings();
+      updateNotesBadge();
     });
   }
 
@@ -3052,6 +3126,7 @@ async function init() {
 
   // Render initial countdowns
   renderCountdowns();
+  updateNotesBadge();
 
   // Fetch API data for configured integrations
   fetchGitHub();
