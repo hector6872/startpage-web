@@ -546,6 +546,8 @@ body {
   font-weight: 500;
   white-space: nowrap;
   margin-top: 2px;
+  display: inline-flex;
+  align-items: center;
 }
 
 .clock-info {

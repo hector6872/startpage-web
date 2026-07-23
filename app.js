@@ -947,22 +947,42 @@ function updateWorldClock() {
       clockLabelEl.title = fullTooltip;
     }
     
-    // Calculate and update time difference text below clock time
+    // Calculate and update time difference text & day/night icon below clock time
     const diffInfo = getTzDifference(state.settings.worldClockTz);
     const diffEl = widget.querySelector('.clock-diff');
     if (diffEl) {
+      // Determine if it's day or night in target timezone (6:00 to 19:59 is day)
+      let targetHour = 12;
+      try {
+        const hourFormatter = new Intl.DateTimeFormat('en-US', {
+          timeZone: state.settings.worldClockTz,
+          hour: 'numeric',
+          hour12: false
+        });
+        targetHour = parseInt(hourFormatter.format(now), 10);
+      } catch (err) {
+        targetHour = now.getHours();
+      }
+      const isDaytime = targetHour >= 6 && targetHour < 20;
+
+      const sunSvg = `<svg class="clock-daynight-icon" xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: #f59e0b; display: inline-block; vertical-align: -1px; margin-left: 4px;"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>`;
+      const moonSvg = `<svg class="clock-daynight-icon" xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: #818cf8; display: inline-block; vertical-align: -1px; margin-left: 4px;"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>`;
+      const dayNightIcon = isDaytime ? sunSvg : moonSvg;
+
       if (diffInfo.diffHours === 0 && diffInfo.dayDiffDays === 0) {
-        diffEl.textContent = dict['world-clock-same-time'] || (state.lang === 'es' ? 'Misma hora' : 'Same time');
+        const sameTimeStr = dict['world-clock-same-time'] || (state.lang === 'es' ? 'Misma hora' : 'Same time');
+        diffEl.innerHTML = `${sameTimeStr} ${dayNightIcon}`;
       } else {
         let diffStr = '';
-        if (diffInfo.diffHours > 0) {
-          diffStr = `+${diffInfo.diffHours}h`;
-        } else if (diffInfo.diffHours < 0) {
-          diffStr = `${diffInfo.diffHours}h`;
+        const absDiff = Math.abs(diffInfo.diffHours);
+        if (state.lang === 'es') {
+          const hLabel = absDiff === 1 ? 'hora' : 'horas';
+          diffStr = diffInfo.diffHours > 0 ? `+${diffInfo.diffHours} ${hLabel}` : `${diffInfo.diffHours} ${hLabel}`;
         } else {
-          diffStr = `0h`;
+          const hLabel = absDiff === 1 ? 'hour' : 'hours';
+          diffStr = diffInfo.diffHours > 0 ? `+${diffInfo.diffHours} ${hLabel}` : `${diffInfo.diffHours} ${hLabel}`;
         }
-        
+
         let dayStr = '';
         if (diffInfo.dayDiffDays === 1) {
           dayStr = state.lang === 'es' ? ' (mañana)' : ' (tomorrow)';
@@ -973,8 +993,8 @@ function updateWorldClock() {
         } else if (diffInfo.dayDiffDays < -1) {
           dayStr = ` (${diffInfo.dayDiffDays}d)`;
         }
-        
-        diffEl.textContent = `${diffStr}${dayStr}`;
+
+        diffEl.innerHTML = `${diffStr}${dayStr} ${dayNightIcon}`;
       }
     }
   } catch (e) {
