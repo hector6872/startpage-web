@@ -3,13 +3,17 @@ const translations = {
   en: {
     "col-today": "Today",
     "col-week": "This Week",
-    "col-tasks": "My Tasks",
+    "col-tasks": "Workspace",
+    "tasks-card-title": "My Tasks",
     "calendar-events": "Events & Meetings",
     "urgent-emails": "Urgent Emails (Gmail)",
     "pending-prs": "Pull Requests",
     "weekly-schedule": "Weekly Schedule",
     "jira-tasks": "Jira Assigned Tasks",
     "todo-placeholder": "Add a new task...",
+    "countdown-placeholder": "Countdown title...",
+    "col-countdowns": "My Countdowns",
+    "countdown-empty": "No countdowns yet.",
     "priority-low": "Low",
     "priority-medium": "Medium",
     "priority-high": "High",
@@ -24,15 +28,49 @@ const translations = {
     "tab-jira": "Jira Cloud",
     "tab-storage": "Storage",
     "label-language": "Language",
+    "label-primary-color": "Primary Color",
+    "color-blue": "Blue",
+    "color-indigo": "Indigo",
+    "color-purple": "Purple",
+    "color-pink": "Pink",
+    "color-red": "Red",
+    "color-orange": "Orange",
+    "color-green": "Green",
+    "color-teal": "Teal",
+    "color-slate": "Slate Gray",
+    "color-black": "Black / Onyx",
     "label-theme": "Default Theme",
     "theme-system": "System Default",
     "theme-light": "Light",
     "theme-dark": "Dark",
     "label-world-clock-tz": "World Clock Timezone",
-    "world-clock-disabled": "Disabled",
     "label-world-clock-label": "World Clock Label",
     "world-clock-sub": "World Time",
+    "label-show-weather": "Show Weather Widget",
+    "label-show-world-clock": "Show World Clock Widget",
+    "label-show-countdowns": "Show Countdowns",
+    "label-show-tasks": "Show Tasks",
     "label-city": "Weather City",
+    "label-weather-url": "Weather Web URL (Optional)",
+    "weather-url-placeholder": "e.g. https://weather.com or leave empty for Google Weather",
+    "label-world-clock-url": "World Clock Web URL (Optional)",
+    "clock-url-placeholder": "e.g. https://time.is or leave empty for Google Time",
+    "label-finance-url": "Finance Web URL",
+    "finance-url-placeholder": "e.g. https://www.google.com/finance/beta/quote/.INX:INDEXSP?window=1M",
+    "label-timer-url": "Timer Web URL",
+    "timer-url-placeholder": "e.g. https://www.google.com/search?q=countdown+timer",
+    "label-stopwatch-url": "Stopwatch Web URL",
+    "stopwatch-url-placeholder": "e.g. https://www.google.com/search?q=stopwatch",
+    "notes-btn-title": "Notes",
+    "notes-modal-title": "Quick Notes",
+    "notes-placeholder": "Write your notes here...",
+    "clear-notes-btn": "Clear Notes",
+    "close-btn": "Close",
+    "finance-btn-title": "Finance",
+    "timer-btn-title": "Timer",
+    "stopwatch-btn-title": "Stopwatch",
+    "tab-shortcuts": "Shortcuts",
+    "shortcuts-card-title": "Quick Action Shortcuts",
     "city-desc": "Leave empty for automatic geolocation.",
     "google-desc": "Requires a Google Cloud Console project with OAuth credentials. Remember to add your local origin (e.g. http://localhost:5173) under Authorized JavaScript Origins.",
     "label-client-id": "Google OAuth Client ID",
@@ -54,10 +92,14 @@ const translations = {
     "label-jira-token": "Jira API Token",
     "save-settings": "Save Settings",
     "edit-task-title": "Edit Task",
+    "add-countdown-title": "Add New Countdown",
+    "add-task-title-modal": "Add New Task",
     "label-task-text": "Task Name",
     "label-due-date": "Due Date",
     "label-priority": "Priority",
     "cancel-btn": "Cancel",
+    "delete-btn": "Delete",
+    "clear-completed-btn": "Clear All",
     "save-btn": "Save Changes",
     "no-events": "No events scheduled.",
     "no-emails": "No unread emails.",
@@ -74,6 +116,14 @@ const translations = {
     "weather-error": "Weather unavailable",
     "weather-unconfigured": "Location not set.",
     "weather-configure-btn": "Configure",
+    "timezone-unconfigured": "No timezone selected",
+    "world-clock-unconfigured": "Timezone not set.",
+    "world-clock-same-time": "Same time",
+    "world-clock-title": "World Clock",
+    "focus-card-title": "Current Focus",
+    "confirm-delete-title": "Delete Task",
+    "confirm-delete-desc": "Are you sure you want to delete this task?",
+    "completed-tasks-note": "Only tasks completed within the last 7 days are displayed.",
     "quote-loading": "Loading quote...",
     "status-unconfigured": "Unconfigured",
     "storage-desc": "Configure where your data is stored. You can select a JSON file in your Google Drive or local sync folder to share tasks across devices.",
@@ -88,18 +138,27 @@ const translations = {
     "btn-import": "Import JSON",
     "file-unsupported": "File System Access API is not supported in this browser. Using manual backup instead.",
     "file-read-error": "Failed to read the selected file.",
-    "file-write-error": "Failed to write data to file."
+    "file-write-error": "Failed to write data to file.",
+    "weather-rain": "Rain expected: {prob}%",
+    "weather-snow": "Snow expected: {prob}%",
+    "weather-storm": "Storms expected: {prob}%",
+    "weather-no-precip": "No precip. next 24h",
+    "weather-feels-like": "Feels like: {temp}°C"
   },
   es: {
     "col-today": "Hoy",
     "col-week": "Esta Semana",
-    "col-tasks": "Mis Tareas",
+    "col-tasks": "Espacio de Trabajo",
+    "tasks-card-title": "Mis Tareas",
     "calendar-events": "Eventos y Reuniones",
     "urgent-emails": "Correos Urgentes (Gmail)",
     "pending-prs": "Pull Requests",
     "weekly-schedule": "Agenda Semanal",
     "jira-tasks": "Tareas de Jira",
-    "todo-placeholder": "Añadir una nueva tarea...",
+    "todo-placeholder": "Añadir nueva tarea...",
+    "countdown-placeholder": "Título del countdown...",
+    "col-countdowns": "Mis Countdowns",
+    "countdown-empty": "Sin countdowns todavía.",
     "priority-low": "Baja",
     "priority-medium": "Media",
     "priority-high": "Alta",
@@ -114,15 +173,49 @@ const translations = {
     "tab-jira": "Jira Cloud",
     "tab-storage": "Almacenamiento",
     "label-language": "Idioma",
+    "label-primary-color": "Color Primario",
+    "color-blue": "Azul",
+    "color-indigo": "Índigo",
+    "color-purple": "Púrpura",
+    "color-pink": "Rosa",
+    "color-red": "Rojo",
+    "color-orange": "Naranja",
+    "color-green": "Verde",
+    "color-teal": "Turquesa",
+    "color-slate": "Gris Pizarra",
+    "color-black": "Negro / Ónice",
     "label-theme": "Tema Predeterminado",
     "theme-system": "Predeterminado del Sistema",
     "theme-light": "Claro",
     "theme-dark": "Oscuro",
     "label-world-clock-tz": "Zona Horaria del Reloj Mundial",
-    "world-clock-disabled": "Desactivado",
     "label-world-clock-label": "Etiqueta del Reloj Mundial",
     "world-clock-sub": "Hora Mundial",
+    "label-show-weather": "Mostrar Clima",
+    "label-show-world-clock": "Mostrar Reloj Mundial",
+    "label-show-countdowns": "Mostrar Countdowns",
+    "label-show-tasks": "Mostrar Tareas",
     "label-city": "Ciudad para el clima",
+    "label-weather-url": "URL de la web del clima (Opcional)",
+    "weather-url-placeholder": "ej. https://eltiempo.es o dejar vacío para Google Clima",
+    "label-world-clock-url": "URL de la web del reloj (Opcional)",
+    "clock-url-placeholder": "ej. https://time.is o dejar vacío para Google Hora",
+    "label-finance-url": "URL de Finanzas / Bolsa",
+    "finance-url-placeholder": "ej. https://www.google.com/finance/beta/quote/.INX:INDEXSP?window=1M",
+    "label-timer-url": "URL del Temporizador",
+    "timer-url-placeholder": "ej. https://www.google.com/search?q=countdown+timer",
+    "label-stopwatch-url": "URL del Cronómetro",
+    "stopwatch-url-placeholder": "ej. https://www.google.com/search?q=stopwatch",
+    "notes-btn-title": "Notas",
+    "notes-modal-title": "Notas Rápidas",
+    "notes-placeholder": "Escribe tus notas aquí...",
+    "clear-notes-btn": "Vaciar",
+    "close-btn": "Cerrar",
+    "finance-btn-title": "Finanzas",
+    "timer-btn-title": "Temporizador",
+    "stopwatch-btn-title": "Cronómetro",
+    "tab-shortcuts": "Atajos",
+    "shortcuts-card-title": "Atajos de Acción Rápida",
     "city-desc": "Déjalo vacío para usar la geolocalización automática del navegador.",
     "google-desc": "Requiere un proyecto en Google Cloud Console con credenciales OAuth. Recuerda añadir tu origen local (ej. http://localhost:5173) en los orígenes de JavaScript autorizados.",
     "label-client-id": "Cliente ID de Google OAuth",
@@ -144,10 +237,14 @@ const translations = {
     "label-jira-token": "Token de API de Jira",
     "save-settings": "Guardar Configuración",
     "edit-task-title": "Editar Tarea",
+    "add-countdown-title": "Añadir nuevo countdown",
+    "add-task-title-modal": "Añadir nueva tarea",
     "label-task-text": "Nombre de la Tarea",
     "label-due-date": "Fecha de Vencimiento",
     "label-priority": "Prioridad",
     "cancel-btn": "Cancelar",
+    "delete-btn": "Eliminar",
+    "clear-completed-btn": "Limpiar todas",
     "save-btn": "Guardar Cambios",
     "no-events": "No hay eventos programados.",
     "no-emails": "No hay correos sin leer.",
@@ -164,6 +261,14 @@ const translations = {
     "weather-error": "Clima no disponible",
     "weather-unconfigured": "Ubicación sin configurar.",
     "weather-configure-btn": "Configurar",
+    "timezone-unconfigured": "Sin zona horaria",
+    "world-clock-unconfigured": "Zona horaria sin configurar.",
+    "world-clock-same-time": "Misma hora",
+    "world-clock-title": "Reloj Mundial",
+    "focus-card-title": "Tarea en Enfoque",
+    "confirm-delete-title": "Confirmar Eliminación",
+    "confirm-delete-desc": "¿Estás seguro de que quieres eliminar esta tarea?",
+    "completed-tasks-note": "Solo se mostrarán las completadas en los últimos 7 días.",
     "quote-loading": "Cargando frase...",
     "status-unconfigured": "Sin configurar",
     "storage-desc": "Configura dónde se guardan tus datos. Puedes seleccionar un archivo JSON en tu Google Drive o carpeta local sincronizada para compartir tareas entre dispositivos.",
@@ -178,7 +283,12 @@ const translations = {
     "btn-import": "Importar JSON",
     "file-unsupported": "La API de Acceso a Archivos no está soportada en este navegador. Utiliza la copia manual en su lugar.",
     "file-read-error": "Error al leer el archivo seleccionado.",
-    "file-write-error": "Error al escribir datos en el archivo."
+    "file-write-error": "Error al escribir datos en el archivo.",
+    "weather-rain": "Lluvia esperada: {prob}%",
+    "weather-snow": "Nieve esperada: {prob}%",
+    "weather-storm": "Tormentas esperadas: {prob}%",
+    "weather-no-precip": "Sin precip. próximas 24h",
+    "weather-feels-like": "Sensación: {temp}°C"
   }
 };
 
@@ -213,13 +323,23 @@ let state = {
   lang: 'en',
   theme: 'system',
   todos: [],
+  countdowns: [],
   googleClientToken: sessionStorage.getItem('google_access_token') || null,
   settings: {
     lang: 'en',
     theme: 'system',
+    primaryColor: 'blue',
     city: '',
-    worldClockTz: '',
+    weatherUrl: '',
+    worldClockTz: 'Europe/London',
     worldClockLabel: '',
+    worldClockUrl: '',
+    notes: '',
+    financeUrl: 'https://www.google.com/finance/beta/quote/.INX:INDEXSP?window=1M',
+    timerUrl: 'https://www.google.com/search?q=countdown+timer',
+    stopwatchUrl: 'https://www.google.com/search?q=stopwatch',
+    showWeather: true,
+    showWorldClock: true,
     storageMode: 'local', // local or file
     googleClientId: '',
     githubToken: '',
@@ -364,6 +484,7 @@ async function initializeFileSync() {
         }
         if (state.settings.lang) state.lang = state.settings.lang;
         if (state.settings.theme) state.theme = state.settings.theme;
+        if (state.settings.primaryColor) applyPrimaryColor(state.settings.primaryColor);
         
         // Cache to localStorage
         localStorage.setItem('todos', JSON.stringify(state.todos));
@@ -416,6 +537,7 @@ function importStateFromFile(file) {
       const data = JSON.parse(e.target.result);
       if (data.todos) state.todos = data.todos;
       if (data.settings) state.settings = { ...state.settings, ...data.settings };
+      if (state.settings.primaryColor) applyPrimaryColor(state.settings.primaryColor);
       
       await saveSettings();
       renderTodos();
@@ -441,17 +563,55 @@ async function loadState() {
   if (storedSettings) {
     state.settings = { ...state.settings, ...JSON.parse(storedSettings) };
   }
+  state.settings.customEvents = state.settings.customEvents || [];
+  state.settings.primaryColor = state.settings.primaryColor || 'blue';
   state.lang = state.settings.lang || 'en';
   state.theme = state.settings.theme || localStorage.getItem('theme') || 'system';
+
+  applyPrimaryColor(state.settings.primaryColor);
 
   const storedTodos = localStorage.getItem('todos');
   if (storedTodos) {
     state.todos = JSON.parse(storedTodos);
   }
 
+  const storedCountdowns = localStorage.getItem('countdowns');
+  if (storedCountdowns) {
+    state.countdowns = JSON.parse(storedCountdowns);
+  }
+
   // Initialize file sync if enabled
   if (state.settings.storageMode === 'file') {
     await initializeFileSync();
+  }
+
+  // Clean up completed todos older than 7 days upon loading
+  await cleanupOldCompletedTodos();
+
+  // Initialize organizer visibility settings
+  updateOrganizerVisibility();
+}
+
+async function cleanupOldCompletedTodos() {
+  const sevenDaysAgo = Date.now() - (7 * 24 * 60 * 60 * 1000);
+  let changed = false;
+  state.todos = state.todos.filter(todo => {
+    if (todo.completed) {
+      if (!todo.completedAt) {
+        todo.completedAt = new Date().toISOString();
+        changed = true;
+        return true;
+      }
+      const completedTime = new Date(todo.completedAt).getTime();
+      if (completedTime < sevenDaysAgo) {
+        changed = true;
+        return false;
+      }
+    }
+    return true;
+  });
+  if (changed) {
+    await saveTodos();
   }
 }
 
@@ -460,10 +620,164 @@ async function saveSettings() {
   state.settings.theme = state.theme;
   localStorage.setItem('dashboard_settings', JSON.stringify(state.settings));
   localStorage.setItem('theme', state.theme);
+  updateNotesBadge();
 
   if (state.settings.storageMode === 'file') {
     await writeDataToFile();
   }
+}
+
+function updateNotesBadge() {
+  const badge = document.getElementById('notes-badge');
+  if (!badge) return;
+  const hasNotes = state.settings.notes && state.settings.notes.trim().length > 0;
+  if (hasNotes) {
+    badge.classList.remove('hidden');
+  } else {
+    badge.classList.add('hidden');
+  }
+}
+
+function updateUpcomingEventBanner() {
+  const banner = document.getElementById('upcoming-event');
+  if (!banner) return;
+
+  const events = state.settings.customEvents || [];
+  if (events.length === 0) {
+    banner.classList.add('hidden');
+    return;
+  }
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const currentYear = today.getFullYear();
+
+  let todayEvents = [];
+  let upcomingEvents = [];
+
+  events.forEach(evt => {
+    const [year, monthStr, dayStr] = evt.date.split('-');
+    const month = parseInt(monthStr, 10) - 1;
+    const day = parseInt(dayStr, 10);
+
+    // Calculate occurrence in current year
+    let eventDateThisYear = new Date(currentYear, month, day);
+    
+    if (today.getMonth() === month && today.getDate() === day) {
+      todayEvents.push(evt);
+    } else {
+      if (eventDateThisYear < today) {
+        eventDateThisYear.setFullYear(currentYear + 1);
+      }
+      const timeDiff = eventDateThisYear.getTime() - today.getTime();
+      const daysLeft = Math.ceil(timeDiff / (1000 * 3600 * 24));
+      upcomingEvents.push({
+        ...evt,
+        daysLeft
+      });
+    }
+  });
+
+  if (todayEvents.length > 0) {
+    banner.className = 'event-banner today';
+    const names = todayEvents.map(e => e.name).join(', ');
+    const labelText = state.lang === 'es' 
+      ? `🎉 Hoy: ¡${names}! 🎂`
+      : `🎉 Today: ${names}! 🎂`;
+    banner.textContent = labelText;
+  } else if (upcomingEvents.length > 0) {
+    upcomingEvents.sort((a, b) => a.daysLeft - b.daysLeft);
+    const closest = upcomingEvents[0];
+    if (closest.daysLeft < 7) {
+      banner.className = 'event-banner soon';
+    } else if (closest.daysLeft < 31) {
+      banner.className = 'event-banner today';
+    } else {
+      banner.className = 'event-banner upcoming';
+    }
+    
+    const isBirthday = closest.name.toLowerCase().includes('birthday') || closest.name.toLowerCase().includes('cumpleaños');
+    const icon = isBirthday ? '🎈' : '📅';
+    
+    let timeText = '';
+    if (state.lang === 'es') {
+      timeText = closest.daysLeft === 1 ? 'mañana' : `en ${closest.daysLeft} días`;
+    } else {
+      timeText = closest.daysLeft === 1 ? 'tomorrow' : `in ${closest.daysLeft} days`;
+    }
+    const labelText = `${icon} ${closest.name} (${timeText})`;
+    
+    banner.textContent = labelText;
+  } else {
+    banner.classList.add('hidden');
+  }
+}
+
+function renderSettingsEventsList() {
+  const listEl = document.getElementById('settings-events-list');
+  if (!listEl) return;
+  listEl.innerHTML = '';
+
+  const events = state.settings.customEvents || [];
+  if (events.length === 0) {
+    const emptyMsg = document.createElement('li');
+    emptyMsg.style.color = 'var(--text-secondary)';
+    emptyMsg.style.fontSize = '0.8rem';
+    emptyMsg.style.justifyContent = 'center';
+    emptyMsg.textContent = state.lang === 'es' ? 'No hay acontecimientos.' : 'No events configured.';
+    listEl.appendChild(emptyMsg);
+    return;
+  }
+
+  // Sort events chronologically (January -> December)
+  const sortedEvents = [...events].sort((a, b) => {
+    const [, mA, dA] = a.date.split('-').map(Number);
+    const [, mB, dB] = b.date.split('-').map(Number);
+    if (mA !== mB) return mA - mB;
+    return dA - dB;
+  });
+
+  sortedEvents.forEach((evt) => {
+    const li = document.createElement('li');
+    
+    const infoDiv = document.createElement('div');
+    infoDiv.className = 'event-item-info';
+    
+    const nameSpan = document.createElement('span');
+    nameSpan.className = 'event-item-name';
+    nameSpan.textContent = evt.name;
+    
+    const dateSpan = document.createElement('span');
+    dateSpan.className = 'event-item-date';
+    const [y, m, d] = evt.date.split('-');
+    const dateObj = new Date(y, parseInt(m, 10) - 1, d);
+    dateSpan.textContent = dateObj.toLocaleDateString(state.lang === 'es' ? 'es-ES' : 'en-US', { day: 'numeric', month: 'short' });
+    
+    infoDiv.appendChild(nameSpan);
+    infoDiv.appendChild(dateSpan);
+    
+    const deleteBtn = document.createElement('button');
+    deleteBtn.type = 'button';
+    deleteBtn.className = 'btn-delete-event';
+    deleteBtn.innerHTML = `
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="3 6 5 6 21 6"></polyline>
+        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+      </svg>
+    `;
+    deleteBtn.addEventListener('click', async (e) => {
+      e.preventDefault();
+      // Filter out by ID instead of index
+      state.settings.customEvents = state.settings.customEvents.filter(item => item.id !== evt.id);
+      await saveSettings();
+      renderSettingsEventsList();
+      updateUpcomingEventBanner();
+    });
+    
+    li.appendChild(infoDiv);
+    li.appendChild(deleteBtn);
+    listEl.appendChild(li);
+  });
 }
 
 // i18n Translation Engine
@@ -486,8 +800,19 @@ function translatePage() {
     }
   });
 
-  // Update UI lang toggle button text
-  document.getElementById('lang-toggle').textContent = state.lang.toUpperCase();
+  // Translate titles
+  document.querySelectorAll('[data-i18n-title]').forEach(el => {
+    const key = el.getAttribute('data-i18n-title');
+    if (dictionary[key]) {
+      el.setAttribute('title', dictionary[key]);
+    }
+  });
+
+  // Update UI lang toggle button text if exists
+  const langToggle = document.getElementById('lang-toggle');
+  if (langToggle) {
+    langToggle.textContent = state.lang.toUpperCase();
+  }
 }
 
 // DateTime / Greeting System
@@ -516,17 +841,72 @@ function updateTimeAndGreeting() {
 
   // Update World Clock
   updateWorldClock();
+
+  // Update Upcoming Event Banner
+  updateUpcomingEventBanner();
 }
 
 // World Clock System
+function getTzDifference(targetTz) {
+  try {
+    const now = new Date();
+    const formatter = new Intl.DateTimeFormat('en-US', {
+      timeZone: targetTz,
+      year: 'numeric',
+      month: 'numeric',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: 'numeric',
+      hour12: false
+    });
+    
+    const parts = formatter.formatToParts(now);
+    const p = {};
+    for (const part of parts) {
+      if (part.type !== 'literal') {
+        p[part.type] = parseInt(part.value, 10);
+      }
+    }
+    const targetHour = (p.hour || 0) % 24;
+    
+    const localMs = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate(), now.getHours(), now.getMinutes());
+    const targetMs = Date.UTC(p.year, p.month - 1, p.day, targetHour, p.minute);
+    
+    const diffMinutes = Math.round((targetMs - localMs) / (1000 * 60));
+    const diffHours = Math.round(diffMinutes / 60);
+    
+    const localDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const targetDate = new Date(p.year, p.month - 1, p.day);
+    const dayDiffDays = Math.round((targetDate - localDate) / (1000 * 3600 * 24));
+    
+    return { diffHours, dayDiffDays };
+  } catch (e) {
+    console.error("Error computing tz difference:", e);
+    return { diffHours: 0, dayDiffDays: 0 };
+  }
+}
+
 function updateWorldClock() {
   const widget = document.getElementById('world-clock-widget');
-  if (!state.settings.worldClockTz) {
+  if (state.settings.showWorldClock === false) {
     widget.classList.add('hidden');
     return;
   }
   
   widget.classList.remove('hidden');
+  const dict = translations[state.lang];
+
+  if (!state.settings.worldClockTz) {
+    widget.classList.add('unconfigured');
+    widget.removeAttribute('title');
+    const clockLabelEl = widget.querySelector('.clock-label');
+    if (clockLabelEl) clockLabelEl.removeAttribute('title');
+    const unconfEl = widget.querySelector('.clock-unconfigured-text');
+    if (unconfEl) unconfEl.textContent = dict['world-clock-unconfigured'];
+    return;
+  }
+  widget.classList.remove('unconfigured');
+
   try {
     const now = new Date();
     const formatter = new Intl.DateTimeFormat(state.lang === 'es' ? 'es-ES' : 'en-US', {
@@ -536,11 +916,109 @@ function updateWorldClock() {
       hour12: false
     });
     widget.querySelector('.clock-time').textContent = formatter.format(now);
-    widget.querySelector('.clock-label').textContent = state.settings.worldClockLabel || state.settings.worldClockTz.split('/').pop().replace('_', ' ');
+    
+    // Label logic: custom label if set, otherwise cities without acronyms. Tooltip is ALWAYS the full timezone string.
+    let customLabel = state.settings.worldClockLabel ? state.settings.worldClockLabel.trim() : '';
+    let optionText = '';
+    
+    if (state.settings.worldClockTz) {
+      const tzSelect = document.getElementById('settings-world-clock-tz');
+      if (tzSelect) {
+        const option = tzSelect.querySelector(`option[value="${state.settings.worldClockTz}"]`);
+        if (option && option.textContent) {
+          optionText = option.textContent.trim();
+        }
+      }
+      if (!optionText) {
+        optionText = state.settings.worldClockTz.split('/').pop().replace(/_/g, ' ');
+      }
+    }
+
+    const fullTooltip = optionText;
+    let labelText = customLabel;
+    if (!labelText) {
+      labelText = optionText.replace(/\s*\([^)]*\)/g, '').trim();
+    }
+    
+    widget.title = fullTooltip;
+    const clockLabelEl = widget.querySelector('.clock-label');
+    if (clockLabelEl) {
+      clockLabelEl.textContent = labelText;
+      clockLabelEl.title = fullTooltip;
+    }
+    
+    // Calculate and update time difference text & day/night icon below clock time
+    const diffInfo = getTzDifference(state.settings.worldClockTz);
+    const diffEl = widget.querySelector('.clock-diff');
+    if (diffEl) {
+      // Determine if it's day or night in target timezone (6:00 to 19:59 is day)
+      let targetHour = 12;
+      try {
+        const hourFormatter = new Intl.DateTimeFormat('en-US', {
+          timeZone: state.settings.worldClockTz,
+          hour: 'numeric',
+          hour12: false
+        });
+        targetHour = parseInt(hourFormatter.format(now), 10);
+      } catch (err) {
+        targetHour = now.getHours();
+      }
+      const isDaytime = targetHour >= 6 && targetHour < 20;
+
+      const sunSvg = `<svg class="clock-daynight-icon" xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: #f59e0b; display: inline-block; vertical-align: -1px; margin-left: 4px;"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>`;
+      const moonSvg = `<svg class="clock-daynight-icon" xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: #818cf8; display: inline-block; vertical-align: -1px; margin-left: 4px;"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>`;
+      const dayNightIcon = isDaytime ? sunSvg : moonSvg;
+
+      if (diffInfo.diffHours === 0 && diffInfo.dayDiffDays === 0) {
+        const sameTimeStr = dict['world-clock-same-time'] || (state.lang === 'es' ? 'Misma hora' : 'Same time');
+        diffEl.innerHTML = `${sameTimeStr} ${dayNightIcon}`;
+      } else {
+        let diffStr = '';
+        const absDiff = Math.abs(diffInfo.diffHours);
+        if (state.lang === 'es') {
+          const hLabel = absDiff === 1 ? 'hora' : 'horas';
+          diffStr = diffInfo.diffHours > 0 ? `+${diffInfo.diffHours} ${hLabel}` : `${diffInfo.diffHours} ${hLabel}`;
+        } else {
+          const hLabel = absDiff === 1 ? 'hour' : 'hours';
+          diffStr = diffInfo.diffHours > 0 ? `+${diffInfo.diffHours} ${hLabel}` : `${diffInfo.diffHours} ${hLabel}`;
+        }
+
+        let dayStr = '';
+        if (diffInfo.dayDiffDays === 1) {
+          dayStr = state.lang === 'es' ? ' (mañana)' : ' (tomorrow)';
+        } else if (diffInfo.dayDiffDays === -1) {
+          dayStr = state.lang === 'es' ? ' (ayer)' : ' (yesterday)';
+        } else if (diffInfo.dayDiffDays > 1) {
+          dayStr = ` (+${diffInfo.dayDiffDays}d)`;
+        } else if (diffInfo.dayDiffDays < -1) {
+          dayStr = ` (${diffInfo.dayDiffDays}d)`;
+        }
+
+        diffEl.innerHTML = `${diffStr}${dayStr} ${dayNightIcon}`;
+      }
+    }
   } catch (e) {
     console.error("Error updating world clock:", e);
     widget.classList.add('hidden');
   }
+}
+
+// Primary Color Accent Management
+function applyPrimaryColor(colorName = 'blue') {
+  const validColors = ['blue', 'indigo', 'purple', 'pink', 'red', 'orange', 'green', 'teal', 'slate', 'black'];
+  const color = validColors.includes(colorName) ? colorName : 'blue';
+  document.documentElement.setAttribute('data-accent', color);
+}
+
+function updateSwatchActiveState(selectedColor) {
+  const swatches = document.querySelectorAll('#color-picker-swatches .color-swatch-btn');
+  swatches.forEach(btn => {
+    if (btn.getAttribute('data-color') === selectedColor) {
+      btn.classList.add('active');
+    } else {
+      btn.classList.remove('active');
+    }
+  });
 }
 
 // Theme management
@@ -572,12 +1050,22 @@ async function toggleTheme() {
   applyTheme();
 }
 
+function toSentenceCase(str) {
+  if (!str) return '';
+  const lower = str.toLowerCase();
+  return lower.replace(/(^\s*|[.!?]\s+)([a-z])/g, (match, separator, char) => separator + char.toUpperCase());
+}
+
 // Quotes System
 function loadQuote() {
   const dictionary = translations[state.lang];
   const quoteWidget = document.getElementById('quote-widget');
   quoteWidget.querySelector('.quote-text').textContent = dictionary['quote-loading'];
-  quoteWidget.querySelector('.quote-author').textContent = '';
+  const authorEl = quoteWidget.querySelector('.quote-author');
+  if (authorEl) {
+    authorEl.textContent = '';
+    authorEl.removeAttribute('href');
+  }
 
   // Attempt to fetch from public API, fallback to curated local list
   fetch('https://dummyjson.com/quotes/random')
@@ -588,11 +1076,9 @@ function loadQuote() {
     .then(data => {
       // API provides quotes in English. If page is in Spanish, translate or use local
       if (state.lang === 'es') {
-        // Fallback to local Spanish quotes to keep translation quality
         useLocalQuote();
       } else {
-        quoteWidget.querySelector('.quote-text').textContent = `"${data.quote}"`;
-        quoteWidget.querySelector('.quote-author').textContent = `-- ${data.author}`;
+        updateQuoteDisplay(data.quote, data.author);
       }
     })
     .catch(() => {
@@ -602,14 +1088,37 @@ function loadQuote() {
   function useLocalQuote() {
     const list = quotesDb[state.lang] || quotesDb['en'];
     const randomQuote = list[Math.floor(Math.random() * list.length)];
-    quoteWidget.querySelector('.quote-text').textContent = `"${randomQuote.text}"`;
-    quoteWidget.querySelector('.quote-author').textContent = `-- ${randomQuote.author}`;
+    updateQuoteDisplay(randomQuote.text, randomQuote.author);
+  }
+
+  function updateQuoteDisplay(text, author) {
+    const quoteTextEl = quoteWidget.querySelector('.quote-text');
+    const quoteSepEl = quoteWidget.querySelector('.quote-sep');
+    quoteTextEl.textContent = `"${toSentenceCase(text)}"`;
+    if (author && authorEl) {
+      const cleanAuthor = author.replace(/^[\s–—-]+/, '').trim();
+      const wikiLang = state.lang === 'es' ? 'es' : 'en';
+      if (quoteSepEl) quoteSepEl.style.display = 'inline';
+      authorEl.href = `https://${wikiLang}.wikipedia.org/wiki/Special:Search?search=${encodeURIComponent(cleanAuthor)}`;
+      authorEl.textContent = cleanAuthor;
+      authorEl.title = state.lang === 'es' ? `Ver ${cleanAuthor} en Wikipedia` : `View ${cleanAuthor} on Wikipedia`;
+      authorEl.style.display = 'inline';
+    } else if (authorEl) {
+      if (quoteSepEl) quoteSepEl.style.display = 'none';
+      authorEl.textContent = '';
+      authorEl.style.display = 'none';
+    }
   }
 }
 
 // Weather System (Open-Meteo)
 async function loadWeather() {
   const weatherWidget = document.getElementById('weather-widget');
+  if (state.settings.showWeather === false) {
+    weatherWidget.classList.add('hidden');
+    return;
+  }
+  weatherWidget.classList.remove('hidden');
   weatherWidget.classList.add('loading');
 
   const dict = translations[state.lang];
@@ -630,62 +1139,72 @@ async function loadWeather() {
         throw new Error("City not found");
       }
     } else {
-      // Auto Geolocating
-      const coords = await new Promise((resolve, reject) => {
-        if (!navigator.geolocation) {
-          const err = new Error("Unsupported");
-          err.isGeolocationError = true;
-          reject(err);
-          return;
-        }
-        navigator.geolocation.getCurrentPosition(
-          pos => resolve(pos.coords),
-          err => {
-            const error = new Error(err.message);
-            error.isGeolocationError = true;
-            reject(error);
-          },
-          { timeout: 5000 }
-        );
-      });
-      lat = coords.latitude;
-      lon = coords.longitude;
-      cityName = state.lang === 'es' ? 'Mi Ubicación' : 'My Location';
+      const err = new Error("Unconfigured");
+      err.isUnconfigured = true;
+      throw err;
     }
 
-    const weatherRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`);
+    const weatherRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,apparent_temperature,weather_code&hourly=precipitation_probability,weathercode`);
     const weatherData = await weatherRes.json();
     
-    if (weatherData.current_weather) {
-      const temp = Math.round(weatherData.current_weather.temperature);
-      const code = weatherData.current_weather.weathercode;
+    if (weatherData.current) {
+      weatherWidget.classList.remove('unconfigured');
+      const temp = Math.round(weatherData.current.temperature_2m);
+      const apparentTemp = Math.round(weatherData.current.apparent_temperature);
+      const code = weatherData.current.weather_code;
       const desc = getWeatherDesc(code);
       
       weatherWidget.querySelector('.weather-temp').textContent = `${temp}°C`;
+      weatherWidget.querySelector('.weather-feels').textContent = dict['weather-feels-like'].replace('{temp}', apparentTemp);
       weatherWidget.querySelector('.weather-desc').textContent = desc;
       weatherWidget.querySelector('.weather-loc').textContent = cityName;
+
+      // Calculate precipitation in next 24h
+      let precipHTML = '';
+      if (weatherData.hourly && weatherData.hourly.precipitation_probability && weatherData.hourly.weathercode) {
+        const currentHourStr = weatherData.current.time;
+        const startIndex = weatherData.hourly.time.indexOf(currentHourStr);
+        const start = startIndex !== -1 ? startIndex : 0;
+        const next24Probs = weatherData.hourly.precipitation_probability.slice(start, start + 24);
+        const next24Codes = weatherData.hourly.weathercode.slice(start, start + 24);
+        const maxProb = Math.max(...next24Probs);
+
+        // Only show precipitation expected badge if probability is at least 20%
+        if (maxProb >= 20) {
+          let hasStorm = false;
+          let hasSnow = false;
+          for (let i = 0; i < next24Codes.length; i++) {
+            if (next24Probs[i] >= 20) {
+              const c = next24Codes[i];
+              if (c >= 95 && c <= 99) hasStorm = true;
+              else if ((c >= 71 && c <= 77) || (c >= 85 && c <= 86)) hasSnow = true;
+            }
+          }
+
+          let typeKey = 'weather-rain';
+          let icon = '☔';
+          if (hasStorm) {
+            typeKey = 'weather-storm';
+            icon = '⛈️';
+          } else if (hasSnow) {
+            typeKey = 'weather-snow';
+            icon = '❄️';
+          }
+
+          const label = dict[typeKey].replace('{prob}', maxProb);
+          precipHTML = `<span class="weather-precip-badge" title="${label}">${icon} ${label}</span>`;
+        } else {
+          precipHTML = `<span class="weather-precip-badge none" title="${dict['weather-no-precip']}">☀️ ${dict['weather-no-precip']}</span>`;
+        }
+      }
+      weatherWidget.querySelector('.weather-precip').innerHTML = precipHTML;
       weatherWidget.classList.remove('loading');
     }
   } catch (err) {
-    weatherWidget.querySelector('.weather-temp').textContent = '--';
-    if (err.isGeolocationError) {
-      weatherWidget.querySelector('.weather-desc').innerHTML = `
-        ${dict['weather-unconfigured']} 
-        <span class="weather-settings-link" style="text-decoration: underline; cursor: pointer; color: var(--accent); font-weight: 500;">
-          ${dict['weather-configure-btn']}
-        </span>
-      `;
-      const link = weatherWidget.querySelector('.weather-settings-link');
-      if (link) {
-        link.addEventListener('click', (e) => {
-          e.stopPropagation();
-          document.getElementById('settings-toggle').click();
-        });
-      }
-    } else {
-      weatherWidget.querySelector('.weather-desc').textContent = dict['weather-error'];
-    }
-    weatherWidget.querySelector('.weather-loc').textContent = '';
+    weatherWidget.classList.add('unconfigured');
+    weatherWidget.querySelector('.weather-unconfigured-text').textContent = err.isUnconfigured
+      ? dict['weather-unconfigured']
+      : dict['weather-error'];
     weatherWidget.classList.remove('loading');
   }
 }
@@ -722,7 +1241,7 @@ function getWeatherDesc(code) {
 // -------------------------------------------------------------
 // TODO LIST SYSTEM (CRUD)
 // -------------------------------------------------------------
-let activeFilter = 'all';
+let activeFilter = 'pending';
 
 function renderTodos() {
   const todoList = document.getElementById('todo-list');
@@ -730,20 +1249,34 @@ function renderTodos() {
   
   const filteredTodos = state.todos.filter(todo => {
     if (activeFilter === 'pending') return !todo.completed;
-    if (activeFilter === 'completed') return todo.completed;
+    if (activeFilter === 'completed') {
+      if (!todo.completed) return false;
+      if (!todo.completedAt) return true;
+      const sevenDaysAgo = Date.now() - (7 * 24 * 60 * 60 * 1000);
+      return new Date(todo.completedAt).getTime() >= sevenDaysAgo;
+    }
     return true;
   });
 
-  // Sort: Incomplete first, then by priority (high -> medium -> low), then by date
+  // Sort: Incomplete first, then by due date (descending), then by priority (high -> medium -> low), then by creation date (ascending)
   filteredTodos.sort((a, b) => {
     if (a.completed !== b.completed) return a.completed ? 1 : -1;
+    
+    // 1. Due date descending (no due date goes to the bottom of the dates)
+    const dateA = a.dueDate ? new Date(a.dueDate).getTime() : 0;
+    const dateB = b.dueDate ? new Date(b.dueDate).getTime() : 0;
+    if (dateA !== dateB) {
+      return dateB - dateA;
+    }
+    
+    // 2. Priority descending
     const priorityWeights = { high: 3, medium: 2, low: 1 };
     if (priorityWeights[b.priority] !== priorityWeights[a.priority]) {
       return priorityWeights[b.priority] - priorityWeights[a.priority];
     }
-    if (!a.dueDate) return 1;
-    if (!b.dueDate) return -1;
-    return new Date(a.dueDate) - new Date(b.dueDate);
+    
+    // 3. Creation date ascending (older/earlier timestamp first)
+    return Number(a.id) - Number(b.id);
   });
 
   if (filteredTodos.length === 0) {
@@ -756,7 +1289,7 @@ function renderTodos() {
 
   filteredTodos.forEach(todo => {
     const li = document.createElement('li');
-    li.className = `todo-item ${todo.completed ? 'completed' : ''}`;
+    li.className = `todo-item ${todo.completed ? 'completed' : ''} ${todo.isFocused ? 'focused' : ''}`;
     
     // Check if task is overdue
     let dateBadgeHTML = '';
@@ -793,6 +1326,19 @@ function renderTodos() {
         </span>`;
     }
 
+    let completedBadgeHTML = '';
+    if (todo.completed && todo.completedAt) {
+      const compDate = new Date(todo.completedAt);
+      const formattedCompDate = formatDateShort(getLocalDateString(compDate));
+      completedBadgeHTML = `
+        <span class="todo-completed-badge" title="${compDate.toLocaleString()}">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="20 6 9 17 4 12"></polyline>
+          </svg>
+          ${state.lang === 'es' ? 'Completada el' : 'Completed on'} ${formattedCompDate}
+        </span>`;
+    }
+
     li.innerHTML = `
       <div class="todo-item-left">
         <input type="checkbox" class="todo-checkbox" ${todo.completed ? 'checked' : ''} data-id="${todo.id}">
@@ -802,9 +1348,18 @@ function renderTodos() {
             <span class="todo-priority-badge priority-${todo.priority}">${translations[state.lang]['priority-' + todo.priority]}</span>
             ${dateBadgeHTML}
           </div>
+          ${completedBadgeHTML}
         </div>
       </div>
       <div class="todo-actions">
+        ${!todo.completed ? `
+        <button class="btn-item-action focus-btn ${todo.isFocused ? 'active' : ''}" data-id="${todo.id}" title="${state.lang === 'es' ? 'Trabajando en esta tarea' : 'Focus on this task'}">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/>
+            <circle cx="12" cy="12" r="3"/>
+          </svg>
+        </button>
+        ` : ''}
         <button class="btn-item-action edit-btn" data-id="${todo.id}">
           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
         </button>
@@ -819,6 +1374,12 @@ function renderTodos() {
       toggleTodo(todo.id);
     });
 
+    if (!todo.completed) {
+      li.querySelector('.focus-btn').addEventListener('click', () => {
+        toggleFocusTodo(todo.id);
+      });
+    }
+
     li.querySelector('.edit-btn').addEventListener('click', () => {
       openEditModal(todo);
     });
@@ -830,6 +1391,117 @@ function renderTodos() {
     todoList.appendChild(li);
   });
 
+  // Update todo focus card
+  const focusedTodo = state.todos.find(todo => todo.isFocused && !todo.completed);
+  const focusCard = document.getElementById('todo-focus-card');
+  const focusContainer = document.getElementById('focus-card-item-container');
+  if (focusCard && focusContainer) {
+    if (focusedTodo) {
+      focusContainer.innerHTML = '';
+      
+      let dateBadgeHTML = '';
+      if (focusedTodo.dueDate) {
+        const todayStr = getLocalDateString(new Date());
+        const due = new Date(focusedTodo.dueDate + 'T00:00:00');
+        const today = new Date(todayStr + 'T00:00:00');
+        const timeDiff = due.getTime() - today.getTime();
+        const diffDays = Math.ceil(timeDiff / (1000 * 3600 * 24));
+        
+        let badgeClass = '';
+        let badgeText = '';
+        const dict = translations[state.lang];
+
+        if (diffDays < 0) {
+          badgeClass = 'overdue';
+          badgeText = `${dict['task-overdue']} (${formatDateShort(focusedTodo.dueDate)})`;
+        } else if (diffDays === 0) {
+          badgeText = dict['task-today'];
+        } else if (diffDays === 1) {
+          badgeText = dict['task-tomorrow'];
+        } else {
+          badgeText = formatDateShort(focusedTodo.dueDate);
+        }
+
+        dateBadgeHTML = `
+          <span class="todo-date-badge ${badgeClass}">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            ${badgeText}
+          </span>`;
+      }
+
+      const focusItemDiv = document.createElement('div');
+      focusItemDiv.className = 'todo-item borderless-todo-item';
+      focusItemDiv.innerHTML = `
+        <div class="todo-item-left">
+          <input type="checkbox" class="todo-checkbox" data-id="${focusedTodo.id}">
+          <div class="todo-item-details">
+            <span class="todo-text">${escapeHtml(focusedTodo.text)}</span>
+            <div class="todo-meta">
+              <span class="todo-priority-badge priority-${focusedTodo.priority}">${translations[state.lang]['priority-' + focusedTodo.priority]}</span>
+              ${dateBadgeHTML}
+            </div>
+          </div>
+        </div>
+        <div class="todo-actions">
+          <button class="btn-item-action focus-btn active" data-id="${focusedTodo.id}" title="${state.lang === 'es' ? 'Quitar del enfoque' : 'Clear focus'}">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"/>
+              <circle cx="12" cy="12" r="3"/>
+            </svg>
+          </button>
+          <button class="btn-item-action edit-btn" data-id="${focusedTodo.id}">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+          </button>
+          <button class="btn-item-action delete-btn" data-id="${focusedTodo.id}">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+          </button>
+        </div>
+      `;
+
+      focusItemDiv.querySelector('.todo-checkbox').addEventListener('change', () => {
+        toggleTodo(focusedTodo.id);
+      });
+      focusItemDiv.querySelector('.focus-btn').addEventListener('click', () => {
+        toggleFocusTodo(focusedTodo.id);
+      });
+      focusItemDiv.querySelector('.edit-btn').addEventListener('click', () => {
+        openEditModal(focusedTodo);
+      });
+      focusItemDiv.querySelector('.delete-btn').addEventListener('click', () => {
+        deleteTodo(focusedTodo.id);
+      });
+
+      focusContainer.appendChild(focusItemDiv);
+      focusCard.classList.remove('hidden');
+    } else {
+      focusCard.classList.add('hidden');
+      focusContainer.innerHTML = '';
+    }
+  }
+
+  // Update Clear Completed button
+  const clearBtn = document.getElementById('btn-clear-completed');
+  if (clearBtn) {
+    const hasCompleted = state.todos.some(todo => todo.completed);
+    if (activeFilter === 'completed' && hasCompleted) {
+      clearBtn.textContent = translations[state.lang]['clear-completed-btn'];
+      clearBtn.classList.remove('hidden');
+    } else {
+      clearBtn.classList.add('hidden');
+    }
+  }
+
+  // Update Completed Tasks Note
+  const completedNote = document.getElementById('completed-tasks-note');
+  if (completedNote) {
+    if (activeFilter === 'completed') {
+      completedNote.textContent = translations[state.lang]['completed-tasks-note'];
+      completedNote.classList.remove('hidden');
+    } else {
+      completedNote.classList.add('hidden');
+    }
+  }
+
   // Re-sync dashboard columns so they reflect task items
   syncDashboardColumns();
 }
@@ -838,6 +1510,151 @@ async function saveTodos() {
   localStorage.setItem('todos', JSON.stringify(state.todos));
   if (state.settings.storageMode === 'file') {
     await writeDataToFile();
+  }
+}
+
+function updateOrganizerVisibility() {
+  const showCountdowns = state.settings.showCountdowns !== false;
+  const showTasks = state.settings.showTasks !== false;
+
+  const countdownHeader = document.getElementById('countdown-section-header');
+  const countdownCard = document.querySelector('.countdown-wrapper');
+  if (countdownHeader) countdownHeader.classList.toggle('hidden', !showCountdowns);
+  if (countdownCard) countdownCard.classList.toggle('hidden', !showCountdowns);
+
+  const tasksHeader = document.getElementById('tasks-section-header');
+  const mainTasksCard = document.getElementById('main-tasks-card');
+  const focusCard = document.getElementById('todo-focus-card');
+  
+  if (tasksHeader) tasksHeader.classList.toggle('hidden', !showTasks);
+  if (mainTasksCard) mainTasksCard.classList.toggle('hidden', !showTasks);
+  if (focusCard) {
+    if (!showTasks) {
+      focusCard.classList.add('hidden');
+    } else {
+      const focusedTodo = state.todos.find(todo => todo.isFocused && !todo.completed);
+      focusCard.classList.toggle('hidden', !focusedTodo);
+    }
+  }
+
+  const colTasks = document.getElementById('col-tasks');
+  const dashboardGrid = document.querySelector('.dashboard-grid');
+  const bothHidden = !showCountdowns && !showTasks;
+  if (colTasks) {
+    colTasks.classList.toggle('hidden', bothHidden);
+  }
+  if (dashboardGrid) {
+    dashboardGrid.classList.toggle('two-cols', bothHidden);
+  }
+}
+
+// ------------------------------------------------------------
+// COUNTDOWNS
+// ------------------------------------------------------------
+
+async function saveCountdowns() {
+  localStorage.setItem('countdowns', JSON.stringify(state.countdowns));
+}
+
+function renderCountdowns() {
+  const list = document.getElementById('countdown-list');
+  const emptyEl = document.getElementById('countdown-empty');
+  if (!list) return;
+
+  list.innerHTML = '';
+
+  const todayStr = getLocalDateString(new Date());
+  const todayMs = new Date(todayStr + 'T00:00:00').getTime();
+
+  if (state.countdowns.length === 0) {
+    if (emptyEl) emptyEl.classList.remove('hidden');
+    return;
+  }
+  if (emptyEl) emptyEl.classList.add('hidden');
+
+  // Sort by target date ascending
+  const sorted = [...state.countdowns].sort((a, b) => a.targetDate.localeCompare(b.targetDate));
+
+  sorted.forEach(countdown => {
+    const targetMs = new Date(countdown.targetDate + 'T00:00:00').getTime();
+    const diffDays = Math.ceil((targetMs - todayMs) / (1000 * 60 * 60 * 24));
+
+    let daysLabel, badgeClass;
+    if (diffDays < 0) {
+      daysLabel = state.lang === 'es' ? `Hace ${Math.abs(diffDays)} días` : `${Math.abs(diffDays)} days ago`;
+      badgeClass = 'countdown-badge-past';
+    } else if (diffDays === 0) {
+      daysLabel = state.lang === 'es' ? '¡Hoy!' : 'Today!';
+      badgeClass = 'countdown-badge-red';
+    } else if (diffDays === 1) {
+      daysLabel = state.lang === 'es' ? 'Mañana' : 'Tomorrow';
+      badgeClass = 'countdown-badge-red';
+    } else if (diffDays < 7) {
+      daysLabel = state.lang === 'es' ? `En ${diffDays} días` : `In ${diffDays} days`;
+      badgeClass = 'countdown-badge-red';
+    } else if (diffDays < 31) {
+      daysLabel = state.lang === 'es' ? `En ${diffDays} días` : `In ${diffDays} days`;
+      badgeClass = 'countdown-badge-amber';
+    } else {
+      daysLabel = state.lang === 'es' ? `En ${diffDays} días` : `In ${diffDays} days`;
+      badgeClass = 'countdown-badge-neutral';
+    }
+
+    const isPast = diffDays < 0;
+    const titleClass = isPast ? 'countdown-title countdown-title-past' : 'countdown-title';
+
+    const li = document.createElement('li');
+    li.className = 'countdown-item';
+    li.innerHTML = `
+      <div class="todo-item-left">
+        <div class="todo-item-details">
+          <span class="${titleClass}">${escapeHtml(countdown.title)}</span>
+          <span class="countdown-date" style="margin-top: 0.15rem; display: block;">${formatDateShort(countdown.targetDate)}</span>
+        </div>
+      </div>
+      <div class="todo-actions countdown-actions">
+        <span class="countdown-badge ${badgeClass}">${daysLabel}</span>
+        <button class="btn-item-action delete-countdown-btn" data-id="${countdown.id}" title="${state.lang === 'es' ? 'Eliminar' : 'Delete'}">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+        </button>
+      </div>
+    `;
+
+    li.querySelector('.delete-countdown-btn').addEventListener('click', () => {
+      deleteCountdown(countdown.id);
+    });
+
+    list.appendChild(li);
+  });
+}
+
+async function addCountdown(title, targetDate) {
+  state.countdowns.push({ id: Date.now().toString(), title, targetDate });
+  await saveCountdowns();
+  renderCountdowns();
+}
+
+let countdownIdToDelete = null;
+
+function deleteCountdown(id) {
+  countdownIdToDelete = id;
+  const countdown = state.countdowns.find(c => c.id === id);
+  if (!countdown) return;
+
+  const modal = document.getElementById('confirm-delete-modal');
+  if (modal) {
+    const dict = translations[state.lang];
+    confirmActionType = 'delete-countdown';
+    modal.querySelector('[data-i18n="confirm-delete-title"]').textContent = state.lang === 'es' ? 'Eliminar Countdown' : 'Delete Countdown';
+    const descEl = modal.querySelector('[data-i18n="confirm-delete-desc"]');
+    if (descEl) {
+      descEl.innerHTML = state.lang === 'es'
+        ? `¿Estás seguro de que quieres eliminar el countdown: <strong>"${escapeHtml(countdown.title)}"</strong>?`
+        : `Are you sure you want to delete the countdown: <strong>"${escapeHtml(countdown.title)}"</strong>?`;
+    }
+    modal.querySelector('[data-i18n="cancel-btn"]').textContent = dict['cancel-btn'];
+    modal.querySelector('[data-i18n="delete-btn"]').textContent = dict['delete-btn'];
+    modal.showModal();
   }
 }
 
@@ -857,7 +1674,13 @@ async function addTodo(text, dueDate, priority) {
 async function toggleTodo(id) {
   state.todos = state.todos.map(todo => {
     if (todo.id === id) {
-      return { ...todo, completed: !todo.completed };
+      const nextCompleted = !todo.completed;
+      return { 
+        ...todo, 
+        completed: nextCompleted,
+        completedAt: nextCompleted ? new Date().toISOString() : null,
+        isFocused: nextCompleted ? false : todo.isFocused 
+      };
     }
     return todo;
   });
@@ -865,10 +1688,64 @@ async function toggleTodo(id) {
   renderTodos();
 }
 
-async function deleteTodo(id) {
-  state.todos = state.todos.filter(todo => todo.id !== id);
+async function toggleFocusTodo(id) {
+  state.todos = state.todos.map(todo => {
+    if (todo.id === id) {
+      return { ...todo, isFocused: !todo.isFocused };
+    }
+    return { ...todo, isFocused: false };
+  });
   await saveTodos();
   renderTodos();
+}
+
+let confirmActionType = null;
+let todoIdToDelete = null;
+
+function showClearCompletedConfirmation() {
+  confirmActionType = 'clear-completed';
+  const modal = document.getElementById('confirm-delete-modal');
+  if (modal) {
+    const dict = translations[state.lang];
+    modal.querySelector('[data-i18n="confirm-delete-title"]').textContent = state.lang === 'es' ? 'Limpiar Tareas' : 'Clear Tasks';
+    
+    const descEl = modal.querySelector('[data-i18n="confirm-delete-desc"]');
+    if (descEl) {
+      descEl.innerHTML = state.lang === 'es' 
+        ? '¿Estás seguro de que quieres eliminar todas las tareas completadas?' 
+        : 'Are you sure you want to delete all completed tasks?';
+    }
+    
+    modal.querySelector('[data-i18n="cancel-btn"]').textContent = dict['cancel-btn'];
+    modal.querySelector('[data-i18n="delete-btn"]').textContent = state.lang === 'es' ? 'Eliminar todas' : 'Delete all';
+    modal.showModal();
+  }
+}
+
+function deleteTodo(id) {
+  confirmActionType = 'delete-single';
+  todoIdToDelete = id;
+  const todo = state.todos.find(t => t.id === id);
+  if (!todo) return;
+
+  const modal = document.getElementById('confirm-delete-modal');
+  if (modal) {
+    const dict = translations[state.lang];
+    modal.querySelector('[data-i18n="confirm-delete-title"]').textContent = dict['confirm-delete-title'];
+    
+    const descEl = modal.querySelector('[data-i18n="confirm-delete-desc"]');
+    if (descEl) {
+      if (state.lang === 'es') {
+        descEl.innerHTML = `¿Estás seguro de que quieres eliminar la tarea: <strong>"${escapeHtml(todo.text)}"</strong>?`;
+      } else {
+        descEl.innerHTML = `Are you sure you want to delete the task: <strong>"${escapeHtml(todo.text)}"</strong>?`;
+      }
+    }
+
+    modal.querySelector('[data-i18n="cancel-btn"]').textContent = dict['cancel-btn'];
+    modal.querySelector('[data-i18n="delete-btn"]').textContent = dict['delete-btn'];
+    modal.showModal();
+  }
 }
 
 async function updateTodo(id, newText, newDueDate, newPriority) {
@@ -1361,30 +2238,454 @@ async function fetchGoogleCalendar() {
 // EVENT LISTENERS & MODALS SETUP
 // -------------------------------------------------------------
 function setupEventListeners() {
-  // Theme Toggle Button
-  document.getElementById('theme-toggle').addEventListener('click', toggleTheme);
+  // Copy Quote Event Listener
+  const copyBtn = document.getElementById('copy-quote-btn');
+  if (copyBtn) {
+    copyBtn.addEventListener('click', () => {
+      const quoteText = document.querySelector('#quote-widget .quote-text')?.textContent || '';
+      const quoteSep = document.querySelector('#quote-widget .quote-sep')?.textContent || ' – ';
+      const quoteAuthor = document.querySelector('#quote-widget .quote-author')?.textContent || '';
+      const textToCopy = quoteAuthor ? `${quoteText}${quoteSep}${quoteAuthor}` : quoteText;
+      
+      navigator.clipboard.writeText(textToCopy).then(() => {
+        // Change icon temporarily to indicate success
+        const originalSVG = copyBtn.innerHTML;
+        copyBtn.innerHTML = `
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="20 6 9 17 4 12"></polyline>
+          </svg>
+        `;
+        copyBtn.classList.add('copied');
+        setTimeout(() => {
+          copyBtn.innerHTML = originalSVG;
+          copyBtn.classList.remove('copied');
+        }, 2000);
+      }).catch(err => {
+        console.error('Failed to copy quote: ', err);
+      });
+    });
+  }
 
-  // Language Toggle Button
-  document.getElementById('lang-toggle').addEventListener('click', async () => {
-    state.lang = state.lang === 'en' ? 'es' : 'en';
-    state.settings.lang = state.lang;
-    await saveSettings();
-    translatePage();
-    updateTimeAndGreeting();
-    renderTodos();
-    loadQuote();
-    loadWeather();
+  // Weather/Clock settings checkboxes visibility toggle
+  const toggleWeatherInputs = () => {
+    const show = document.getElementById('settings-show-weather').checked;
+    document.getElementById('weather-city-group').classList.toggle('collapsed', !show);
+  };
+  document.getElementById('settings-show-weather').addEventListener('change', toggleWeatherInputs);
+
+  const toggleClockInputs = () => {
+    const show = document.getElementById('settings-show-world-clock').checked;
+    document.getElementById('world-clock-settings-group').classList.toggle('collapsed', !show);
+  };
+  document.getElementById('settings-show-world-clock').addEventListener('change', toggleClockInputs);
+
+  // Color swatches click handlers
+  const swatches = document.querySelectorAll('#color-picker-swatches .color-swatch-btn');
+  swatches.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const selectedColor = btn.getAttribute('data-color');
+      const hiddenInput = document.getElementById('settings-primary-color');
+      if (hiddenInput) hiddenInput.value = selectedColor;
+      updateSwatchActiveState(selectedColor);
+      applyPrimaryColor(selectedColor);
+    });
   });
 
+  // Scroll to Top Listener
+  const scrollToTopBtn = document.getElementById('scroll-to-top');
+  if (scrollToTopBtn) {
+    window.addEventListener('scroll', () => {
+      if (window.scrollY > 200) {
+        scrollToTopBtn.classList.remove('hidden');
+      } else {
+        scrollToTopBtn.classList.add('hidden');
+      }
+    });
+
+    scrollToTopBtn.addEventListener('click', () => {
+      window.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+      });
+    });
+  }
+
+  // Click banner to open Events settings directly
+  const eventBanner = document.getElementById('upcoming-event');
+  if (eventBanner) {
+    eventBanner.addEventListener('click', () => {
+      document.getElementById('settings-toggle').click();
+      const eventsTab = document.querySelector('.tab-btn[data-tab="tab-events"]');
+      if (eventsTab) eventsTab.click();
+    });
+  }
+
+  // Confirm Delete Modal Listeners
+  const confirmDeleteModal = document.getElementById('confirm-delete-modal');
+  if (confirmDeleteModal) {
+    document.getElementById('btn-cancel-delete').addEventListener('click', () => {
+      confirmDeleteModal.close();
+      todoIdToDelete = null;
+    });
+    
+    document.getElementById('close-delete-modal').addEventListener('click', () => {
+      confirmDeleteModal.close();
+      todoIdToDelete = null;
+      countdownIdToDelete = null;
+    });
+
+    document.getElementById('btn-confirm-delete').addEventListener('click', async () => {
+      if (confirmActionType === 'delete-single' && todoIdToDelete !== null) {
+        state.todos = state.todos.filter(todo => todo.id !== todoIdToDelete);
+        await saveTodos();
+        renderTodos();
+        confirmDeleteModal.close();
+        todoIdToDelete = null;
+        confirmActionType = null;
+      } else if (confirmActionType === 'clear-completed') {
+        state.todos = state.todos.filter(todo => !todo.completed);
+        await saveTodos();
+        renderTodos();
+        confirmDeleteModal.close();
+        confirmActionType = null;
+      } else if (confirmActionType === 'delete-countdown' && countdownIdToDelete !== null) {
+        state.countdowns = state.countdowns.filter(c => c.id !== countdownIdToDelete);
+        await saveCountdowns();
+        renderCountdowns();
+        confirmDeleteModal.close();
+        countdownIdToDelete = null;
+        confirmActionType = null;
+      }
+    });
+  }
+
+  // Clear Completed Tasks Click Listener
+  const clearCompletedBtn = document.getElementById('btn-clear-completed');
+  if (clearCompletedBtn) {
+    clearCompletedBtn.addEventListener('click', () => {
+      showClearCompletedConfirmation();
+    });
+  }
+
+  // Add Countdown Modal Toggle
+  const addCountdownModal = document.getElementById('add-countdown-modal');
+  const showAddCountdownBtn = document.getElementById('btn-show-add-countdown');
+  const closeAddCountdownBtn = document.getElementById('close-add-countdown-modal');
+  const cancelAddCountdownBtn = document.getElementById('btn-cancel-add-countdown');
+
+  if (showAddCountdownBtn && addCountdownModal) {
+    showAddCountdownBtn.addEventListener('click', () => {
+      addCountdownModal.showModal();
+    });
+  }
+  if (closeAddCountdownBtn && addCountdownModal) {
+    closeAddCountdownBtn.addEventListener('click', () => {
+      addCountdownModal.close();
+    });
+  }
+  if (cancelAddCountdownBtn && addCountdownModal) {
+    cancelAddCountdownBtn.addEventListener('click', () => {
+      addCountdownModal.close();
+    });
+  }
+
+  // Add Task Modal Toggle
+  const addTaskModal = document.getElementById('add-task-modal');
+  const showAddTaskBtn = document.getElementById('btn-show-add-task');
+  const closeAddTaskBtn = document.getElementById('close-add-task-modal');
+  const cancelAddTaskBtn = document.getElementById('btn-cancel-add-task');
+
+  if (showAddTaskBtn && addTaskModal) {
+    showAddTaskBtn.addEventListener('click', () => {
+      addTaskModal.showModal();
+    });
+  }
+  if (closeAddTaskBtn && addTaskModal) {
+    closeAddTaskBtn.addEventListener('click', () => {
+      addTaskModal.close();
+    });
+  }
+  if (cancelAddTaskBtn && addTaskModal) {
+    cancelAddTaskBtn.addEventListener('click', () => {
+      addTaskModal.close();
+    });
+  }
+
+  // Countdown Form
+  const countdownForm = document.getElementById('countdown-form');
+  if (countdownForm) {
+    countdownForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const titleInput = document.getElementById('countdown-title-input');
+      const dateInput = document.getElementById('countdown-date-input');
+      const title = titleInput.value.trim();
+      const date = dateInput.value;
+      if (!title || !date) return;
+      await addCountdown(title, date);
+      titleInput.value = '';
+      dateInput.value = '';
+      if (addCountdownModal) addCountdownModal.close();
+    });
+  }
+
+  // Helper to ensure proper HTTP/HTTPS URL
+  function ensureHttpUrl(url) {
+    if (!url) return '';
+    let trimmed = url.trim();
+    if (!trimmed) return '';
+    if (!/^https?:\/\//i.test(trimmed)) {
+      trimmed = 'https://' + trimmed;
+    }
+    return trimmed;
+  }
+
+  // Click weather widget to open web page in new tab
+  const weatherWidgetEl = document.getElementById('weather-widget');
+  if (weatherWidgetEl) {
+    weatherWidgetEl.addEventListener('click', (e) => {
+      e.stopPropagation();
+      let targetUrl = '';
+      if (state.settings.weatherUrl && state.settings.weatherUrl.trim()) {
+        targetUrl = ensureHttpUrl(state.settings.weatherUrl);
+      } else {
+        const city = state.settings.city ? state.settings.city.trim() : '';
+        const langQuery = state.lang === 'es' ? 'tiempo' : 'weather';
+        if (city) {
+          targetUrl = `https://www.google.com/search?q=${encodeURIComponent(langQuery + ' ' + city)}`;
+        } else {
+          targetUrl = `https://www.google.com/search?q=${encodeURIComponent(langQuery)}`;
+        }
+      }
+      if (targetUrl) {
+        window.open(targetUrl, '_blank', 'noopener,noreferrer');
+      } else {
+        document.getElementById('settings-toggle').click();
+      }
+    });
+  }
+
+  // Click world clock widget to open web page in new tab
+  const clockWidgetEl = document.getElementById('world-clock-widget');
+  if (clockWidgetEl) {
+    clockWidgetEl.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (!state.settings.worldClockTz && !state.settings.worldClockUrl) {
+        document.getElementById('settings-toggle').click();
+        const generalTab = document.querySelector('.tab-btn[data-tab="tab-general"]');
+        if (generalTab) generalTab.click();
+        const clockSelect = document.getElementById('settings-world-clock-tz');
+        if (clockSelect) setTimeout(() => clockSelect.focus(), 150);
+        return;
+      }
+
+      let targetUrl = '';
+      if (state.settings.worldClockUrl && state.settings.worldClockUrl.trim()) {
+        targetUrl = ensureHttpUrl(state.settings.worldClockUrl);
+      } else {
+        const tzCity = state.settings.worldClockTz ? state.settings.worldClockTz.split('/').pop().replace(/_/g, ' ') : '';
+        const langQuery = state.lang === 'es' ? 'hora en' : 'time in';
+        if (tzCity) {
+          targetUrl = `https://www.google.com/search?q=${encodeURIComponent(langQuery + ' ' + tzCity)}`;
+        } else {
+          targetUrl = `https://www.google.com/search?q=${encodeURIComponent(langQuery)}`;
+        }
+      }
+      if (targetUrl) {
+        window.open(targetUrl, '_blank', 'noopener,noreferrer');
+      }
+    });
+  }
+
+  // Click Notes button (header or floating) & Undo/Redo History
+  const notesBtnEl = document.getElementById('notes-btn-header') || document.getElementById('notes-btn-floating');
+  const notesModal = document.getElementById('notes-modal');
+  const notesTextarea = document.getElementById('notes-textarea');
+  const closeNotesModalBtn = document.getElementById('close-notes-modal');
+  const closeNotesFooterBtn = document.getElementById('btn-close-notes-footer');
+  const clearNotesBtn = document.getElementById('btn-clear-notes');
+
+  let notesHistory = [];
+  let notesHistoryIndex = -1;
+  let historyDebounceTimeout = null;
+
+  function pushNotesHistory(text) {
+    if (notesHistoryIndex >= 0 && notesHistory[notesHistoryIndex] === text) return;
+    notesHistory = notesHistory.slice(0, notesHistoryIndex + 1);
+    notesHistory.push(text);
+    notesHistoryIndex = notesHistory.length - 1;
+  }
+
+  if (notesBtnEl && notesModal) {
+    notesBtnEl.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (notesTextarea) {
+        notesTextarea.value = state.settings.notes || '';
+        notesHistory = [notesTextarea.value];
+        notesHistoryIndex = 0;
+      }
+      notesModal.showModal();
+    });
+  }
+
+  if (notesTextarea) {
+    notesTextarea.addEventListener('input', () => {
+      state.settings.notes = notesTextarea.value;
+      saveSettings();
+      updateNotesBadge();
+
+      clearTimeout(historyDebounceTimeout);
+      const val = notesTextarea.value;
+      historyDebounceTimeout = setTimeout(() => {
+        pushNotesHistory(val);
+      }, 300);
+    });
+
+    notesTextarea.addEventListener('keydown', (e) => {
+      const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+      const isCmdOrCtrl = isMac ? e.metaKey : e.ctrlKey;
+      const key = e.key.toLowerCase();
+
+      if (isCmdOrCtrl && key === 'z') {
+        if (e.shiftKey) {
+          // Redo (Cmd+Shift+Z)
+          if (notesHistoryIndex < notesHistory.length - 1) {
+            notesHistoryIndex++;
+            notesTextarea.value = notesHistory[notesHistoryIndex];
+            state.settings.notes = notesTextarea.value;
+            saveSettings();
+            updateNotesBadge();
+          }
+          e.preventDefault();
+        } else {
+          // Undo (Cmd+Z)
+          if (notesHistoryIndex > 0) {
+            notesHistoryIndex--;
+            notesTextarea.value = notesHistory[notesHistoryIndex];
+            state.settings.notes = notesTextarea.value;
+            saveSettings();
+            updateNotesBadge();
+          }
+          e.preventDefault();
+        }
+      } else if (isCmdOrCtrl && key === 'y') {
+        // Redo (Ctrl+Y)
+        if (notesHistoryIndex < notesHistory.length - 1) {
+          notesHistoryIndex++;
+          notesTextarea.value = notesHistory[notesHistoryIndex];
+          state.settings.notes = notesTextarea.value;
+          saveSettings();
+          updateNotesBadge();
+        }
+        e.preventDefault();
+      }
+    });
+  }
+
+  if (clearNotesBtn) {
+    clearNotesBtn.addEventListener('click', () => {
+      if (notesTextarea) {
+        notesTextarea.value = '';
+        pushNotesHistory('');
+      }
+      state.settings.notes = '';
+      saveSettings();
+      updateNotesBadge();
+    });
+  }
+
+  if (closeNotesModalBtn && notesModal) {
+    closeNotesModalBtn.addEventListener('click', () => {
+      notesModal.close();
+    });
+  }
+
+  if (closeNotesFooterBtn && notesModal) {
+    closeNotesFooterBtn.addEventListener('click', () => {
+      notesModal.close();
+    });
+  }
+
+  // Click Timer button (header or floating)
+  const timerBtnEl = document.getElementById('timer-btn-header') || document.getElementById('timer-btn-floating');
+  if (timerBtnEl) {
+    timerBtnEl.addEventListener('click', (e) => {
+      e.stopPropagation();
+      let targetUrl = '';
+      if (state.settings.timerUrl && state.settings.timerUrl.trim()) {
+        targetUrl = ensureHttpUrl(state.settings.timerUrl);
+      } else {
+        targetUrl = 'https://www.google.com/search?q=countdown+timer';
+      }
+      window.open(targetUrl, '_blank', 'noopener,noreferrer');
+    });
+  }
+
+  // Click Finance button (header or floating)
+  const financeBtnEl = document.getElementById('finance-btn-header') || document.getElementById('finance-btn-floating');
+  if (financeBtnEl) {
+    financeBtnEl.addEventListener('click', (e) => {
+      e.stopPropagation();
+      let targetUrl = '';
+      if (state.settings.financeUrl && state.settings.financeUrl.trim()) {
+        targetUrl = ensureHttpUrl(state.settings.financeUrl);
+      } else {
+        targetUrl = 'https://www.google.com/finance/beta/quote/.INX:INDEXSP?window=1M';
+      }
+      window.open(targetUrl, '_blank', 'noopener,noreferrer');
+    });
+  }
+
+  // Click Stopwatch button (header or floating)
+  const stopwatchBtnEl = document.getElementById('stopwatch-btn-header') || document.getElementById('stopwatch-btn-floating');
+  if (stopwatchBtnEl) {
+    stopwatchBtnEl.addEventListener('click', (e) => {
+      e.stopPropagation();
+      let targetUrl = '';
+      if (state.settings.stopwatchUrl && state.settings.stopwatchUrl.trim()) {
+        targetUrl = ensureHttpUrl(state.settings.stopwatchUrl);
+      } else {
+        targetUrl = 'https://www.google.com/search?q=stopwatch';
+      }
+      window.open(targetUrl, '_blank', 'noopener,noreferrer');
+    });
+  }
+
   // Settings Modal Open
+  let isSettingsFormSaved = false;
   const settingsModal = document.getElementById('settings-modal');
   document.getElementById('settings-toggle').addEventListener('click', () => {
+    isSettingsFormSaved = false;
     // Fill form fields with current settings
     document.getElementById('settings-lang').value = state.settings.lang;
     document.getElementById('settings-theme').value = state.settings.theme || 'system';
+    const currentColor = state.settings.primaryColor || 'blue';
+    const colorInput = document.getElementById('settings-primary-color');
+    if (colorInput) colorInput.value = currentColor;
+    updateSwatchActiveState(currentColor);
+
     document.getElementById('settings-city').value = state.settings.city;
-    document.getElementById('settings-world-clock-tz').value = state.settings.worldClockTz || '';
+    const weatherUrlInput = document.getElementById('settings-weather-url');
+    if (weatherUrlInput) weatherUrlInput.value = state.settings.weatherUrl || '';
+    document.getElementById('settings-world-clock-tz').value = state.settings.worldClockTz !== undefined ? state.settings.worldClockTz : '';
     document.getElementById('settings-world-clock-label').value = state.settings.worldClockLabel || '';
+    const clockUrlInput = document.getElementById('settings-world-clock-url');
+    if (clockUrlInput) clockUrlInput.value = state.settings.worldClockUrl || '';
+    
+    const financeUrlInput = document.getElementById('settings-finance-url');
+    if (financeUrlInput) financeUrlInput.value = state.settings.financeUrl !== undefined ? state.settings.financeUrl : 'https://www.google.com/finance/beta/quote/.INX:INDEXSP?window=1M';
+    const timerUrlInput = document.getElementById('settings-timer-url');
+    if (timerUrlInput) timerUrlInput.value = state.settings.timerUrl !== undefined ? state.settings.timerUrl : 'https://www.google.com/search?q=countdown+timer';
+    const stopwatchUrlInput = document.getElementById('settings-stopwatch-url');
+    if (stopwatchUrlInput) stopwatchUrlInput.value = state.settings.stopwatchUrl !== undefined ? state.settings.stopwatchUrl : 'https://www.google.com/search?q=stopwatch';
+
+    document.getElementById('settings-show-weather').checked = state.settings.showWeather !== false;
+    document.getElementById('settings-show-world-clock').checked = state.settings.showWorldClock !== false;
+    document.getElementById('settings-show-countdowns').checked = state.settings.showCountdowns !== false;
+    document.getElementById('settings-show-tasks').checked = state.settings.showTasks !== false;
+    
+    toggleWeatherInputs();
+    toggleClockInputs();
+    
     document.getElementById('settings-storage-mode').value = state.settings.storageMode || 'local';
     document.getElementById('google-client-id').value = state.settings.googleClientId;
     document.getElementById('github-token').value = state.settings.githubToken;
@@ -1408,12 +2709,65 @@ function setupEventListeners() {
       document.getElementById('file-sync-settings').classList.add('hidden');
     }
 
+    renderSettingsEventsList();
     settingsModal.showModal();
   });
+
+  // Live Preview Handlers for Language and Theme
+  const settingsLangSelect = document.getElementById('settings-lang');
+  if (settingsLangSelect) {
+    settingsLangSelect.addEventListener('change', (e) => {
+      state.lang = e.target.value;
+      translatePage();
+      updateTimeAndGreeting();
+      loadWeather();
+      loadQuote();
+    });
+  }
+
+  const settingsThemeSelect = document.getElementById('settings-theme');
+  if (settingsThemeSelect) {
+    settingsThemeSelect.addEventListener('change', (e) => {
+      state.theme = e.target.value;
+      applyTheme();
+    });
+  }
 
   // Close Settings Modal
   document.getElementById('close-settings').addEventListener('click', () => {
     settingsModal.close();
+  });
+
+  settingsModal.addEventListener('close', () => {
+    if (!isSettingsFormSaved) {
+      // Revert Language
+      state.lang = state.settings.lang || 'en';
+      const langSelect = document.getElementById('settings-lang');
+      if (langSelect) langSelect.value = state.lang;
+      translatePage();
+      updateTimeAndGreeting();
+      loadWeather();
+      loadQuote();
+
+      // Revert Theme
+      state.theme = state.settings.theme || 'system';
+      const themeSelect = document.getElementById('settings-theme');
+      if (themeSelect) themeSelect.value = state.theme;
+      applyTheme();
+
+      // Revert Primary Color
+      const savedColor = state.settings.primaryColor || 'blue';
+      applyPrimaryColor(savedColor);
+      const colorInput = document.getElementById('settings-primary-color');
+      if (colorInput) colorInput.value = savedColor;
+      updateSwatchActiveState(savedColor);
+
+      // Revert URLs
+      const wUrlInput = document.getElementById('settings-weather-url');
+      if (wUrlInput) wUrlInput.value = state.settings.weatherUrl || '';
+      const cUrlInput = document.getElementById('settings-world-clock-url');
+      if (cUrlInput) cUrlInput.value = state.settings.worldClockUrl || '';
+    }
   });
 
   // Storage Mode Change Handler
@@ -1465,6 +2819,7 @@ function setupEventListeners() {
             if (fileData.settings) {
               state.settings = { ...state.settings, ...fileData.settings, storageMode: 'file' };
             }
+            if (state.settings.primaryColor) applyPrimaryColor(state.settings.primaryColor);
             renderTodos();
             translatePage();
             updateTimeAndGreeting();
@@ -1520,12 +2875,71 @@ function setupEventListeners() {
     });
   });
 
+  // Event tab Add Event handler
+  const addEventBtn = document.getElementById('btn-add-event');
+  if (addEventBtn) {
+    addEventBtn.addEventListener('click', async (e) => {
+      e.preventDefault();
+      const nameInput = document.getElementById('event-name-input');
+      const dateInput = document.getElementById('event-date-input');
+      
+      nameInput.classList.remove('invalid-field');
+      dateInput.classList.remove('invalid-field');
+      nameInput.setCustomValidity('');
+      dateInput.setCustomValidity('');
+
+      if (!nameInput.value.trim()) {
+        nameInput.classList.add('invalid-field');
+        nameInput.setCustomValidity(state.lang === 'es' ? 'Por favor, rellene este campo.' : 'Please fill out this field.');
+        nameInput.reportValidity();
+        nameInput.addEventListener('input', () => {
+          nameInput.classList.remove('invalid-field');
+          nameInput.setCustomValidity('');
+        }, { once: true });
+        return;
+      }
+      if (!dateInput.value) {
+        dateInput.classList.add('invalid-field');
+        dateInput.setCustomValidity(state.lang === 'es' ? 'Por favor, rellene este campo.' : 'Please fill out this field.');
+        dateInput.reportValidity();
+        dateInput.addEventListener('input', () => {
+          dateInput.classList.remove('invalid-field');
+          dateInput.setCustomValidity('');
+        }, { once: true });
+        return;
+      }
+
+      const name = nameInput.value.trim();
+      const date = dateInput.value;
+      
+      state.settings.customEvents = state.settings.customEvents || [];
+      state.settings.customEvents.push({
+        id: Date.now().toString(),
+        name,
+        date
+      });
+      
+      nameInput.value = '';
+      dateInput.value = '';
+      
+      await saveSettings();
+      renderSettingsEventsList();
+      updateUpcomingEventBanner();
+    });
+  }
+
   // Save Settings Form
   document.getElementById('settings-form').addEventListener('submit', async (e) => {
     e.preventDefault();
+    isSettingsFormSaved = true;
     state.settings.lang = document.getElementById('settings-lang').value;
     state.settings.city = document.getElementById('settings-city').value.trim();
     state.settings.theme = document.getElementById('settings-theme').value;
+    const colorInput = document.getElementById('settings-primary-color');
+    if (colorInput) {
+      state.settings.primaryColor = colorInput.value;
+      applyPrimaryColor(state.settings.primaryColor);
+    }
     
     state.theme = state.settings.theme;
     
@@ -1547,10 +2961,25 @@ function setupEventListeners() {
     state.settings.jiraToken = document.getElementById('jira-token').value.trim();
     state.settings.worldClockTz = document.getElementById('settings-world-clock-tz').value;
     state.settings.worldClockLabel = document.getElementById('settings-world-clock-label').value.trim();
+    const wUrlEl = document.getElementById('settings-weather-url');
+    if (wUrlEl) state.settings.weatherUrl = wUrlEl.value.trim();
+    const cUrlEl = document.getElementById('settings-world-clock-url');
+    if (cUrlEl) state.settings.worldClockUrl = cUrlEl.value.trim();
+    const finUrlEl = document.getElementById('settings-finance-url');
+    if (finUrlEl) state.settings.financeUrl = finUrlEl.value.trim();
+    const tUrlEl = document.getElementById('settings-timer-url');
+    if (tUrlEl) state.settings.timerUrl = tUrlEl.value.trim();
+    const swUrlEl = document.getElementById('settings-stopwatch-url');
+    if (swUrlEl) state.settings.stopwatchUrl = swUrlEl.value.trim();
+    state.settings.showWeather = document.getElementById('settings-show-weather').checked;
+    state.settings.showWorldClock = document.getElementById('settings-show-world-clock').checked;
+    state.settings.showCountdowns = document.getElementById('settings-show-countdowns').checked;
+    state.settings.showTasks = document.getElementById('settings-show-tasks').checked;
 
     state.lang = state.settings.lang;
 
     await saveSettings();
+    updateOrganizerVisibility();
     
     // If we just toggled file-sync on, let's initialize it
     if (state.settings.storageMode === 'file') {
@@ -1620,6 +3049,9 @@ function setupEventListeners() {
     input.value = '';
     dateInput.value = '';
     prioritySelect.value = 'medium';
+
+    const addTaskModal = document.getElementById('add-task-modal');
+    if (addTaskModal) addTaskModal.close();
   });
 
   // Todo Filters
@@ -1711,6 +3143,10 @@ async function init() {
 
   // Render initial tasks
   renderTodos();
+
+  // Render initial countdowns
+  renderCountdowns();
+  updateNotesBadge();
 
   // Fetch API data for configured integrations
   fetchGitHub();
