@@ -117,7 +117,10 @@
           <!-- Calendar and tasks summaries will go here -->
           <div class="section-card">
             <h3 class="card-subtitle">
-              <span data-i18n="calendar-events">Events</span>
+              <span style="display: inline-flex; align-items: center; gap: 0.4rem;">
+                <span data-i18n="calendar-events">Events</span>
+                <span id="events-count-badge" class="filter-badge hidden" style="margin-left: 0;"></span>
+              </span>
               <span class="header-status-indicators" id="google-events-status-indicators"></span>
             </h3>
             <div id="google-events-container" class="integration-list">
@@ -127,7 +130,10 @@
           </div>
           <div class="section-card">
             <h3 class="card-subtitle">
-              <span data-i18n="urgent-emails">Urgent Emails</span>
+              <span style="display: inline-flex; align-items: center; gap: 0.4rem;">
+                <span data-i18n="urgent-emails">Urgent Emails</span>
+                <span id="emails-count-badge" class="filter-badge hidden" style="margin-left: 0;"></span>
+              </span>
               <span class="header-status-indicators" id="google-emails-status-indicators"></span>
             </h3>
             <div id="gmail-container" class="integration-list">
@@ -136,7 +142,12 @@
             </div>
           </div>
           <div class="section-card">
-            <h3 class="card-subtitle" data-i18n="pending-prs">Pull Requests (Git)</h3>
+            <h3 class="card-subtitle">
+              <span style="display: inline-flex; align-items: center; gap: 0.4rem;">
+                <span data-i18n="pending-prs">Pull Requests (Git)</span>
+                <span id="prs-count-badge" class="filter-badge hidden" style="margin-left: 0;"></span>
+              </span>
+            </h3>
             <div id="prs-container" class="integration-list">
               <!-- Dynamically populated -->
               <p class="empty-msg" data-i18n="no-prs">No pending PRs.</p>
@@ -151,7 +162,10 @@
         <div class="col-content">
           <div class="section-card">
             <h3 class="card-subtitle">
-              <span data-i18n="weekly-schedule">Weekly Schedule</span>
+              <span style="display: inline-flex; align-items: center; gap: 0.4rem;">
+                <span data-i18n="weekly-schedule">Weekly Schedule</span>
+                <span id="weekly-count-badge" class="filter-badge hidden" style="margin-left: 0;"></span>
+              </span>
               <span class="header-status-indicators" id="google-weekly-status-indicators"></span>
             </h3>
             <div id="weekly-events-container" class="integration-list">
@@ -160,7 +174,12 @@
             </div>
           </div>
           <div class="section-card">
-            <h3 class="card-subtitle" data-i18n="jira-tasks">Jira Tasks</h3>
+            <h3 class="card-subtitle">
+              <span style="display: inline-flex; align-items: center; gap: 0.4rem;">
+                <span data-i18n="jira-tasks">Jira Tasks</span>
+                <span id="jira-count-badge" class="filter-badge hidden" style="margin-left: 0;"></span>
+              </span>
+            </h3>
             <div id="jira-container" class="integration-list">
               <!-- Dynamically populated -->
               <p class="empty-msg" data-i18n="no-jira-tasks">No Jira tasks assigned.</p>

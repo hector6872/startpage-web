@@ -1262,6 +1262,17 @@ let activeFilter = 'pending';
 function renderTodos() {
   const todoList = document.getElementById('todo-list');
   todoList.innerHTML = '';
+
+  const pendingCount = state.todos.filter(todo => !todo.completed).length;
+  const pendingBtn = document.querySelector('.filter-btn[data-filter="pending"]');
+  if (pendingBtn) {
+    const baseText = translations[state.lang]['filter-pending'] || 'Pending';
+    if (pendingCount > 0) {
+      pendingBtn.innerHTML = `${baseText} <span class="filter-badge">${pendingCount}</span>`;
+    } else {
+      pendingBtn.textContent = baseText;
+    }
+  }
   
   const filteredTodos = state.todos.filter(todo => {
     if (activeFilter === 'pending') return !todo.completed;
@@ -1859,6 +1870,11 @@ function getJiraAuthHeader() {
 // Fetch Jira Tasks
 async function fetchJira() {
   const container = document.getElementById('jira-container');
+  const jiraBadge = document.getElementById('jira-count-badge');
+  if (jiraBadge) {
+    jiraBadge.classList.add('hidden');
+  }
+
   if (!state.settings.jiraHost || !state.settings.jiraEmail || !state.settings.jiraToken) {
     container.innerHTML = `<p class="empty-msg">${translations[state.lang]['status-unconfigured']}</p>`;
     return;
@@ -1876,6 +1892,15 @@ async function fetchJira() {
 
     if (!response.ok) throw new Error();
     const data = await response.json();
+
+    if (jiraBadge) {
+      if (data.issues && data.issues.length > 0) {
+        jiraBadge.textContent = data.issues.length;
+        jiraBadge.classList.remove('hidden');
+      } else {
+        jiraBadge.classList.add('hidden');
+      }
+    }
 
     if (!data.issues || data.issues.length === 0) {
       container.innerHTML = `<p class="empty-msg">${translations[state.lang]['no-jira-tasks']}</p>`;
@@ -1906,6 +1931,11 @@ async function fetchJira() {
 // Fetch GitHub PRs
 async function fetchGitHub() {
   const container = document.getElementById('prs-container');
+  const prsBadge = document.getElementById('prs-count-badge');
+  if (prsBadge) {
+    prsBadge.classList.add('hidden');
+  }
+
   if (!state.settings.githubToken || !state.settings.githubUsername) {
     container.innerHTML = `<p class="empty-msg">${translations[state.lang]['status-unconfigured']}</p>`;
     return;
@@ -1922,6 +1952,15 @@ async function fetchGitHub() {
 
     if (!response.ok) throw new Error();
     const data = await response.json();
+
+    if (prsBadge) {
+      if (data.items && data.items.length > 0) {
+        prsBadge.textContent = data.items.length;
+        prsBadge.classList.remove('hidden');
+      } else {
+        prsBadge.classList.add('hidden');
+      }
+    }
 
     if (!data.items || data.items.length === 0) {
       container.innerHTML = `<p class="empty-msg">${translations[state.lang]['no-prs']}</p>`;
@@ -1992,6 +2031,17 @@ async function fetchBitbucket() {
     }).join('');
 
     container.innerHTML = currentHTML + bbHTML;
+
+    const prsBadge = document.getElementById('prs-count-badge');
+    if (prsBadge) {
+      const count = container.querySelectorAll('.integration-item').length;
+      if (count > 0) {
+        prsBadge.textContent = count;
+        prsBadge.classList.remove('hidden');
+      } else {
+        prsBadge.classList.add('hidden');
+      }
+    }
   } catch (error) {
     // only write error if container was empty
     if (container.innerHTML.includes('empty-msg')) {
@@ -2229,6 +2279,11 @@ async function fetchGoogleData() {
 
 async function fetchGmail() {
   const container = document.getElementById('gmail-container');
+  const emailsBadge = document.getElementById('emails-count-badge');
+  if (emailsBadge) {
+    emailsBadge.classList.add('hidden');
+  }
+
   if (!state.googlePersonalToken && !state.googleWorkToken) {
     const configLinkText = state.lang === 'es' ? 'Configurar Gmail' : 'Configure Gmail';
     container.innerHTML = `<p class="empty-msg" style="margin: 0.5rem 0;"><a href="#" onclick="event.preventDefault(); window.openSettingsGoogleTab();" style="color: var(--accent); text-decoration: underline; font-weight: 500;">${configLinkText}</a></p>`;
@@ -2280,6 +2335,15 @@ async function fetchGmail() {
       return bDate - aDate;
     });
 
+    if (emailsBadge) {
+      if (allEmails.length > 0) {
+        emailsBadge.textContent = allEmails.length;
+        emailsBadge.classList.remove('hidden');
+      } else {
+        emailsBadge.classList.add('hidden');
+      }
+    }
+
     if (allEmails.length === 0) {
       container.innerHTML = `<p class="empty-msg">${translations[state.lang]['no-emails']}</p>`;
       return;
@@ -2298,7 +2362,7 @@ async function fetchGmail() {
 
       let gmailLink = `https://mail.google.com/mail/#inbox/${msg.threadId}`;
       if (msg.accountEmail) {
-        gmailLink = `https://mail.google.com/mail/u/${encodeURIComponent(msg.accountEmail)}/#inbox/${msg.threadId}`;
+        gmailLink = `https://mail.google.com/mail/?authuser=${encodeURIComponent(msg.accountEmail)}#inbox/${msg.threadId}`;
       }
 
       return `
@@ -2409,6 +2473,10 @@ async function fetchGoogleTasks() {
 async function fetchGoogleCalendar() {
   const todayEventsContainer = document.getElementById('google-events-container');
   const weeklyEventsContainer = document.getElementById('weekly-events-container');
+  const weeklyBadge = document.getElementById('weekly-count-badge');
+  if (weeklyBadge) {
+    weeklyBadge.classList.add('hidden');
+  }
 
   if (!state.googlePersonalToken && !state.googleWorkToken) {
     const configLinkText = state.lang === 'es' ? 'Configurar Google Calendar' : 'Configure Google Calendar';
@@ -2504,6 +2572,25 @@ async function fetchGoogleCalendar() {
         weeklyEvents.push(eventHTML);
       }
     });
+
+    if (weeklyBadge) {
+      if (weeklyEvents.length > 0) {
+        weeklyBadge.textContent = weeklyEvents.length;
+        weeklyBadge.classList.remove('hidden');
+      } else {
+        weeklyBadge.classList.add('hidden');
+      }
+    }
+
+    const todayBadge = document.getElementById('events-count-badge');
+    if (todayBadge) {
+      if (todayEvents.length > 0) {
+        todayBadge.textContent = todayEvents.length;
+        todayBadge.classList.remove('hidden');
+      } else {
+        todayBadge.classList.add('hidden');
+      }
+    }
 
     todayEventsContainer.innerHTML = todayEvents.length > 0 ? todayEvents.join('') : `<p class="empty-msg">${translations[state.lang]['no-events']}</p>`;
     weeklyEventsContainer.innerHTML = weeklyEvents.length > 0 ? weeklyEvents.join('') : `<p class="empty-msg">${translations[state.lang]['no-weekly-events']}</p>`;
