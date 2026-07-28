@@ -28,8 +28,8 @@
       } catch (e) {}
     }
   </script>
-  <script type="module" crossorigin src="/assets/index-BIuNX39Y.js"></script>
-  <link rel="stylesheet" crossorigin href="/assets/index-BCYYwxm-.css">
+  <script type="module" crossorigin src="/assets/index-zM2IryDm.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/index-CTBnJgbb.css">
 </head>
 <body>
   <!-- Background Decorative Elements -->
@@ -117,14 +117,20 @@
         <div class="col-content">
           <!-- Calendar and tasks summaries will go here -->
           <div class="section-card">
-            <h3 class="card-subtitle" data-i18n="calendar-events">Events</h3>
+            <h3 class="card-subtitle">
+              <span data-i18n="calendar-events">Events</span>
+              <span class="header-status-indicators" id="google-events-status-indicators"></span>
+            </h3>
             <div id="google-events-container" class="integration-list">
               <!-- Dynamically populated -->
               <p class="empty-msg" data-i18n="no-events">No events scheduled.</p>
             </div>
           </div>
           <div class="section-card">
-            <h3 class="card-subtitle" data-i18n="urgent-emails">Urgent Emails</h3>
+            <h3 class="card-subtitle">
+              <span data-i18n="urgent-emails">Urgent Emails</span>
+              <span class="header-status-indicators" id="google-emails-status-indicators"></span>
+            </h3>
             <div id="gmail-container" class="integration-list">
               <!-- Dynamically populated -->
               <p class="empty-msg" data-i18n="no-emails">No unread emails.</p>
@@ -145,7 +151,10 @@
         <h2 class="col-title" data-i18n="col-week">This Week</h2>
         <div class="col-content">
           <div class="section-card">
-            <h3 class="card-subtitle" data-i18n="weekly-schedule">Weekly Schedule</h3>
+            <h3 class="card-subtitle">
+              <span data-i18n="weekly-schedule">Weekly Schedule</span>
+              <span class="header-status-indicators" id="google-weekly-status-indicators"></span>
+            </h3>
             <div id="weekly-events-container" class="integration-list">
               <!-- Dynamically populated -->
               <p class="empty-msg" data-i18n="no-weekly-events">No events this week.</p>
@@ -434,17 +443,41 @@
           <!-- Tab: Google -->
           <div id="tab-google" class="tab-pane">
             <p class="tab-desc" data-i18n="google-desc">Requires a Google Cloud project with OAuth credentials. Ensure you add your local origin (e.g. http://localhost:5173 or the server URL) in Google Console.</p>
-            <div class="form-group">
+            <div class="form-group" style="margin-bottom: 1.5rem;">
               <label for="google-client-id" data-i18n="label-client-id">Google Client ID</label>
               <input type="text" id="google-client-id" placeholder="xxxxxxxx.apps.googleusercontent.com">
             </div>
-            <div class="form-group row-align">
-              <label data-i18n="google-status">Authentication Status:</label>
-              <span id="google-auth-status" class="auth-status disconnected" data-i18n="disconnected">Disconnected</span>
+
+            <!-- Personal Account -->
+            <div class="google-account-section" style="margin-bottom: 1.5rem; padding-bottom: 1.5rem; border-bottom: 1px solid var(--border-color, rgba(255,255,255,0.1));">
+              <h4 style="margin-top: 0; margin-bottom: 0.5rem; font-family: var(--font-title); display: flex; align-items: center; gap: 0.4rem;">
+                <span class="status-dot disconnected" id="google-settings-dot-personal"></span>
+                <span data-i18n="badge-personal">Personal</span>
+              </h4>
+              <div class="form-group row-align" style="margin-bottom: 0.75rem;">
+                <label data-i18n="google-status-personal">Personal Account:</label>
+                <span id="google-auth-status-personal" class="auth-status disconnected" data-i18n="disconnected">Disconnected</span>
+              </div>
+              <div class="google-auth-actions">
+                <button type="button" id="google-login-btn-personal" class="btn-secondary" data-i18n="google-login-personal">Log In (Personal)</button>
+                <button type="button" id="google-logout-btn-personal" class="btn-danger hidden" data-i18n="google-logout">Log Out</button>
+              </div>
             </div>
-            <div class="google-auth-actions">
-              <button type="button" id="google-login-btn" class="btn-secondary" data-i18n="google-login">Log In with Google</button>
-              <button type="button" id="google-logout-btn" class="btn-danger hidden" data-i18n="google-logout">Log Out</button>
+
+            <!-- Work Account -->
+            <div class="google-account-section">
+              <h4 style="margin-top: 0; margin-bottom: 0.5rem; font-family: var(--font-title); display: flex; align-items: center; gap: 0.4rem;">
+                <span class="status-dot disconnected" id="google-settings-dot-work"></span>
+                <span data-i18n="badge-work">Work</span>
+              </h4>
+              <div class="form-group row-align" style="margin-bottom: 0.75rem;">
+                <label data-i18n="google-status-work">Work Account:</label>
+                <span id="google-auth-status-work" class="auth-status disconnected" data-i18n="disconnected">Disconnected</span>
+              </div>
+              <div class="google-auth-actions">
+                <button type="button" id="google-login-btn-work" class="btn-secondary" data-i18n="google-login-work">Log In (Work)</button>
+                <button type="button" id="google-logout-btn-work" class="btn-danger hidden" data-i18n="google-logout">Log Out</button>
+              </div>
             </div>
           </div>
 
@@ -609,7 +642,7 @@
         <form id="todo-form" class="todo-form" style="gap: 1.25rem; margin-bottom: 0;">
           <div class="form-group">
             <label for="todo-input" data-i18n="label-task-text">Task Name</label>
-            <input type="text" id="todo-input" placeholder="Task text..." required>
+            <input type="text" id="todo-input" placeholder="Task text...">
           </div>
           <div class="form-group">
             <label for="todo-date" data-i18n="label-due-date">Due Date</label>
@@ -644,7 +677,7 @@
           <input type="hidden" id="edit-task-id">
           <div class="form-group">
             <label for="edit-task-text" data-i18n="label-task-text">Task Name</label>
-            <input type="text" id="edit-task-text" required placeholder="Task text...">
+            <input type="text" id="edit-task-text" placeholder="Task text...">
           </div>
           <div class="form-group">
             <label for="edit-task-date" data-i18n="label-due-date">Due Date</label>

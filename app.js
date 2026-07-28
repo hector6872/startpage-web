@@ -79,6 +79,12 @@ const translations = {
     "connected": "Connected",
     "google-login": "Log In with Google",
     "google-logout": "Log Out",
+    "google-login-personal": "Log In (Personal)",
+    "google-login-work": "Log In (Work)",
+    "google-status-personal": "Personal Account:",
+    "google-status-work": "Work Account:",
+    "badge-personal": "Personal",
+    "badge-work": "Work",
     "github-settings": "GitHub Configuration",
     "label-token": "Personal Access Token (PAT)",
     "label-username": "GitHub Username",
@@ -224,6 +230,12 @@ const translations = {
     "connected": "Conectado",
     "google-login": "Iniciar Sesión con Google",
     "google-logout": "Cerrar Sesión",
+    "google-login-personal": "Iniciar Sesión (Personal)",
+    "google-login-work": "Iniciar Sesión (Trabajo)",
+    "google-status-personal": "Cuenta Personal:",
+    "google-status-work": "Cuenta de Trabajo:",
+    "badge-personal": "Personal",
+    "badge-work": "Trabajo",
     "github-settings": "Configuración de GitHub",
     "label-token": "Token de Acceso Personal (PAT)",
     "label-username": "Usuario de GitHub",
@@ -325,6 +337,10 @@ let state = {
   todos: [],
   countdowns: [],
   googleClientToken: sessionStorage.getItem('google_access_token') || null,
+  googlePersonalToken: sessionStorage.getItem('google_personal_token') || null,
+  googleWorkToken: sessionStorage.getItem('google_work_token') || null,
+  googlePersonalEmail: sessionStorage.getItem('google_personal_email') || null,
+  googleWorkEmail: sessionStorage.getItem('google_work_email') || null,
   settings: {
     lang: 'en',
     theme: 'system',
@@ -1983,57 +1999,227 @@ async function fetchBitbucket() {
     }
   }
 }
+function showInputErrorFeedback(inputEl, errorMessage) {
+  if (inputEl.classList.contains('invalid-field')) return;
+  inputEl.classList.add('invalid-field');
+  inputEl.focus();
+
+  let errorEl = inputEl.nextElementSibling;
+  if (!errorEl || !errorEl.classList.contains('field-error-msg')) {
+    errorEl = document.createElement('span');
+    errorEl.className = 'field-error-msg';
+    errorEl.style.color = 'var(--danger)';
+    errorEl.style.fontSize = '0.75rem';
+    errorEl.style.marginTop = '0.25rem';
+    errorEl.style.display = 'block';
+    inputEl.parentNode.insertBefore(errorEl, inputEl.nextSibling);
+  }
+  errorEl.textContent = errorMessage;
+
+  setTimeout(() => {
+    inputEl.classList.remove('invalid-field');
+    errorEl.remove();
+  }, 2500);
+}
+
+function openSettingsGoogleTab() {
+  const toggle = document.getElementById('settings-toggle');
+  if (toggle) {
+    toggle.click();
+    setTimeout(() => {
+      const googleBtn = document.querySelector('.tab-btn[data-tab="tab-google"]');
+      if (googleBtn) googleBtn.click();
+    }, 50);
+  }
+}
+window.openSettingsGoogleTab = openSettingsGoogleTab;
 
 // Google APIs Integrations (Gmail, Tasks, Calendar)
 let googleTokenClient;
+let googleLoginTarget = 'personal';
+
+async function fetchGoogleUserEmail(token) {
+  try {
+    const res = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    if (res.ok) {
+      const data = await res.json();
+      return data.email;
+    }
+  } catch (e) {
+    console.error("Failed to fetch user email", e);
+  }
+  return null;
+}
 
 function initGoogleOAuth() {
+  updateGoogleAuthStatus();
+
+  if (!state.googlePersonalToken && !state.googleWorkToken) {
+    fetchGoogleCalendar();
+    fetchGmail();
+  }
+
   if (typeof google === 'undefined' || !state.settings.googleClientId) {
     return;
   }
 
   googleTokenClient = google.accounts.oauth2.initTokenClient({
     client_id: state.settings.googleClientId,
-    scope: 'https://www.googleapis.com/auth/gmail.readonly https://www.googleapis.com/auth/tasks.readonly https://www.googleapis.com/auth/calendar.readonly',
+    scope: 'https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/gmail.readonly https://www.googleapis.com/auth/tasks.readonly https://www.googleapis.com/auth/calendar.readonly',
     callback: async (response) => {
       if (response.error) {
         console.error(response.error);
         return;
       }
-      state.googleClientToken = response.access_token;
-      sessionStorage.setItem('google_access_token', response.access_token);
-      updateGoogleAuthStatus(true);
+      
+      const token = response.access_token;
+      
+      if (googleLoginTarget === 'personal') {
+        state.googlePersonalToken = token;
+        sessionStorage.setItem('google_personal_token', token);
+        const email = await fetchGoogleUserEmail(token);
+        if (email) {
+          state.googlePersonalEmail = email;
+          sessionStorage.setItem('google_personal_email', email);
+        }
+      } else {
+        state.googleWorkToken = token;
+        sessionStorage.setItem('google_work_token', token);
+        const email = await fetchGoogleUserEmail(token);
+        if (email) {
+          state.googleWorkEmail = email;
+          sessionStorage.setItem('google_work_email', email);
+        }
+      }
+      
+      // Keep googleClientToken for backward compatibility
+      state.googleClientToken = state.googlePersonalToken || state.googleWorkToken;
+      sessionStorage.setItem('google_access_token', state.googleClientToken || '');
+      
+      updateGoogleAuthStatus();
       await fetchGoogleData();
     }
   });
 
-  if (state.googleClientToken) {
-    updateGoogleAuthStatus(true);
+  checkAndFetchGoogleEmails();
+  
+  updateGoogleAuthStatus();
+  if (state.googlePersonalToken || state.googleWorkToken) {
     fetchGoogleData();
+  } else {
+    fetchGoogleCalendar();
+    fetchGmail();
   }
 }
 
-function updateGoogleAuthStatus(connected) {
-  const statusEl = document.getElementById('google-auth-status');
-  const loginBtn = document.getElementById('google-login-btn');
-  const logoutBtn = document.getElementById('google-logout-btn');
-  const dict = translations[state.lang];
+async function checkAndFetchGoogleEmails() {
+  let changed = false;
+  if (state.googlePersonalToken && !state.googlePersonalEmail) {
+    const email = await fetchGoogleUserEmail(state.googlePersonalToken);
+    if (email) {
+      state.googlePersonalEmail = email;
+      sessionStorage.setItem('google_personal_email', email);
+      changed = true;
+    }
+  }
+  if (state.googleWorkToken && !state.googleWorkEmail) {
+    const email = await fetchGoogleUserEmail(state.googleWorkToken);
+    if (email) {
+      state.googleWorkEmail = email;
+      sessionStorage.setItem('google_work_email', email);
+      changed = true;
+    }
+  }
+  if (changed) {
+    updateGoogleAuthStatus();
+  }
+}
 
-  if (connected) {
-    statusEl.textContent = dict['connected'];
-    statusEl.className = "auth-status connected";
-    loginBtn.classList.add('hidden');
-    logoutBtn.classList.remove('hidden');
-  } else {
-    statusEl.textContent = dict['disconnected'];
-    statusEl.className = "auth-status disconnected";
-    loginBtn.classList.remove('hidden');
-    logoutBtn.classList.add('hidden');
+function updateGoogleAuthStatus() {
+  const dict = translations[state.lang];
+  
+  // Personal account status
+  const personalStatusEl = document.getElementById('google-auth-status-personal');
+  const personalLoginBtn = document.getElementById('google-login-btn-personal');
+  const personalLogoutBtn = document.getElementById('google-logout-btn-personal');
+  
+  if (personalStatusEl && personalLoginBtn && personalLogoutBtn) {
+    if (state.googlePersonalToken) {
+      const emailStr = state.googlePersonalEmail ? ` (${state.googlePersonalEmail})` : '';
+      personalStatusEl.textContent = `${dict['connected']}${emailStr}`;
+      personalStatusEl.className = "auth-status connected";
+      personalLoginBtn.classList.add('hidden');
+      personalLogoutBtn.classList.remove('hidden');
+    } else {
+      personalStatusEl.textContent = dict['disconnected'];
+      personalStatusEl.className = "auth-status disconnected";
+      personalLoginBtn.classList.remove('hidden');
+      personalLogoutBtn.classList.add('hidden');
+    }
+  }
+  
+  // Work account status
+  const workStatusEl = document.getElementById('google-auth-status-work');
+  const workLoginBtn = document.getElementById('google-login-btn-work');
+  const workLogoutBtn = document.getElementById('google-logout-btn-work');
+  
+  if (workStatusEl && workLoginBtn && workLogoutBtn) {
+    if (state.googleWorkToken) {
+      const emailStr = state.googleWorkEmail ? ` (${state.googleWorkEmail})` : '';
+      workStatusEl.textContent = `${dict['connected']}${emailStr}`;
+      workStatusEl.className = "auth-status connected";
+      workLoginBtn.classList.add('hidden');
+      workLogoutBtn.classList.remove('hidden');
+    } else {
+      workStatusEl.textContent = dict['disconnected'];
+      workStatusEl.className = "auth-status disconnected";
+      workLoginBtn.classList.remove('hidden');
+      workLogoutBtn.classList.add('hidden');
+    }
+  }
+
+  // Update header status indicators (dots) for Events, Emails, and Weekly Schedule
+  const personalClass = state.googlePersonalToken ? 'personal' : 'disconnected';
+  const personalTooltip = state.googlePersonalToken 
+    ? `${state.lang === 'es' ? 'Personal: Conectado' : 'Personal: Connected'} (${state.googlePersonalEmail || 'Google'})`
+    : (state.lang === 'es' ? 'Personal: Desconectado' : 'Personal: Disconnected');
+    
+  const workClass = state.googleWorkToken ? 'work' : 'disconnected';
+  const workTooltip = state.googleWorkToken 
+    ? `${state.lang === 'es' ? 'Trabajo: Conectado' : 'Work: Connected'} (${state.googleWorkEmail || 'Google'})`
+    : (state.lang === 'es' ? 'Trabajo: Desconectado' : 'Work: Disconnected');
+
+  const indicatorsHTML = `
+    <span class="status-dot ${personalClass}" title="${escapeHtml(personalTooltip)}"></span>
+    <span class="status-dot ${workClass}" title="${escapeHtml(workTooltip)}"></span>
+  `;
+
+  const evInd = document.getElementById('google-events-status-indicators');
+  const emInd = document.getElementById('google-emails-status-indicators');
+  const wkInd = document.getElementById('google-weekly-status-indicators');
+
+  if (evInd) evInd.innerHTML = indicatorsHTML;
+  if (emInd) emInd.innerHTML = indicatorsHTML;
+  if (wkInd) wkInd.innerHTML = indicatorsHTML;
+
+  const settingsDotPers = document.getElementById('google-settings-dot-personal');
+  const settingsDotWork = document.getElementById('google-settings-dot-work');
+
+  if (settingsDotPers) {
+    settingsDotPers.className = `status-dot ${personalClass}`;
+  }
+  if (settingsDotWork) {
+    settingsDotWork.className = `status-dot ${workClass}`;
   }
 }
 
 async function fetchGoogleData() {
-  if (!state.googleClientToken) return;
+  const token = state.googlePersonalToken || state.googleWorkToken;
+  if (!token) return;
+
+  state.googleClientToken = token;
 
   // Run in parallel
   fetchGmail();
@@ -2043,28 +2229,63 @@ async function fetchGoogleData() {
 
 async function fetchGmail() {
   const container = document.getElementById('gmail-container');
-  try {
-    const res = await fetch('https://gmail.googleapis.com/v1/users/me/messages?q=is:unread&maxResults=5', {
-      headers: { 'Authorization': `Bearer ${state.googleClientToken}` }
-    });
-    if (!res.ok) throw new Error();
-    const data = await res.json();
+  if (!state.googlePersonalToken && !state.googleWorkToken) {
+    const configLinkText = state.lang === 'es' ? 'Configurar Gmail' : 'Configure Gmail';
+    container.innerHTML = `<p class="empty-msg" style="margin: 0.5rem 0;"><a href="#" onclick="event.preventDefault(); window.openSettingsGoogleTab();" style="color: var(--accent); text-decoration: underline; font-weight: 500;">${configLinkText}</a></p>`;
+    return;
+  }
 
-    if (!data.messages || data.messages.length === 0) {
+  async function fetchEmailsForAccount(token, type, email) {
+    if (!token) return [];
+    try {
+      const res = await fetch('https://www.googleapis.com/gmail/v1/users/me/messages?q=is:unread&maxResults=5', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      if (!data.messages || data.messages.length === 0) return [];
+
+      const detailsPromises = data.messages.map(msg =>
+        fetch(`https://www.googleapis.com/gmail/v1/users/me/messages/${msg.id}`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        }).then(r => {
+          if (!r.ok) throw new Error(`HTTP ${r.status}`);
+          return r.json();
+        })
+      );
+      const details = await Promise.all(detailsPromises);
+      return details.map(item => ({ ...item, accountType: type, accountEmail: email }));
+    } catch (e) {
+      console.error(`Error fetching Gmail for ${type}:`, e);
+      return [];
+    }
+  }
+
+  try {
+    const promises = [];
+    if (state.googlePersonalToken) {
+      promises.push(fetchEmailsForAccount(state.googlePersonalToken, 'personal', state.googlePersonalEmail));
+    }
+    if (state.googleWorkToken) {
+      promises.push(fetchEmailsForAccount(state.googleWorkToken, 'work', state.googleWorkEmail));
+    }
+
+    const results = await Promise.all(promises);
+    const allEmails = results.flat();
+
+    // Sort by internalDate (newest first)
+    allEmails.sort((a, b) => {
+      const aDate = parseInt(a.internalDate) || 0;
+      const bDate = parseInt(b.internalDate) || 0;
+      return bDate - aDate;
+    });
+
+    if (allEmails.length === 0) {
       container.innerHTML = `<p class="empty-msg">${translations[state.lang]['no-emails']}</p>`;
       return;
     }
 
-    // Fetch details for each message
-    const detailsPromises = data.messages.map(msg => 
-      fetch(`https://gmail.googleapis.com/v1/users/me/messages/${msg.id}`, {
-        headers: { 'Authorization': `Bearer ${state.googleClientToken}` }
-      }).then(r => r.json())
-    );
-
-    const messagesDetails = await Promise.all(detailsPromises);
-    
-    container.innerHTML = messagesDetails.map(msg => {
+    container.innerHTML = allEmails.slice(0, 5).map(msg => {
       const headers = msg.payload.headers;
       const subjectHeader = headers.find(h => h.name.toLowerCase() === 'subject');
       const fromHeader = headers.find(h => h.name.toLowerCase() === 'from');
@@ -2072,19 +2293,28 @@ async function fetchGmail() {
       const from = fromHeader ? fromHeader.value.split('<')[0].trim() : 'Unknown';
       const snippet = msg.snippet;
 
+      const badgeClass = msg.accountType === 'personal' ? 'personal' : 'work';
+      const badgeLabel = translations[state.lang][`badge-${msg.accountType}`] || msg.accountType;
+
+      let gmailLink = `https://mail.google.com/mail/#inbox/${msg.threadId}`;
+      if (msg.accountEmail) {
+        gmailLink = `https://mail.google.com/mail/u/${encodeURIComponent(msg.accountEmail)}/#inbox/${msg.threadId}`;
+      }
+
       return `
-        <div class="integration-item">
+        <a href="${escapeHtml(gmailLink)}" target="_blank" rel="noopener noreferrer" class="integration-item ${badgeClass}">
           <span class="item-title">${escapeHtml(subject)}</span>
           <div class="item-meta">
             <span>${escapeHtml(from)}</span>
-            <span class="item-badge" title="${escapeHtml(snippet)}">Gmail</span>
+            <span class="item-badge ${badgeClass}" title="${escapeHtml(snippet)}">${escapeHtml(badgeLabel)}</span>
           </div>
-        </div>
+        </a>
       `;
     }).join('');
 
   } catch (err) {
-    container.innerHTML = `<p class="empty-msg" style="color:var(--danger)">Gmail Loading Error</p>`;
+    console.error("Gmail Loading Error:", err);
+    container.innerHTML = `<p class="empty-msg" style="color:var(--danger)">Gmail Loading Error (${err.message || 'Error'})</p>`;
   }
 }
 
@@ -2094,7 +2324,7 @@ async function fetchGoogleTasks() {
   // For simplicity, let's fetch Google Tasks and show them as uncompleted items in Hoy / Esta semana.
   try {
     // 1. Get task lists
-    const listsRes = await fetch('https://tasks.googleapis.com/v1/users/@me/lists', {
+    const listsRes = await fetch('https://www.googleapis.com/tasks/v1/users/@me/lists', {
       headers: { 'Authorization': `Bearer ${state.googleClientToken}` }
     });
     if (!listsRes.ok) throw new Error();
@@ -2103,7 +2333,7 @@ async function fetchGoogleTasks() {
 
     // 2. Fetch tasks from primary list (first one usually)
     const listId = listsData.items[0].id;
-    const tasksRes = await fetch(`https://tasks.googleapis.com/v1/lists/${listId}/tasks?showCompleted=false`, {
+    const tasksRes = await fetch(`https://www.googleapis.com/tasks/v1/lists/${listId}/tasks?showCompleted=false`, {
       headers: { 'Authorization': `Bearer ${state.googleClientToken}` }
     });
     const tasksData = await tasksRes.json();
@@ -2180,42 +2410,92 @@ async function fetchGoogleCalendar() {
   const todayEventsContainer = document.getElementById('google-events-container');
   const weeklyEventsContainer = document.getElementById('weekly-events-container');
 
-  try {
-    const timeMin = new Date().toISOString();
-    const timeMax = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(); // 7 days ahead
+  if (!state.googlePersonalToken && !state.googleWorkToken) {
+    const configLinkText = state.lang === 'es' ? 'Configurar Google Calendar' : 'Configure Google Calendar';
+    const msgHTML = `<p class="empty-msg" style="margin: 0.5rem 0;"><a href="#" onclick="event.preventDefault(); window.openSettingsGoogleTab();" style="color: var(--accent); text-decoration: underline; font-weight: 500;">${configLinkText}</a></p>`;
+    todayEventsContainer.innerHTML = msgHTML;
+    weeklyEventsContainer.innerHTML = msgHTML;
+    return;
+  }
 
+  const timeMin = new Date().toISOString();
+  const timeMax = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(); // 7 days ahead
+
+  async function fetchEventsForAccount(token, type) {
+    if (!token) return [];
     const url = `https://www.googleapis.com/calendar/v3/calendars/primary/events?timeMin=${timeMin}&timeMax=${timeMax}&singleEvents=true&orderBy=startTime`;
     const res = await fetch(url, {
-      headers: { 'Authorization': `Bearer ${state.googleClientToken}` }
+      headers: { 'Authorization': `Bearer ${token}` }
     });
-    if (!res.ok) throw new Error();
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
+    const items = data.items || [];
+    return items.map(item => ({ ...item, accountType: type }));
+  }
 
-    const events = data.items || [];
+  try {
+    const promises = [];
+    if (state.googlePersonalToken) {
+      promises.push(
+        fetchEventsForAccount(state.googlePersonalToken, 'personal')
+          .catch(err => {
+            console.error("Error fetching personal calendar:", err);
+            return [];
+          })
+      );
+    }
+    if (state.googleWorkToken) {
+      promises.push(
+        fetchEventsForAccount(state.googleWorkToken, 'work')
+          .catch(err => {
+            console.error("Error fetching work calendar:", err);
+            return [];
+          })
+      );
+    }
 
-    if (events.length === 0) {
+    const results = await Promise.all(promises);
+    const allEvents = results.flat();
+
+    // Sort all events by start time
+    allEvents.sort((a, b) => {
+      const aStart = a.start.dateTime || a.start.date;
+      const bStart = b.start.dateTime || b.start.date;
+      return aStart.localeCompare(bStart);
+    });
+
+    if (allEvents.length === 0) {
       todayEventsContainer.innerHTML = `<p class="empty-msg">${translations[state.lang]['no-events']}</p>`;
       weeklyEventsContainer.innerHTML = `<p class="empty-msg">${translations[state.lang]['no-weekly-events']}</p>`;
       return;
     }
 
     const todayStr = getLocalDateString(new Date());
-
     const todayEvents = [];
     const weeklyEvents = [];
 
-    events.forEach(evt => {
+    allEvents.forEach(evt => {
       const startStr = evt.start.dateTime || evt.start.date;
       const isToday = startStr.startsWith(todayStr);
       
+      const badgeClass = evt.accountType === 'personal' ? 'personal' : 'work';
+      const badgeLabel = translations[state.lang][`badge-${evt.accountType}`] || evt.accountType;
+
+      let eventLink = evt.htmlLink || 'https://calendar.google.com/calendar/r';
+      const email = evt.accountType === 'personal' ? state.googlePersonalEmail : state.googleWorkEmail;
+      if (email) {
+        const separator = eventLink.includes('?') ? '&' : '?';
+        eventLink = `${eventLink}${separator}authuser=${encodeURIComponent(email)}`;
+      }
+
       const eventHTML = `
-        <div class="integration-item">
+        <a href="${escapeHtml(eventLink)}" target="_blank" rel="noopener noreferrer" class="integration-item ${badgeClass}">
           <span class="item-title">${escapeHtml(evt.summary)}</span>
           <div class="item-meta">
             <span>${formatEventTime(evt)}</span>
-            <span class="item-badge">Cal</span>
+            <span class="item-badge ${badgeClass}">${escapeHtml(badgeLabel)}</span>
           </div>
-        </div>
+        </a>
       `;
 
       if (isToday) {
@@ -2229,6 +2509,7 @@ async function fetchGoogleCalendar() {
     weeklyEventsContainer.innerHTML = weeklyEvents.length > 0 ? weeklyEvents.join('') : `<p class="empty-msg">${translations[state.lang]['no-weekly-events']}</p>`;
 
   } catch (err) {
+    console.error("Failed to load calendars", err);
     todayEventsContainer.innerHTML = `<p class="empty-msg" style="color:var(--danger)">Calendar Loading Error</p>`;
     weeklyEventsContainer.innerHTML = `<p class="empty-msg" style="color:var(--danger)">Calendar Loading Error</p>`;
   }
@@ -3003,37 +3284,98 @@ function setupEventListeners() {
     settingsModal.close();
   });
 
-  // Google OAuth Login Action
-  document.getElementById('google-login-btn').addEventListener('click', () => {
+  // Google OAuth Personal Login Action
+  const loginBtnPersonal = document.getElementById('google-login-btn-personal');
+  loginBtnPersonal.addEventListener('click', () => {
     if (!state.settings.googleClientId) {
-      alert(state.lang === 'es' ? 'Por favor, configura primero tu Google Client ID.' : 'Please configure your Google Client ID first.');
+      const clientIdInput = document.getElementById('google-client-id');
+      const msg = state.lang === 'es' ? 'Por favor, introduce tu Google Client ID.' : 'Please enter your Google Client ID.';
+      showInputErrorFeedback(clientIdInput, msg);
       return;
     }
+    googleLoginTarget = 'personal';
     if (googleTokenClient) {
-      googleTokenClient.requestAccessToken();
+      googleTokenClient.requestAccessToken({ prompt: 'select_account' });
     } else {
       initGoogleOAuth();
-      googleTokenClient.requestAccessToken();
+      googleTokenClient.requestAccessToken({ prompt: 'select_account' });
     }
   });
 
-  // Google OAuth Logout Action
-  document.getElementById('google-logout-btn').addEventListener('click', () => {
-    if (state.googleClientToken) {
-      google.accounts.oauth2.revokeToken(state.googleClientToken, () => {});
+  // Google OAuth Work Login Action
+  const loginBtnWork = document.getElementById('google-login-btn-work');
+  loginBtnWork.addEventListener('click', () => {
+    if (!state.settings.googleClientId) {
+      const clientIdInput = document.getElementById('google-client-id');
+      const msg = state.lang === 'es' ? 'Por favor, introduce tu Google Client ID.' : 'Please enter your Google Client ID.';
+      showInputErrorFeedback(clientIdInput, msg);
+      return;
     }
-    state.googleClientToken = null;
-    sessionStorage.removeItem('google_access_token');
-    updateGoogleAuthStatus(false);
+    googleLoginTarget = 'work';
+    if (googleTokenClient) {
+      googleTokenClient.requestAccessToken({ prompt: 'select_account' });
+    } else {
+      initGoogleOAuth();
+      googleTokenClient.requestAccessToken({ prompt: 'select_account' });
+    }
+  });
+
+  // Google OAuth Personal Logout Action
+  document.getElementById('google-logout-btn-personal').addEventListener('click', () => {
+    if (state.googlePersonalToken) {
+      google.accounts.oauth2.revokeToken(state.googlePersonalToken, () => {});
+    }
+    state.googlePersonalToken = null;
+    state.googlePersonalEmail = null;
+    sessionStorage.removeItem('google_personal_token');
+    sessionStorage.removeItem('google_personal_email');
     
-    // Clear Google components
-    document.getElementById('google-events-container').innerHTML = `<p class="empty-msg">${translations[state.lang]['no-events']}</p>`;
-    document.getElementById('gmail-container').innerHTML = `<p class="empty-msg">${translations[state.lang]['no-emails']}</p>`;
-    document.getElementById('weekly-events-container').innerHTML = `<p class="empty-msg">${translations[state.lang]['no-weekly-events']}</p>`;
-    const gT1 = document.getElementById('gtasks-today');
-    const gT2 = document.getElementById('gtasks-week');
-    if (gT1) gT1.remove();
-    if (gT2) gT2.remove();
+    // Sync legacy/compatibility tokens
+    state.googleClientToken = state.googleWorkToken;
+    sessionStorage.setItem('google_access_token', state.googleClientToken || '');
+    
+    updateGoogleAuthStatus();
+    
+    // Clear / Refetch Google components
+    if (state.googleWorkToken) {
+      fetchGoogleData();
+    } else {
+      fetchGoogleCalendar();
+      document.getElementById('gmail-container').innerHTML = `<p class="empty-msg">${translations[state.lang]['no-emails']}</p>`;
+      const gT1 = document.getElementById('gtasks-today');
+      const gT2 = document.getElementById('gtasks-week');
+      if (gT1) gT1.remove();
+      if (gT2) gT2.remove();
+    }
+  });
+
+  // Google OAuth Work Logout Action
+  document.getElementById('google-logout-btn-work').addEventListener('click', () => {
+    if (state.googleWorkToken) {
+      google.accounts.oauth2.revokeToken(state.googleWorkToken, () => {});
+    }
+    state.googleWorkToken = null;
+    state.googleWorkEmail = null;
+    sessionStorage.removeItem('google_work_token');
+    sessionStorage.removeItem('google_work_email');
+    
+    // Sync legacy/compatibility tokens
+    state.googleClientToken = state.googlePersonalToken;
+    sessionStorage.setItem('google_access_token', state.googleClientToken || '');
+    
+    updateGoogleAuthStatus();
+    
+    // Clear / Refetch Google components
+    if (state.googlePersonalToken) {
+      fetchGoogleData();
+    } else {
+      fetchGoogleCalendar();
+      document.getElementById('gmail-container').innerHTML = `<p class="empty-msg">${translations[state.lang]['no-emails']}</p>`;
+      const gT1 = document.getElementById('gtasks-today');
+      const gT2 = document.getElementById('gtasks-week');
+      if (gT1) gT1.remove();
+      if (gT2) gT2.remove();
+    }
   });
 
   // Todo Form Submit (Add Task)
@@ -3042,6 +3384,12 @@ function setupEventListeners() {
     const input = document.getElementById('todo-input');
     const dateInput = document.getElementById('todo-date');
     const prioritySelect = document.getElementById('todo-priority');
+
+    if (!input.value.trim()) {
+      const msg = state.lang === 'es' ? 'Por favor, escribe un nombre para la tarea.' : 'Please enter a task name.';
+      showInputErrorFeedback(input, msg);
+      return;
+    }
 
     addTodo(input.value.trim(), dateInput.value, prioritySelect.value);
 
@@ -3072,9 +3420,16 @@ function setupEventListeners() {
   document.getElementById('edit-task-form').addEventListener('submit', (e) => {
     e.preventDefault();
     const id = document.getElementById('edit-task-id').value;
-    const text = document.getElementById('edit-task-text').value.trim();
+    const textInput = document.getElementById('edit-task-text');
+    const text = textInput.value.trim();
     const date = document.getElementById('edit-task-date').value;
     const priority = document.getElementById('edit-task-priority').value;
+
+    if (!text) {
+      const msg = state.lang === 'es' ? 'Por favor, escribe un nombre para la tarea.' : 'Please enter a task name.';
+      showInputErrorFeedback(textInput, msg);
+      return;
+    }
 
     updateTodo(id, text, date, priority);
     editModal.close();
@@ -3153,10 +3508,8 @@ async function init() {
   fetchBitbucket();
   fetchJira();
 
-  // If Client ID is present, wait and load Google Auth
-  if (state.settings.googleClientId) {
-    setTimeout(initGoogleOAuth, 1000);
-  }
+  // Load Google Auth and render setup links
+  setTimeout(initGoogleOAuth, 1000);
 }
 
 // Start application

@@ -23,6 +23,12 @@
   --success-bg: rgba(39, 174, 96, 0.1);
   --warning: #f2c94c;
   --glow-1: rgba(47, 128, 237, 0.05);
+  --personal-color: #1e70e0;
+  --personal-bg: rgba(30, 112, 224, 0.1);
+  --personal-border: rgba(30, 112, 224, 0.2);
+  --work-color: #7c3aed;
+  --work-bg: rgba(124, 58, 237, 0.1);
+  --work-border: rgba(124, 58, 237, 0.2);
   --glow-2: rgba(235, 87, 87, 0.03);
 
   --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.04);
@@ -58,6 +64,12 @@
     --glow-2: rgba(248, 113, 113, 0.06);
     --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.2);
     --shadow-md: 0 8px 30px rgba(0, 0, 0, 0.3);
+    --personal-color: #60a5fa;
+    --personal-bg: rgba(96, 165, 250, 0.15);
+    --personal-border: rgba(96, 165, 250, 0.25);
+    --work-color: #a78bfa;
+    --work-bg: rgba(167, 139, 250, 0.15);
+    --work-border: rgba(167, 139, 250, 0.25);
   }
 }
 
@@ -81,6 +93,12 @@ html.light {
   --success-bg: rgba(39, 174, 96, 0.1);
   --warning: #f2c94c;
   --glow-1: rgba(47, 128, 237, 0.05);
+  --personal-color: #1e70e0;
+  --personal-bg: rgba(30, 112, 224, 0.1);
+  --personal-border: rgba(30, 112, 224, 0.2);
+  --work-color: #7c3aed;
+  --work-bg: rgba(124, 58, 237, 0.1);
+  --work-border: rgba(124, 58, 237, 0.2);
   --glow-2: rgba(235, 87, 87, 0.03);
   --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.04);
   --shadow-md: 0 8px 30px rgba(0, 0, 0, 0.06);
@@ -108,6 +126,12 @@ html.dark {
   --glow-2: rgba(248, 113, 113, 0.06);
   --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.2);
   --shadow-md: 0 8px 30px rgba(0, 0, 0, 0.3);
+  --personal-color: #60a5fa;
+  --personal-bg: rgba(96, 165, 250, 0.15);
+  --personal-border: rgba(96, 165, 250, 0.25);
+  --work-color: #a78bfa;
+  --work-bg: rgba(167, 139, 250, 0.15);
+  --work-border: rgba(167, 139, 250, 0.25);
 }
 
 /* Modern Browser Support: use light-dark() where supported */
@@ -705,32 +729,79 @@ html.dark .section-card:hover {
   font-style: italic;
 }
 
+/* Header status indicators styling */
+.header-status-indicators {
+  display: inline-flex;
+  gap: 0.35rem;
+  align-items: center;
+}
+
+.status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  display: inline-block;
+  transition: all 0.3s ease;
+}
+
+.status-dot.personal {
+  background: var(--personal-color);
+  box-shadow: 0 0 6px var(--personal-color);
+}
+
+.status-dot.work {
+  background: var(--work-color);
+  box-shadow: 0 0 6px var(--work-color);
+}
+
+.status-dot.disconnected {
+  background: var(--text-tertiary);
+  opacity: 0.4;
+  box-shadow: none;
+}
+
+/* Remove bottom padding from cards that contain scrollable integration lists */
+.section-card:has(.integration-list) {
+  padding-bottom: 0;
+}
+
+.section-card:has(.integration-list) .card-subtitle {
+  margin-bottom: 0;
+}
+
+.todo-wrapper:has(.countdown-list),
+.todo-wrapper:has(.todo-list-container) {
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
 /* Integration lists styling */
 .integration-list {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 0.5rem;
   max-height: 250px;
   overflow-y: auto;
   scrollbar-width: thin;
+  padding: 0.75rem 0.15rem 1.25rem 0.15rem;
 }
 
 /* Scrollbar support */
 @supports (scrollbar-color: auto) {
-  .integration-list, .todo-list-container, .modal-body {
+  .integration-list, .todo-list, .modal-body {
     scrollbar-color: var(--border-color) transparent;
   }
 }
 
 @supports not (scrollbar-color: auto) {
   .integration-list::-webkit-scrollbar, 
-  .todo-list-container::-webkit-scrollbar,
+  .todo-list::-webkit-scrollbar,
   .modal-body::-webkit-scrollbar {
     width: 6px;
     height: 6px;
   }
   .integration-list::-webkit-scrollbar-thumb,
-  .todo-list-container::-webkit-scrollbar-thumb,
+  .todo-list::-webkit-scrollbar-thumb,
   .modal-body::-webkit-scrollbar-thumb {
     background: var(--border-color);
     border-radius: 3px;
@@ -741,27 +812,27 @@ html.dark .section-card:hover {
 .integration-item {
   display: flex;
   flex-direction: column;
-  padding: 0.65rem;
+  padding: 0.8rem 1rem;
   border-radius: var(--radius-sm);
-  background: rgba(0,0,0,0.02);
-  border-left: 3.5px solid var(--text-tertiary);
+  background: rgba(0,0,0,0.015);
+  border: 1px solid var(--border-color);
   transition: all 0.2s ease;
   text-decoration: none;
   color: inherit;
 }
 
 html.dark .integration-item {
-  background: rgba(255,255,255,0.02);
+  background: rgba(255,255,255,0.015);
 }
 
 .integration-item:hover {
   background: var(--accent-bg);
-  border-left-color: var(--accent);
-  transform: translateX(2px);
+  border-color: var(--accent);
+  transform: translateY(-1px);
 }
 
 .integration-item.urgent {
-  border-left-color: var(--danger);
+  border-color: var(--danger);
   background: var(--danger-bg);
 }
 
@@ -783,10 +854,25 @@ html.dark .integration-item {
 
 .item-badge {
   font-size: 0.7rem;
-  padding: 0.1rem 0.4rem;
+  padding: 0.15rem 0.45rem;
   border-radius: 10px;
   background: var(--border-color);
   font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+}
+
+.item-badge.personal {
+  background: var(--personal-bg);
+  color: var(--personal-color);
+  border: 1px solid var(--personal-border);
+}
+
+.item-badge.work {
+  background: var(--work-bg);
+  color: var(--work-color);
+  border: 1px solid var(--work-border);
 }
 
 /* Todo section styling */
@@ -914,12 +1000,11 @@ html.dark .btn-secondary:hover {
   color: white;
 }
 
-/* Filters */
 .todo-filters {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 1rem;
+  margin-bottom: 0;
   padding-bottom: 0.75rem;
   border-bottom: 1px solid var(--border-color);
 }
@@ -975,8 +1060,9 @@ html.dark .btn-secondary:hover {
 
 /* Todo List Items */
 .todo-list-container {
-  max-height: 400px;
-  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  padding-top: 1.5rem;
 }
 
 .todo-list {
@@ -984,6 +1070,9 @@ html.dark .btn-secondary:hover {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+  max-height: 380px;
+  overflow-y: auto;
+  padding: 1rem 0.15rem 1.5rem 0.15rem;
 }
 
 .todo-item {
@@ -1950,7 +2039,7 @@ html.dark .event-banner.soon {
   gap: 0.45rem;
   max-height: 240px;
   overflow-y: auto;
-  padding: 0;
+  padding: 1.5rem 0.15rem;
   margin: 0;
 }
 
@@ -2380,5 +2469,19 @@ button:focus-visible,
 .filter-btn:focus-visible,
 .tab-btn:focus-visible {
   box-shadow: 0 0 0 3px var(--accent-bg-hover) !important;
+}
+
+/* Button error feedback */
+.btn-secondary.btn-error {
+  background: var(--danger-bg) !important;
+  color: var(--danger) !important;
+  border-color: var(--danger) !important;
+  animation: shake 0.4s ease-in-out;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-4px); }
+  40%, 80% { transform: translateX(4px); }
 }
 
