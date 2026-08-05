@@ -2252,6 +2252,7 @@ function initGoogleOAuth() {
       state.googleClientToken = state.googlePersonalToken || state.googleWorkToken;
       sessionStorage.setItem('google_access_token', state.googleClientToken || '');
       
+      isRefreshingToken[googleLoginTarget] = false;
       updateGoogleAuthStatus();
       await fetchGoogleData();
     }
@@ -2266,6 +2267,48 @@ function initGoogleOAuth() {
     fetchGoogleCalendar();
     fetchGmail();
   }
+}
+
+let isRefreshingToken = { personal: false, work: false };
+
+function refreshGoogleToken(accountType) {
+  if (isRefreshingToken[accountType]) return;
+  if (typeof google === 'undefined' || !googleTokenClient) {
+    console.warn("Google Client not initialized for refresh");
+    return;
+  }
+  
+  console.log(`Attempting silent token refresh for ${accountType}...`);
+  isRefreshingToken[accountType] = true;
+  googleLoginTarget = accountType;
+  const emailHint = accountType === 'personal' ? state.googlePersonalEmail : state.googleWorkEmail;
+  
+  try {
+    googleTokenClient.requestAccessToken({
+      hint: emailHint || '',
+      prompt: 'none'
+    });
+    setTimeout(() => { isRefreshingToken[accountType] = false; }, 8000);
+  } catch (e) {
+    console.error("Silent refresh failed", e);
+    isRefreshingToken[accountType] = false;
+  }
+}
+
+function handleInvalidToken(accountType) {
+  console.warn(`Token expired (401) for ${accountType} account. Clearing token and attempting silent refresh.`);
+  if (accountType === 'personal') {
+    state.googlePersonalToken = null;
+    sessionStorage.removeItem('google_personal_token');
+  } else {
+    state.googleWorkToken = null;
+    sessionStorage.removeItem('google_work_token');
+  }
+  state.googleClientToken = state.googlePersonalToken || state.googleWorkToken;
+  sessionStorage.setItem('google_access_token', state.googleClientToken || '');
+  
+  updateGoogleAuthStatus();
+  refreshGoogleToken(accountType);
 }
 
 async function checkAndFetchGoogleEmails() {
@@ -2400,7 +2443,12 @@ async function fetchGmail() {
       const res = await fetch('https://www.googleapis.com/gmail/v1/users/me/messages?q=is:unread%20in:inbox&maxResults=5', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      if (!res.ok) {
+        if (res.status === 401) {
+          handleInvalidToken(type);
+        }
+        throw new Error(`HTTP ${res.status}`);
+      }
       const data = await res.json();
       if (!data.messages || data.messages.length === 0) return [];
 
@@ -2487,60 +2535,187 @@ async function fetchGmail() {
 }
 
 async function fetchGoogleTasks() {
-  // We can merge Google Tasks into our standard ToDo list visually, or display them separately.
-  // Let's merge them under Hoy / Esta Semana if they have dates, or list them.
-  // For simplicity, let's fetch Google Tasks and show them as uncompleted items in Hoy / Esta semana.
+  const oldToday = document.getElementById('gtasks-today');
+  if (oldToday) oldToday.remove();
+  const oldWeek = document.getElementById('gtasks-week');
+  if (oldWeek) oldWeek.remove();
+
+  if (!state.googlePersonalToken && !state.googleWorkToken) {
+    return;
+  }
+
+  let errors = [];
+
+  async function fetchTasksForAccount(token, type) {
+    if (!token) return [];
+    try {
+      const tasksRes = await fetch('https://www.googleapis.com/tasks/v1/lists/@default/tasks?showCompleted=false', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (!tasksRes.ok) {
+        if (tasksRes.status === 401) {
+          handleInvalidToken(type);
+        }
+        throw new Error(`HTTP ${tasksRes.status}`);
+      }
+      const tasksData = await tasksRes.json();
+      const items = tasksData.items || [];
+      return items.map(t => ({ ...t, accountType: type }));
+    } catch (e) {
+      console.warn(`Direct fetch from @default failed for ${type}, trying lists fallback...`, e);
+      try {
+        const listsRes = await fetch('https://www.googleapis.com/tasks/v1/users/@me/lists', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (!listsRes.ok) throw new Error(`Fallback HTTP ${listsRes.status}`);
+        const listsData = await listsRes.json();
+        if (!listsData.items || listsData.items.length === 0) return [];
+
+        const listId = listsData.items[0].id;
+        const tasksRes = await fetch(`https://www.googleapis.com/tasks/v1/lists/${listId}/tasks?showCompleted=false`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (!tasksRes.ok) throw new Error(`Fallback Tasks HTTP ${tasksRes.status}`);
+        const tasksData = await tasksRes.json();
+        const items = tasksData.items || [];
+        return items.map(t => ({ ...t, accountType: type }));
+      } catch (fallbackError) {
+        errors.push(`${type} account: ${fallbackError.message}`);
+        return [];
+      }
+    }
+  }
+
   try {
-    // 1. Get task lists
-    const listsRes = await fetch('https://www.googleapis.com/tasks/v1/users/@me/lists', {
-      headers: { 'Authorization': `Bearer ${state.googleClientToken}` }
-    });
-    if (!listsRes.ok) throw new Error();
-    const listsData = await listsRes.json();
-    if (!listsData.items || listsData.items.length === 0) return;
-
-    // 2. Fetch tasks from primary list (first one usually)
-    const listId = listsData.items[0].id;
-    const tasksRes = await fetch(`https://www.googleapis.com/tasks/v1/lists/${listId}/tasks?showCompleted=false`, {
-      headers: { 'Authorization': `Bearer ${state.googleClientToken}` }
-    });
-    const tasksData = await tasksRes.json();
-    const gTasks = tasksData.items || [];
-
-    // Store in global state or overlay on UI
-    // We will render Google Tasks directly into the columns!
-    const todayStr = getLocalDateString(new Date());
-    const next7Days = [];
-    for (let i = 1; i <= 7; i++) {
-      const d = new Date();
-      d.setDate(d.getDate() + i);
-      next7Days.push(getLocalDateString(d));
+    const promises = [];
+    if (state.googlePersonalToken) {
+      promises.push(fetchTasksForAccount(state.googlePersonalToken, 'personal'));
+    }
+    if (state.googleWorkToken) {
+      promises.push(fetchTasksForAccount(state.googleWorkToken, 'work'));
     }
 
-    const todayGTasks = gTasks.filter(t => t.due && t.due.startsWith(todayStr));
-    const weekGTasks = gTasks.filter(t => t.due && next7Days.some(day => t.due.startsWith(day)));
+    const results = await Promise.all(promises);
+    const gTasks = results.flat();
 
-    // Insert into DOM
-    if (todayGTasks.length > 0) {
-      // Find today list container or append
+    // Check if we had errors and no tasks were successfully loaded
+    if (errors.length > 0 && gTasks.length === 0) {
       let gTodayCard = document.getElementById('gtasks-today');
       if (!gTodayCard) {
         gTodayCard = document.createElement('div');
         gTodayCard.id = 'gtasks-today';
         gTodayCard.className = 'section-card';
-        document.querySelector('#col-today .col-content').appendChild(gTodayCard);
+        const colContent = document.querySelector('#col-today .col-content');
+        if (colContent) colContent.appendChild(gTodayCard);
+      }
+      gTodayCard.innerHTML = `
+        <h3 class="card-subtitle" style="color: var(--danger);">Google Tasks Error</h3>
+        <p class="empty-msg" style="color: var(--danger); font-size: 0.85rem; padding: 0.5rem 0; line-height: 1.4;">
+          ${escapeHtml(errors.join(' | '))}
+          <br><span style="font-size: 0.75rem; color: var(--text-secondary); display: block; margin-top: 0.25rem;">
+            Please check that the Google Tasks API is enabled in your Google Cloud Console project.
+          </span>
+        </p>
+      `;
+      return;
+    }
+
+    if (gTasks.length === 0) return;
+
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+    const todayTime = todayStart.getTime();
+
+    const weekEnd = new Date(todayStart);
+    weekEnd.setDate(weekEnd.getDate() + 7);
+    const weekEndTime = weekEnd.getTime();
+
+    const todayGTasks = [];
+    const weekGTasks = [];
+
+    gTasks.forEach(t => {
+      if (!t.title || t.title.trim() === '') return;
+      if (!t.due) {
+        weekGTasks.push(t);
+        return;
+      }
+      
+      const dueTime = new Date(t.due).getTime();
+      if (dueTime <= todayTime + 24 * 60 * 60 * 1000 - 1) {
+        todayGTasks.push(t);
+      } else if (dueTime <= weekEndTime) {
+        weekGTasks.push(t);
+      } else {
+        weekGTasks.push(t);
+      }
+    });
+
+    todayGTasks.sort((a, b) => {
+      const aOverdue = a.due && new Date(a.due).getTime() < todayTime;
+      const bOverdue = b.due && new Date(b.due).getTime() < todayTime;
+      if (aOverdue && !bOverdue) return -1;
+      if (!aOverdue && bOverdue) return 1;
+      return 0;
+    });
+
+    function getTaskTimeText(task) {
+      if (!task.due) return '';
+      const hasTime = !task.due.endsWith('T00:00:00.000Z') && !task.due.endsWith('T00:00:00Z') && task.due.includes('T');
+      if (!hasTime) {
+        return '';
+      }
+      const d = new Date(task.due);
+      return d.toLocaleTimeString(state.lang === 'es' ? 'es-ES' : 'en-US', {
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    }
+
+    function checkTaskRecurring(task) {
+      return !!(task.recurrence || task.recurring);
+    }
+
+    if (todayGTasks.length > 0) {
+      let gTodayCard = document.getElementById('gtasks-today');
+      if (!gTodayCard) {
+        gTodayCard = document.createElement('div');
+        gTodayCard.id = 'gtasks-today';
+        gTodayCard.className = 'section-card';
+        const colContent = document.querySelector('#col-today .col-content');
+        if (colContent) colContent.appendChild(gTodayCard);
       }
       gTodayCard.innerHTML = `
         <h3 class="card-subtitle">Google Tasks (Hoy)</h3>
         <div class="integration-list">
-          ${todayGTasks.map(t => `
-            <div class="integration-item urgent" data-tooltip="${escapeHtml(t.title)}">
-              <span class="item-title">${escapeHtml(t.title)}</span>
-              <div class="item-meta">
-                <span class="item-badge">Google</span>
-              </div>
-            </div>
-          `).join('')}
+          ${todayGTasks.map(t => {
+            const badgeClass = t.accountType === 'personal' ? 'personal' : 'work';
+            const badgeLabel = translations[state.lang][`badge-${t.accountType}`] || t.accountType;
+            const isOverdue = t.due && new Date(t.due).getTime() < todayTime;
+            const dueLabel = isOverdue ? (state.lang === 'es' ? 'Vencido' : 'Overdue') : '';
+            const timeText = getTaskTimeText(t);
+            const isRecurring = checkTaskRecurring(t);
+            const recurringClass = isRecurring ? 'recurring' : '';
+            const repeatIcon = isRecurring 
+              ? `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="opacity: 0.65; display: inline-block; vertical-align: middle; margin-right: 0.25rem; flex-shrink: 0;"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>` 
+              : '';
+            const tooltipText = t.title + (isOverdue ? ` (${dueLabel})` : '') + (timeText ? `\n${timeText}` : '') + (isRecurring ? (state.lang === 'es' ? ' (Recurrente)' : ' (Recurring)') : '');
+            
+            const email = t.accountType === 'personal' ? state.googlePersonalEmail : state.googleWorkEmail;
+            const tasksLink = email 
+              ? `https://tasks.google.com/?authuser=${encodeURIComponent(email)}` 
+              : 'https://tasks.google.com/';
+
+            return `
+              <a href="${escapeHtml(tasksLink)}" target="_blank" rel="noopener noreferrer" class="integration-item one-line ${recurringClass}" data-tooltip="${escapeHtml(tooltipText)}">
+                <div style="display: flex; align-items: center; gap: 0.4rem; min-width: 0; flex: 1;">
+                  ${isOverdue ? `<span class="event-overdue-badge" style="margin-left: 0; flex-shrink: 0; padding: 0.05rem 0.25rem; font-size: 0.6rem;">${dueLabel}</span>` : ''}
+                  ${repeatIcon}
+                  <span class="item-title">${escapeHtml(t.title)}</span>
+                </div>
+                <span class="item-badge ${badgeClass}">${escapeHtml(badgeLabel)}</span>
+              </a>
+            `;
+          }).join('')}
         </div>
       `;
     }
@@ -2551,20 +2726,42 @@ async function fetchGoogleTasks() {
         gWeekCard = document.createElement('div');
         gWeekCard.id = 'gtasks-week';
         gWeekCard.className = 'section-card';
-        document.querySelector('#col-week .col-content').appendChild(gWeekCard);
+        const colContent = document.querySelector('#col-week .col-content');
+        if (colContent) colContent.appendChild(gWeekCard);
       }
       gWeekCard.innerHTML = `
         <h3 class="card-subtitle">Google Tasks (Semana)</h3>
         <div class="integration-list">
-          ${weekGTasks.map(t => `
-            <div class="integration-item" data-tooltip="${escapeHtml(t.title)}\nDue: ${formatDateShort(t.due.split('T')[0])}">
-              <span class="item-title">${escapeHtml(t.title)}</span>
-              <div class="item-meta">
-                <span>${formatDateShort(t.due.split('T')[0])}</span>
-                <span class="item-badge">Google</span>
-              </div>
-            </div>
-          `).join('')}
+          ${weekGTasks.map(t => {
+            const badgeClass = t.accountType === 'personal' ? 'personal' : 'work';
+            const badgeLabel = translations[state.lang][`badge-${t.accountType}`] || t.accountType;
+            const timeText = getTaskTimeText(t);
+            const dateText = t.due ? formatDateShort(t.due.split('T')[0]) : '';
+            const isRecurring = checkTaskRecurring(t);
+            const recurringClass = isRecurring ? 'recurring' : '';
+            const repeatIcon = isRecurring 
+              ? `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="opacity: 0.65; display: inline-block; vertical-align: middle; margin-right: 0.25rem; flex-shrink: 0;"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>` 
+              : '';
+            const tooltipText = t.title + (t.due ? `\n${dateText}` : '') + (isRecurring ? (state.lang === 'es' ? ' (Recurrente)' : ' (Recurring)') : '');
+            
+            const email = t.accountType === 'personal' ? state.googlePersonalEmail : state.googleWorkEmail;
+            const tasksLink = email 
+              ? `https://tasks.google.com/?authuser=${encodeURIComponent(email)}` 
+              : 'https://tasks.google.com/';
+
+            return `
+              <a href="${escapeHtml(tasksLink)}" target="_blank" rel="noopener noreferrer" class="integration-item one-line ${recurringClass}" data-tooltip="${escapeHtml(tooltipText)}">
+                <div style="display: flex; align-items: center; gap: 0.4rem; min-width: 0; flex: 1;">
+                  ${repeatIcon}
+                  <span class="item-title">${escapeHtml(t.title)}</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 0.4rem; flex-shrink: 0;">
+                  ${dateText ? `<span style="font-size: 0.72rem; color: var(--text-secondary);">${escapeHtml(dateText)}</span>` : ''}
+                  <span class="item-badge ${badgeClass}">${escapeHtml(badgeLabel)}</span>
+                </div>
+              </a>
+            `;
+          }).join('')}
         </div>
       `;
     }
@@ -2599,7 +2796,12 @@ async function fetchGoogleCalendar() {
     const res = await fetch(url, {
       headers: { 'Authorization': `Bearer ${token}` }
     });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    if (!res.ok) {
+      if (res.status === 401) {
+        handleInvalidToken(type);
+      }
+      throw new Error(`HTTP ${res.status}`);
+    }
     const data = await res.json();
     const items = data.items || [];
     return items.map(item => ({ ...item, accountType: type }));

@@ -18,6 +18,7 @@ You must enable the APIs that this dashboard communicates with:
 2. Search for and enable the following APIs one by one:
    - **Google Calendar API**
    - **Gmail API**
+   - **Google Tasks API**
    - **People API** (Optional, used for user info retrieval)
 
 ### 3. Configure the OAuth Consent Screen

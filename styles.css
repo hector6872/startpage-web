@@ -851,6 +851,23 @@ html.dark .integration-item {
   background: var(--danger-bg);
 }
 
+.integration-item.one-line {
+  flex-direction: row !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  padding: 0.35rem 0.6rem !important;
+  gap: 0.5rem !important;
+}
+
+.integration-item.one-line .item-title {
+  margin-bottom: 0 !important;
+  font-size: 0.82rem !important;
+}
+
+.integration-item.one-line .item-badge {
+  margin-top: 0 !important;
+}
+
 .item-title {
   font-weight: 500;
   font-size: 0.85rem;
