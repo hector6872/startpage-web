@@ -128,7 +128,7 @@
               <p class="empty-msg" data-i18n="no-events">No events scheduled.</p>
             </div>
           </div>
-          <div class="section-card">
+          <div class="section-card" id="gmail-card">
             <h3 class="card-subtitle">
               <span style="display: inline-flex; align-items: center; gap: 0.4rem;">
                 <span data-i18n="urgent-emails">Urgent Emails</span>
@@ -162,10 +162,13 @@
             </div>
           </div>
         </div>
+      </section>
 
-        <h2 class="col-title" data-i18n="col-work">Work</h2>
-        <div class="col-content">
-          <div class="section-card">
+      <!-- Column 3: Tasks List (CRUD) -->
+      <section class="grid-col" id="col-tasks">
+        <h2 class="col-title" data-i18n="col-work" id="work-section-title">Work</h2>
+        <div class="col-content" id="work-section-content">
+          <div class="section-card" id="prs-card">
             <h3 class="card-subtitle">
               <span style="display: inline-flex; align-items: center; gap: 0.4rem;">
                 <span data-i18n="pending-prs">Pull Requests (Git)</span>
@@ -177,7 +180,7 @@
               <p class="empty-msg" data-i18n="no-prs">No pending PRs.</p>
             </div>
           </div>
-          <div class="section-card">
+          <div class="section-card" id="jira-card">
             <h3 class="card-subtitle">
               <span style="display: inline-flex; align-items: center; gap: 0.4rem;">
                 <span data-i18n="jira-tasks">Jira Tasks</span>
@@ -190,10 +193,7 @@
             </div>
           </div>
         </div>
-      </section>
 
-      <!-- Column 3: Tasks List (CRUD) -->
-      <section class="grid-col" id="col-tasks">
         <div class="section-header" id="countdown-section-header">
           <h2 class="col-title" id="countdown-section-title" data-i18n="col-countdowns">My Countdowns</h2>
           <button id="btn-show-add-countdown" class="add-section-btn" title="Add Countdown" aria-label="Add Countdown">
@@ -465,9 +465,34 @@
           <!-- Tab: Google -->
           <div id="tab-google" class="tab-pane">
             <p class="tab-desc" data-i18n="google-desc">Requires a Google Cloud project with OAuth credentials. Ensure you add your local origin (e.g. http://localhost:5173 or the server URL) in Google Console.</p>
-            <div class="form-group" style="margin-bottom: 1.5rem;">
+            <div class="form-group" style="margin-bottom: 1rem;">
               <label for="google-client-id" data-i18n="label-client-id">Google Client ID</label>
               <input type="text" id="google-client-id" placeholder="xxxxxxxx.apps.googleusercontent.com">
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+              <div class="settings-section-card" style="margin-bottom: 0;">
+                <div class="card-toggle-header" style="padding: 0.6rem 0.8rem;">
+                  <span class="card-toggle-title" style="font-size: 0.85rem;">
+                    <span data-i18n="label-show-google-emails">Show Emails (Gmail)</span>
+                  </span>
+                  <label class="switch-control">
+                    <input type="checkbox" id="settings-show-google-emails" checked>
+                    <span class="switch-slider"></span>
+                  </label>
+                </div>
+              </div>
+              <div class="settings-section-card" style="margin-bottom: 0;">
+                <div class="card-toggle-header" style="padding: 0.6rem 0.8rem;">
+                  <span class="card-toggle-title" style="font-size: 0.85rem;">
+                    <span data-i18n="label-show-google-tasks">Show Tasks (Google Tasks)</span>
+                  </span>
+                  <label class="switch-control">
+                    <input type="checkbox" id="settings-show-google-tasks" checked>
+                    <span class="switch-slider"></span>
+                  </label>
+                </div>
+              </div>
             </div>
 
             <!-- Personal Account -->
@@ -537,6 +562,17 @@
 
           <!-- Tab: Git -->
           <div id="tab-git" class="tab-pane">
+            <div class="settings-section-card" style="margin-bottom: 1.5rem;">
+              <div class="card-toggle-header" style="padding: 0.6rem 0.8rem;">
+                <span class="card-toggle-title" style="font-size: 0.85rem;">
+                  <span data-i18n="label-show-git">Show Git Integration (PRs)</span>
+                </span>
+                <label class="switch-control">
+                  <input type="checkbox" id="settings-show-git" checked>
+                  <span class="switch-slider"></span>
+                </label>
+              </div>
+            </div>
             <h3 data-i18n="github-settings">GitHub</h3>
             <div class="form-group">
               <label for="github-token" data-i18n="label-token">Personal Access Token (PAT)</label>
@@ -566,6 +602,17 @@
 
           <!-- Tab: Jira -->
           <div id="tab-jira" class="tab-pane">
+            <div class="settings-section-card" style="margin-bottom: 1.5rem;">
+              <div class="card-toggle-header" style="padding: 0.6rem 0.8rem;">
+                <span class="card-toggle-title" style="font-size: 0.85rem;">
+                  <span data-i18n="label-show-jira">Show Jira Integration</span>
+                </span>
+                <label class="switch-control">
+                  <input type="checkbox" id="settings-show-jira" checked>
+                  <span class="switch-slider"></span>
+                </label>
+              </div>
+            </div>
             <p class="tab-desc" data-i18n="jira-cors-warning">Note: Jira API requires CORS. If tasks fail to load, you may need a browser CORS extension or configure your Jira Cloud to allow local requests.</p>
             <div class="form-group">
               <label for="jira-host" data-i18n="label-jira-host">Jira Host URL</label>

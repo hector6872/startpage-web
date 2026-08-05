@@ -1643,6 +1643,19 @@ async function saveTodos() {
 function updateOrganizerVisibility() {
   const showCountdowns = state.settings.showCountdowns !== false;
   const showTasks = state.settings.showTasks !== false;
+  const showGit = state.settings.showGit !== false;
+  const showJira = state.settings.showJira !== false;
+  const showWork = showGit || showJira;
+
+  const prsCard = document.getElementById('prs-card');
+  const jiraCard = document.getElementById('jira-card');
+  const workTitle = document.getElementById('work-section-title');
+  const workContent = document.getElementById('work-section-content');
+
+  if (prsCard) prsCard.classList.toggle('hidden', !showGit);
+  if (jiraCard) jiraCard.classList.toggle('hidden', !showJira);
+  if (workTitle) workTitle.classList.toggle('hidden', !showWork);
+  if (workContent) workContent.classList.toggle('hidden', !showWork);
 
   const countdownHeader = document.getElementById('countdown-section-header');
   const countdownCard = document.querySelector('.countdown-wrapper');
@@ -1666,12 +1679,12 @@ function updateOrganizerVisibility() {
 
   const colTasks = document.getElementById('col-tasks');
   const dashboardGrid = document.querySelector('.dashboard-grid');
-  const bothHidden = !showCountdowns && !showTasks;
+  const colTasksHidden = !showCountdowns && !showTasks && !showWork;
   if (colTasks) {
-    colTasks.classList.toggle('hidden', bothHidden);
+    colTasks.classList.toggle('hidden', colTasksHidden);
   }
   if (dashboardGrid) {
-    dashboardGrid.classList.toggle('two-cols', bothHidden);
+    dashboardGrid.classList.toggle('two-cols', colTasksHidden);
   }
 }
 
@@ -2425,6 +2438,13 @@ async function fetchGoogleData() {
 }
 
 async function fetchGmail() {
+  const gmailCard = document.getElementById('gmail-card');
+  if (state.settings.showGoogleEmails === false) {
+    if (gmailCard) gmailCard.classList.add('hidden');
+    return;
+  }
+  if (gmailCard) gmailCard.classList.remove('hidden');
+
   const container = document.getElementById('gmail-container');
   const emailsBadge = document.getElementById('emails-count-badge');
   if (emailsBadge) {
@@ -2539,6 +2559,10 @@ async function fetchGoogleTasks() {
   if (oldToday) oldToday.remove();
   const oldWeek = document.getElementById('gtasks-week');
   if (oldWeek) oldWeek.remove();
+
+  if (state.settings.showGoogleTasks === false) {
+    return;
+  }
 
   if (!state.googlePersonalToken && !state.googleWorkToken) {
     return;
@@ -3430,6 +3454,10 @@ function setupEventListeners() {
     document.getElementById('settings-show-world-clock').checked = state.settings.showWorldClock !== false;
     document.getElementById('settings-show-countdowns').checked = state.settings.showCountdowns !== false;
     document.getElementById('settings-show-tasks').checked = state.settings.showTasks !== false;
+    document.getElementById('settings-show-google-emails').checked = state.settings.showGoogleEmails !== false;
+    document.getElementById('settings-show-google-tasks').checked = state.settings.showGoogleTasks !== false;
+    document.getElementById('settings-show-git').checked = state.settings.showGit !== false;
+    document.getElementById('settings-show-jira').checked = state.settings.showJira !== false;
     
     toggleWeatherInputs();
     toggleClockInputs();
@@ -3734,6 +3762,10 @@ function setupEventListeners() {
     state.settings.showWorldClock = document.getElementById('settings-show-world-clock').checked;
     state.settings.showCountdowns = document.getElementById('settings-show-countdowns').checked;
     state.settings.showTasks = document.getElementById('settings-show-tasks').checked;
+    state.settings.showGoogleEmails = document.getElementById('settings-show-google-emails').checked;
+    state.settings.showGoogleTasks = document.getElementById('settings-show-google-tasks').checked;
+    state.settings.showGit = document.getElementById('settings-show-git').checked;
+    state.settings.showJira = document.getElementById('settings-show-jira').checked;
 
     state.lang = state.settings.lang;
 
@@ -3754,6 +3786,9 @@ function setupEventListeners() {
     fetchGitHub();
     fetchBitbucket();
     fetchJira();
+    fetchGmail();
+    fetchGoogleTasks();
+    fetchGoogleCalendar();
 
     if (state.settings.googleClientId) {
       initGoogleOAuth();
