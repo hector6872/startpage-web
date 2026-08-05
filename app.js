@@ -2338,7 +2338,7 @@ async function fetchGmail() {
   async function fetchEmailsForAccount(token, type, email) {
     if (!token) return [];
     try {
-      const res = await fetch('https://www.googleapis.com/gmail/v1/users/me/messages?q=is:unread&maxResults=5', {
+      const res = await fetch('https://www.googleapis.com/gmail/v1/users/me/messages?q=is:unread%20in:inbox&maxResults=5', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
