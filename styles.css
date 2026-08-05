@@ -24,11 +24,11 @@
   --warning: #f2c94c;
   --glow-1: rgba(47, 128, 237, 0.05);
   --personal-color: #1e70e0;
-  --personal-bg: rgba(30, 112, 224, 0.1);
-  --personal-border: rgba(30, 112, 224, 0.2);
+  --personal-bg: color-mix(in srgb, var(--personal-color) 12%, transparent);
+  --personal-border: color-mix(in srgb, var(--personal-color) 25%, transparent);
   --work-color: #7c3aed;
-  --work-bg: rgba(124, 58, 237, 0.1);
-  --work-border: rgba(124, 58, 237, 0.2);
+  --work-bg: color-mix(in srgb, var(--work-color) 12%, transparent);
+  --work-border: color-mix(in srgb, var(--work-color) 25%, transparent);
   --glow-2: rgba(235, 87, 87, 0.03);
 
   --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.04);
@@ -65,11 +65,7 @@
     --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.2);
     --shadow-md: 0 8px 30px rgba(0, 0, 0, 0.3);
     --personal-color: #60a5fa;
-    --personal-bg: rgba(96, 165, 250, 0.15);
-    --personal-border: rgba(96, 165, 250, 0.25);
     --work-color: #a78bfa;
-    --work-bg: rgba(167, 139, 250, 0.15);
-    --work-border: rgba(167, 139, 250, 0.25);
   }
 }
 
@@ -94,11 +90,7 @@ html.light {
   --warning: #f2c94c;
   --glow-1: rgba(47, 128, 237, 0.05);
   --personal-color: #1e70e0;
-  --personal-bg: rgba(30, 112, 224, 0.1);
-  --personal-border: rgba(30, 112, 224, 0.2);
   --work-color: #7c3aed;
-  --work-bg: rgba(124, 58, 237, 0.1);
-  --work-border: rgba(124, 58, 237, 0.2);
   --glow-2: rgba(235, 87, 87, 0.03);
   --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.04);
   --shadow-md: 0 8px 30px rgba(0, 0, 0, 0.06);
@@ -127,11 +119,7 @@ html.dark {
   --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.2);
   --shadow-md: 0 8px 30px rgba(0, 0, 0, 0.3);
   --personal-color: #60a5fa;
-  --personal-bg: rgba(96, 165, 250, 0.15);
-  --personal-border: rgba(96, 165, 250, 0.25);
   --work-color: #a78bfa;
-  --work-bg: rgba(167, 139, 250, 0.15);
-  --work-border: rgba(167, 139, 250, 0.25);
 }
 
 /* Modern Browser Support: use light-dark() where supported */
@@ -2403,16 +2391,16 @@ html.dark[data-accent="black"] {
 
 /* Color Swatches Component */
 .color-picker-grid {
-  display: flex;
-  gap: 0.65rem;
-  align-items: center;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(10, auto);
+  gap: 0.35rem;
+  justify-content: start;
   margin-top: 0.5rem;
 }
 
 .color-swatch-btn {
-  width: 32px;
-  height: 32px;
+  width: 26px;
+  height: 26px;
   border-radius: 50%;
   border: 2px solid transparent;
   background-color: var(--swatch-color);
@@ -2432,6 +2420,21 @@ html.dark[data-accent="black"] {
   border-color: var(--text-primary);
   transform: scale(1.12);
   box-shadow: 0 0 0 3px var(--accent-bg-hover);
+}
+
+/* Smaller swatches for Google accounts config */
+#google-color-personal-swatches .color-swatch-btn,
+#google-color-work-swatches .color-swatch-btn {
+  width: 20px;
+  height: 20px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+}
+
+#google-color-personal-swatches .color-swatch-btn.active::after,
+#google-color-work-swatches .color-swatch-btn.active::after {
+  width: 3px;
+  height: 6px;
+  border-width: 0 1.5px 1.5px 0;
 }
 
 .color-swatch-btn.active::after {

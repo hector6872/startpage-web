@@ -141,18 +141,6 @@
               <p class="empty-msg" data-i18n="no-emails">No unread emails.</p>
             </div>
           </div>
-          <div class="section-card">
-            <h3 class="card-subtitle">
-              <span style="display: inline-flex; align-items: center; gap: 0.4rem;">
-                <span data-i18n="pending-prs">Pull Requests (Git)</span>
-                <span id="prs-count-badge" class="filter-badge hidden" style="margin-left: 0;"></span>
-              </span>
-            </h3>
-            <div id="prs-container" class="integration-list">
-              <!-- Dynamically populated -->
-              <p class="empty-msg" data-i18n="no-prs">No pending PRs.</p>
-            </div>
-          </div>
         </div>
       </section>
 
@@ -171,6 +159,22 @@
             <div id="weekly-events-container" class="integration-list">
               <!-- Dynamically populated -->
               <p class="empty-msg" data-i18n="no-weekly-events">No events this week.</p>
+            </div>
+          </div>
+        </div>
+
+        <h2 class="col-title" data-i18n="col-work">Work</h2>
+        <div class="col-content">
+          <div class="section-card">
+            <h3 class="card-subtitle">
+              <span style="display: inline-flex; align-items: center; gap: 0.4rem;">
+                <span data-i18n="pending-prs">Pull Requests (Git)</span>
+                <span id="prs-count-badge" class="filter-badge hidden" style="margin-left: 0;"></span>
+              </span>
+            </h3>
+            <div id="prs-container" class="integration-list">
+              <!-- Dynamically populated -->
+              <p class="empty-msg" data-i18n="no-prs">No pending PRs.</p>
             </div>
           </div>
           <div class="section-card">
@@ -476,6 +480,22 @@
                 <label data-i18n="google-status-personal">Personal Account:</label>
                 <span id="google-auth-status-personal" class="auth-status disconnected" data-i18n="disconnected">Disconnected</span>
               </div>
+              <div class="form-group row-align" style="margin-bottom: 0.75rem;">
+                <label data-i18n="google-color">Account Color:</label>
+                <div class="color-picker-grid" id="google-color-personal-swatches" style="margin-top: 0;">
+                  <button type="button" class="color-swatch-btn" data-color="blue" title="Blue" style="--swatch-color: #3b82f6;"></button>
+                  <button type="button" class="color-swatch-btn" data-color="indigo" title="Indigo" style="--swatch-color: #6366f1;"></button>
+                  <button type="button" class="color-swatch-btn" data-color="purple" title="Purple" style="--swatch-color: #8b5cf6;"></button>
+                  <button type="button" class="color-swatch-btn" data-color="pink" title="Pink" style="--swatch-color: #ec4899;"></button>
+                  <button type="button" class="color-swatch-btn" data-color="red" title="Red" style="--swatch-color: #ef4444;"></button>
+                  <button type="button" class="color-swatch-btn" data-color="orange" title="Orange" style="--swatch-color: #f97316;"></button>
+                  <button type="button" class="color-swatch-btn" data-color="green" title="Green" style="--swatch-color: #10b981;"></button>
+                  <button type="button" class="color-swatch-btn" data-color="teal" title="Teal" style="--swatch-color: #06b6d4;"></button>
+                  <button type="button" class="color-swatch-btn" data-color="slate" title="Slate Gray" style="--swatch-color: #64748b;"></button>
+                  <button type="button" class="color-swatch-btn" data-color="black" title="Black / Onyx" style="--swatch-color: #18181b;"></button>
+                </div>
+                <input type="hidden" id="google-color-personal" value="blue">
+              </div>
               <div class="google-auth-actions">
                 <button type="button" id="google-login-btn-personal" class="btn-secondary" data-i18n="google-login-personal">Log In (Personal)</button>
                 <button type="button" id="google-logout-btn-personal" class="btn-danger hidden" data-i18n="google-logout">Log Out</button>
@@ -491,6 +511,22 @@
               <div class="form-group row-align" style="margin-bottom: 0.75rem;">
                 <label data-i18n="google-status-work">Work Account:</label>
                 <span id="google-auth-status-work" class="auth-status disconnected" data-i18n="disconnected">Disconnected</span>
+              </div>
+              <div class="form-group row-align" style="margin-bottom: 0.75rem;">
+                <label data-i18n="google-color">Account Color:</label>
+                <div class="color-picker-grid" id="google-color-work-swatches" style="margin-top: 0;">
+                  <button type="button" class="color-swatch-btn" data-color="blue" title="Blue" style="--swatch-color: #3b82f6;"></button>
+                  <button type="button" class="color-swatch-btn" data-color="indigo" title="Indigo" style="--swatch-color: #6366f1;"></button>
+                  <button type="button" class="color-swatch-btn" data-color="purple" title="Purple" style="--swatch-color: #8b5cf6;"></button>
+                  <button type="button" class="color-swatch-btn" data-color="pink" title="Pink" style="--swatch-color: #ec4899;"></button>
+                  <button type="button" class="color-swatch-btn" data-color="red" title="Red" style="--swatch-color: #ef4444;"></button>
+                  <button type="button" class="color-swatch-btn" data-color="orange" title="Orange" style="--swatch-color: #f97316;"></button>
+                  <button type="button" class="color-swatch-btn" data-color="green" title="Green" style="--swatch-color: #10b981;"></button>
+                  <button type="button" class="color-swatch-btn" data-color="teal" title="Teal" style="--swatch-color: #06b6d4;"></button>
+                  <button type="button" class="color-swatch-btn" data-color="slate" title="Slate Gray" style="--swatch-color: #64748b;"></button>
+                  <button type="button" class="color-swatch-btn" data-color="black" title="Black / Onyx" style="--swatch-color: #18181b;"></button>
+                </div>
+                <input type="hidden" id="google-color-work" value="purple">
               </div>
               <div class="google-auth-actions">
                 <button type="button" id="google-login-btn-work" class="btn-secondary" data-i18n="google-login-work">Log In (Work)</button>

@@ -3,6 +3,7 @@ const translations = {
   en: {
     "col-today": "Today",
     "col-week": "This Week",
+    "col-work": "Work",
     "col-tasks": "Workspace",
     "tasks-card-title": "My Tasks",
     "calendar-events": "Events & Meetings",
@@ -83,6 +84,7 @@ const translations = {
     "google-login-work": "Log In (Work)",
     "google-status-personal": "Personal Account:",
     "google-status-work": "Work Account:",
+    "google-color": "Account Color:",
     "badge-personal": "Personal",
     "badge-work": "Work",
     "github-settings": "GitHub Configuration",
@@ -154,6 +156,7 @@ const translations = {
   es: {
     "col-today": "Hoy",
     "col-week": "Esta Semana",
+    "col-work": "Trabajo",
     "col-tasks": "Espacio de Trabajo",
     "tasks-card-title": "Mis Tareas",
     "calendar-events": "Eventos y Reuniones",
@@ -234,6 +237,7 @@ const translations = {
     "google-login-work": "Iniciar Sesión (Trabajo)",
     "google-status-personal": "Cuenta Personal:",
     "google-status-work": "Cuenta de Trabajo:",
+    "google-color": "Color de Cuenta:",
     "badge-personal": "Personal",
     "badge-work": "Trabajo",
     "github-settings": "Configuración de GitHub",
@@ -585,6 +589,7 @@ async function loadState() {
   state.theme = state.settings.theme || localStorage.getItem('theme') || 'system';
 
   applyPrimaryColor(state.settings.primaryColor);
+  applyAccountColors();
 
   const storedTodos = localStorage.getItem('todos');
   if (storedTodos) {
@@ -1026,8 +1031,42 @@ function applyPrimaryColor(colorName = 'blue') {
   document.documentElement.setAttribute('data-accent', color);
 }
 
+// Personal & Work Custom Colors Management
+function applyAccountColors() {
+  const isDark = document.documentElement.classList.contains('dark');
+  const colorMap = {
+    blue: isDark ? '#60a5fa' : '#1e70e0',
+    indigo: '#6366f1',
+    purple: isDark ? '#a78bfa' : '#7c3aed',
+    pink: '#ec4899',
+    red: '#ef4444',
+    orange: '#f97316',
+    green: '#10b981',
+    teal: '#06b6d4',
+    slate: '#64748b',
+    black: isDark ? '#e4e4e7' : '#18181b'
+  };
+
+  const personal = state.settings.personalColor || 'blue';
+  const work = state.settings.workColor || 'purple';
+
+  document.documentElement.style.setProperty('--personal-color', colorMap[personal] || colorMap.blue);
+  document.documentElement.style.setProperty('--work-color', colorMap[work] || colorMap.purple);
+}
+
 function updateSwatchActiveState(selectedColor) {
   const swatches = document.querySelectorAll('#color-picker-swatches .color-swatch-btn');
+  swatches.forEach(btn => {
+    if (btn.getAttribute('data-color') === selectedColor) {
+      btn.classList.add('active');
+    } else {
+      btn.classList.remove('active');
+    }
+  });
+}
+
+function updateAccountSwatchActiveState(containerId, selectedColor) {
+  const swatches = document.querySelectorAll(`#${containerId} .color-swatch-btn`);
   swatches.forEach(btn => {
     if (btn.getAttribute('data-color') === selectedColor) {
       btn.classList.add('active');
@@ -1053,6 +1092,8 @@ function applyTheme() {
       html.classList.add('dark');
     }
   }
+  
+  applyAccountColors();
 }
 
 // Theme switch action
@@ -2659,6 +2700,27 @@ function setupEventListeners() {
     });
   });
 
+  // Google Account color swatches click handlers
+  const personalSwatches = document.querySelectorAll('#google-color-personal-swatches .color-swatch-btn');
+  personalSwatches.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const selectedColor = btn.getAttribute('data-color');
+      const hiddenInput = document.getElementById('google-color-personal');
+      if (hiddenInput) hiddenInput.value = selectedColor;
+      updateAccountSwatchActiveState('google-color-personal-swatches', selectedColor);
+    });
+  });
+
+  const workSwatches = document.querySelectorAll('#google-color-work-swatches .color-swatch-btn');
+  workSwatches.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const selectedColor = btn.getAttribute('data-color');
+      const hiddenInput = document.getElementById('google-color-work');
+      if (hiddenInput) hiddenInput.value = selectedColor;
+      updateAccountSwatchActiveState('google-color-work-swatches', selectedColor);
+    });
+  });
+
   // Scroll to Top Listener
   const scrollToTopBtn = document.getElementById('scroll-to-top');
   if (scrollToTopBtn) {
@@ -3056,6 +3118,14 @@ function setupEventListeners() {
     
     document.getElementById('settings-storage-mode').value = state.settings.storageMode || 'local';
     document.getElementById('google-client-id').value = state.settings.googleClientId;
+    
+    const personalCol = state.settings.personalColor || 'blue';
+    const workCol = state.settings.workColor || 'purple';
+    document.getElementById('google-color-personal').value = personalCol;
+    document.getElementById('google-color-work').value = workCol;
+    updateAccountSwatchActiveState('google-color-personal-swatches', personalCol);
+    updateAccountSwatchActiveState('google-color-work-swatches', workCol);
+
     document.getElementById('github-token').value = state.settings.githubToken;
     document.getElementById('github-username').value = state.settings.githubUsername;
     document.getElementById('bitbucket-workspace').value = state.settings.bitbucketWorkspace;
@@ -3319,6 +3389,9 @@ function setupEventListeners() {
     state.settings.storageMode = newStorageMode;
     
     state.settings.googleClientId = document.getElementById('google-client-id').value.trim();
+    state.settings.personalColor = document.getElementById('google-color-personal').value;
+    state.settings.workColor = document.getElementById('google-color-work').value;
+    applyAccountColors();
     state.settings.githubToken = document.getElementById('github-token').value.trim();
     state.settings.githubUsername = document.getElementById('github-username').value.trim();
     state.settings.bitbucketWorkspace = document.getElementById('bitbucket-workspace').value.trim();
