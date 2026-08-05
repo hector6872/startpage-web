@@ -28,7 +28,7 @@
       } catch (e) {}
     }
   </script>
-  <script type="module" crossorigin src="/assets/index-Dnl6mfKO.js"></script>
+  <script type="module" crossorigin src="/assets/index-LycgrQI3.js"></script>
   <link rel="stylesheet" crossorigin href="/assets/index-BDYvaDxx.css">
 </head>
 <body>
@@ -195,29 +195,14 @@
           </div>
         </div>
 
-        <div class="section-header" id="countdown-section-header">
-          <h2 class="col-title" id="countdown-section-title" data-i18n="col-countdowns">My Countdowns</h2>
-          <button id="btn-show-add-countdown" class="add-section-btn" title="Add Countdown" aria-label="Add Countdown">
+        <!-- My Tasks Header -->
+        <div class="section-header" id="tasks-section-header">
+          <h2 class="col-title" id="tasks-section-title" data-i18n="tasks-card-title">My Tasks</h2>
+          <button id="btn-show-add-task" class="add-section-btn" title="Add Task" aria-label="Add Task">
             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
           </button>
         </div>
-        <div class="col-content">
-          <!-- Countdowns Card -->
-          <div class="todo-wrapper countdown-wrapper">
-            <ul id="countdown-list" class="countdown-list">
-              <!-- Dynamically populated -->
-            </ul>
-            <p id="countdown-empty" class="countdown-empty" data-i18n="countdown-empty">No countdowns yet.</p>
-          </div>
-
-          <!-- Tasks Section Header -->
-          <div class="section-header" id="tasks-section-header">
-            <h2 class="col-title" id="tasks-section-title" data-i18n="tasks-card-title">My Tasks</h2>
-            <button id="btn-show-add-task" class="add-section-btn" title="Add Task" aria-label="Add Task">
-              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-            </button>
-          </div>
-
+        <div class="col-content" id="tasks-section-content">
           <!-- Focus Task Card -->
           <div id="todo-focus-card" class="todo-wrapper todo-focus-card hidden">
             <h3 class="card-subtitle">
@@ -246,6 +231,23 @@
                  Only tasks completed within the last 7 days are displayed.
               </div>
             </div>
+          </div>
+        </div>
+
+        <!-- My Events Header -->
+        <div class="section-header" id="countdown-section-header">
+          <h2 class="col-title" id="countdown-section-title" data-i18n="col-countdowns">My Events</h2>
+          <button id="btn-show-add-countdown" class="add-section-btn" title="Add Event" aria-label="Add Event">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          </button>
+        </div>
+        <div class="col-content" id="countdown-section-content">
+          <!-- Countdowns Card -->
+          <div class="todo-wrapper countdown-wrapper">
+            <ul id="countdown-list" class="countdown-list">
+              <!-- Dynamically populated -->
+            </ul>
+            <p id="countdown-empty" class="countdown-empty" data-i18n="countdown-empty">No events configured.</p>
           </div>
         </div>
       </section>

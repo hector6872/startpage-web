@@ -12,9 +12,9 @@ const translations = {
     "weekly-schedule": "Weekly Schedule",
     "jira-tasks": "Jira Assigned Tasks",
     "todo-placeholder": "Add a new task...",
-    "countdown-placeholder": "Countdown title...",
-    "col-countdowns": "My Countdowns",
-    "countdown-empty": "No countdowns yet.",
+    "countdown-placeholder": "Event title...",
+    "col-countdowns": "My Events",
+    "countdown-empty": "No events configured.",
     "priority-low": "Low",
     "priority-medium": "Medium",
     "priority-high": "High",
@@ -49,7 +49,7 @@ const translations = {
     "world-clock-sub": "World Time",
     "label-show-weather": "Show Weather Widget",
     "label-show-world-clock": "Show World Clock Widget",
-    "label-show-countdowns": "Show Countdowns",
+    "label-show-countdowns": "Show Events",
     "label-show-tasks": "Show Tasks",
     "label-city": "Weather City",
     "label-weather-url": "Weather Web URL (Optional)",
@@ -100,7 +100,7 @@ const translations = {
     "label-jira-token": "Jira API Token",
     "save-settings": "Save Settings",
     "edit-task-title": "Edit Task",
-    "add-countdown-title": "Add New Countdown",
+    "add-countdown-title": "Add New Event",
     "add-task-title-modal": "Add New Task",
     "label-task-text": "Task Name",
     "label-due-date": "Due Date",
@@ -165,9 +165,9 @@ const translations = {
     "weekly-schedule": "Agenda Semanal",
     "jira-tasks": "Tareas de Jira",
     "todo-placeholder": "Añadir nueva tarea...",
-    "countdown-placeholder": "Título del countdown...",
-    "col-countdowns": "Mis Countdowns",
-    "countdown-empty": "Sin countdowns todavía.",
+    "countdown-placeholder": "Nombre del evento...",
+    "col-countdowns": "Mis Eventos",
+    "countdown-empty": "No hay eventos configurados.",
     "priority-low": "Baja",
     "priority-medium": "Media",
     "priority-high": "Alta",
@@ -202,7 +202,7 @@ const translations = {
     "world-clock-sub": "Hora Mundial",
     "label-show-weather": "Mostrar Clima",
     "label-show-world-clock": "Mostrar Reloj Mundial",
-    "label-show-countdowns": "Mostrar Countdowns",
+    "label-show-countdowns": "Mostrar Eventos",
     "label-show-tasks": "Mostrar Tareas",
     "label-city": "Ciudad para el clima",
     "label-weather-url": "URL de la web del clima (Opcional)",
@@ -253,7 +253,7 @@ const translations = {
     "label-jira-token": "Token de API de Jira",
     "save-settings": "Guardar Configuración",
     "edit-task-title": "Editar Tarea",
-    "add-countdown-title": "Añadir nuevo countdown",
+    "add-countdown-title": "Añadir nuevo evento",
     "add-task-title-modal": "Añadir nueva tarea",
     "label-task-text": "Nombre de la Tarea",
     "label-due-date": "Fecha de Vencimiento",
@@ -596,10 +596,7 @@ async function loadState() {
     state.todos = JSON.parse(storedTodos);
   }
 
-  const storedCountdowns = localStorage.getItem('countdowns');
-  if (storedCountdowns) {
-    state.countdowns = JSON.parse(storedCountdowns);
-  }
+  // Countdowns are now customEvents from settings, no local countdowns needed
 
   // Initialize file sync if enabled
   if (state.settings.storageMode === 'file') {
@@ -1692,10 +1689,6 @@ function updateOrganizerVisibility() {
 // COUNTDOWNS
 // ------------------------------------------------------------
 
-async function saveCountdowns() {
-  localStorage.setItem('countdowns', JSON.stringify(state.countdowns));
-}
-
 function renderCountdowns() {
   const list = document.getElementById('countdown-list');
   const emptyEl = document.getElementById('countdown-empty');
@@ -1703,89 +1696,111 @@ function renderCountdowns() {
 
   list.innerHTML = '';
 
-  const todayStr = getLocalDateString(new Date());
-  const todayMs = new Date(todayStr + 'T00:00:00').getTime();
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const todayMs = today.getTime();
+  const currentYear = today.getFullYear();
 
-  if (state.countdowns.length === 0) {
+  const events = state.settings.customEvents || [];
+  if (events.length === 0) {
     if (emptyEl) emptyEl.classList.remove('hidden');
     return;
   }
   if (emptyEl) emptyEl.classList.add('hidden');
 
-  // Sort by target date ascending
-  const sorted = [...state.countdowns].sort((a, b) => a.targetDate.localeCompare(b.targetDate));
+  // Sort events chronologically (January -> December)
+  const sorted = [...events].sort((a, b) => {
+    const [, mA, dA] = a.date.split('-').map(Number);
+    const [, mB, dB] = b.date.split('-').map(Number);
+    if (mA !== mB) return mA - mB;
+    return dA - dB;
+  });
 
-  sorted.forEach(countdown => {
-    const targetMs = new Date(countdown.targetDate + 'T00:00:00').getTime();
-    const diffDays = Math.ceil((targetMs - todayMs) / (1000 * 60 * 60 * 24));
+  sorted.forEach(evt => {
+    const [, m, d] = evt.date.split('-');
+    const eventDateThisYear = new Date(currentYear, parseInt(m, 10) - 1, parseInt(d, 10));
+    
+    // Check if the event is overdue (passed this year already)
+    const isOverdue = eventDateThisYear < today && !(today.getMonth() === parseInt(m, 10) - 1 && today.getDate() === parseInt(d, 10));
+    
+    let daysLabel = '';
+    let badgeClass = '';
 
-    let daysLabel, badgeClass;
-    if (diffDays < 0) {
-      daysLabel = state.lang === 'es' ? `Hace ${Math.abs(diffDays)} días` : `${Math.abs(diffDays)} days ago`;
+    if (isOverdue) {
+      daysLabel = state.lang === 'es' ? 'Vencido' : 'Overdue';
       badgeClass = 'countdown-badge-past';
-    } else if (diffDays === 0) {
-      daysLabel = state.lang === 'es' ? '¡Hoy!' : 'Today!';
-      badgeClass = 'countdown-badge-red';
-    } else if (diffDays === 1) {
-      daysLabel = state.lang === 'es' ? 'Mañana' : 'Tomorrow';
-      badgeClass = 'countdown-badge-red';
-    } else if (diffDays < 7) {
-      daysLabel = state.lang === 'es' ? `En ${diffDays} días` : `In ${diffDays} days`;
-      badgeClass = 'countdown-badge-red';
-    } else if (diffDays < 31) {
-      daysLabel = state.lang === 'es' ? `En ${diffDays} días` : `In ${diffDays} days`;
-      badgeClass = 'countdown-badge-amber';
     } else {
-      daysLabel = state.lang === 'es' ? `En ${diffDays} días` : `In ${diffDays} days`;
-      badgeClass = 'countdown-badge-neutral';
+      const diffTime = eventDateThisYear.getTime() - todayMs;
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      
+      if (diffDays === 0) {
+        daysLabel = state.lang === 'es' ? 'Hoy' : 'Today';
+        badgeClass = 'countdown-badge-red';
+      } else if (diffDays === 1) {
+        daysLabel = state.lang === 'es' ? 'Mañana' : 'Tomorrow';
+        badgeClass = 'countdown-badge-red';
+      } else if (diffDays <= 3) {
+        daysLabel = state.lang === 'es' ? `En ${diffDays} d` : `In ${diffDays} d`;
+        badgeClass = 'countdown-badge-red';
+      } else if (diffDays <= 7) {
+        daysLabel = state.lang === 'es' ? `En ${diffDays} d` : `In ${diffDays} d`;
+        badgeClass = 'countdown-badge-amber';
+      } else {
+        daysLabel = state.lang === 'es' ? `En ${diffDays} d` : `In ${diffDays} d`;
+        badgeClass = 'countdown-badge-neutral';
+      }
     }
 
-    const isPast = diffDays < 0;
-    const titleClass = isPast ? 'countdown-title countdown-title-past' : 'countdown-title';
+    const titleClass = isOverdue ? 'countdown-title countdown-title-past' : 'countdown-title';
+    const formattedDate = eventDateThisYear.toLocaleDateString(state.lang === 'es' ? 'es-ES' : 'en-US', { day: 'numeric', month: 'short' });
 
     const li = document.createElement('li');
     li.className = 'countdown-item';
     li.innerHTML = `
       <div class="todo-item-left">
         <div class="todo-item-details">
-          <span class="${titleClass}">${escapeHtml(countdown.title)}</span>
-          <span class="countdown-date" style="margin-top: 0.15rem; display: block;">${formatDateShort(countdown.targetDate)}</span>
+          <span class="${titleClass}">${escapeHtml(evt.name)}</span>
+          <span class="countdown-date" style="margin-top: 0.15rem; display: block;">${formattedDate}</span>
         </div>
       </div>
       <div class="todo-actions countdown-actions">
         <span class="countdown-badge ${badgeClass}">${daysLabel}</span>
-        <button class="btn-item-action delete-countdown-btn" data-id="${countdown.id}" title="${state.lang === 'es' ? 'Eliminar' : 'Delete'}">
-          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+        <button class="btn-item-action delete-countdown-btn" data-id="${evt.id}" title="${state.lang === 'es' ? 'Eliminar' : 'Delete'}">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
         </button>
       </div>
     `;
 
     li.querySelector('.delete-countdown-btn').addEventListener('click', () => {
-      deleteCountdown(countdown.id);
+      deleteCountdown(evt.id);
     });
 
     list.appendChild(li);
   });
 }
 
-async function addCountdown(title, targetDate) {
-  state.countdowns.push({ id: Date.now().toString(), title, targetDate });
-  await saveCountdowns();
+async function addCountdown(name, date) {
+  state.settings.customEvents = state.settings.customEvents || [];
+  state.settings.customEvents.push({ id: Date.now().toString(), name, date });
+  await saveSettings();
   renderCountdowns();
+  renderSettingsEventsList();
+  updateUpcomingEventBanner();
 }
 
 let countdownIdToDelete = null;
 
 function deleteCountdown(id) {
   countdownIdToDelete = id;
-  const countdown = state.countdowns.find(c => c.id === id);
+  const events = state.settings.customEvents || [];
+  const countdown = events.find(c => c.id === id);
   if (!countdown) return;
 
   const modal = document.getElementById('confirm-delete-modal');
   if (modal) {
     const dict = translations[state.lang];
     confirmActionType = 'delete-countdown';
-    modal.querySelector('[data-i18n="confirm-delete-title"]').textContent = state.lang === 'es' ? 'Eliminar Countdown' : 'Delete Countdown';
+    modal.querySelector('[data-i18n="confirm-delete-title"]').textContent = state.lang === 'es' ? 'Eliminar Evento' : 'Delete Event';
     const descEl = modal.querySelector('[data-i18n="confirm-delete-desc"]');
     if (descEl) {
       descEl.innerHTML = state.lang === 'es'
@@ -3121,9 +3136,11 @@ function setupEventListeners() {
         confirmDeleteModal.close();
         confirmActionType = null;
       } else if (confirmActionType === 'delete-countdown' && countdownIdToDelete !== null) {
-        state.countdowns = state.countdowns.filter(c => c.id !== countdownIdToDelete);
-        await saveCountdowns();
+        state.settings.customEvents = (state.settings.customEvents || []).filter(c => c.id !== countdownIdToDelete);
+        await saveSettings();
         renderCountdowns();
+        renderSettingsEventsList();
+        updateUpcomingEventBanner();
         confirmDeleteModal.close();
         countdownIdToDelete = null;
         confirmActionType = null;
