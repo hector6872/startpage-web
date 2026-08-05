@@ -660,12 +660,12 @@ function updateNotesBadge() {
 }
 
 function updateUpcomingEventBanner() {
-  const banner = document.getElementById('upcoming-event');
-  if (!banner) return;
+  const container = document.getElementById('events-banner-container');
+  if (!container) return;
+  container.innerHTML = '';
 
   const events = state.settings.customEvents || [];
   if (events.length === 0) {
-    banner.classList.add('hidden');
     return;
   }
 
@@ -674,6 +674,7 @@ function updateUpcomingEventBanner() {
   const currentYear = today.getFullYear();
 
   let todayEvents = [];
+  let pastEvents = [];
   let upcomingEvents = [];
 
   events.forEach(evt => {
@@ -686,10 +687,24 @@ function updateUpcomingEventBanner() {
     
     if (today.getMonth() === month && today.getDate() === day) {
       todayEvents.push(evt);
+    } else if (eventDateThisYear < today) {
+      const timeDiff = today.getTime() - eventDateThisYear.getTime();
+      const daysAgo = Math.floor(timeDiff / (1000 * 3600 * 24));
+      pastEvents.push({
+        ...evt,
+        daysAgo
+      });
+      
+      // Also calculate next year's upcoming occurrence
+      let nextYearEvent = new Date(eventDateThisYear);
+      nextYearEvent.setFullYear(currentYear + 1);
+      const nextDiff = nextYearEvent.getTime() - today.getTime();
+      const daysLeft = Math.ceil(nextDiff / (1000 * 3600 * 24));
+      upcomingEvents.push({
+        ...evt,
+        daysLeft
+      });
     } else {
-      if (eventDateThisYear < today) {
-        eventDateThisYear.setFullYear(currentYear + 1);
-      }
       const timeDiff = eventDateThisYear.getTime() - today.getTime();
       const daysLeft = Math.ceil(timeDiff / (1000 * 3600 * 24));
       upcomingEvents.push({
@@ -699,22 +714,41 @@ function updateUpcomingEventBanner() {
     }
   });
 
+  let activeChipsHTML = '';
+
   if (todayEvents.length > 0) {
-    banner.className = 'event-banner today';
     const names = todayEvents.map(e => e.name).join(', ');
     const labelText = state.lang === 'es' 
       ? `🎉 Hoy: ¡${names}! 🎂`
       : `🎉 Today: ${names}! 🎂`;
-    banner.textContent = labelText;
+    activeChipsHTML += `<div class="event-banner today">${escapeHtml(labelText)}</div>`;
+    
+    const remainingCount = events.length - todayEvents.length;
+    if (remainingCount > 0) {
+      const moreText = state.lang === 'es' ? `+${remainingCount} más` : `+${remainingCount} more`;
+      activeChipsHTML += `<div class="event-banner more-chip">${escapeHtml(moreText)}</div>`;
+    }
+  } else if (pastEvents.length > 0) {
+    pastEvents.sort((a, b) => a.daysAgo - b.daysAgo);
+    const closestPast = pastEvents[0];
+    const labelText = state.lang === 'es'
+      ? `⚠️ Evento pasado: ${closestPast.name} (hace ${closestPast.daysAgo} ${closestPast.daysAgo === 1 ? 'día' : 'días'})`
+      : `⚠️ Past event: ${closestPast.name} (${closestPast.daysAgo} ${closestPast.daysAgo === 1 ? 'day' : 'days'} ago)`;
+    activeChipsHTML += `<div class="event-banner past-warning">${escapeHtml(labelText)}</div>`;
+    
+    const remainingCount = events.length - 1;
+    if (remainingCount > 0) {
+      const moreText = state.lang === 'es' ? `+${remainingCount} más` : `+${remainingCount} more`;
+      activeChipsHTML += `<div class="event-banner more-chip">${escapeHtml(moreText)}</div>`;
+    }
   } else if (upcomingEvents.length > 0) {
     upcomingEvents.sort((a, b) => a.daysLeft - b.daysLeft);
     const closest = upcomingEvents[0];
+    let bannerClass = 'upcoming';
     if (closest.daysLeft < 7) {
-      banner.className = 'event-banner soon';
+      bannerClass = 'soon';
     } else if (closest.daysLeft < 31) {
-      banner.className = 'event-banner today';
-    } else {
-      banner.className = 'event-banner upcoming';
+      bannerClass = 'today';
     }
     
     const isBirthday = closest.name.toLowerCase().includes('birthday') || closest.name.toLowerCase().includes('cumpleaños');
@@ -727,11 +761,16 @@ function updateUpcomingEventBanner() {
       timeText = closest.daysLeft === 1 ? 'tomorrow' : `in ${closest.daysLeft} days`;
     }
     const labelText = `${icon} ${closest.name} (${timeText})`;
+    activeChipsHTML += `<div class="event-banner ${bannerClass}">${escapeHtml(labelText)}</div>`;
     
-    banner.textContent = labelText;
-  } else {
-    banner.classList.add('hidden');
+    const remainingCount = upcomingEvents.length - 1;
+    if (remainingCount > 0) {
+      const moreText = state.lang === 'es' ? `+${remainingCount} más` : `+${remainingCount} more`;
+      activeChipsHTML += `<div class="event-banner more-chip">${escapeHtml(moreText)}</div>`;
+    }
   }
+
+  container.innerHTML = activeChipsHTML;
 }
 
 function renderSettingsEventsList() {
@@ -758,6 +797,10 @@ function renderSettingsEventsList() {
     return dA - dB;
   });
 
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const currentYear = today.getFullYear();
+
   sortedEvents.forEach((evt) => {
     const li = document.createElement('li');
     
@@ -768,14 +811,30 @@ function renderSettingsEventsList() {
     nameSpan.className = 'event-item-name';
     nameSpan.textContent = evt.name;
     
+    const dateRow = document.createElement('div');
+    dateRow.style.display = 'flex';
+    dateRow.style.alignItems = 'center';
+    dateRow.style.gap = '0.5rem';
+    
     const dateSpan = document.createElement('span');
     dateSpan.className = 'event-item-date';
     const [y, m, d] = evt.date.split('-');
     const dateObj = new Date(y, parseInt(m, 10) - 1, d);
     dateSpan.textContent = dateObj.toLocaleDateString(state.lang === 'es' ? 'es-ES' : 'en-US', { day: 'numeric', month: 'short' });
     
+    dateRow.appendChild(dateSpan);
+    
+    const eventDateThisYear = new Date(currentYear, parseInt(m, 10) - 1, parseInt(d, 10));
+    const isOverdue = eventDateThisYear < today && !(today.getMonth() === parseInt(m, 10) - 1 && today.getDate() === parseInt(d, 10));
+    if (isOverdue) {
+      const overdueBadge = document.createElement('span');
+      overdueBadge.className = 'event-overdue-badge';
+      overdueBadge.textContent = state.lang === 'es' ? 'Vencido' : 'Overdue';
+      dateRow.appendChild(overdueBadge);
+    }
+
     infoDiv.appendChild(nameSpan);
-    infoDiv.appendChild(dateSpan);
+    infoDiv.appendChild(dateRow);
     
     const deleteBtn = document.createElement('button');
     deleteBtn.type = 'button';
@@ -2798,7 +2857,7 @@ function setupEventListeners() {
   });
 
   // Click banner to open Events settings directly
-  const eventBanner = document.getElementById('upcoming-event');
+  const eventBanner = document.getElementById('events-banner-container');
   if (eventBanner) {
     eventBanner.addEventListener('click', () => {
       document.getElementById('settings-toggle').click();

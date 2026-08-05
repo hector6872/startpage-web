@@ -1923,8 +1923,16 @@ html.dark .settings-section-card {
   background: var(--danger-bg);
 }
 
-.event-banner {
+.events-banner-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
   margin-top: 0.5rem;
+  align-items: center;
+  width: fit-content;
+}
+
+.event-banner {
   padding: 0.25rem 0.6rem;
   font-size: 0.78rem;
   font-weight: 600;
@@ -1938,6 +1946,25 @@ html.dark .settings-section-card {
   user-select: none;
 }
 
+.event-banner.more-chip {
+  background: rgba(0, 0, 0, 0.02);
+  border: 1px dashed var(--border-color);
+  color: var(--text-secondary);
+  font-weight: 500;
+  box-shadow: none;
+  font-size: 0.72rem;
+}
+
+html.dark .event-banner.more-chip {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.event-banner.more-chip:hover {
+  background: var(--accent-bg-hover);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
 .event-banner:hover {
   transform: translateY(-1px);
   filter: brightness(1.05);
@@ -1948,7 +1975,6 @@ html.dark .settings-section-card {
   background: rgba(245, 158, 11, 0.15);
   border: 1px solid rgba(245, 158, 11, 0.3);
   color: #d97706;
-  animation: pulse-event 2s infinite ease-in-out;
 }
 
 html.dark .event-banner.today {
@@ -1956,13 +1982,10 @@ html.dark .event-banner.today {
 }
 
 .event-banner.upcoming {
-  background: rgba(0, 0, 0, 0.02);
+  background: var(--bg-card);
   border: 1px solid var(--border-color);
-  color: var(--text-secondary);
-}
-
-html.dark .event-banner.upcoming {
-  background: rgba(255, 255, 255, 0.02);
+  color: var(--text-primary);
+  box-shadow: var(--shadow-sm);
 }
 
 .event-banner.soon {
@@ -1972,6 +1995,16 @@ html.dark .event-banner.upcoming {
 }
 
 html.dark .event-banner.soon {
+  color: #fca5a5;
+}
+
+.event-banner.past-warning {
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  color: #ef4444;
+}
+
+html.dark .event-banner.past-warning {
   color: #fca5a5;
 }
 
@@ -2590,5 +2623,20 @@ html.dark .integration-item.recurring {
 .integration-item.recurring:hover {
   opacity: 1;
   border-style: solid;
+}
+
+/* Overdue Badge in settings events list */
+.event-overdue-badge {
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  background: var(--danger-bg);
+  color: var(--danger);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  padding: 0.1rem 0.35rem;
+  border-radius: 4px;
+  margin-left: 0.5rem;
+  display: inline-block;
+  line-height: 1.2;
 }
 
