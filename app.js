@@ -1953,11 +1953,13 @@ async function fetchJira() {
       const key = issue.key;
       const url = `${domain}/browse/${key}`;
       const priority = issue.fields.priority ? issue.fields.priority.name : 'medium';
+      const titleText = `[${key}] ${summary}`;
+      const statusText = issue.fields.status.name;
       return `
-        <a href="${url}" target="_blank" class="integration-item">
+        <a href="${url}" target="_blank" class="integration-item" data-tooltip="${escapeHtml(titleText)}\nStatus: ${escapeHtml(statusText)}\nPriority: ${escapeHtml(priority)}">
           <span class="item-title">[${key}] ${escapeHtml(summary)}</span>
           <div class="item-meta">
-            <span>${escapeHtml(issue.fields.status.name)}</span>
+            <span>${escapeHtml(statusText)}</span>
             <span class="item-badge">${escapeHtml(priority)}</span>
           </div>
         </a>
@@ -2011,7 +2013,7 @@ async function fetchGitHub() {
     container.innerHTML = data.items.map(pr => {
       const repo = pr.repository_url.split('/').slice(-1)[0];
       return `
-        <a href="${pr.html_url}" target="_blank" class="integration-item">
+        <a href="${pr.html_url}" target="_blank" class="integration-item" data-tooltip="${escapeHtml(pr.title)}\nRepo: ${escapeHtml(repo)}\nPR: #${pr.number}">
           <span class="item-title">${escapeHtml(pr.title)}</span>
           <div class="item-meta">
             <span>${escapeHtml(repo)}</span>
@@ -2060,11 +2062,13 @@ async function fetchBitbucket() {
     const currentHTML = container.innerHTML.includes('empty-msg') || container.innerHTML.includes('Unconfigured') ? '' : container.innerHTML;
     
     const bbHTML = prs.map(pr => {
+      const titleText = `[Bitbucket] ${pr.title}`;
+      const repoName = pr.source.repository.name;
       return `
-        <a href="${pr.links.html.href}" target="_blank" class="integration-item">
+        <a href="${pr.links.html.href}" target="_blank" class="integration-item" data-tooltip="${escapeHtml(titleText)}\nRepo: ${escapeHtml(repoName)}\nPR: #${pr.id}">
           <span class="item-title">[Bitbucket] ${escapeHtml(pr.title)}</span>
           <div class="item-meta">
-            <span>${escapeHtml(pr.source.repository.name)}</span>
+            <span>${escapeHtml(repoName)}</span>
             <span class="item-badge">#${pr.id}</span>
           </div>
         </a>
@@ -2407,11 +2411,11 @@ async function fetchGmail() {
       }
 
       return `
-        <a href="${escapeHtml(gmailLink)}" target="_blank" rel="noopener noreferrer" class="integration-item ${badgeClass}">
+        <a href="${escapeHtml(gmailLink)}" target="_blank" rel="noopener noreferrer" class="integration-item ${badgeClass}" data-tooltip="Subject: ${escapeHtml(subject)}\nFrom: ${escapeHtml(from)}\nSnippet: ${escapeHtml(snippet)}">
           <span class="item-title">${escapeHtml(subject)}</span>
           <div class="item-meta">
             <span>${escapeHtml(from)}</span>
-            <span class="item-badge ${badgeClass}" title="${escapeHtml(snippet)}">${escapeHtml(badgeLabel)}</span>
+            <span class="item-badge ${badgeClass}">${escapeHtml(badgeLabel)}</span>
           </div>
         </a>
       `;
@@ -2471,7 +2475,7 @@ async function fetchGoogleTasks() {
         <h3 class="card-subtitle">Google Tasks (Hoy)</h3>
         <div class="integration-list">
           ${todayGTasks.map(t => `
-            <div class="integration-item urgent">
+            <div class="integration-item urgent" data-tooltip="${escapeHtml(t.title)}">
               <span class="item-title">${escapeHtml(t.title)}</span>
               <div class="item-meta">
                 <span class="item-badge">Google</span>
@@ -2494,7 +2498,7 @@ async function fetchGoogleTasks() {
         <h3 class="card-subtitle">Google Tasks (Semana)</h3>
         <div class="integration-list">
           ${weekGTasks.map(t => `
-            <div class="integration-item">
+            <div class="integration-item" data-tooltip="${escapeHtml(t.title)}\nDue: ${formatDateShort(t.due.split('T')[0])}">
               <span class="item-title">${escapeHtml(t.title)}</span>
               <div class="item-meta">
                 <span>${formatDateShort(t.due.split('T')[0])}</span>
@@ -2581,7 +2585,7 @@ async function fetchGoogleCalendar() {
 
     const todayStr = getLocalDateString(new Date());
     const todayEvents = [];
-    const weeklyEvents = [];
+    const weeklyGroups = {}; // relative date string -> list of event HTMLs
 
     allEvents.forEach(evt => {
       const startStr = evt.start.dateTime || evt.start.date;
@@ -2597,11 +2601,18 @@ async function fetchGoogleCalendar() {
         eventLink = `${eventLink}${separator}authuser=${encodeURIComponent(email)}`;
       }
 
+      const timeStr = formatEventTime(evt);
+      const isRecurring = !!evt.recurringEventId;
+      const recurringClass = isRecurring ? 'recurring' : '';
+      const repeatIcon = isRecurring 
+        ? `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="opacity: 0.65; display: inline-block; vertical-align: middle; margin-right: 0.25rem;"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>` 
+        : '';
+
       const eventHTML = `
-        <a href="${escapeHtml(eventLink)}" target="_blank" rel="noopener noreferrer" class="integration-item ${badgeClass}">
+        <a href="${escapeHtml(eventLink)}" target="_blank" rel="noopener noreferrer" class="integration-item ${badgeClass} ${recurringClass}" data-tooltip="${escapeHtml(evt.summary)}\nTime: ${escapeHtml(timeStr)}${isRecurring ? (state.lang === 'es' ? ' (Recurrente)' : ' (Recurring)') : ''}">
           <span class="item-title">${escapeHtml(evt.summary)}</span>
           <div class="item-meta">
-            <span>${formatEventTime(evt)}</span>
+            <span>${repeatIcon}${escapeHtml(timeStr)}</span>
             <span class="item-badge ${badgeClass}">${escapeHtml(badgeLabel)}</span>
           </div>
         </a>
@@ -2610,13 +2621,26 @@ async function fetchGoogleCalendar() {
       if (isToday) {
         todayEvents.push(eventHTML);
       } else {
-        weeklyEvents.push(eventHTML);
+        const dateVal = evt.start.dateTime || evt.start.date;
+        const relativeLabel = getRelativeDateLabel(dateVal);
+        if (!weeklyGroups[relativeLabel]) {
+          weeklyGroups[relativeLabel] = [];
+        }
+        weeklyGroups[relativeLabel].push(eventHTML);
       }
     });
 
+    const weeklyHTML = [];
+    let totalWeeklyCount = 0;
+    Object.keys(weeklyGroups).forEach(label => {
+      weeklyHTML.push(`<div class="schedule-group-header">${escapeHtml(label)}</div>`);
+      weeklyHTML.push(...weeklyGroups[label]);
+      totalWeeklyCount += weeklyGroups[label].length;
+    });
+
     if (weeklyBadge) {
-      if (weeklyEvents.length > 0) {
-        weeklyBadge.textContent = weeklyEvents.length;
+      if (totalWeeklyCount > 0) {
+        weeklyBadge.textContent = totalWeeklyCount;
         weeklyBadge.classList.remove('hidden');
       } else {
         weeklyBadge.classList.add('hidden');
@@ -2634,7 +2658,7 @@ async function fetchGoogleCalendar() {
     }
 
     todayEventsContainer.innerHTML = todayEvents.length > 0 ? todayEvents.join('') : `<p class="empty-msg">${translations[state.lang]['no-events']}</p>`;
-    weeklyEventsContainer.innerHTML = weeklyEvents.length > 0 ? weeklyEvents.join('') : `<p class="empty-msg">${translations[state.lang]['no-weekly-events']}</p>`;
+    weeklyEventsContainer.innerHTML = weeklyHTML.length > 0 ? weeklyHTML.join('') : `<p class="empty-msg">${translations[state.lang]['no-weekly-events']}</p>`;
 
   } catch (err) {
     console.error("Failed to load calendars", err);
@@ -2739,6 +2763,39 @@ function setupEventListeners() {
       });
     });
   }
+
+  // Dynamic immediate tooltip events
+  document.addEventListener('mouseover', (e) => {
+    const target = e.target.closest('[data-tooltip]');
+    if (!target) return;
+    const text = target.getAttribute('data-tooltip');
+    if (!text) return;
+    
+    const tooltip = document.getElementById('custom-tooltip');
+    if (!tooltip) return;
+    
+    tooltip.textContent = text;
+    tooltip.classList.remove('hidden');
+    
+    const rect = target.getBoundingClientRect();
+    tooltip.style.left = `${rect.left + rect.width / 2}px`;
+    tooltip.style.top = `${rect.top - 8}px`;
+    
+    // Force layout reflow
+    tooltip.getBoundingClientRect();
+    tooltip.classList.add('visible');
+  });
+
+  document.addEventListener('mouseout', (e) => {
+    const target = e.target.closest('[data-tooltip]');
+    if (!target) return;
+    
+    const tooltip = document.getElementById('custom-tooltip');
+    if (tooltip) {
+      tooltip.classList.remove('visible');
+      tooltip.classList.add('hidden');
+    }
+  });
 
   // Click banner to open Events settings directly
   const eventBanner = document.getElementById('upcoming-event');
@@ -3637,6 +3694,29 @@ function formatEventTime(evt) {
   const date = new Date(evt.start.dateTime);
   const options = { hour: '2-digit', minute: '2-digit', hour12: false };
   return date.toLocaleTimeString(state.lang === 'es' ? 'es-ES' : 'en-US', options);
+}
+
+function getRelativeDateLabel(dateVal) {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  
+  const target = new Date(dateVal);
+  target.setHours(0, 0, 0, 0);
+  
+  const diffTime = target.getTime() - today.getTime();
+  const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+  
+  if (diffDays === 0) {
+    return state.lang === 'es' ? 'Hoy' : 'Today';
+  } else if (diffDays === 1) {
+    return state.lang === 'es' ? 'Mañana' : 'Tomorrow';
+  } else if (diffDays === 2) {
+    return state.lang === 'es' ? 'Pasado mañana' : 'Day after tomorrow';
+  } else {
+    const options = { weekday: 'long', day: 'numeric', month: 'short' };
+    const formatted = target.toLocaleDateString(state.lang === 'es' ? 'es-ES' : 'en-US', options);
+    return formatted.charAt(0).toUpperCase() + formatted.slice(1);
+  }
 }
 
 // -------------------------------------------------------------

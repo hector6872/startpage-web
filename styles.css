@@ -656,6 +656,7 @@ html:not(.dark) .moon-icon { display: block; }
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
+  min-width: 0;
 }
 
 .col-title {
@@ -773,6 +774,32 @@ html.dark .section-card:hover {
   padding: 0.75rem 0.15rem 1.25rem 0.15rem;
 }
 
+.schedule-group-header {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+  margin-top: 0.75rem;
+  margin-bottom: 0.35rem;
+  padding-left: 0.25rem;
+  letter-spacing: 0.05em;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.schedule-group-header:first-of-type {
+  margin-top: 0.25rem;
+}
+
+.schedule-group-header::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border-color);
+  opacity: 0.4;
+}
+
 /* Scrollbar support */
 @supports (scrollbar-color: auto) {
   .integration-list, .todo-list, .modal-body {
@@ -806,6 +833,7 @@ html.dark .section-card:hover {
   transition: all 0.2s ease;
   text-decoration: none;
   color: inherit;
+  min-width: 0;
 }
 
 html.dark .integration-item {
@@ -835,8 +863,19 @@ html.dark .integration-item {
 .item-meta {
   display: flex;
   justify-content: space-between;
+  align-items: center;
   font-size: 0.75rem;
   color: var(--text-secondary);
+  min-width: 0;
+}
+
+.item-meta > span:first-child {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+  flex: 1;
+  margin-right: 0.5rem;
 }
 
 .item-badge {
@@ -2503,5 +2542,53 @@ button:focus-visible,
   0%, 100% { transform: translateX(0); }
   20%, 60% { transform: translateX(-4px); }
   40%, 80% { transform: translateX(4px); }
+}
+
+/* ==========================================================================
+   Custom Tooltip Style
+   ========================================================================== */
+.custom-tooltip {
+  position: fixed;
+  background: var(--bg-card);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  padding: 0.45rem 0.75rem;
+  border-radius: 8px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  box-shadow: var(--shadow-md);
+  z-index: 9999;
+  pointer-events: none;
+  max-width: 280px;
+  white-space: pre-wrap;
+  word-break: break-word;
+  opacity: 0;
+  transform: translate(-50%, -100%) scale(0.95);
+  transition: opacity 0.1s ease, transform 0.1s ease;
+  line-height: 1.35;
+  backdrop-filter: blur(8px);
+}
+
+.custom-tooltip.visible {
+  opacity: 1;
+  transform: translate(-50%, -100%) scale(1);
+}
+
+/* ==========================================================================
+   Recurring Calendar Events (Washed styling with less presence)
+   ========================================================================== */
+.integration-item.recurring {
+  opacity: 0.55;
+  border-style: dashed;
+  background: rgba(0, 0, 0, 0.005);
+}
+
+html.dark .integration-item.recurring {
+  background: rgba(255, 255, 255, 0.005);
+}
+
+.integration-item.recurring:hover {
+  opacity: 1;
+  border-style: solid;
 }
 
