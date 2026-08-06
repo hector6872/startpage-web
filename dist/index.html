@@ -28,7 +28,7 @@
       } catch (e) {}
     }
   </script>
-  <script type="module" crossorigin src="/assets/index-CIZrrMJD.js"></script>
+  <script type="module" crossorigin src="/assets/index-CYBAnJ89.js"></script>
   <link rel="stylesheet" crossorigin href="/assets/index-Bh5stArr.css">
 </head>
 <body>
@@ -476,16 +476,10 @@
 
           <!-- Tab: Google -->
           <div id="tab-google" class="tab-pane">
-            <p class="tab-desc" data-i18n="google-desc">Requires a Google Cloud project with OAuth credentials. Ensure you add your local origin (e.g. http://localhost:5173 or the server URL) in Google Console.</p>
-            <div class="form-group" style="margin-bottom: 1rem;">
-              <label for="google-client-id" data-i18n="label-client-id">Google Client ID</label>
-              <input type="text" id="google-client-id" placeholder="xxxxxxxx.apps.googleusercontent.com">
-            </div>
-
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem; align-items: start;">
               <div class="settings-section-card" style="margin-bottom: 0;">
-                <div class="card-toggle-header" style="padding: 0.6rem 0.8rem;">
-                  <span class="card-toggle-title" style="font-size: 0.85rem;">
+                <div class="card-toggle-header">
+                  <span class="card-toggle-title">
                     <span data-i18n="label-show-google-emails">Show Emails (Gmail)</span>
                   </span>
                   <label class="switch-control">
@@ -494,27 +488,35 @@
                   </label>
                 </div>
               </div>
-              <div class="settings-section-card" style="margin-bottom: 0; padding: 0.6rem 0.8rem;">
-                <div style="font-size: 0.85rem; font-weight: 600; margin-bottom: 0.5rem; color: var(--text-primary);" data-i18n="label-show-google-tasks-title">
-                  Tasks (Google Tasks)
+              <div class="settings-section-card" style="margin-bottom: 0;">
+                <div class="card-toggle-header" style="margin-bottom: 0.5rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border-color, rgba(255,255,255,0.08));">
+                  <span class="card-toggle-title">
+                    <span data-i18n="label-show-google-tasks-title">Tasks (Google Tasks)</span>
+                  </span>
                 </div>
-                <div style="display: flex; flex-direction: column; gap: 0.4rem;">
-                  <div style="display: flex; align-items: center; justify-content: space-between;">
-                    <span style="font-size: 0.8rem; color: var(--text-secondary);" data-i18n="label-show-google-tasks-today">Today</span>
+                <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                  <div class="card-toggle-header">
+                    <span class="card-toggle-title" style="font-size: 0.9rem; font-weight: 500;">
+                      <span data-i18n="label-show-google-tasks-today">Today</span>
+                    </span>
                     <label class="switch-control">
                       <input type="checkbox" id="settings-show-google-tasks-today" checked>
                       <span class="switch-slider"></span>
                     </label>
                   </div>
-                  <div style="display: flex; align-items: center; justify-content: space-between;">
-                    <span style="font-size: 0.8rem; color: var(--text-secondary);" data-i18n="label-show-google-tasks-week">This Week</span>
+                  <div class="card-toggle-header">
+                    <span class="card-toggle-title" style="font-size: 0.9rem; font-weight: 500;">
+                      <span data-i18n="label-show-google-tasks-week">This Week</span>
+                    </span>
                     <label class="switch-control">
                       <input type="checkbox" id="settings-show-google-tasks-week" checked>
                       <span class="switch-slider"></span>
                     </label>
                   </div>
-                  <div style="display: flex; align-items: center; justify-content: space-between;">
-                    <span style="font-size: 0.8rem; color: var(--text-secondary);" data-i18n="label-show-google-tasks-overdue">Show Overdue</span>
+                  <div class="card-toggle-header">
+                    <span class="card-toggle-title" style="font-size: 0.9rem; font-weight: 500;">
+                      <span data-i18n="label-show-google-tasks-overdue">Show Overdue</span>
+                    </span>
                     <label class="switch-control">
                       <input type="checkbox" id="settings-show-google-tasks-overdue" checked>
                       <span class="switch-slider"></span>
@@ -522,6 +524,11 @@
                   </div>
                 </div>
               </div>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 1.5rem;">
+              <label for="google-client-id" data-i18n="label-client-id">Google Client ID</label>
+              <input type="text" id="google-client-id" placeholder="xxxxxxxx.apps.googleusercontent.com">
             </div>
 
             <!-- Personal Account -->

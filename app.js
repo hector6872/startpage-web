@@ -3048,7 +3048,7 @@ function updateGoogleAuthStatus() {
     ? `${state.lang === 'es' ? 'Trabajo: Conectado' : 'Work: Connected'} (${state.googleWorkEmail || 'Google'})`
     : (state.lang === 'es' ? 'Trabajo: Desconectado' : 'Work: Disconnected');
 
-  const hasGoogleError = !!(state.googleErrors && (state.googleErrors.personal || state.googleErrors.work));
+  const hasGoogleError = !!(state.googleErrors && (state.googleErrors.personal || state.googleErrors.work || state.googleErrors.tasks));
   const googleWarningTooltip = state.lang === 'es'
     ? 'Error al conectar con algunos servicios'
     : 'Failed to connect to some services';
@@ -3338,16 +3338,10 @@ async function fetchGoogleTasks() {
     const results = await Promise.all(promises);
     const gTasks = results.flat();
 
-    // Check if we had errors and no tasks were successfully loaded
+    // Check if we had errors and update status indicators
     if (errors.length > 0 && gTasks.length === 0) {
       console.warn("Google Tasks fetch failed:", errors.join(' | '));
-      const errorText = state.lang === 'es' ? 'Error al cargar Google Tasks' : 'Error loading Google Tasks';
-      const configLinkText = state.lang === 'es' ? 'Configurar Google Tasks' : 'Configure Google Tasks';
-      const msgHTML = `
-        <p class="empty-msg" style="color: var(--danger); margin-bottom: 0.25rem;">${errorText}</p>
-        <p class="empty-msg" style="margin: 0.25rem 0;"><a href="#" onclick="event.preventDefault(); window.openSettingsGoogleTab();" style="color: var(--accent); text-decoration: underline; font-weight: 500;">${configLinkText}</a></p>
-      `;
-      showPlaceholder(msgHTML);
+      updateGoogleAuthStatus();
       return;
     }
 
@@ -3361,6 +3355,8 @@ async function fetchGoogleTasks() {
     weekEnd.setDate(weekEnd.getDate() + 7);
     const weekEndTime = weekEnd.getTime();
 
+    const todayGTasks = [];
+    const weekGTasks = [];
     const showOverdue = state.settings.showGoogleTasksOverdue !== false;
 
     gTasks.forEach(t => {
@@ -3506,18 +3502,11 @@ async function fetchGoogleTasks() {
       `;
     }
 
-    updateGoogleAuthStatus();
   } catch (err) {
     console.error("Error fetching Google Tasks", err);
-    const errorText = state.lang === 'es' ? 'Error al cargar Google Tasks' : 'Error loading Google Tasks';
-    const configLinkText = state.lang === 'es' ? 'Configurar Google Tasks' : 'Configure Google Tasks';
-    const msgHTML = `
-      <p class="empty-msg" style="color: var(--danger); margin-bottom: 0.25rem;">${errorText} (${err.message || 'Error'})</p>
-      <p class="empty-msg" style="margin: 0.25rem 0;"><a href="#" onclick="event.preventDefault(); window.openSettingsGoogleTab();" style="color: var(--accent); text-decoration: underline; font-weight: 500;">${configLinkText}</a></p>
-    `;
-    if (typeof showPlaceholder === 'function') {
-      showPlaceholder(msgHTML);
-    }
+    state.googleErrors = state.googleErrors || {};
+    state.googleErrors.tasks = err.message || 'Tasks error';
+    updateGoogleAuthStatus();
   }
 }
 
