@@ -54,6 +54,7 @@ const translations = {
     "label-show-google-tasks-title": "Tasks (Google Tasks)",
     "label-show-google-tasks-today": "Today",
     "label-show-google-tasks-week": "This Week",
+    "label-show-google-tasks-overdue": "Show Overdue",
     "label-city": "Weather City",
     "label-weather-url": "Weather Web URL (Optional)",
     "weather-url-placeholder": "e.g. https://weather.com or leave empty for Google Weather",
@@ -216,6 +217,7 @@ const translations = {
     "label-show-google-tasks-title": "Tareas (Google Tasks)",
     "label-show-google-tasks-today": "Hoy",
     "label-show-google-tasks-week": "Esta Semana",
+    "label-show-google-tasks-overdue": "Mostrar Vencidas",
     "label-city": "Ciudad para el clima",
     "label-weather-url": "URL de la web del clima (Opcional)",
     "weather-url-placeholder": "ej. https://eltiempo.es o dejar vacío para Google Clima",
@@ -3359,11 +3361,14 @@ async function fetchGoogleTasks() {
     weekEnd.setDate(weekEnd.getDate() + 7);
     const weekEndTime = weekEnd.getTime();
 
-    const todayGTasks = [];
-    const weekGTasks = [];
+    const showOverdue = state.settings.showGoogleTasksOverdue !== false;
 
     gTasks.forEach(t => {
       if (!t.title || t.title.trim() === '') return;
+
+      const isOverdue = t.due && new Date(t.due).getTime() < todayTime;
+      if (isOverdue && !showOverdue) return;
+
       if (!t.due) {
         weekGTasks.push(t);
         return;
@@ -4357,6 +4362,8 @@ function setupEventListeners() {
     if (gTasksTodayEl) gTasksTodayEl.checked = state.settings.showGoogleTasksToday !== false;
     const gTasksWeekEl = document.getElementById('settings-show-google-tasks-week');
     if (gTasksWeekEl) gTasksWeekEl.checked = state.settings.showGoogleTasksWeek !== false;
+    const gTasksOverdueEl = document.getElementById('settings-show-google-tasks-overdue');
+    if (gTasksOverdueEl) gTasksOverdueEl.checked = state.settings.showGoogleTasksOverdue !== false;
     document.getElementById('settings-show-git').checked = state.settings.showGit !== false;
     document.getElementById('settings-show-jira').checked = state.settings.showJira !== false;
     
@@ -4712,6 +4719,8 @@ function setupEventListeners() {
     if (gTasksTodayElSave) state.settings.showGoogleTasksToday = gTasksTodayElSave.checked;
     const gTasksWeekElSave = document.getElementById('settings-show-google-tasks-week');
     if (gTasksWeekElSave) state.settings.showGoogleTasksWeek = gTasksWeekElSave.checked;
+    const gTasksOverdueElSave = document.getElementById('settings-show-google-tasks-overdue');
+    if (gTasksOverdueElSave) state.settings.showGoogleTasksOverdue = gTasksOverdueElSave.checked;
     state.settings.showGit = document.getElementById('settings-show-git').checked;
     state.settings.showJira = document.getElementById('settings-show-jira').checked;
 
