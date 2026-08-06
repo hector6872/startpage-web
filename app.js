@@ -94,6 +94,7 @@ const translations = {
     "label-workspace": "Workspace ID",
     "label-bb-username": "Atlassian Account Email",
     "label-bb-token": "API Token",
+    "test-connection": "Test Connection",
     "gitlab-settings": "GitLab Configuration",
     "label-gitlab-host": "GitLab Host URL",
     "label-gitlab-username": "GitLab Username",
@@ -252,6 +253,7 @@ const translations = {
     "label-workspace": "ID del Espacio de Trabajo",
     "label-bb-username": "Email de Cuenta Atlassian",
     "label-bb-token": "Token de API",
+    "test-connection": "Probar conexión",
     "gitlab-settings": "Configuración de GitLab",
     "label-gitlab-host": "URL del Servidor GitLab",
     "label-gitlab-username": "Usuario de GitLab",
@@ -355,6 +357,12 @@ let state = {
   googleWorkToken: sessionStorage.getItem('google_work_token') || null,
   googlePersonalEmail: sessionStorage.getItem('google_personal_email') || null,
   googleWorkEmail: sessionStorage.getItem('google_work_email') || null,
+  githubStatus: 'disconnected',
+  githubError: '',
+  bitbucketStatus: 'disconnected',
+  bitbucketError: '',
+  gitlabStatus: 'disconnected',
+  gitlabError: '',
   settings: {
     lang: 'en',
     theme: 'system',
@@ -2154,6 +2162,224 @@ async function fetchJira() {
   }
 }
 
+// Update Git status indicators (dots)
+function updateGitStatusIndicators() {
+  const ghStatus = state.githubStatus || 'disconnected';
+  const bbStatus = state.bitbucketStatus || 'disconnected';
+  const glStatus = state.gitlabStatus || 'disconnected';
+
+  let ghTooltip = 'GitHub: ';
+  if (ghStatus === 'disconnected') {
+    ghTooltip += state.lang === 'es' ? 'Desconectado' : 'Disconnected';
+  } else if (ghStatus === 'connected') {
+    ghTooltip += state.lang === 'es' ? 'Conectado' : 'Connected';
+  } else {
+    ghTooltip += (state.lang === 'es' ? 'Error: ' : 'Error: ') + (state.githubError || '');
+  }
+
+  let bbTooltip = 'Bitbucket: ';
+  if (bbStatus === 'disconnected') {
+    bbTooltip += state.lang === 'es' ? 'Desconectado' : 'Disconnected';
+  } else if (bbStatus === 'connected') {
+    bbTooltip += state.lang === 'es' ? 'Conectado' : 'Connected';
+  } else {
+    bbTooltip += (state.lang === 'es' ? 'Error: ' : 'Error: ') + (state.bitbucketError || '');
+  }
+
+  let glTooltip = 'GitLab: ';
+  if (glStatus === 'disconnected') {
+    glTooltip += state.lang === 'es' ? 'Desconectado' : 'Disconnected';
+  } else if (glStatus === 'connected') {
+    glTooltip += state.lang === 'es' ? 'Conectado' : 'Connected';
+  } else {
+    glTooltip += (state.lang === 'es' ? 'Error: ' : 'Error: ') + (state.gitlabError || '');
+  }
+
+  const ghClass = ghStatus === 'connected' ? 'github' : ghStatus;
+  const bbClass = bbStatus === 'connected' ? 'bitbucket' : bbStatus;
+  const glClass = glStatus === 'connected' ? 'gitlab' : glStatus;
+
+  const html = `
+    <span class="status-dot ${ghClass}" title="${escapeHtml(ghTooltip)}"></span>
+    <span class="status-dot ${bbClass}" title="${escapeHtml(bbTooltip)}"></span>
+    <span class="status-dot ${glClass}" title="${escapeHtml(glTooltip)}"></span>
+  `;
+
+  const ind1 = document.getElementById('git-status-indicators');
+  if (ind1) ind1.innerHTML = html;
+
+  const ghSettingsClass = ghStatus === 'connected' ? 'github' : 'disconnected';
+  const bbSettingsClass = bbStatus === 'connected' ? 'bitbucket' : 'disconnected';
+  const glSettingsClass = glStatus === 'connected' ? 'gitlab' : 'disconnected';
+
+  // Update dots in Settings panel
+  const setDotGh = document.getElementById('settings-git-dot-github');
+  const setDotBb = document.getElementById('settings-git-dot-bitbucket');
+  const setDotGl = document.getElementById('settings-git-dot-gitlab');
+
+  if (setDotGh) {
+    setDotGh.className = `status-dot ${ghSettingsClass}`;
+    setDotGh.title = ghTooltip;
+  }
+  if (setDotBb) {
+    setDotBb.className = `status-dot ${bbSettingsClass}`;
+    setDotBb.title = bbTooltip;
+  }
+  if (setDotGl) {
+    setDotGl.className = `status-dot ${glSettingsClass}`;
+    setDotGl.title = glTooltip;
+  }
+}
+
+// Cooldown tracker for successful connection tests (60 seconds)
+function startTestCooldown(provider, button) {
+  state.lastSuccessGit = state.lastSuccessGit || {};
+  state.lastSuccessGit[provider] = Date.now();
+
+  let remaining = 60;
+  button.disabled = true;
+
+  const originalText = state.lang === 'es' ? 'Conectar' : 'Connect';
+  
+  const interval = setInterval(() => {
+    remaining--;
+    if (remaining <= 0) {
+      clearInterval(interval);
+      button.disabled = false;
+      button.textContent = originalText;
+      button.setAttribute('data-i18n', 'connect-btn');
+      if (typeof translatePage === 'function') translatePage();
+    } else {
+      button.textContent = `${originalText} (${remaining}s)`;
+    }
+  }, 1000);
+  
+  button.dataset.cooldownInterval = interval;
+}
+
+// Test connection endpoint validator using inputs currently in the settings form
+async function testGitConnection(provider, button) {
+  const originalText = state.lang === 'es' ? 'Conectar' : 'Connect';
+  button.textContent = state.lang === 'es' ? 'Conectando...' : 'Connecting...';
+  button.disabled = true;
+
+  let success = false;
+  let errorMsg = '';
+
+  try {
+    if (provider === 'github') {
+      const username = document.getElementById('github-username').value.trim();
+      const token = document.getElementById('github-token').value.trim();
+      if (!username || !token) {
+        throw new Error(state.lang === 'es' ? 'Rellena todos los campos' : 'Fill all fields');
+      }
+
+      const headers = {
+        'Authorization': `token ${token}`,
+        'Accept': 'application/vnd.github.v3+json'
+      };
+      const res = await fetch(`https://api.github.com/user`, { headers });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.login.toLowerCase() === username.toLowerCase()) {
+          success = true;
+        } else {
+          throw new Error(state.lang === 'es' ? 'El usuario no coincide con el token' : 'Username does not match token');
+        }
+      } else {
+        throw new Error(`${res.status} ${res.statusText}`);
+      }
+    } else if (provider === 'bitbucket') {
+      const workspace = document.getElementById('bitbucket-workspace').value.trim();
+      const email = document.getElementById('bitbucket-username').value.trim();
+      const token = document.getElementById('bitbucket-token').value.trim();
+      if (!workspace || !email || !token) {
+        throw new Error(state.lang === 'es' ? 'Rellena todos los campos' : 'Fill all fields');
+      }
+
+      const auth = btoa(`${email}:${token}`);
+      const res = await fetch(`https://api.bitbucket.org/2.0/repositories/${workspace}?pagelen=1`, {
+        headers: {
+          'Authorization': `Basic ${auth}`,
+          'Accept': 'application/json'
+        }
+      });
+      if (res.ok) {
+        success = true;
+      } else {
+        throw new Error(`${res.status} ${res.statusText}`);
+      }
+    } else if (provider === 'gitlab') {
+      let host = document.getElementById('gitlab-host').value.trim() || 'https://gitlab.com';
+      host = host.replace(/\/$/, "");
+      const username = document.getElementById('gitlab-username').value.trim();
+      const token = document.getElementById('gitlab-token').value.trim();
+      if (!username || !token) {
+        throw new Error(state.lang === 'es' ? 'Rellena todos los campos' : 'Fill all fields');
+      }
+
+      const headers = { 'PRIVATE-TOKEN': token };
+      const res = await fetch(`${host}/api/v4/user`, { headers });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.username.toLowerCase() === username.toLowerCase()) {
+          success = true;
+        } else {
+          throw new Error(state.lang === 'es' ? 'El usuario no coincide con el token' : 'Username does not match token');
+        }
+      } else {
+        throw new Error(`${res.status} ${res.statusText}`);
+      }
+    }
+  } catch (e) {
+    errorMsg = e.message || String(e);
+  }
+
+  // Update State Status and Error Message
+  if (success) {
+    if (provider === 'github') { state.githubStatus = 'connected'; state.githubError = ''; }
+    if (provider === 'bitbucket') { state.bitbucketStatus = 'connected'; state.bitbucketError = ''; }
+    if (provider === 'gitlab') { state.gitlabStatus = 'connected'; state.gitlabError = ''; }
+  } else {
+    if (provider === 'github') { state.githubStatus = 'error'; state.githubError = errorMsg; }
+    if (provider === 'bitbucket') { state.bitbucketStatus = 'error'; state.bitbucketError = errorMsg; }
+    if (provider === 'gitlab') { state.gitlabStatus = 'error'; state.gitlabError = errorMsg; }
+  }
+
+  // Update Settings dot status and tooltips reactively
+  updateGitStatusIndicators();
+
+  if (success) {
+    button.textContent = state.lang === 'es' ? '¡Conectado!' : 'Connected!';
+    button.style.backgroundColor = 'rgba(39, 174, 96, 0.1)';
+    button.style.color = '#27ae60';
+    button.style.borderColor = '#27ae60';
+    
+    // Start 1 minute cooldown
+    startTestCooldown(provider, button);
+    
+    // Refresh main PRs list
+    fetchAllPRs();
+  } else {
+    button.textContent = state.lang === 'es' ? 'Error' : 'Failed';
+    button.style.backgroundColor = 'rgba(235, 87, 87, 0.1)';
+    button.style.color = '#eb5757';
+    button.style.borderColor = '#eb5757';
+    
+    const originalTexti18n = button.getAttribute('data-i18n');
+    setTimeout(() => {
+      button.disabled = false;
+      button.textContent = originalText;
+      button.style.backgroundColor = '';
+      button.style.color = '';
+      button.style.borderColor = '';
+      if (originalTexti18n) button.setAttribute('data-i18n', originalTexti18n);
+    }, 3000);
+    
+    fetchAllPRs();
+  }
+}
+
 // Fetch GitHub PRs
 async function fetchAllPRs() {
   const container = document.getElementById('prs-container');
@@ -2168,6 +2394,15 @@ async function fetchAllPRs() {
   const hasGithub = !!(state.settings.githubToken && state.settings.githubUsername);
   const hasBitbucket = !!(state.settings.bitbucketToken && state.settings.bitbucketUsername && state.settings.bitbucketWorkspace);
   const hasGitlab = !!(state.settings.gitlabToken && state.settings.gitlabUsername);
+
+  // Initialize status before fetching
+  state.githubStatus = hasGithub ? 'connected' : 'disconnected';
+  state.githubError = '';
+  state.bitbucketStatus = hasBitbucket ? 'connected' : 'disconnected';
+  state.bitbucketError = '';
+  state.gitlabStatus = hasGitlab ? 'connected' : 'disconnected';
+  state.gitlabError = '';
+  updateGitStatusIndicators();
   
   if (state.settings.oooActive && (hasGithub || hasBitbucket || hasGitlab)) {
     const activeGithub = hasGithub && !state.settings.hideGithubOoo;
@@ -2278,10 +2513,16 @@ async function fetchAllPRs() {
         });
 
         await Promise.all(prDetailPromises);
+      } else {
+        state.githubStatus = 'error';
+        state.githubError = `${reposRes.status} ${reposRes.statusText}`;
       }
     } catch (e) {
       console.error("Error fetching GitHub PRs:", e);
+      state.githubStatus = 'error';
+      state.githubError = e.message || String(e);
     }
+    updateGitStatusIndicators();
   }
 
   // Bitbucket Fetch
@@ -2369,10 +2610,16 @@ async function fetchAllPRs() {
             }
           }
         });
+      } else {
+        state.bitbucketStatus = 'error';
+        state.bitbucketError = `${reposRes.status} ${reposRes.statusText}`;
       }
     } catch (e) {
       console.error("Error fetching Bitbucket PRs:", e);
+      state.bitbucketStatus = 'error';
+      state.bitbucketError = e.message || String(e);
     }
+    updateGitStatusIndicators();
   }
 
   // GitLab Fetch
@@ -2482,18 +2729,33 @@ async function fetchAllPRs() {
         });
 
         await Promise.all(mrDetailPromises);
+      } else {
+        state.gitlabStatus = 'error';
+        state.gitlabError = `${projectsRes.status} ${projectsRes.statusText}`;
       }
     } catch (e) {
       console.error("Error fetching GitLab MRs:", e);
+      state.gitlabStatus = 'error';
+      state.gitlabError = e.message || String(e);
     }
+    updateGitStatusIndicators();
   }
 
   // Sort the final combined list by sortTime descending (most recent first)
   prList.sort((a, b) => (b.sortTime || 0) - (a.sortTime || 0));
 
   // Render PRs
+  let errorHTML = '';
+  const hasErrors = state.githubStatus === 'error' || state.bitbucketStatus === 'error' || state.gitlabStatus === 'error';
+  if (hasErrors) {
+    const errorMsg = state.lang === 'es' 
+      ? 'Error al conectar con algún servicio. Pasa el ratón por los puntos de estado para más detalles.' 
+      : 'Failed to connect to some services. Hover over status dots for details.';
+    errorHTML = `<p class="empty-msg" style="margin-top: 0.5rem; font-size: 0.72rem; color: var(--danger); opacity: 0.85; padding: 0.5rem 0;">⚠️ ${errorMsg}</p>`;
+  }
+
   if (prList.length === 0) {
-    container.innerHTML = `<p class="empty-msg">${translations[state.lang]['no-prs']}</p>`;
+    container.innerHTML = `<p class="empty-msg">${translations[state.lang]['no-prs']}</p>${errorHTML}`;
     if (prsBadge) prsBadge.classList.add('hidden');
     return;
   }
@@ -2511,7 +2773,7 @@ async function fetchAllPRs() {
         </div>
       </a>
     `;
-  }).join('');
+  }).join('') + errorHTML;
 
   if (prsBadge && prList.length > 0) {
     prsBadge.textContent = prList.length;
@@ -3435,6 +3697,15 @@ function setupEventListeners() {
       const hiddenInput = document.getElementById('google-color-work');
       if (hiddenInput) hiddenInput.value = selectedColor;
       updateAccountSwatchActiveState('google-color-work-swatches', selectedColor);
+    });
+  });
+
+  // Test connection button click handlers
+  const testConnButtons = document.querySelectorAll('.test-conn-btn');
+  testConnButtons.forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const provider = btn.getAttribute('data-provider');
+      await testGitConnection(provider, btn);
     });
   });
 

@@ -767,17 +767,46 @@ html.dark .section-card:hover {
   box-shadow: 0 0 6px var(--work-color);
 }
 
-.status-dot.disconnected {
+.status-dot.disconnected, .status-dot.error {
   background: var(--text-tertiary);
-  opacity: 0.4;
+  opacity: 0.35;
   box-shadow: none;
+}
+
+.status-dot.github {
+  background: #24292f;
+  box-shadow: 0 0 6px rgba(36, 41, 47, 0.4);
+}
+
+html.dark .status-dot.github {
+  background: #c9d1d9;
+  box-shadow: 0 0 6px rgba(201, 209, 217, 0.4);
+}
+
+.status-dot.bitbucket {
+  background: #0052cc;
+  box-shadow: 0 0 6px rgba(0, 82, 204, 0.4);
+}
+
+html.dark .status-dot.bitbucket {
+  background: #2684ff;
+  box-shadow: 0 0 6px rgba(38, 132, 255, 0.4);
+}
+
+.status-dot.gitlab {
+  background: #e24329;
+  box-shadow: 0 0 6px rgba(226, 67, 41, 0.4);
+}
+
+html.dark .status-dot.gitlab {
+  background: #fc6d26;
+  box-shadow: 0 0 6px rgba(252, 109, 38, 0.4);
 }
 
 /* Remove bottom padding from cards that contain scrollable integration lists */
 .section-card:has(.integration-list) {
   padding-bottom: 0;
 }
-
 .section-card:has(.integration-list) .card-subtitle {
   margin-bottom: 0;
 }
