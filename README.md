@@ -71,6 +71,28 @@ Before creating credentials, you must configure the OAuth consent screen to defi
 4. Paste your **Google Client ID** into the input field and save settings.
 5. You can now log into your **Personal** and **Work** accounts separately!
 
+## Git Integrations (GitHub, Bitbucket, GitLab)
+
+This dashboard supports aggregating pull requests and merge requests across GitHub, Bitbucket, and GitLab:
+
+- **GitHub**: Requires a Personal Access Token (PAT) with `repo` scope and your username.
+- **Bitbucket**: Requires App Username, App Password (Token), and Workspace ID.
+- **GitLab**:
+  1. Generate a **Personal Access Token (PAT)** in your GitLab Account Settings (User Settings -> Access Tokens) with the `api` scope.
+  2. Enter the GitLab Host URL (defaults to `https://gitlab.com` but supports self-hosted GitLab instances).
+  3. Enter your GitLab username.
+  4. The dashboard will automatically fetch open Merge Requests where you are either assigned or requested as a reviewer.
+
+## Out of Office (OOO) Mode
+
+Under Settings -> Google APIs, you can toggle **Out of Office (OOO) Mode**:
+1. When enabling OOO, the dashboard will prompt you to select a return date.
+2. While OOO is active:
+   - **Work** events (Gmail, Tasks, Google Calendar) will be hidden from the Today/This Week panels.
+   - You can choose to hide **Jira**, **GitHub**, **Bitbucket**, and **GitLab** integrations individually if OOO is active.
+   - OOO status is indicated by a red "OOO" badge in the Today and This Week column headers. Clicking this badge takes you directly to the Google Settings tab.
+3. OOO mode automatically disables itself on or after the specified return date.
+
 ## Known Limitations & Troubleshooting (CORS)
 
 ### Gmail & Jira APIs CORS Issue

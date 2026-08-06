@@ -664,10 +664,34 @@ html:not(.dark) .moon-icon { display: block; }
   font-weight: 600;
   font-size: 1.5rem;
   letter-spacing: -0.02em;
-  padding-left: 0.25rem;
   border-left: 3.5px solid var(--accent);
   padding-left: 0.75rem;
   line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.ooo-badge {
+  font-size: 0.65rem;
+  font-weight: 700;
+  background: var(--danger-bg, rgba(239, 68, 68, 0.15));
+  color: var(--danger, #ef4444);
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  padding: 0.2rem 0.5rem;
+  border-radius: 10px;
+  cursor: pointer;
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.ooo-badge:hover {
+  filter: brightness(0.95);
+  transform: scale(1.05);
 }
 
 .col-content {

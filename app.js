@@ -371,7 +371,16 @@ let state = {
     bitbucketToken: '',
     jiraHost: '',
     jiraEmail: '',
-    jiraToken: ''
+    jiraToken: '',
+    oooActive: false,
+    oooUntil: null,
+    hideJiraOoo: false,
+    hideGithubOoo: false,
+    hideBitbucketOoo: false,
+    hideGitlabOoo: false,
+    gitlabHost: 'https://gitlab.com',
+    gitlabToken: '',
+    gitlabUsername: ''
   }
 };
 
@@ -590,6 +599,20 @@ async function loadState() {
   state.lang = state.settings.lang || 'en';
   state.theme = state.settings.theme || localStorage.getItem('theme') || 'system';
 
+  // Check Out of Office (OOO) expiration
+  if (state.settings.oooActive && state.settings.oooUntil) {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const oooUntilDate = new Date(state.settings.oooUntil + 'T00:00:00');
+    if (today >= oooUntilDate) {
+      state.settings.oooActive = false;
+      state.settings.oooUntil = null;
+      localStorage.setItem('dashboard_settings', JSON.stringify(state.settings));
+    }
+  }
+
+  updateOooBadges();
+
   applyPrimaryColor(state.settings.primaryColor);
   applyAccountColors();
 
@@ -610,6 +633,14 @@ async function loadState() {
 
   // Initialize organizer visibility settings
   updateOrganizerVisibility();
+}
+
+function updateOooBadges() {
+  const active = state.settings.oooActive === true;
+  const badgeToday = document.getElementById('ooo-badge-today');
+  const badgeWeek = document.getElementById('ooo-badge-week');
+  if (badgeToday) badgeToday.classList.toggle('hidden', !active);
+  if (badgeWeek) badgeWeek.classList.toggle('hidden', !active);
 }
 
 async function cleanupOldCompletedTodos() {
@@ -1113,10 +1144,10 @@ function applyAccountColors() {
   };
 
   const personal = state.settings.personalColor || 'blue';
-  const work = state.settings.workColor || 'purple';
+  const work = state.settings.workColor || 'black';
 
   document.documentElement.style.setProperty('--personal-color', colorMap[personal] || colorMap.blue);
-  document.documentElement.style.setProperty('--work-color', colorMap[work] || colorMap.purple);
+  document.documentElement.style.setProperty('--work-color', colorMap[work] || colorMap.black);
 }
 
 function updateSwatchActiveState(selectedColor) {
@@ -1649,8 +1680,26 @@ async function saveTodos() {
 function updateOrganizerVisibility() {
   const showCountdowns = state.settings.showCountdowns !== false;
   const showTasks = state.settings.showTasks !== false;
-  const showGit = state.settings.showGit !== false;
-  const showJira = state.settings.showJira !== false;
+  
+  let showJira = state.settings.showJira !== false;
+  if (state.settings.oooActive && state.settings.hideJiraOoo) {
+    showJira = false;
+  }
+
+  let showGit = state.settings.showGit !== false;
+  const hasGithub = !!(state.settings.githubToken && state.settings.githubUsername);
+  const hasBitbucket = !!(state.settings.bitbucketToken && state.settings.bitbucketUsername && state.settings.bitbucketWorkspace);
+  const hasGitlab = !!(state.settings.gitlabToken && state.settings.gitlabUsername);
+  
+  if (state.settings.oooActive) {
+    const activeGithub = hasGithub && !state.settings.hideGithubOoo;
+    const activeBitbucket = hasBitbucket && !state.settings.hideBitbucketOoo;
+    const activeGitlab = hasGitlab && !state.settings.hideGitlabOoo;
+    if (!activeGithub && !activeBitbucket && !activeGitlab) {
+      showGit = false;
+    }
+  }
+
   const showWork = showGit || showJira;
 
   const prsCard = document.getElementById('prs-card');
@@ -2102,128 +2151,173 @@ async function fetchJira() {
 }
 
 // Fetch GitHub PRs
-async function fetchGitHub() {
+async function fetchAllPRs() {
   const container = document.getElementById('prs-container');
   const prsBadge = document.getElementById('prs-count-badge');
-  if (prsBadge) {
-    prsBadge.classList.add('hidden');
+  if (prsBadge) prsBadge.classList.add('hidden');
+  
+  if (state.settings.showGit === false) {
+    return;
   }
 
-  if (!state.settings.githubToken || !state.settings.githubUsername) {
+  let gitHiddenByOoo = false;
+  const hasGithub = !!(state.settings.githubToken && state.settings.githubUsername);
+  const hasBitbucket = !!(state.settings.bitbucketToken && state.settings.bitbucketUsername && state.settings.bitbucketWorkspace);
+  const hasGitlab = !!(state.settings.gitlabToken && state.settings.gitlabUsername);
+  
+  if (state.settings.oooActive) {
+    const activeGithub = hasGithub && !state.settings.hideGithubOoo;
+    const activeBitbucket = hasBitbucket && !state.settings.hideBitbucketOoo;
+    const activeGitlab = hasGitlab && !state.settings.hideGitlabOoo;
+    if (!activeGithub && !activeBitbucket && !activeGitlab) {
+      gitHiddenByOoo = true;
+    }
+  }
+
+  if (gitHiddenByOoo) {
+    container.innerHTML = `<p class="empty-msg">${state.lang === 'es' ? 'Out of Office Activo' : 'Out of Office Active'}</p>`;
+    return;
+  }
+
+  if (!hasGithub && !hasBitbucket && !hasGitlab) {
     container.innerHTML = `<p class="empty-msg">${translations[state.lang]['status-unconfigured']}</p>`;
     return;
   }
 
-  try {
-    const q = encodeURIComponent(`is:pr is:open review-requested:${state.settings.githubUsername} assignee:${state.settings.githubUsername}`);
-    const response = await fetch(`https://api.github.com/search/issues?q=${q}&per_page=5`, {
-      headers: {
-        'Authorization': `token ${state.settings.githubToken}`,
-        'Accept': 'application/vnd.github.v3+json'
+  let prList = [];
+
+  // GitHub Fetch
+  if (hasGithub && !(state.settings.oooActive && state.settings.hideGithubOoo)) {
+    try {
+      const q = encodeURIComponent(`is:pr is:open review-requested:${state.settings.githubUsername} assignee:${state.settings.githubUsername}`);
+      const res = await fetch(`https://api.github.com/search/issues?q=${q}&per_page=5`, {
+        headers: {
+          'Authorization': `token ${state.settings.githubToken}`,
+          'Accept': 'application/vnd.github.v3+json'
+        }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.items) {
+          data.items.forEach(pr => {
+            const repo = pr.repository_url.split('/').slice(-1)[0];
+            prList.push({
+              title: pr.title,
+              url: pr.html_url,
+              repo: repo,
+              number: pr.number,
+              source: 'GitHub'
+            });
+          });
+        }
       }
-    });
-
-    if (!response.ok) throw new Error();
-    const data = await response.json();
-
-    if (prsBadge) {
-      if (data.items && data.items.length > 0) {
-        prsBadge.textContent = data.items.length;
-        prsBadge.classList.remove('hidden');
-      } else {
-        prsBadge.classList.add('hidden');
-      }
+    } catch (e) {
+      console.error("Error fetching GitHub PRs:", e);
     }
-
-    if (!data.items || data.items.length === 0) {
-      container.innerHTML = `<p class="empty-msg">${translations[state.lang]['no-prs']}</p>`;
-      return;
-    }
-
-    container.innerHTML = data.items.map(pr => {
-      const repo = pr.repository_url.split('/').slice(-1)[0];
-      return `
-        <a href="${pr.html_url}" target="_blank" class="integration-item" data-tooltip="${escapeHtml(pr.title)}\nRepo: ${escapeHtml(repo)}\nPR: #${pr.number}">
-          <span class="item-title">${escapeHtml(pr.title)}</span>
-          <div class="item-meta">
-            <span>${escapeHtml(repo)}</span>
-            <span class="item-badge">#${pr.number}</span>
-          </div>
-        </a>
-      `;
-    }).join('');
-
-  } catch (error) {
-    container.innerHTML = `<p class="empty-msg" style="color:var(--danger)">GitHub Auth / Connection Error</p>`;
   }
-}
 
-// Fetch Bitbucket PRs
-async function fetchBitbucket() {
-  // If GitHub has loaded, let's append Bitbucket PRs to the same container, or clear it
-  const container = document.getElementById('prs-container');
-  
-  if (!state.settings.bitbucketWorkspace || !state.settings.bitbucketToken || !state.settings.bitbucketUsername) {
-    // If GitHub is also unconfigured, show unconfigured
-    if (!state.settings.githubToken) {
-      container.innerHTML = `<p class="empty-msg">${translations[state.lang]['status-unconfigured']}</p>`;
+  // Bitbucket Fetch
+  if (hasBitbucket && !(state.settings.oooActive && state.settings.hideBitbucketOoo)) {
+    try {
+      const auth = btoa(`${state.settings.bitbucketUsername}:${state.settings.bitbucketToken}`);
+      const res = await fetch(`https://api.bitbucket.org/2.0/pullrequests/${state.settings.bitbucketUsername}`, {
+        headers: {
+          'Authorization': `Basic ${auth}`,
+          'Accept': 'application/json'
+        }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.values) {
+          data.values.forEach(pr => {
+            prList.push({
+              title: `[Bitbucket] ${pr.title}`,
+              url: pr.links.html.href,
+              repo: pr.source.repository.name,
+              number: pr.id,
+              source: 'Bitbucket'
+            });
+          });
+        }
+      }
+    } catch (e) {
+      console.error("Error fetching Bitbucket PRs:", e);
     }
+  }
+
+  // GitLab Fetch
+  if (hasGitlab && !(state.settings.oooActive && state.settings.hideGitlabOoo)) {
+    try {
+      const host = (state.settings.gitlabHost || 'https://gitlab.com').replace(/\/$/, "");
+      const token = state.settings.gitlabToken;
+      const username = state.settings.gitlabUsername;
+      
+      const assigneeUrl = `${host}/api/v4/merge_requests?state=opened&assignee_username=${encodeURIComponent(username)}`;
+      const reviewerUrl = `${host}/api/v4/merge_requests?state=opened&reviewer_username=${encodeURIComponent(username)}`;
+      
+      const headers = { 'PRIVATE-TOKEN': token };
+      
+      const [res1, res2] = await Promise.all([
+        fetch(assigneeUrl, { headers }).then(r => r.ok ? r.json() : []),
+        fetch(reviewerUrl, { headers }).then(r => r.ok ? r.json() : [])
+      ]);
+      
+      const uniqueMRs = new Map();
+      [...res1, ...res2].forEach(mr => {
+        uniqueMRs.set(mr.id, mr);
+      });
+
+      uniqueMRs.forEach(mr => {
+        let repo = String(mr.project_id);
+        try {
+          const pathParts = mr.web_url.split('/');
+          const idx = pathParts.indexOf('-');
+          if (idx !== -1) {
+            repo = pathParts.slice(3, idx).join('/');
+          }
+        } catch (e) {}
+
+        prList.push({
+          title: `[GitLab] ${mr.title}`,
+          url: mr.web_url,
+          repo: repo,
+          number: mr.iid,
+          source: 'GitLab'
+        });
+      });
+    } catch (e) {
+      console.error("Error fetching GitLab MRs:", e);
+    }
+  }
+
+  // Render PRs
+  if (prList.length === 0) {
+    container.innerHTML = `<p class="empty-msg">${translations[state.lang]['no-prs']}</p>`;
+    if (prsBadge) prsBadge.classList.add('hidden');
     return;
   }
 
-  try {
-    const auth = btoa(`${state.settings.bitbucketUsername}:${state.settings.bitbucketToken}`);
-    // Fetch pull requests for workspace
-    const workspace = state.settings.bitbucketWorkspace;
-    const response = await fetch(`https://api.bitbucket.org/2.0/pullrequests/${state.settings.bitbucketUsername}`, {
-      headers: {
-        'Authorization': `Basic ${auth}`,
-        'Accept': 'application/json'
-      }
-    });
+  container.innerHTML = prList.map(pr => {
+    return `
+      <a href="${pr.url}" target="_blank" class="integration-item" data-tooltip="${escapeHtml(pr.title)}\nSource: ${pr.source}\nRepo: ${escapeHtml(pr.repo)}\nPR/MR: #${pr.number}">
+        <span class="item-title">${escapeHtml(pr.title)}</span>
+        <div class="item-meta">
+          <span>${escapeHtml(pr.repo)}</span>
+          <span class="item-badge">#${pr.number}</span>
+        </div>
+      </a>
+    `;
+  }).join('');
 
-    if (!response.ok) throw new Error();
-    const data = await response.json();
-
-    const prs = data.values || [];
-    if (prs.length === 0) return; // let GitHub messages remain
-
-    // Append to existing HTML or replace if empty
-    const currentHTML = container.innerHTML.includes('empty-msg') || container.innerHTML.includes('Unconfigured') ? '' : container.innerHTML;
-    
-    const bbHTML = prs.map(pr => {
-      const titleText = `[Bitbucket] ${pr.title}`;
-      const repoName = pr.source.repository.name;
-      return `
-        <a href="${pr.links.html.href}" target="_blank" class="integration-item" data-tooltip="${escapeHtml(titleText)}\nRepo: ${escapeHtml(repoName)}\nPR: #${pr.id}">
-          <span class="item-title">[Bitbucket] ${escapeHtml(pr.title)}</span>
-          <div class="item-meta">
-            <span>${escapeHtml(repoName)}</span>
-            <span class="item-badge">#${pr.id}</span>
-          </div>
-        </a>
-      `;
-    }).join('');
-
-    container.innerHTML = currentHTML + bbHTML;
-
-    const prsBadge = document.getElementById('prs-count-badge');
-    if (prsBadge) {
-      const count = container.querySelectorAll('.integration-item').length;
-      if (count > 0) {
-        prsBadge.textContent = count;
-        prsBadge.classList.remove('hidden');
-      } else {
-        prsBadge.classList.add('hidden');
-      }
-    }
-  } catch (error) {
-    // only write error if container was empty
-    if (container.innerHTML.includes('empty-msg')) {
-      container.innerHTML = `<p class="empty-msg" style="color:var(--danger)">Bitbucket Auth / Connection Error</p>`;
-    }
+  if (prsBadge && prList.length > 0) {
+    prsBadge.textContent = prList.length;
+    prsBadge.classList.remove('hidden');
   }
 }
+
+const fetchGitHub = fetchAllPRs;
+const fetchBitbucket = fetchAllPRs;
+const fetchGitLab = fetchAllPRs;
 function showInputErrorFeedback(inputEl, errorMessage) {
   if (inputEl.classList.contains('invalid-field')) return;
   inputEl.classList.add('invalid-field');
@@ -2367,7 +2461,7 @@ function refreshGoogleToken(accountType) {
 }
 
 function handleInvalidToken(accountType) {
-  console.warn(`Token expired (401) for ${accountType} account. Clearing token and attempting silent refresh.`);
+  console.warn(`Token expired (401) for ${accountType} account. Clearing token.`);
   if (accountType === 'personal') {
     state.googlePersonalToken = null;
     sessionStorage.removeItem('google_personal_token');
@@ -2379,7 +2473,6 @@ function handleInvalidToken(accountType) {
   sessionStorage.setItem('google_access_token', state.googleClientToken || '');
   
   updateGoogleAuthStatus();
-  refreshGoogleToken(accountType);
 }
 
 async function checkAndFetchGoogleEmails() {
@@ -2551,7 +2644,7 @@ async function fetchGmail() {
     if (state.googlePersonalToken) {
       promises.push(fetchEmailsForAccount(state.googlePersonalToken, 'personal', state.googlePersonalEmail));
     }
-    if (state.googleWorkToken) {
+    if (state.googleWorkToken && !state.settings.oooActive) {
       promises.push(fetchEmailsForAccount(state.googleWorkToken, 'work', state.googleWorkEmail));
     }
 
@@ -2673,7 +2766,7 @@ async function fetchGoogleTasks() {
     if (state.googlePersonalToken) {
       promises.push(fetchTasksForAccount(state.googlePersonalToken, 'personal'));
     }
-    if (state.googleWorkToken) {
+    if (state.googleWorkToken && !state.settings.oooActive) {
       promises.push(fetchTasksForAccount(state.googleWorkToken, 'work'));
     }
 
@@ -2682,23 +2775,7 @@ async function fetchGoogleTasks() {
 
     // Check if we had errors and no tasks were successfully loaded
     if (errors.length > 0 && gTasks.length === 0) {
-      let gTodayCard = document.getElementById('gtasks-today');
-      if (!gTodayCard) {
-        gTodayCard = document.createElement('div');
-        gTodayCard.id = 'gtasks-today';
-        gTodayCard.className = 'section-card';
-        const colContent = document.querySelector('#col-today .col-content');
-        if (colContent) colContent.appendChild(gTodayCard);
-      }
-      gTodayCard.innerHTML = `
-        <h3 class="card-subtitle" style="color: var(--danger);">Google Tasks Error</h3>
-        <p class="empty-msg" style="color: var(--danger); font-size: 0.85rem; padding: 0.5rem 0; line-height: 1.4;">
-          ${escapeHtml(errors.join(' | '))}
-          <br><span style="font-size: 0.75rem; color: var(--text-secondary); display: block; margin-top: 0.25rem;">
-            Please check that the Google Tasks API is enabled in your Google Cloud Console project.
-          </span>
-        </p>
-      `;
+      console.warn("Google Tasks fetch failed:", errors.join(' | '));
       return;
     }
 
@@ -2900,7 +2977,7 @@ async function fetchGoogleCalendar() {
           })
       );
     }
-    if (state.googleWorkToken) {
+    if (state.googleWorkToken && !state.settings.oooActive) {
       promises.push(
         fetchEventsForAccount(state.googleWorkToken, 'work')
           .catch(err => {
@@ -3567,6 +3644,81 @@ function setupEventListeners() {
     });
   }
 
+  // Click OOO badge to open settings at Google tab
+  const oooBadges = document.querySelectorAll('.ooo-badge');
+  oooBadges.forEach(b => {
+    b.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const toggleBtn = document.getElementById('settings-toggle');
+      if (toggleBtn) {
+        toggleBtn.click();
+        const googleTab = document.querySelector('.tab-btn[data-tab="tab-google"]');
+        if (googleTab) googleTab.click();
+      }
+    });
+  });
+
+  // OOO switch change handler
+  const oooActiveSwitch = document.getElementById('settings-ooo-active');
+  const oooDateModal = document.getElementById('ooo-date-modal');
+  const oooForm = document.getElementById('ooo-form');
+  const oooDateInput = document.getElementById('ooo-date-input');
+
+  if (oooActiveSwitch) {
+    oooActiveSwitch.addEventListener('change', () => {
+      if (oooActiveSwitch.checked) {
+        // Ask for a future date
+        const today = new Date();
+        today.setDate(today.getDate() + 1); // Minimum date: tomorrow
+        const yyyy = today.getFullYear();
+        const mm = String(today.getMonth() + 1).padStart(2, '0');
+        const dd = String(today.getDate()).padStart(2, '0');
+        if (oooDateInput) {
+          oooDateInput.min = `${yyyy}-${mm}-${dd}`;
+          oooDateInput.value = `${yyyy}-${mm}-${dd}`;
+        }
+        if (oooDateModal) oooDateModal.showModal();
+      } else {
+        const display = document.getElementById('ooo-date-display');
+        if (display) display.classList.add('hidden');
+      }
+    });
+  }
+
+  if (oooForm && oooDateModal) {
+    oooForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const val = oooDateInput.value;
+      if (!val) return;
+      
+      if (oooActiveSwitch) {
+        oooActiveSwitch.setAttribute('data-until', val);
+      }
+
+      const display = document.getElementById('ooo-date-display');
+      const text = document.getElementById('ooo-return-date-text');
+      if (display) display.classList.remove('hidden');
+      if (text) text.textContent = new Date(val + 'T00:00:00').toLocaleDateString(state.lang === 'es' ? 'es-ES' : 'en-US', { day: 'numeric', month: 'long', year: 'numeric' });
+      
+      oooDateModal.close();
+    });
+  }
+
+  const cancelOooBtn = document.getElementById('btn-cancel-ooo');
+  const closeOooModalBtn = document.getElementById('close-ooo-modal');
+  if (cancelOooBtn && oooDateModal) {
+    cancelOooBtn.addEventListener('click', () => {
+      if (oooActiveSwitch) oooActiveSwitch.checked = false;
+      oooDateModal.close();
+    });
+  }
+  if (closeOooModalBtn && oooDateModal) {
+    closeOooModalBtn.addEventListener('click', () => {
+      if (oooActiveSwitch) oooActiveSwitch.checked = false;
+      oooDateModal.close();
+    });
+  }
+
   // Settings Modal Open
   let isSettingsFormSaved = false;
   const settingsModal = document.getElementById('settings-modal');
@@ -3611,20 +3763,43 @@ function setupEventListeners() {
     document.getElementById('google-client-id').value = state.settings.googleClientId;
     
     const personalCol = state.settings.personalColor || 'blue';
-    const workCol = state.settings.workColor || 'purple';
+    const workCol = state.settings.workColor || 'black';
     document.getElementById('google-color-personal').value = personalCol;
     document.getElementById('google-color-work').value = workCol;
     updateAccountSwatchActiveState('google-color-personal-swatches', personalCol);
     updateAccountSwatchActiveState('google-color-work-swatches', workCol);
 
-    document.getElementById('github-token').value = state.settings.githubToken;
-    document.getElementById('github-username').value = state.settings.githubUsername;
-    document.getElementById('bitbucket-workspace').value = state.settings.bitbucketWorkspace;
-    document.getElementById('bitbucket-username').value = state.settings.bitbucketUsername;
-    document.getElementById('bitbucket-token').value = state.settings.bitbucketToken;
-    document.getElementById('jira-host').value = state.settings.jiraHost;
-    document.getElementById('jira-email').value = state.settings.jiraEmail;
-    document.getElementById('jira-token').value = state.settings.jiraToken;
+    document.getElementById('github-token').value = state.settings.githubToken || '';
+    document.getElementById('github-username').value = state.settings.githubUsername || '';
+    document.getElementById('settings-github-ooo-hide').checked = state.settings.hideGithubOoo === true;
+
+    document.getElementById('bitbucket-workspace').value = state.settings.bitbucketWorkspace || '';
+    document.getElementById('bitbucket-username').value = state.settings.bitbucketUsername || '';
+    document.getElementById('bitbucket-token').value = state.settings.bitbucketToken || '';
+    document.getElementById('settings-bitbucket-ooo-hide').checked = state.settings.hideBitbucketOoo === true;
+
+    document.getElementById('gitlab-host').value = state.settings.gitlabHost || 'https://gitlab.com';
+    document.getElementById('gitlab-token').value = state.settings.gitlabToken || '';
+    document.getElementById('gitlab-username').value = state.settings.gitlabUsername || '';
+    document.getElementById('settings-gitlab-ooo-hide').checked = state.settings.hideGitlabOoo === true;
+
+    document.getElementById('jira-host').value = state.settings.jiraHost || '';
+    document.getElementById('jira-email').value = state.settings.jiraEmail || '';
+    document.getElementById('jira-token').value = state.settings.jiraToken || '';
+    document.getElementById('settings-jira-ooo-hide').checked = state.settings.hideJiraOoo === true;
+
+    const oooActiveInput = document.getElementById('settings-ooo-active');
+    if (oooActiveInput) {
+      oooActiveInput.checked = state.settings.oooActive === true;
+      const display = document.getElementById('ooo-date-display');
+      const text = document.getElementById('ooo-return-date-text');
+      if (state.settings.oooActive && state.settings.oooUntil) {
+        if (display) display.classList.remove('hidden');
+        if (text) text.textContent = new Date(state.settings.oooUntil + 'T00:00:00').toLocaleDateString(state.lang === 'es' ? 'es-ES' : 'en-US', { day: 'numeric', month: 'long', year: 'numeric' });
+      } else {
+        if (display) display.classList.add('hidden');
+      }
+    }
 
     // Toggle sync details visibility depending on current storageMode
     if (state.settings.storageMode === 'file') {
@@ -3888,12 +4063,30 @@ function setupEventListeners() {
     applyAccountColors();
     state.settings.githubToken = document.getElementById('github-token').value.trim();
     state.settings.githubUsername = document.getElementById('github-username').value.trim();
+    state.settings.hideGithubOoo = document.getElementById('settings-github-ooo-hide').checked;
+
     state.settings.bitbucketWorkspace = document.getElementById('bitbucket-workspace').value.trim();
     state.settings.bitbucketUsername = document.getElementById('bitbucket-username').value.trim();
     state.settings.bitbucketToken = document.getElementById('bitbucket-token').value.trim();
+    state.settings.hideBitbucketOoo = document.getElementById('settings-bitbucket-ooo-hide').checked;
+
+    state.settings.gitlabHost = document.getElementById('gitlab-host').value.trim();
+    state.settings.gitlabToken = document.getElementById('gitlab-token').value.trim();
+    state.settings.gitlabUsername = document.getElementById('gitlab-username').value.trim();
+    state.settings.hideGitlabOoo = document.getElementById('settings-gitlab-ooo-hide').checked;
+
     state.settings.jiraHost = document.getElementById('jira-host').value.trim();
     state.settings.jiraEmail = document.getElementById('jira-email').value.trim();
     state.settings.jiraToken = document.getElementById('jira-token').value.trim();
+    state.settings.hideJiraOoo = document.getElementById('settings-jira-ooo-hide').checked;
+
+    const oooActive = document.getElementById('settings-ooo-active').checked;
+    const oooUntil = document.getElementById('settings-ooo-active').getAttribute('data-until') || state.settings.oooUntil;
+    state.settings.oooActive = oooActive;
+    state.settings.oooUntil = oooActive ? oooUntil : null;
+
+    updateOooBadges();
+
     state.settings.worldClockTz = document.getElementById('settings-world-clock-tz').value;
     state.settings.worldClockLabel = document.getElementById('settings-world-clock-label').value.trim();
     const wUrlEl = document.getElementById('settings-weather-url');

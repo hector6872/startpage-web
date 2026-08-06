@@ -112,7 +112,10 @@
     <main class="dashboard-grid">
       <!-- Column 1: Today -->
       <section class="grid-col" id="col-today">
-        <h2 class="col-title" data-i18n="col-today">Today</h2>
+        <h2 class="col-title">
+          <span data-i18n="col-today">Today</span>
+          <span class="ooo-badge hidden" id="ooo-badge-today" title="Out of Office mode active. Click to open settings.">out of office</span>
+        </h2>
         <div class="col-content">
           <!-- Calendar and tasks summaries will go here -->
           <div class="section-card">
@@ -146,7 +149,10 @@
 
       <!-- Column 2: This Week -->
       <section class="grid-col" id="col-week">
-        <h2 class="col-title" data-i18n="col-week">This Week</h2>
+        <h2 class="col-title">
+          <span data-i18n="col-week">This Week</span>
+          <span class="ooo-badge hidden" id="ooo-badge-week" title="Out of Office mode active. Click to open settings.">out of office</span>
+        </h2>
         <div class="col-content">
           <div class="section-card">
             <h3 class="card-subtitle">
@@ -552,7 +558,22 @@
                   <button type="button" class="color-swatch-btn" data-color="slate" title="Slate Gray" style="--swatch-color: #64748b;"></button>
                   <button type="button" class="color-swatch-btn" data-color="black" title="Black / Onyx" style="--swatch-color: #18181b;"></button>
                 </div>
-                <input type="hidden" id="google-color-work" value="purple">
+                <input type="hidden" id="google-color-work" value="black">
+              </div>
+              <div class="settings-section-card" style="margin-top: 1rem; margin-bottom: 1rem; background: rgba(255,255,255,0.01);">
+                <div class="card-toggle-header" style="padding: 0.6rem 0.8rem;">
+                  <span class="card-toggle-title" style="font-size: 0.85rem; font-weight: 500;">
+                    <span data-i18n="label-ooo-active">Out of Office (OOO)</span>
+                  </span>
+                  <label class="switch-control">
+                    <input type="checkbox" id="settings-ooo-active">
+                    <span class="switch-slider"></span>
+                  </label>
+                </div>
+                <div id="ooo-date-display" class="form-group row-align hidden" style="padding: 0.5rem 0.8rem; margin: 0; border-top: 1px solid var(--border-color, rgba(255,255,255,0.05));">
+                  <span style="font-size: 0.75rem; color: var(--text-secondary);" data-i18n="ooo-until">Active until:</span>
+                  <span id="ooo-return-date-text" style="font-size: 0.75rem; font-weight: 600; color: var(--accent);">--</span>
+                </div>
               </div>
               <div class="google-auth-actions">
                 <button type="button" id="google-login-btn-work" class="btn-secondary" data-i18n="google-login-work">Log In (Work)</button>
@@ -583,6 +604,13 @@
               <label for="github-username" data-i18n="label-username">Username</label>
               <input type="text" id="github-username" placeholder="octocat">
             </div>
+            <div class="form-group row-align" style="margin-top: 0.5rem; margin-bottom: 1rem;">
+              <label for="settings-github-ooo-hide" style="font-size: 0.8rem; color: var(--text-secondary);" data-i18n="label-hide-ooo">Hide if Out of Office is active</label>
+              <label class="switch-control" style="transform: scale(0.85);">
+                <input type="checkbox" id="settings-github-ooo-hide">
+                <span class="switch-slider"></span>
+              </label>
+            </div>
 
             <hr class="form-divider">
 
@@ -598,6 +626,36 @@
             <div class="form-group">
               <label for="bitbucket-token" data-i18n="label-bb-token">App Password / Token</label>
               <input type="password" id="bitbucket-token" placeholder="App password">
+            </div>
+            <div class="form-group row-align" style="margin-top: 0.5rem; margin-bottom: 1rem;">
+              <label for="settings-bitbucket-ooo-hide" style="font-size: 0.8rem; color: var(--text-secondary);" data-i18n="label-hide-ooo">Hide if Out of Office is active</label>
+              <label class="switch-control" style="transform: scale(0.85);">
+                <input type="checkbox" id="settings-bitbucket-ooo-hide">
+                <span class="switch-slider"></span>
+              </label>
+            </div>
+
+            <hr class="form-divider">
+
+            <h3>GitLab</h3>
+            <div class="form-group">
+              <label for="gitlab-host">GitLab Host URL</label>
+              <input type="url" id="gitlab-host" placeholder="https://gitlab.com">
+            </div>
+            <div class="form-group">
+              <label for="gitlab-token">Personal Access Token (PAT)</label>
+              <input type="password" id="gitlab-token" placeholder="glpat-xxxxxxxx">
+            </div>
+            <div class="form-group">
+              <label for="gitlab-username">Username</label>
+              <input type="text" id="gitlab-username" placeholder="gitlab-user">
+            </div>
+            <div class="form-group row-align" style="margin-top: 0.5rem; margin-bottom: 1rem;">
+              <label for="settings-gitlab-ooo-hide" style="font-size: 0.8rem; color: var(--text-secondary);" data-i18n="label-hide-ooo">Hide if Out of Office is active</label>
+              <label class="switch-control" style="transform: scale(0.85);">
+                <input type="checkbox" id="settings-gitlab-ooo-hide">
+                <span class="switch-slider"></span>
+              </label>
             </div>
           </div>
 
@@ -622,11 +680,18 @@
               <label for="jira-email" data-i18n="label-jira-email">Account Email</label>
               <input type="email" id="jira-email" placeholder="name@company.com">
             </div>
-            <div class="form-group">
-              <label for="jira-token" data-i18n="label-jira-token">API Token</label>
-              <input type="password" id="jira-token" placeholder="API token from Atlassian Account">
-            </div>
-          </div>
+             <div class="form-group">
+               <label for="jira-token" data-i18n="label-jira-token">API Token</label>
+               <input type="password" id="jira-token" placeholder="API token from Atlassian Account">
+             </div>
+             <div class="form-group row-align" style="margin-top: 0.5rem; margin-bottom: 1rem;">
+               <label for="settings-jira-ooo-hide" style="font-size: 0.8rem; color: var(--text-secondary);" data-i18n="label-hide-ooo">Hide if Out of Office is active</label>
+               <label class="switch-control" style="transform: scale(0.85);">
+                 <input type="checkbox" id="settings-jira-ooo-hide">
+                 <span class="switch-slider"></span>
+               </label>
+             </div>
+           </div>
 
           <!-- Tab: Storage -->
           <div id="tab-storage" class="tab-pane">
@@ -839,6 +904,28 @@
   </button>
 
 
+
+  <!-- Out of Office Date Modal -->
+  <dialog id="ooo-date-modal" class="modal-dialog">
+    <div class="modal-content" style="max-width: 400px;">
+      <header class="modal-header">
+        <h2 data-i18n="ooo-title">Return Date</h2>
+        <button id="close-ooo-modal" class="btn-close">&times;</button>
+      </header>
+      <div class="modal-body" style="padding-bottom: 1rem;">
+        <form id="ooo-form" style="display: flex; flex-direction: column; gap: 1rem; margin-bottom: 0;">
+          <div class="form-group">
+            <label for="ooo-date-input">Until when will you be away?</label>
+            <input type="date" id="ooo-date-input" required>
+          </div>
+          <div class="modal-footer" style="padding: 1rem 0 0 0; margin-top: 1rem; border-top: 1px solid var(--border-color);">
+            <button type="button" id="btn-cancel-ooo" class="btn-secondary" data-i18n="cancel-btn">Cancel</button>
+            <button type="submit" class="btn-primary" data-i18n="save-btn">Save</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </dialog>
 
   <!-- Custom Tooltip -->
   <div id="custom-tooltip" class="custom-tooltip hidden"></div>
