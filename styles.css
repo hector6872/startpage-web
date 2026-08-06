@@ -648,7 +648,7 @@ html:not(.dark) .moon-icon { display: block; }
 @media (max-width: 1024px) {
   .dashboard-grid {
     grid-template-columns: 1fr;
-    gap: 1.5rem;
+    gap: 3rem;
   }
 }
 
@@ -2302,6 +2302,7 @@ html.dark .countdown-badge-past {
   justify-content: space-between;
   align-items: center;
   width: 100%;
+  margin-top: 1.4rem;
 }
 
 .section-header.hidden {
