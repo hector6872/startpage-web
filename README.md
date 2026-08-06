@@ -75,10 +75,10 @@ Before creating credentials, you must configure the OAuth consent screen to defi
 
 This dashboard supports aggregating pull requests and merge requests across GitHub, Bitbucket, and GitLab:
 
-- **GitHub**: Requires a Personal Access Token (PAT) with `repo` scope and your username.
-- **Bitbucket**: Requires App Username, App Password (Token), and Workspace ID.
+- **GitHub**: Requires a [Personal Access Token (PAT)](https://github.com/settings/tokens/new?scopes=repo&description=Personal%20Startpage) with `repo` scope and your username.
+- **Bitbucket**: Requires App Username, [App Password (Token)](https://bitbucket.org/account/settings/app-passwords/), and Workspace ID.
 - **GitLab**:
-  1. Generate a **Personal Access Token (PAT)** in your GitLab Account Settings (User Settings -> Access Tokens) with the `api` scope.
+  1. Generate a [Personal Access Token (PAT)](https://gitlab.com/-/profile/personal_access_tokens?name=Personal%20Startpage&scopes=api) in your GitLab Account Settings with the `api` scope.
   2. Enter the GitLab Host URL (defaults to `https://gitlab.com` but supports self-hosted GitLab instances).
   3. Enter your GitLab username.
   4. The dashboard will automatically fetch open Merge Requests where you are either assigned or requested as a reviewer.
