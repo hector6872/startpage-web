@@ -954,7 +954,13 @@ function updateTimeAndGreeting() {
     greetingKey = 'greeting-evening';
   }
   const greetingText = translations[state.lang][greetingKey];
-  document.getElementById('greeting').textContent = `${greetingText}`;
+  let fullGreeting = greetingText;
+  if (state.settings.oooActive) {
+    const oooEmojis = ['🏝️', '🏖️', '🍹', '🌊', '⛺', '🌴'];
+    const emoji = oooEmojis[(now.getDate() + now.getMonth()) % oooEmojis.length];
+    fullGreeting = `${greetingText} ${emoji}`;
+  }
+  document.getElementById('greeting').textContent = `${fullGreeting}`;
 
   // Update World Clock
   updateWorldClock();
