@@ -2373,41 +2373,108 @@ async function fetchAllPRs() {
       const host = (state.settings.gitlabHost || 'https://gitlab.com').replace(/\/$/, "");
       const token = state.settings.gitlabToken;
       const username = state.settings.gitlabUsername;
-      
-      const assigneeUrl = `${host}/api/v4/merge_requests?state=opened&assignee_username=${encodeURIComponent(username)}`;
-      const reviewerUrl = `${host}/api/v4/merge_requests?state=opened&reviewer_username=${encodeURIComponent(username)}`;
-      
       const headers = { 'PRIVATE-TOKEN': token };
-      
-      const [res1, res2] = await Promise.all([
-        fetch(assigneeUrl, { headers }).then(r => r.ok ? r.json() : []),
-        fetch(reviewerUrl, { headers }).then(r => r.ok ? r.json() : [])
-      ]);
-      
-      const uniqueMRs = new Map();
-      [...res1, ...res2].forEach(mr => {
-        uniqueMRs.set(mr.id, mr);
-      });
 
-      uniqueMRs.forEach(mr => {
-        let repo = String(mr.project_id);
-        try {
-          const pathParts = mr.web_url.split('/');
-          const idx = pathParts.indexOf('-');
-          if (idx !== -1) {
-            repo = pathParts.slice(3, idx).join('/');
+      // 1. Get the 5 most recently active projects (repositories)
+      const projectsRes = await fetch(`${host}/api/v4/projects?membership=true&order_by=last_activity_at&sort=desc&per_page=5`, { headers });
+      if (projectsRes.ok) {
+        const projects = await projectsRes.json();
+
+        // 2. Fetch open merge requests for each project in parallel
+        const mrPromises = projects.map(async (project) => {
+          try {
+            const mrsRes = await fetch(`${host}/api/v4/projects/${project.id}/merge_requests?state=opened`, { headers });
+            if (mrsRes.ok) {
+              return await mrsRes.json();
+            }
+            return [];
+          } catch (e) {
+            console.error(`Error fetching GitLab MRs for project ${project.path_with_namespace}:`, e);
+            return [];
           }
-        } catch (e) {}
-
-        prList.push({
-          title: mr.title,
-          url: mr.web_url,
-          repo: repo,
-          number: mr.iid,
-          source: 'GitLab',
-          sortTime: new Date(mr.updated_at).getTime()
         });
-      });
+
+        const allProjectMRs = await Promise.all(mrPromises);
+        const openMRs = allProjectMRs.flat();
+        const mrDetailPromises = [];
+
+        // 3. Process and filter MRs
+        openMRs.forEach(mr => {
+          const isAuthor = mr.author && mr.author.username === username;
+          const isReviewer = mr.reviewers && mr.reviewers.some(r => r.username === username);
+
+          if (isReviewer) {
+            // Teammate's MR where I am requested to review: check if I have approved it yet
+            mrDetailPromises.push((async () => {
+              try {
+                const appRes = await fetch(`${host}/api/v4/projects/${mr.project_id}/merge_requests/${mr.iid}/approvals`, { headers });
+                if (appRes.ok) {
+                  const appData = await appRes.json();
+                  const hasApproved = appData.approved_by && appData.approved_by.some(app => app.user.username === username);
+                  if (!hasApproved) {
+                    let repoName = String(mr.project_id);
+                    try {
+                      const pathParts = mr.web_url.split('/');
+                      const idx = pathParts.indexOf('-');
+                      if (idx !== -1) {
+                        repoName = pathParts.slice(3, idx).join('/');
+                      }
+                    } catch (e) {}
+
+                    prList.push({
+                      title: `${mr.title} (${state.lang === 'es' ? 'Revisar' : 'Needs Review'})`,
+                      url: mr.web_url,
+                      repo: repoName,
+                      number: mr.iid,
+                      source: 'GitLab',
+                      sortTime: new Date(mr.updated_at).getTime()
+                    });
+                  }
+                }
+              } catch (e) {
+                console.error(`Error fetching approvals for GitLab MR #${mr.iid}:`, e);
+              }
+            })());
+          } else if (isAuthor) {
+            // My own MR: check for conflicts and unresolved threads (blocking discussions)
+            mrDetailPromises.push((async () => {
+              const hasConflicts = mr.has_conflicts === true || mr.merge_status === 'cannot_be_merged' || mr.detailed_merge_status === 'conflict';
+              const hasUnresolvedDiscussions = mr.blocking_discussions_resolved === false || mr.detailed_merge_status === 'discussions_not_resolved';
+
+              if (hasConflicts || hasUnresolvedDiscussions) {
+                let label = '';
+                if (hasConflicts && hasUnresolvedDiscussions) {
+                  label = state.lang === 'es' ? 'Conflictos | Hilos pendientes' : 'Conflicts | Threads open';
+                } else if (hasConflicts) {
+                  label = state.lang === 'es' ? 'Conflictos' : 'Conflicts';
+                } else {
+                  label = state.lang === 'es' ? 'Hilos pendientes' : 'Threads open';
+                }
+
+                let repoName = String(mr.project_id);
+                try {
+                  const pathParts = mr.web_url.split('/');
+                  const idx = pathParts.indexOf('-');
+                  if (idx !== -1) {
+                    repoName = pathParts.slice(3, idx).join('/');
+                  }
+                } catch (e) {}
+
+                prList.push({
+                  title: `${mr.title} (${label})`,
+                  url: mr.web_url,
+                  repo: repoName,
+                  number: mr.iid,
+                  source: 'GitLab',
+                  sortTime: new Date(mr.updated_at).getTime()
+                });
+              }
+            })());
+          }
+        });
+
+        await Promise.all(mrDetailPromises);
+      }
     } catch (e) {
       console.error("Error fetching GitLab MRs:", e);
     }

@@ -81,9 +81,9 @@ This dashboard supports aggregating pull requests and merge requests across GitH
 - **Bitbucket**: Requires your Workspace ID (the slug/identifier of your workspace found in the URL after `bitbucket.org/`), your Atlassian Account Email, and your [Personal API Token](https://bitbucket.org/account/settings/api-tokens/) (ensure you select both `Repositories: Read` and `Pull requests: Read` scopes).
 - **GitLab**:
   1. Generate a [Personal Access Token (PAT)](https://gitlab.com/-/profile/personal_access_tokens?name=Personal%20Startpage&scopes=api) in your GitLab Account Settings with the `api` scope.
-  2. Enter the GitLab Host URL (defaults to `https://gitlab.com` but supports self-hosted GitLab instances).
-  3. Enter your GitLab username.
-  4. The dashboard will automatically fetch open Merge Requests where you are either assigned or requested as a reviewer.
+  2. Enter the GitLab Host URL (defaults to `https://gitlab.com` but supports self-hosted GitLab instances) and your username.
+  3. The dashboard will automatically fetch open Merge Requests from your 5 most recently active projects.
+  4. It filters to show teammate MRs where you are a reviewer (and have not approved yet), and your own MRs that have merge conflicts or unresolved discussion threads.
 
 ## Out of Office (OOO) Mode
 
