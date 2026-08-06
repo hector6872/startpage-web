@@ -2397,9 +2397,18 @@ html.dark .countdown-badge-past {
 .section-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
   width: 100%;
   margin-top: 1.4rem;
+}
+
+.section-header .col-title {
+  flex: 1;
+}
+
+.section-header .add-section-btn {
+  align-self: center;
+  margin-top: -2px;
 }
 
 .section-header.hidden {

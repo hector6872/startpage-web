@@ -1764,9 +1764,25 @@ function updateOrganizerVisibility() {
   const colTasksHidden = !showCountdowns && !showTasks && !showWork;
   if (colTasks) {
     colTasks.classList.toggle('hidden', colTasksHidden);
+
+    // If section-header is the first visible header in col-tasks, remove top margin so it aligns cleanly with other column titles
+    const allSectionHeaders = colTasks.querySelectorAll('.section-header');
+    allSectionHeaders.forEach(sh => sh.style.marginTop = '');
+
+    const firstVisibleHeader = colTasks.querySelector('.col-title:not(.hidden), .section-header:not(.hidden)');
+    if (firstVisibleHeader && firstVisibleHeader.classList.contains('section-header')) {
+      firstVisibleHeader.style.marginTop = '0';
+    }
   }
   if (dashboardGrid) {
     dashboardGrid.classList.toggle('two-cols', colTasksHidden);
+  }
+
+  // Update World Clock and Weather widgets visibility
+  updateWorldClock();
+  const weatherWidget = document.getElementById('weather-widget');
+  if (weatherWidget) {
+    weatherWidget.classList.toggle('hidden', state.settings.showWeather === false);
   }
 }
 
@@ -3769,6 +3785,7 @@ function setupEventListeners() {
       if (hiddenInput) hiddenInput.value = selectedColor;
       updateSwatchActiveState(selectedColor);
       applyPrimaryColor(selectedColor);
+      autoSaveSettingsForm();
     });
   });
 
@@ -3780,6 +3797,7 @@ function setupEventListeners() {
       const hiddenInput = document.getElementById('google-color-personal');
       if (hiddenInput) hiddenInput.value = selectedColor;
       updateAccountSwatchActiveState('google-color-personal-swatches', selectedColor);
+      autoSaveSettingsForm();
     });
   });
 
@@ -3790,6 +3808,7 @@ function setupEventListeners() {
       const hiddenInput = document.getElementById('google-color-work');
       if (hiddenInput) hiddenInput.value = selectedColor;
       updateAccountSwatchActiveState('google-color-work-swatches', selectedColor);
+      autoSaveSettingsForm();
     });
   });
 
@@ -3884,6 +3903,7 @@ function setupEventListeners() {
       if (confirmActionType === 'hide-events') {
         const cb = document.getElementById('settings-show-countdowns');
         if (cb) cb.checked = true;
+        autoSaveSettingsForm();
       }
       confirmDeleteModal.close();
       todoIdToDelete = null;
@@ -3894,6 +3914,7 @@ function setupEventListeners() {
       if (confirmActionType === 'hide-events') {
         const cb = document.getElementById('settings-show-countdowns');
         if (cb) cb.checked = true;
+        autoSaveSettingsForm();
       }
       confirmDeleteModal.close();
       todoIdToDelete = null;
@@ -3927,6 +3948,7 @@ function setupEventListeners() {
       } else if (confirmActionType === 'hide-events') {
         confirmDeleteModal.close();
         confirmActionType = null;
+        autoSaveSettingsForm();
       }
     });
   }
@@ -4353,10 +4375,8 @@ function setupEventListeners() {
   }
 
   // Settings Modal Open
-  let isSettingsFormSaved = false;
   const settingsModal = document.getElementById('settings-modal');
   document.getElementById('settings-toggle').addEventListener('click', () => {
-    isSettingsFormSaved = false;
     // Fill form fields with current settings
     document.getElementById('settings-lang').value = state.settings.lang;
     document.getElementById('settings-theme').value = state.settings.theme || 'system';
@@ -4481,34 +4501,18 @@ function setupEventListeners() {
   });
 
   settingsModal.addEventListener('close', () => {
-    if (!isSettingsFormSaved) {
-      // Revert Language
-      state.lang = state.settings.lang || 'en';
-      const langSelect = document.getElementById('settings-lang');
-      if (langSelect) langSelect.value = state.lang;
-      translatePage();
-      updateTimeAndGreeting();
-      loadWeather();
-      loadQuote();
-
-      // Revert Theme
-      state.theme = state.settings.theme || 'system';
-      const themeSelect = document.getElementById('settings-theme');
-      if (themeSelect) themeSelect.value = state.theme;
-      applyTheme();
-
-      // Revert Primary Color
-      const savedColor = state.settings.primaryColor || 'blue';
-      applyPrimaryColor(savedColor);
-      const colorInput = document.getElementById('settings-primary-color');
-      if (colorInput) colorInput.value = savedColor;
-      updateSwatchActiveState(savedColor);
-
-      // Revert URLs
-      const wUrlInput = document.getElementById('settings-weather-url');
-      if (wUrlInput) wUrlInput.value = state.settings.weatherUrl || '';
-      const cUrlInput = document.getElementById('settings-world-clock-url');
-      if (cUrlInput) cUrlInput.value = state.settings.worldClockUrl || '';
+    updateOrganizerVisibility();
+    renderTodos();
+    renderCountdowns();
+    loadWeather();
+    fetchGitHub();
+    fetchBitbucket();
+    fetchJira();
+    fetchGmail();
+    fetchGoogleTasks();
+    fetchGoogleCalendar();
+    if (state.settings.googleClientId) {
+      initGoogleOAuth();
     }
   });
 
@@ -4673,10 +4677,10 @@ function setupEventListeners() {
     });
   }
 
-  // Save Settings Form
-  document.getElementById('settings-form').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    isSettingsFormSaved = true;
+  // Auto-Save Settings Form
+  let autoSaveTimeout = null;
+
+  async function autoSaveSettingsForm() {
     state.settings.lang = document.getElementById('settings-lang').value;
     state.settings.city = document.getElementById('settings-city').value.trim();
     state.settings.theme = document.getElementById('settings-theme').value;
@@ -4689,7 +4693,7 @@ function setupEventListeners() {
     state.theme = state.settings.theme;
     
     const newStorageMode = document.getElementById('settings-storage-mode').value;
-    if (newStorageMode !== 'file') {
+    if (newStorageMode !== 'file' && state.settings.storageMode === 'file') {
       fileHandle = null;
       await clearFileHandle();
     }
@@ -4751,10 +4755,10 @@ function setupEventListeners() {
     state.settings.showGit = document.getElementById('settings-show-git').checked;
     state.settings.showJira = document.getElementById('settings-show-jira').checked;
 
+    const prevLang = state.lang;
     state.lang = state.settings.lang;
 
     await saveSettings();
-    updateOrganizerVisibility();
     
     // If we just toggled file-sync on, let's initialize it
     if (state.settings.storageMode === 'file') {
@@ -4762,24 +4766,31 @@ function setupEventListeners() {
     }
 
     applyTheme();
-    translatePage();
-    updateTimeAndGreeting();
-    loadWeather();
-    
-    // Refresh integrations
-    fetchGitHub();
-    fetchBitbucket();
-    fetchJira();
-    fetchGmail();
-    fetchGoogleTasks();
-    fetchGoogleCalendar();
 
-    if (state.settings.googleClientId) {
-      initGoogleOAuth();
+    if (prevLang !== state.lang) {
+      translatePage();
+      updateTimeAndGreeting();
     }
+  }
 
-    settingsModal.close();
-  });
+  const settingsForm = document.getElementById('settings-form');
+  if (settingsForm) {
+    settingsForm.addEventListener('change', () => {
+      autoSaveSettingsForm();
+    });
+
+    settingsForm.addEventListener('input', () => {
+      if (autoSaveTimeout) clearTimeout(autoSaveTimeout);
+      autoSaveTimeout = setTimeout(() => {
+        autoSaveSettingsForm();
+      }, 300);
+    });
+
+    settingsForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      autoSaveSettingsForm();
+    });
+  }
 
   // Google OAuth Personal Login Action
   const loginBtnPersonal = document.getElementById('google-login-btn-personal');
