@@ -640,18 +640,18 @@
 
             <hr class="form-divider">
 
-            <h3>GitLab</h3>
+            <h3 data-i18n="gitlab-settings">GitLab Configuration</h3>
             <div class="form-group">
-              <label for="gitlab-host">GitLab Host URL</label>
+              <label for="gitlab-host" data-i18n="label-gitlab-host">GitLab Host URL</label>
               <input type="url" id="gitlab-host" placeholder="https://gitlab.com">
             </div>
             <div class="form-group">
-              <label for="gitlab-token">Personal Access Token (PAT)</label>
-              <input type="password" id="gitlab-token" placeholder="glpat-xxxxxxxx">
+              <label for="gitlab-username" data-i18n="label-gitlab-username">Username</label>
+              <input type="text" id="gitlab-username" placeholder="gitlab-user">
             </div>
             <div class="form-group">
-              <label for="gitlab-username">Username</label>
-              <input type="text" id="gitlab-username" placeholder="gitlab-user">
+              <label for="gitlab-token" data-i18n="label-gitlab-token">Personal Access Token (PAT)</label>
+              <input type="password" id="gitlab-token" placeholder="glpat-xxxxxxxx">
             </div>
             <div class="form-group row-align" style="margin-top: 0.5rem; margin-bottom: 1rem;">
               <label for="settings-gitlab-ooo-hide" style="font-size: 0.8rem; color: var(--text-secondary);" data-i18n="label-hide-ooo">Hide if Out of Office is active</label>
