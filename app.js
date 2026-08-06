@@ -2378,6 +2378,7 @@ function initGoogleOAuth() {
   if (!state.googlePersonalToken && !state.googleWorkToken) {
     fetchGoogleCalendar();
     fetchGmail();
+    fetchGoogleTasks();
   }
 
   if (typeof google === 'undefined' || !state.settings.googleClientId) {
@@ -2431,6 +2432,7 @@ function initGoogleOAuth() {
   } else {
     fetchGoogleCalendar();
     fetchGmail();
+    fetchGoogleTasks();
   }
 }
 
@@ -2715,7 +2717,42 @@ async function fetchGoogleTasks() {
     return;
   }
 
+  function showPlaceholder(messageHTML) {
+    let gTodayCard = document.getElementById('gtasks-today');
+    if (!gTodayCard) {
+      gTodayCard = document.createElement('div');
+      gTodayCard.id = 'gtasks-today';
+      gTodayCard.className = 'section-card';
+      const colContent = document.querySelector('#col-today .col-content');
+      if (colContent) colContent.appendChild(gTodayCard);
+    }
+    gTodayCard.innerHTML = `
+      <h3 class="card-subtitle">Google Tasks (Hoy)</h3>
+      <div class="integration-list">
+        ${messageHTML}
+      </div>
+    `;
+
+    let gWeekCard = document.getElementById('gtasks-week');
+    if (!gWeekCard) {
+      gWeekCard = document.createElement('div');
+      gWeekCard.id = 'gtasks-week';
+      gWeekCard.className = 'section-card';
+      const colContent = document.querySelector('#col-week .col-content');
+      if (colContent) colContent.appendChild(gWeekCard);
+    }
+    gWeekCard.innerHTML = `
+      <h3 class="card-subtitle">Google Tasks (Semana)</h3>
+      <div class="integration-list">
+        ${messageHTML}
+      </div>
+    `;
+  }
+
   if (!state.googlePersonalToken && !state.googleWorkToken) {
+    const configLinkText = state.lang === 'es' ? 'Configurar Google Tasks' : 'Configure Google Tasks';
+    const msgHTML = `<p class="empty-msg" style="margin: 0.5rem 0;"><a href="#" onclick="event.preventDefault(); window.openSettingsGoogleTab();" style="color: var(--accent); text-decoration: underline; font-weight: 500;">${configLinkText}</a></p>`;
+    showPlaceholder(msgHTML);
     return;
   }
 
@@ -2776,6 +2813,13 @@ async function fetchGoogleTasks() {
     // Check if we had errors and no tasks were successfully loaded
     if (errors.length > 0 && gTasks.length === 0) {
       console.warn("Google Tasks fetch failed:", errors.join(' | '));
+      const errorText = state.lang === 'es' ? 'Error al cargar Google Tasks' : 'Error loading Google Tasks';
+      const configLinkText = state.lang === 'es' ? 'Configurar Google Tasks' : 'Configure Google Tasks';
+      const msgHTML = `
+        <p class="empty-msg" style="color: var(--danger); margin-bottom: 0.25rem;">${errorText}</p>
+        <p class="empty-msg" style="margin: 0.25rem 0;"><a href="#" onclick="event.preventDefault(); window.openSettingsGoogleTab();" style="color: var(--accent); text-decoration: underline; font-weight: 500;">${configLinkText}</a></p>
+      `;
+      showPlaceholder(msgHTML);
       return;
     }
 
@@ -2927,6 +2971,15 @@ async function fetchGoogleTasks() {
 
   } catch (err) {
     console.error("Error fetching Google Tasks", err);
+    const errorText = state.lang === 'es' ? 'Error al cargar Google Tasks' : 'Error loading Google Tasks';
+    const configLinkText = state.lang === 'es' ? 'Configurar Google Tasks' : 'Configure Google Tasks';
+    const msgHTML = `
+      <p class="empty-msg" style="color: var(--danger); margin-bottom: 0.25rem;">${errorText} (${err.message || 'Error'})</p>
+      <p class="empty-msg" style="margin: 0.25rem 0;"><a href="#" onclick="event.preventDefault(); window.openSettingsGoogleTab();" style="color: var(--accent); text-decoration: underline; font-weight: 500;">${configLinkText}</a></p>
+    `;
+    if (typeof showPlaceholder === 'function') {
+      showPlaceholder(msgHTML);
+    }
   }
 }
 
@@ -4195,11 +4248,8 @@ function setupEventListeners() {
       fetchGoogleData();
     } else {
       fetchGoogleCalendar();
-      document.getElementById('gmail-container').innerHTML = `<p class="empty-msg">${translations[state.lang]['no-emails']}</p>`;
-      const gT1 = document.getElementById('gtasks-today');
-      const gT2 = document.getElementById('gtasks-week');
-      if (gT1) gT1.remove();
-      if (gT2) gT2.remove();
+      fetchGmail();
+      fetchGoogleTasks();
     }
   });
 
@@ -4224,11 +4274,8 @@ function setupEventListeners() {
       fetchGoogleData();
     } else {
       fetchGoogleCalendar();
-      document.getElementById('gmail-container').innerHTML = `<p class="empty-msg">${translations[state.lang]['no-emails']}</p>`;
-      const gT1 = document.getElementById('gtasks-today');
-      const gT2 = document.getElementById('gtasks-week');
-      if (gT1) gT1.remove();
-      if (gT2) gT2.remove();
+      fetchGmail();
+      fetchGoogleTasks();
     }
   });
 
