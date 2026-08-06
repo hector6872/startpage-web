@@ -930,6 +930,48 @@ html.dark .integration-item {
   gap: 0.2rem;
 }
 
+.pr-source-badge {
+  font-size: 0.62rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  padding: 0.08rem 0.35rem;
+  border-radius: 4px;
+  letter-spacing: 0.02em;
+  display: inline-flex;
+  align-items: center;
+  line-height: 1;
+}
+
+.pr-source-badge.github {
+  background: rgba(36, 41, 47, 0.08);
+  color: #24292f;
+}
+
+html.dark .pr-source-badge.github {
+  background: rgba(240, 246, 252, 0.12);
+  color: #c9d1d9;
+}
+
+.pr-source-badge.bitbucket {
+  background: rgba(0, 82, 204, 0.08);
+  color: #0052cc;
+}
+
+html.dark .pr-source-badge.bitbucket {
+  background: rgba(38, 132, 255, 0.15);
+  color: #2684ff;
+}
+
+.pr-source-badge.gitlab {
+  background: rgba(226, 67, 41, 0.08);
+  color: #e24329;
+}
+
+html.dark .pr-source-badge.gitlab {
+  background: rgba(252, 109, 38, 0.15);
+  color: #fc6d26;
+}
+
 .item-badge.personal {
   background: var(--personal-bg);
   color: var(--personal-color);

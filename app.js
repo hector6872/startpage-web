@@ -2186,33 +2186,91 @@ async function fetchAllPRs() {
   // GitHub Fetch
   if (hasGithub && !(state.settings.oooActive && state.settings.hideGithubOoo)) {
     try {
-      const qReview = encodeURIComponent(`is:pr is:open review-requested:${state.settings.githubUsername}`);
-      const qAssign = encodeURIComponent(`is:pr is:open assignee:${state.settings.githubUsername}`);
-      
       const headers = {
         'Authorization': `token ${state.settings.githubToken}`,
         'Accept': 'application/vnd.github.v3+json'
       };
 
-      const [resReview, resAssign] = await Promise.all([
-        fetch(`https://api.github.com/search/issues?q=${qReview}&per_page=5`, { headers }).then(r => r.ok ? r.json() : { items: [] }),
-        fetch(`https://api.github.com/search/issues?q=${qAssign}&per_page=5`, { headers }).then(r => r.ok ? r.json() : { items: [] })
-      ]);
-
-      const itemsMap = new Map();
-      (resReview.items || []).forEach(item => itemsMap.set(item.id, item));
-      (resAssign.items || []).forEach(item => itemsMap.set(item.id, item));
-
-      itemsMap.forEach(pr => {
-        const repo = pr.repository_url.split('/').slice(-1)[0];
-        prList.push({
-          title: pr.title,
-          url: pr.html_url,
-          repo: repo,
-          number: pr.number,
-          source: 'GitHub'
+      // 1. Get the 5 most recently updated repositories
+      const reposRes = await fetch(`https://api.github.com/user/repos?sort=updated&direction=desc&per_page=5`, { headers });
+      if (reposRes.ok) {
+        const repos = await reposRes.json();
+        
+        // 2. Fetch open pull requests for each repository in parallel
+        const prPromises = repos.map(async (repo) => {
+          try {
+            const prsRes = await fetch(`https://api.github.com/repos/${repo.owner.login}/${repo.name}/pulls?state=open`, { headers });
+            if (prsRes.ok) {
+              return await prsRes.json();
+            }
+            return [];
+          } catch (e) {
+            console.error(`Error fetching GitHub PRs for ${repo.full_name}:`, e);
+            return [];
+          }
         });
-      });
+
+        const allRepoPRs = await Promise.all(prPromises);
+        const openPRs = allRepoPRs.flat();
+        const prDetailPromises = [];
+
+        // 3. Process and filter PRs
+        openPRs.forEach(pr => {
+          const isAuthor = pr.user && pr.user.login === state.settings.githubUsername;
+          const isReviewer = pr.requested_reviewers && pr.requested_reviewers.some(r => r.login === state.settings.githubUsername);
+          
+          if (isReviewer) {
+            // Teammate's PR where I am requested to review
+            prDetailPromises.push((async () => {
+              prList.push({
+                title: `${pr.title} (${state.lang === 'es' ? 'Revisar' : 'Needs Review'})`,
+                url: pr.html_url,
+                repo: pr.base.repo.name,
+                number: pr.number,
+                source: 'GitHub',
+                sortTime: new Date(pr.updated_at).getTime()
+              });
+            })());
+          } else if (isAuthor) {
+            // My own PR: check for conflicts and requested changes
+            prDetailPromises.push((async () => {
+              try {
+                const [detailRes, reviewsRes] = await Promise.all([
+                  fetch(pr.url, { headers }).then(r => r.ok ? r.json() : null),
+                  fetch(`${pr.url}/reviews`, { headers }).then(r => r.ok ? r.json() : [])
+                ]);
+
+                const hasConflicts = detailRes && detailRes.mergeable === false;
+                const hasRequestedChanges = reviewsRes && reviewsRes.some(rev => rev.state === 'CHANGES_REQUESTED');
+
+                if (hasConflicts || hasRequestedChanges) {
+                  let label = '';
+                  if (hasConflicts && hasRequestedChanges) {
+                    label = state.lang === 'es' ? 'Conflictos | Cambios solicitados' : 'Conflicts | Changes requested';
+                  } else if (hasConflicts) {
+                    label = state.lang === 'es' ? 'Conflictos' : 'Conflicts';
+                  } else {
+                    label = state.lang === 'es' ? 'Cambios solicitados' : 'Changes requested';
+                  }
+
+                  prList.push({
+                    title: `${pr.title} (${label})`,
+                    url: pr.html_url,
+                    repo: pr.base.repo.name,
+                    number: pr.number,
+                    source: 'GitHub',
+                    sortTime: new Date(pr.updated_at).getTime()
+                  });
+                }
+              } catch (e) {
+                console.error(`Error fetching details for GitHub PR #${pr.number}:`, e);
+              }
+            })());
+          }
+        });
+
+        await Promise.all(prDetailPromises);
+      }
     } catch (e) {
       console.error("Error fetching GitHub PRs:", e);
     }
@@ -2259,32 +2317,48 @@ async function fetchAllPRs() {
         const allRepoPRs = await Promise.all(prPromises);
         const openPRs = allRepoPRs.flat();
 
-        // 3. Filter and map PRs (Author, Reviewer, or has open tasks/comments that block it)
+        // 3. Filter and map PRs
         openPRs.forEach(pr => {
           const isAuthor = pr.author && (pr.author.nickname === state.settings.bitbucketUsername || pr.author.username === state.settings.bitbucketUsername);
           const isReviewer = pr.reviewers && pr.reviewers.some(r => r.nickname === state.settings.bitbucketUsername || r.username === state.settings.bitbucketUsername);
-          const hasOpenTasks = pr.task_count > 0;
 
-          if (isAuthor || isReviewer || hasOpenTasks) {
-            let statusLabel = '';
-            if (isReviewer) {
-              const hasApproved = pr.participants && pr.participants.some(p => p.approved && (p.user.nickname === state.settings.bitbucketUsername || p.user.username === state.settings.bitbucketUsername));
-              statusLabel = hasApproved ? (state.lang === 'es' ? 'Aprobado' : 'Approved') : (state.lang === 'es' ? 'Revisar' : 'Needs Review');
-            } else if (isAuthor) {
-              statusLabel = state.lang === 'es' ? 'Autor' : 'Author';
+          if (isReviewer) {
+            // Teammate's PR where I am requested to review and I have not approved it yet
+            const hasApproved = pr.participants && pr.participants.some(p => p.approved && (p.user.nickname === state.settings.bitbucketUsername || p.user.username === state.settings.bitbucketUsername));
+            if (!hasApproved) {
+              prList.push({
+                title: `${pr.title} (${state.lang === 'es' ? 'Revisar' : 'Needs Review'})`,
+                url: pr.links.html.href,
+                repo: pr.source.repository.name,
+                number: pr.id,
+                source: 'Bitbucket',
+                sortTime: new Date(pr.updated_on).getTime()
+              });
             }
+          } else if (isAuthor) {
+            // My own PR: check for needs_work (requested changes) or task_count > 0 (blocked)
+            const hasNeedsWork = pr.participants && pr.participants.some(p => p.state === 'needs_work');
+            const hasTasks = pr.task_count > 0;
             
-            if (hasOpenTasks) {
-              statusLabel += (statusLabel ? ' | ' : '') + (state.lang === 'es' ? 'Tareas pendientes' : 'Tasks open');
-            }
+            if (hasNeedsWork || hasTasks) {
+              let label = '';
+              if (hasNeedsWork && hasTasks) {
+                label = state.lang === 'es' ? 'Cambios solicitados | Tareas' : 'Changes requested | Tasks';
+              } else if (hasNeedsWork) {
+                label = state.lang === 'es' ? 'Cambios solicitados' : 'Changes requested';
+              } else {
+                label = state.lang === 'es' ? 'Tareas pendientes' : 'Tasks open';
+              }
 
-            prList.push({
-              title: `[Bitbucket] ${pr.title}${statusLabel ? ` (${statusLabel})` : ''}`,
-              url: pr.links.html.href,
-              repo: pr.source.repository.name,
-              number: pr.id,
-              source: 'Bitbucket'
-            });
+              prList.push({
+                title: `${pr.title} (${label})`,
+                url: pr.links.html.href,
+                repo: pr.source.repository.name,
+                number: pr.id,
+                source: 'Bitbucket',
+                sortTime: new Date(pr.updated_on).getTime()
+              });
+            }
           }
         });
       }
@@ -2326,17 +2400,21 @@ async function fetchAllPRs() {
         } catch (e) {}
 
         prList.push({
-          title: `[GitLab] ${mr.title}`,
+          title: mr.title,
           url: mr.web_url,
           repo: repo,
           number: mr.iid,
-          source: 'GitLab'
+          source: 'GitLab',
+          sortTime: new Date(mr.updated_at).getTime()
         });
       });
     } catch (e) {
       console.error("Error fetching GitLab MRs:", e);
     }
   }
+
+  // Sort the final combined list by sortTime descending (most recent first)
+  prList.sort((a, b) => (b.sortTime || 0) - (a.sortTime || 0));
 
   // Render PRs
   if (prList.length === 0) {
@@ -2350,7 +2428,10 @@ async function fetchAllPRs() {
       <a href="${pr.url}" target="_blank" class="integration-item" data-tooltip="${escapeHtml(pr.title)}\nSource: ${pr.source}\nRepo: ${escapeHtml(pr.repo)}\nPR/MR: #${pr.number}">
         <span class="item-title">${escapeHtml(pr.title)}</span>
         <div class="item-meta">
-          <span>${escapeHtml(pr.repo)}</span>
+          <span style="display: flex; align-items: center; gap: 0.35rem; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+            <span class="pr-source-badge ${pr.source.toLowerCase()}">${pr.source}</span>
+            <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${escapeHtml(pr.repo)}</span>
+          </span>
           <span class="item-badge">#${pr.number}</span>
         </div>
       </a>
