@@ -77,7 +77,8 @@ const translations = {
     "tab-shortcuts": "Shortcuts",
     "shortcuts-card-title": "Quick Action Shortcuts",
     "city-desc": "Leave empty for automatic geolocation.",
-    "google-desc": "Requires a Google Cloud Console project with OAuth credentials. Remember to add your local origin (e.g. http://localhost:5173) under Authorized JavaScript Origins.",
+    "google-desc": "Requires a Google Cloud Console project with OAuth credentials. Remember to add your local origin under Authorized JavaScript Origins.",
+    "google-config-title": "Google Configuration",
     "label-client-id": "Google OAuth Client ID",
     "google-status": "Authentication:",
     "disconnected": "Disconnected",
@@ -240,7 +241,8 @@ const translations = {
     "tab-shortcuts": "Atajos",
     "shortcuts-card-title": "Atajos de Acción Rápida",
     "city-desc": "Déjalo vacío para usar la geolocalización automática del navegador.",
-    "google-desc": "Requiere un proyecto en Google Cloud Console con credenciales OAuth. Recuerda añadir tu origen local (ej. http://localhost:5173) en los orígenes de JavaScript autorizados.",
+    "google-desc": "Requires a Google Cloud Console project with OAuth credentials. Remember to add your local origin under Authorized JavaScript Origins.",
+    "google-config-title": "Configuración de Google",
     "label-client-id": "Cliente ID de Google OAuth",
     "google-status": "Autenticación:",
     "disconnected": "Desconectado",
@@ -3502,6 +3504,7 @@ async function fetchGoogleTasks() {
       `;
     }
 
+    updateGoogleAuthStatus();
   } catch (err) {
     console.error("Error fetching Google Tasks", err);
     state.googleErrors = state.googleErrors || {};
