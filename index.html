@@ -481,10 +481,10 @@
               <input type="text" id="google-client-id" placeholder="xxxxxxxx.apps.googleusercontent.com">
             </div>
 
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 0.75rem; margin-bottom: 1.5rem;">
               <div class="settings-section-card" style="margin-bottom: 0;">
                 <div class="card-toggle-header" style="padding: 0.6rem 0.8rem;">
-                  <span class="card-toggle-title" style="font-size: 0.85rem;">
+                  <span class="card-toggle-title" style="font-size: 0.82rem;">
                     <span data-i18n="label-show-google-emails">Show Emails (Gmail)</span>
                   </span>
                   <label class="switch-control">
@@ -495,11 +495,22 @@
               </div>
               <div class="settings-section-card" style="margin-bottom: 0;">
                 <div class="card-toggle-header" style="padding: 0.6rem 0.8rem;">
-                  <span class="card-toggle-title" style="font-size: 0.85rem;">
-                    <span data-i18n="label-show-google-tasks">Show Tasks (Google Tasks)</span>
+                  <span class="card-toggle-title" style="font-size: 0.82rem;">
+                    <span data-i18n="label-show-google-tasks-today">Tasks: Today (Google Tasks)</span>
                   </span>
                   <label class="switch-control">
-                    <input type="checkbox" id="settings-show-google-tasks" checked>
+                    <input type="checkbox" id="settings-show-google-tasks-today" checked>
+                    <span class="switch-slider"></span>
+                  </label>
+                </div>
+              </div>
+              <div class="settings-section-card" style="margin-bottom: 0;">
+                <div class="card-toggle-header" style="padding: 0.6rem 0.8rem;">
+                  <span class="card-toggle-title" style="font-size: 0.82rem;">
+                    <span data-i18n="label-show-google-tasks-week">Tasks: This Week (Google Tasks)</span>
+                  </span>
+                  <label class="switch-control">
+                    <input type="checkbox" id="settings-show-google-tasks-week" checked>
                     <span class="switch-slider"></span>
                   </label>
                 </div>

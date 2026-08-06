@@ -51,6 +51,8 @@ const translations = {
     "label-show-world-clock": "Show World Clock Widget",
     "label-show-countdowns": "Show Events",
     "label-show-tasks": "Show Tasks",
+    "label-show-google-tasks-today": "Tasks: Today (Google Tasks)",
+    "label-show-google-tasks-week": "Tasks: This Week (Google Tasks)",
     "label-city": "Weather City",
     "label-weather-url": "Weather Web URL (Optional)",
     "weather-url-placeholder": "e.g. https://weather.com or leave empty for Google Weather",
@@ -210,6 +212,8 @@ const translations = {
     "label-show-world-clock": "Mostrar Reloj Mundial",
     "label-show-countdowns": "Mostrar Eventos",
     "label-show-tasks": "Mostrar Tareas",
+    "label-show-google-tasks-today": "Tareas: Hoy (Google Tasks)",
+    "label-show-google-tasks-week": "Tareas: Esta Semana (Google Tasks)",
     "label-city": "Ciudad para el clima",
     "label-weather-url": "URL de la web del clima (Opcional)",
     "weather-url-placeholder": "ej. https://eltiempo.es o dejar vacío para Google Clima",
@@ -3216,46 +3220,53 @@ async function fetchGoogleTasks() {
   const oldWeek = document.getElementById('gtasks-week');
   if (oldWeek) oldWeek.remove();
 
-  if (state.settings.showGoogleTasks === false) {
+  const showToday = state.settings.showGoogleTasksToday !== false && state.settings.showGoogleTasks !== false;
+  const showWeek = state.settings.showGoogleTasksWeek !== false && state.settings.showGoogleTasks !== false;
+
+  if (!showToday && !showWeek) {
     return;
   }
 
   function showPlaceholder(messageHTML) {
-    let gTodayCard = document.getElementById('gtasks-today');
-    if (!gTodayCard) {
-      gTodayCard = document.createElement('div');
-      gTodayCard.id = 'gtasks-today';
-      gTodayCard.className = 'section-card';
-      const colContent = document.querySelector('#col-today .col-content');
-      if (colContent) colContent.appendChild(gTodayCard);
+    if (showToday) {
+      let gTodayCard = document.getElementById('gtasks-today');
+      if (!gTodayCard) {
+        gTodayCard = document.createElement('div');
+        gTodayCard.id = 'gtasks-today';
+        gTodayCard.className = 'section-card';
+        const colContent = document.querySelector('#col-today .col-content');
+        if (colContent) colContent.appendChild(gTodayCard);
+      }
+      gTodayCard.innerHTML = `
+        <h3 class="card-subtitle">
+          <span>${state.lang === 'es' ? 'Google Tasks (Hoy)' : 'Google Tasks (Today)'}</span>
+          <span class="header-status-indicators" id="google-gtasks-today-status-indicators"></span>
+        </h3>
+        <div class="integration-list">
+          ${messageHTML}
+        </div>
+      `;
     }
-    gTodayCard.innerHTML = `
-      <h3 class="card-subtitle">
-        <span>Google Tasks (Hoy)</span>
-        <span class="header-status-indicators" id="google-gtasks-today-status-indicators"></span>
-      </h3>
-      <div class="integration-list">
-        ${messageHTML}
-      </div>
-    `;
 
-    let gWeekCard = document.getElementById('gtasks-week');
-    if (!gWeekCard) {
-      gWeekCard = document.createElement('div');
-      gWeekCard.id = 'gtasks-week';
-      gWeekCard.className = 'section-card';
-      const colContent = document.querySelector('#col-week .col-content');
-      if (colContent) colContent.appendChild(gWeekCard);
+    if (showWeek) {
+      let gWeekCard = document.getElementById('gtasks-week');
+      if (!gWeekCard) {
+        gWeekCard = document.createElement('div');
+        gWeekCard.id = 'gtasks-week';
+        gWeekCard.className = 'section-card';
+        const colContent = document.querySelector('#col-week .col-content');
+        if (colContent) colContent.appendChild(gWeekCard);
+      }
+      gWeekCard.innerHTML = `
+        <h3 class="card-subtitle">
+          <span>${state.lang === 'es' ? 'Google Tasks (Semana)' : 'Google Tasks (This Week)'}</span>
+          <span class="header-status-indicators" id="google-gtasks-week-status-indicators"></span>
+        </h3>
+        <div class="integration-list">
+          ${messageHTML}
+        </div>
+      `;
     }
-    gWeekCard.innerHTML = `
-      <h3 class="card-subtitle">
-        <span>Google Tasks (Semana)</span>
-        <span class="header-status-indicators" id="google-gtasks-week-status-indicators"></span>
-      </h3>
-      <div class="integration-list">
-        ${messageHTML}
-      </div>
-    `;
     updateGoogleAuthStatus();
   }
 
@@ -3391,7 +3402,7 @@ async function fetchGoogleTasks() {
       return !!(task.recurrence || task.recurring);
     }
 
-    if (todayGTasks.length > 0) {
+    if (showToday && todayGTasks.length > 0) {
       let gTodayCard = document.getElementById('gtasks-today');
       if (!gTodayCard) {
         gTodayCard = document.createElement('div');
@@ -3439,7 +3450,7 @@ async function fetchGoogleTasks() {
       `;
     }
 
-    if (weekGTasks.length > 0) {
+    if (showWeek && weekGTasks.length > 0) {
       let gWeekCard = document.getElementById('gtasks-week');
       if (!gWeekCard) {
         gWeekCard = document.createElement('div');
@@ -4340,7 +4351,10 @@ function setupEventListeners() {
     document.getElementById('settings-show-countdowns').checked = state.settings.showCountdowns !== false;
     document.getElementById('settings-show-tasks').checked = state.settings.showTasks !== false;
     document.getElementById('settings-show-google-emails').checked = state.settings.showGoogleEmails !== false;
-    document.getElementById('settings-show-google-tasks').checked = state.settings.showGoogleTasks !== false;
+    const gTasksTodayEl = document.getElementById('settings-show-google-tasks-today');
+    if (gTasksTodayEl) gTasksTodayEl.checked = state.settings.showGoogleTasksToday !== false;
+    const gTasksWeekEl = document.getElementById('settings-show-google-tasks-week');
+    if (gTasksWeekEl) gTasksWeekEl.checked = state.settings.showGoogleTasksWeek !== false;
     document.getElementById('settings-show-git').checked = state.settings.showGit !== false;
     document.getElementById('settings-show-jira').checked = state.settings.showJira !== false;
     
@@ -4692,7 +4706,10 @@ function setupEventListeners() {
     state.settings.showCountdowns = document.getElementById('settings-show-countdowns').checked;
     state.settings.showTasks = document.getElementById('settings-show-tasks').checked;
     state.settings.showGoogleEmails = document.getElementById('settings-show-google-emails').checked;
-    state.settings.showGoogleTasks = document.getElementById('settings-show-google-tasks').checked;
+    const gTasksTodayElSave = document.getElementById('settings-show-google-tasks-today');
+    if (gTasksTodayElSave) state.settings.showGoogleTasksToday = gTasksTodayElSave.checked;
+    const gTasksWeekElSave = document.getElementById('settings-show-google-tasks-week');
+    if (gTasksWeekElSave) state.settings.showGoogleTasksWeek = gTasksWeekElSave.checked;
     state.settings.showGit = document.getElementById('settings-show-git').checked;
     state.settings.showJira = document.getElementById('settings-show-jira').checked;
 
