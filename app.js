@@ -92,8 +92,8 @@ const translations = {
     "label-username": "GitHub Username",
     "bitbucket-settings": "Bitbucket Configuration",
     "label-workspace": "Workspace ID",
-    "label-bb-username": "Bitbucket Username",
-    "label-bb-token": "App Password / Token",
+    "label-bb-username": "Atlassian Account Email",
+    "label-bb-token": "API Token",
     "jira-cors-warning": "Note: Jira API requires CORS. Ensure you use a browser extension to bypass CORS (e.g. 'Allow CORS' extension) when running locally.",
     "label-jira-host": "Jira Host URL",
     "label-jira-email": "Atlassian Account Email",
@@ -246,8 +246,8 @@ const translations = {
     "label-username": "Usuario de GitHub",
     "bitbucket-settings": "Configuración de Bitbucket",
     "label-workspace": "ID del Espacio de Trabajo",
-    "label-bb-username": "Usuario de Bitbucket",
-    "label-bb-token": "Contraseña de App / Token",
+    "label-bb-username": "Email de Cuenta Atlassian",
+    "label-bb-token": "Token de API",
     "jira-cors-warning": "Nota: La API de Jira requiere CORS. Asegúrate de usar una extensión del navegador para omitir CORS (como 'Allow CORS') al ejecutarlo localmente.",
     "label-jira-host": "URL del Servidor Jira",
     "label-jira-email": "Correo de Atlassian",
@@ -2221,26 +2221,73 @@ async function fetchAllPRs() {
   // Bitbucket Fetch
   if (hasBitbucket && !(state.settings.oooActive && state.settings.hideBitbucketOoo)) {
     try {
-      const auth = btoa(`${state.settings.bitbucketUsername}:${state.settings.bitbucketToken}`);
-      const res = await fetch(`https://api.bitbucket.org/2.0/pullrequests/${state.settings.bitbucketUsername}`, {
+      const token = state.settings.bitbucketToken;
+      const username = state.settings.bitbucketUsername;
+      const isBasic = token.startsWith('ATAT') || token.startsWith('ATBB') || (username && username.includes('@'));
+      const authHeader = isBasic ? 'Basic ' + btoa(`${username}:${token}`) : `Bearer ${token}`;
+
+      // 1. Get the 10 most recently updated repositories in the workspace
+      const reposRes = await fetch(`https://api.bitbucket.org/2.0/repositories/${state.settings.bitbucketWorkspace}?pagelen=10&sort=-updated_on`, {
         headers: {
-          'Authorization': `Basic ${auth}`,
+          'Authorization': authHeader,
           'Accept': 'application/json'
         }
       });
-      if (res.ok) {
-        const data = await res.json();
-        if (data.values) {
-          data.values.forEach(pr => {
+      if (reposRes.ok) {
+        const reposData = await reposRes.json();
+        const repos = reposData.values || [];
+
+        // 2. Fetch open pull requests for all repositories in parallel
+        const prPromises = repos.map(async (repo) => {
+          try {
+            const prsRes = await fetch(`https://api.bitbucket.org/2.0/repositories/${state.settings.bitbucketWorkspace}/${repo.slug}/pullrequests?state=OPEN`, {
+              headers: {
+                'Authorization': authHeader,
+                'Accept': 'application/json'
+              }
+            });
+            if (prsRes.ok) {
+              const prsData = await prsRes.json();
+              return prsData.values || [];
+            }
+            return [];
+          } catch (e) {
+            console.error(`Error fetching PRs for ${repo.slug}:`, e);
+            return [];
+          }
+        });
+
+        const allRepoPRs = await Promise.all(prPromises);
+        const openPRs = allRepoPRs.flat();
+
+        // 3. Filter and map PRs (Author, Reviewer, or has open tasks/comments that block it)
+        openPRs.forEach(pr => {
+          const isAuthor = pr.author && (pr.author.nickname === state.settings.bitbucketUsername || pr.author.username === state.settings.bitbucketUsername);
+          const isReviewer = pr.reviewers && pr.reviewers.some(r => r.nickname === state.settings.bitbucketUsername || r.username === state.settings.bitbucketUsername);
+          const hasOpenTasks = pr.task_count > 0;
+
+          if (isAuthor || isReviewer || hasOpenTasks) {
+            let statusLabel = '';
+            if (isReviewer) {
+              const hasApproved = pr.participants && pr.participants.some(p => p.approved && (p.user.nickname === state.settings.bitbucketUsername || p.user.username === state.settings.bitbucketUsername));
+              statusLabel = hasApproved ? (state.lang === 'es' ? 'Aprobado' : 'Approved') : (state.lang === 'es' ? 'Revisar' : 'Needs Review');
+            } else if (isAuthor) {
+              statusLabel = state.lang === 'es' ? 'Autor' : 'Author';
+            }
+            
+            if (hasOpenTasks) {
+              statusLabel += (statusLabel ? ' | ' : '') + (state.lang === 'es' ? 'Tareas pendientes' : 'Tasks open');
+            }
+
             prList.push({
-              title: `[Bitbucket] ${pr.title}`,
+              title: `[Bitbucket] ${pr.title}${statusLabel ? ` (${statusLabel})` : ''}`,
               url: pr.links.html.href,
               repo: pr.source.repository.name,
               number: pr.id,
               source: 'Bitbucket'
             });
-          });
-        }
+          }
+        });
       }
     } catch (e) {
       console.error("Error fetching Bitbucket PRs:", e);

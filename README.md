@@ -76,7 +76,10 @@ Before creating credentials, you must configure the OAuth consent screen to defi
 This dashboard supports aggregating pull requests and merge requests across GitHub, Bitbucket, and GitLab:
 
 - **GitHub**: Requires a [Personal Access Token (PAT)](https://github.com/settings/tokens/new?scopes=repo&description=Personal%20Startpage) with `repo` scope and your username.
-- **Bitbucket**: Requires App Username, [App Password (Token)](https://bitbucket.org/account/settings/app-passwords/), and Workspace ID.
+- **Bitbucket**: Supports two authentication methods:
+  * **Personal API Token**: Generate it in your Bitbucket **Personal settings -> API tokens** (make sure to select both `Repositories: Read` and `Pull requests: Read` scopes). Under "Atlassian Account Email", enter your Atlassian account email address, and under "API Token", paste the token (starts with `ATAT...`).
+  * **Workspace Access Token**: Generate it in your **Workspace Settings -> Access tokens** (with `Pull requests: Read` scope). Under "Atlassian Account Email", enter your username (used for filtering), and under "API Token", paste the token (starts with `ATCT...`).
+  * In both cases, **Workspace ID** is the slug/identifier of your workspace (found in the URL after `bitbucket.org/`).
 - **GitLab**:
   1. Generate a [Personal Access Token (PAT)](https://gitlab.com/-/profile/personal_access_tokens?name=Personal%20Startpage&scopes=api) in your GitLab Account Settings with the `api` scope.
   2. Enter the GitLab Host URL (defaults to `https://gitlab.com` but supports self-hosted GitLab instances).
