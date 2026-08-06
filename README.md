@@ -73,9 +73,9 @@ Before creating credentials, you must configure the OAuth consent screen to defi
 
 ## Git Integrations (GitHub, Bitbucket, GitLab)
 
-This dashboard supports aggregating pull requests and merge requests across GitHub, Bitbucket, and GitLab. 
+This dashboard supports aggregating pull requests and merge requests across git providers. 
 
-For all three services, the dashboard:
+For each active provider, the dashboard:
 * Automatically fetches open Pull/Merge Requests from your **5 most recently updated** repositories/projects.
 * Filters to show teammate PRs/MRs where you are a **requested reviewer** (and have not approved yet), and your own open PRs/MRs that have **merge conflicts, requested changes, or unresolved discussion threads**.
 
