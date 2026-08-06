@@ -79,6 +79,7 @@ const translations = {
     "city-desc": "Leave empty for automatic geolocation.",
     "google-desc": "Requires a Google Cloud Console project with OAuth credentials. Remember to add your local origin under Authorized JavaScript Origins.",
     "google-config-title": "Google Configuration",
+    "jira-config-title": "Jira Configuration",
     "label-client-id": "Google OAuth Client ID",
     "google-status": "Authentication:",
     "disconnected": "Disconnected",
@@ -243,6 +244,7 @@ const translations = {
     "city-desc": "Déjalo vacío para usar la geolocalización automática del navegador.",
     "google-desc": "Requires a Google Cloud Console project with OAuth credentials. Remember to add your local origin under Authorized JavaScript Origins.",
     "google-config-title": "Configuración de Google",
+    "jira-config-title": "Configuración de Jira",
     "label-client-id": "Cliente ID de Google OAuth",
     "google-status": "Autenticación:",
     "disconnected": "Desconectado",
@@ -2254,6 +2256,16 @@ function updateGitStatusIndicators() {
     setDotGl.className = `status-dot ${glSettingsClass}`;
     setDotGl.title = glTooltip;
   }
+
+  const jiraStatus = state.jiraStatus || (state.jiraToken ? 'connected' : 'disconnected');
+  const jiraSettingsClass = jiraStatus === 'connected' ? 'connected' : (jiraStatus === 'error' ? 'error' : 'disconnected');
+  const setDotJira = document.getElementById('settings-jira-dot');
+  if (setDotJira) {
+    setDotJira.className = `status-dot ${jiraSettingsClass}`;
+    setDotJira.title = jiraStatus === 'connected' 
+      ? (state.lang === 'es' ? 'Jira: Conectado' : 'Jira: Connected') 
+      : (jiraStatus === 'error' ? (state.jiraError || 'Error') : (state.lang === 'es' ? 'Jira: Desconectado' : 'Jira: Disconnected'));
+  }
 }
 
 // Cooldown tracker for successful connection tests (60 seconds)
@@ -2355,6 +2367,27 @@ async function testGitConnection(provider, button) {
       } else {
         throw new Error(`${res.status} ${res.statusText}`);
       }
+    } else if (provider === 'jira') {
+      let host = document.getElementById('jira-host').value.trim();
+      host = host.replace(/\/$/, "");
+      const email = document.getElementById('jira-email').value.trim();
+      const token = document.getElementById('jira-token').value.trim();
+      if (!host || !email || !token) {
+        throw new Error(state.lang === 'es' ? 'Rellena todos los campos' : 'Fill all fields');
+      }
+
+      const auth = btoa(`${email}:${token}`);
+      const res = await fetch(`${host}/rest/api/3/myself`, {
+        headers: {
+          'Authorization': `Basic ${auth}`,
+          'Accept': 'application/json'
+        }
+      });
+      if (res.ok) {
+        success = true;
+      } else {
+        throw new Error(`${res.status} ${res.statusText}`);
+      }
     }
   } catch (e) {
     errorMsg = e.message || String(e);
@@ -2365,10 +2398,12 @@ async function testGitConnection(provider, button) {
     if (provider === 'github') { state.githubStatus = 'connected'; state.githubError = ''; }
     if (provider === 'bitbucket') { state.bitbucketStatus = 'connected'; state.bitbucketError = ''; }
     if (provider === 'gitlab') { state.gitlabStatus = 'connected'; state.gitlabError = ''; }
+    if (provider === 'jira') { state.jiraStatus = 'connected'; state.jiraError = ''; }
   } else {
     if (provider === 'github') { state.githubStatus = 'error'; state.githubError = errorMsg; }
     if (provider === 'bitbucket') { state.bitbucketStatus = 'error'; state.bitbucketError = errorMsg; }
     if (provider === 'gitlab') { state.gitlabStatus = 'error'; state.gitlabError = errorMsg; }
+    if (provider === 'jira') { state.jiraStatus = 'error'; state.jiraError = errorMsg; }
   }
 
   // Update Settings dot status and tooltips reactively

@@ -525,7 +525,11 @@
               </div>
             </div>
 
-            <h3 style="margin-top: 1.25rem; margin-bottom: 0.75rem; font-family: var(--font-title); font-size: 1rem;" data-i18n="google-config-title">Google Configuration</h3>
+            <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; margin-top: 1.25rem; margin-bottom: 0.5rem;">
+              <h3 style="display: flex; align-items: center; gap: 0.35rem; margin: 0;">
+                <span data-i18n="google-config-title">Google Configuration</span>
+              </h3>
+            </div>
             <div class="form-group" style="margin-bottom: 1.5rem;">
               <label for="google-client-id" data-i18n="label-client-id">Google Client ID</label>
               <input type="text" id="google-client-id" placeholder="xxxxxxxx.apps.googleusercontent.com">
@@ -591,7 +595,7 @@
               </div>
               <div class="settings-section-card" style="margin-top: 1rem; margin-bottom: 1rem; background: rgba(255,255,255,0.01);">
                 <div class="card-toggle-header" style="padding: 0.6rem 0.8rem;">
-                  <span class="card-toggle-title" style="font-size: 0.85rem; font-weight: 500;">
+                  <span class="card-toggle-title">
                     <span data-i18n="label-ooo-active">Out of Office (OOO)</span>
                   </span>
                   <label class="switch-control">
@@ -647,8 +651,6 @@
               </label>
             </div>
 
-            <hr class="form-divider">
-
             <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; margin-top: 1.25rem; margin-bottom: 0.5rem;">
               <h3 style="display: flex; align-items: center; gap: 0.35rem; margin: 0;">
                 <span class="status-dot disconnected" id="settings-git-dot-bitbucket"></span>
@@ -675,8 +677,6 @@
                 <span class="switch-slider"></span>
               </label>
             </div>
-
-            <hr class="form-divider">
 
             <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; margin-top: 1.25rem; margin-bottom: 0.5rem;">
               <h3 style="display: flex; align-items: center; gap: 0.35rem; margin: 0;">
@@ -718,6 +718,13 @@
                   <span class="switch-slider"></span>
                 </label>
               </div>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; margin-top: 1rem; margin-bottom: 0.5rem;">
+              <h3 style="display: flex; align-items: center; gap: 0.35rem; margin: 0;">
+                <span class="status-dot disconnected" id="settings-jira-dot"></span>
+                <span data-i18n="jira-config-title">Jira Configuration</span>
+              </h3>
+              <button type="button" class="btn-secondary test-conn-btn" data-provider="jira" data-i18n="connect-btn" style="padding: 0.3rem 0.6rem; font-size: 0.72rem; border-radius: var(--radius-sm); margin: 0; line-height: 1;">Connect</button>
             </div>
             <div class="form-group">
               <label for="jira-host" data-i18n="label-jira-host">Jira Host URL</label>
