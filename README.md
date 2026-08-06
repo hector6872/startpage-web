@@ -73,15 +73,17 @@ Before creating credentials, you must configure the OAuth consent screen to defi
 
 ## Git Integrations (GitHub, Bitbucket, GitLab)
 
-This dashboard supports aggregating pull requests and merge requests across GitHub, Bitbucket, and GitLab:
+This dashboard supports aggregating pull requests and merge requests across git providers. 
 
-- **GitHub**: Requires a Personal Access Token (PAT) with `repo` scope and your username.
-- **Bitbucket**: Requires App Username, App Password (Token), and Workspace ID.
-- **GitLab**:
-  1. Generate a **Personal Access Token (PAT)** in your GitLab Account Settings (User Settings -> Access Tokens) with the `api` scope.
-  2. Enter the GitLab Host URL (defaults to `https://gitlab.com` but supports self-hosted GitLab instances).
-  3. Enter your GitLab username.
-  4. The dashboard will automatically fetch open Merge Requests where you are either assigned or requested as a reviewer.
+For each active provider, the dashboard:
+* Automatically fetches open Pull/Merge Requests from your **5 most recently updated** repositories/projects.
+* Filters to show teammate PRs/MRs where you are a **requested reviewer** (and have not approved yet), and your own open PRs/MRs that have **merge conflicts, requested changes, or unresolved discussion threads**.
+
+### Configuration Requirements:
+
+- **GitHub**: Requires your Username and a [Personal Access Token (PAT)](https://github.com/settings/tokens/new?scopes=repo&description=Personal%20Startpage) with `repo` scope.
+- **Bitbucket**: Requires your Workspace ID (the slug/identifier of your workspace found in the URL after `bitbucket.org/`), your Atlassian Account Email, and your [Personal API Token](https://bitbucket.org/account/settings/api-tokens/) (ensure you select both `Repositories: Read` and `Pull requests: Read` scopes).
+- **GitLab**: Requires your GitLab Username, a [Personal Access Token (PAT)](https://gitlab.com/-/profile/personal_access_tokens?name=Personal%20Startpage&scopes=api) with the `api` scope, and the GitLab Host URL (defaults to `https://gitlab.com` but supports self-hosted GitLab instances).
 
 ## Out of Office (OOO) Mode
 

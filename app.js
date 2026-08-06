@@ -51,6 +51,10 @@ const translations = {
     "label-show-world-clock": "Show World Clock Widget",
     "label-show-countdowns": "Show Events",
     "label-show-tasks": "Show Tasks",
+    "label-show-google-tasks-title": "Tasks (Google Tasks)",
+    "label-show-google-tasks-today": "Today",
+    "label-show-google-tasks-week": "This Week",
+    "label-show-google-tasks-overdue": "Show Overdue",
     "label-city": "Weather City",
     "label-weather-url": "Weather Web URL (Optional)",
     "weather-url-placeholder": "e.g. https://weather.com or leave empty for Google Weather",
@@ -73,7 +77,9 @@ const translations = {
     "tab-shortcuts": "Shortcuts",
     "shortcuts-card-title": "Quick Action Shortcuts",
     "city-desc": "Leave empty for automatic geolocation.",
-    "google-desc": "Requires a Google Cloud Console project with OAuth credentials. Remember to add your local origin (e.g. http://localhost:5173) under Authorized JavaScript Origins.",
+    "google-desc": "Requires a Google Cloud Console project with OAuth credentials. Remember to add your local origin under Authorized JavaScript Origins.",
+    "google-config-title": "Google Configuration",
+    "jira-config-title": "Jira Configuration",
     "label-client-id": "Google OAuth Client ID",
     "google-status": "Authentication:",
     "disconnected": "Disconnected",
@@ -92,8 +98,13 @@ const translations = {
     "label-username": "GitHub Username",
     "bitbucket-settings": "Bitbucket Configuration",
     "label-workspace": "Workspace ID",
-    "label-bb-username": "Bitbucket Username",
-    "label-bb-token": "App Password / Token",
+    "label-bb-username": "Atlassian Account Email",
+    "label-bb-token": "API Token",
+    "test-connection": "Test Connection",
+    "gitlab-settings": "GitLab Configuration",
+    "label-gitlab-host": "GitLab Host URL",
+    "label-gitlab-username": "GitLab Username",
+    "label-gitlab-token": "Personal Access Token (PAT)",
     "jira-cors-warning": "Note: Jira API requires CORS. Ensure you use a browser extension to bypass CORS (e.g. 'Allow CORS' extension) when running locally.",
     "label-jira-host": "Jira Host URL",
     "label-jira-email": "Atlassian Account Email",
@@ -205,6 +216,10 @@ const translations = {
     "label-show-world-clock": "Mostrar Reloj Mundial",
     "label-show-countdowns": "Mostrar Eventos",
     "label-show-tasks": "Mostrar Tareas",
+    "label-show-google-tasks-title": "Tareas (Google Tasks)",
+    "label-show-google-tasks-today": "Hoy",
+    "label-show-google-tasks-week": "Esta Semana",
+    "label-show-google-tasks-overdue": "Mostrar Vencidas",
     "label-city": "Ciudad para el clima",
     "label-weather-url": "URL de la web del clima (Opcional)",
     "weather-url-placeholder": "ej. https://eltiempo.es o dejar vacío para Google Clima",
@@ -227,7 +242,9 @@ const translations = {
     "tab-shortcuts": "Atajos",
     "shortcuts-card-title": "Atajos de Acción Rápida",
     "city-desc": "Déjalo vacío para usar la geolocalización automática del navegador.",
-    "google-desc": "Requiere un proyecto en Google Cloud Console con credenciales OAuth. Recuerda añadir tu origen local (ej. http://localhost:5173) en los orígenes de JavaScript autorizados.",
+    "google-desc": "Requires a Google Cloud Console project with OAuth credentials. Remember to add your local origin under Authorized JavaScript Origins.",
+    "google-config-title": "Configuración de Google",
+    "jira-config-title": "Configuración de Jira",
     "label-client-id": "Cliente ID de Google OAuth",
     "google-status": "Autenticación:",
     "disconnected": "Desconectado",
@@ -246,8 +263,13 @@ const translations = {
     "label-username": "Usuario de GitHub",
     "bitbucket-settings": "Configuración de Bitbucket",
     "label-workspace": "ID del Espacio de Trabajo",
-    "label-bb-username": "Usuario de Bitbucket",
-    "label-bb-token": "Contraseña de App / Token",
+    "label-bb-username": "Email de Cuenta Atlassian",
+    "label-bb-token": "Token de API",
+    "test-connection": "Probar conexión",
+    "gitlab-settings": "Configuración de GitLab",
+    "label-gitlab-host": "URL del Servidor GitLab",
+    "label-gitlab-username": "Usuario de GitLab",
+    "label-gitlab-token": "Token de Acceso Personal (PAT)",
     "jira-cors-warning": "Nota: La API de Jira requiere CORS. Asegúrate de usar una extensión del navegador para omitir CORS (como 'Allow CORS') al ejecutarlo localmente.",
     "label-jira-host": "URL del Servidor Jira",
     "label-jira-email": "Correo de Atlassian",
@@ -347,6 +369,12 @@ let state = {
   googleWorkToken: sessionStorage.getItem('google_work_token') || null,
   googlePersonalEmail: sessionStorage.getItem('google_personal_email') || null,
   googleWorkEmail: sessionStorage.getItem('google_work_email') || null,
+  githubStatus: 'disconnected',
+  githubError: '',
+  bitbucketStatus: 'disconnected',
+  bitbucketError: '',
+  gitlabStatus: 'disconnected',
+  gitlabError: '',
   settings: {
     lang: 'en',
     theme: 'system',
@@ -639,8 +667,10 @@ function updateOooBadges() {
   const active = state.settings.oooActive === true;
   const badgeToday = document.getElementById('ooo-badge-today');
   const badgeWeek = document.getElementById('ooo-badge-week');
+  const badgeWork = document.getElementById('ooo-badge-work');
   if (badgeToday) badgeToday.classList.toggle('hidden', !active);
   if (badgeWeek) badgeWeek.classList.toggle('hidden', !active);
+  if (badgeWork) badgeWork.classList.toggle('hidden', !active);
 }
 
 async function cleanupOldCompletedTodos() {
@@ -768,9 +798,12 @@ function updateUpcomingEventBanner() {
   } else if (pastEvents.length > 0) {
     pastEvents.sort((a, b) => a.daysAgo - b.daysAgo);
     const closestPast = pastEvents[0];
+    const timeAgoText = closestPast.daysAgo === 1
+      ? (state.lang === 'es' ? 'ayer' : 'yesterday')
+      : (state.lang === 'es' ? `hace ${closestPast.daysAgo} días` : `${closestPast.daysAgo} days ago`);
     const labelText = state.lang === 'es'
-      ? `⚠️ Evento pasado: ${closestPast.name} (hace ${closestPast.daysAgo} ${closestPast.daysAgo === 1 ? 'día' : 'días'})`
-      : `⚠️ Past event: ${closestPast.name} (${closestPast.daysAgo} ${closestPast.daysAgo === 1 ? 'day' : 'days'} ago)`;
+      ? `⚠️ Evento pasado: ${closestPast.name} (${timeAgoText})`
+      : `⚠️ Past event: ${closestPast.name} (${timeAgoText})`;
     activeChipsHTML += `<div class="event-banner past-warning">${escapeHtml(labelText)}</div>`;
     
     const remainingCount = events.length - 1;
@@ -954,7 +987,13 @@ function updateTimeAndGreeting() {
     greetingKey = 'greeting-evening';
   }
   const greetingText = translations[state.lang][greetingKey];
-  document.getElementById('greeting').textContent = `${greetingText}`;
+  let fullGreeting = greetingText;
+  if (state.settings.oooActive) {
+    const oooEmojis = ['🏝️', '🏖️', '🍹', '🌊', '⛺', '🌴'];
+    const emoji = oooEmojis[(now.getDate() + now.getMonth()) % oooEmojis.length];
+    fullGreeting = `${greetingText} ${emoji}`;
+  }
+  document.getElementById('greeting').textContent = `${fullGreeting}`;
 
   // Update World Clock
   updateWorldClock();
@@ -1687,18 +1726,6 @@ function updateOrganizerVisibility() {
   }
 
   let showGit = state.settings.showGit !== false;
-  const hasGithub = !!(state.settings.githubToken && state.settings.githubUsername);
-  const hasBitbucket = !!(state.settings.bitbucketToken && state.settings.bitbucketUsername && state.settings.bitbucketWorkspace);
-  const hasGitlab = !!(state.settings.gitlabToken && state.settings.gitlabUsername);
-  
-  if (state.settings.oooActive) {
-    const activeGithub = hasGithub && !state.settings.hideGithubOoo;
-    const activeBitbucket = hasBitbucket && !state.settings.hideBitbucketOoo;
-    const activeGitlab = hasGitlab && !state.settings.hideGitlabOoo;
-    if (!activeGithub && !activeBitbucket && !activeGitlab) {
-      showGit = false;
-    }
-  }
 
   const showWork = showGit || showJira;
 
@@ -1792,9 +1819,9 @@ function renderCountdowns() {
       
       const timeDiff = todayMs - eventDateThisYear.getTime();
       const daysAgo = Math.floor(timeDiff / (1000 * 3600 * 24));
-      relativeText = state.lang === 'es'
-        ? `hace ${daysAgo} ${daysAgo === 1 ? 'día' : 'días'}`
-        : `${daysAgo} ${daysAgo === 1 ? 'day' : 'days'} ago`;
+      relativeText = daysAgo === 1
+        ? (state.lang === 'es' ? 'ayer' : 'yesterday')
+        : (state.lang === 'es' ? `hace ${daysAgo} días` : `${daysAgo} days ago`);
     } else {
       const diffTime = eventDateThisYear.getTime() - todayMs;
       const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
@@ -1804,6 +1831,10 @@ function renderCountdowns() {
         daysLabel = state.lang === 'es' ? 'Hoy' : 'Today';
         badgeClass = 'countdown-badge-amber'; // Header banner today colors (orange/yellow)
         relativeText = state.lang === 'es' ? 'hoy' : 'today';
+      } else if (diffDays === 1) {
+        daysLabel = state.lang === 'es' ? 'Mañana' : 'Tomorrow';
+        badgeClass = 'countdown-badge-red';
+        relativeText = state.lang === 'es' ? 'mañana' : 'tomorrow';
       } else if (diffDays < 7) {
         daysLabel = state.lang === 'es' ? `En ${diffDays} d` : `In ${diffDays} d`;
         badgeClass = 'countdown-badge-red'; // Header banner soon colors (<7 days: red)
@@ -1822,7 +1853,7 @@ function renderCountdowns() {
     }
 
     const titleClass = 'countdown-title'; // Overdue events do not get line-through strikethrough
-    const formattedDate = eventDateThisYear.toLocaleDateString(state.lang === 'es' ? 'es-ES' : 'en-US', { day: 'numeric', month: 'short' });
+    const formattedDate = formatDateShort(getLocalDateString(eventDateThisYear));
     const fullMonthDate = eventDateThisYear.toLocaleDateString(state.lang === 'es' ? 'es-ES' : 'en-US', { day: 'numeric', month: 'long' });
     const tooltipText = evt.name + `\n${fullMonthDate} (${relativeText})`;
 
@@ -2150,6 +2181,265 @@ async function fetchJira() {
   }
 }
 
+// Update Git status indicators (dots)
+function updateGitStatusIndicators() {
+  const ghStatus = state.githubStatus || 'disconnected';
+  const bbStatus = state.bitbucketStatus || 'disconnected';
+  const glStatus = state.gitlabStatus || 'disconnected';
+
+  let ghTooltip = 'GitHub: ';
+  if (ghStatus === 'disconnected') {
+    ghTooltip += state.lang === 'es' ? 'Desconectado' : 'Disconnected';
+  } else if (ghStatus === 'connected') {
+    ghTooltip += state.lang === 'es' ? 'Conectado' : 'Connected';
+  } else {
+    ghTooltip += (state.lang === 'es' ? 'Error: ' : 'Error: ') + (state.githubError || '');
+  }
+
+  let bbTooltip = 'Bitbucket: ';
+  if (bbStatus === 'disconnected') {
+    bbTooltip += state.lang === 'es' ? 'Desconectado' : 'Disconnected';
+  } else if (bbStatus === 'connected') {
+    bbTooltip += state.lang === 'es' ? 'Conectado' : 'Connected';
+  } else {
+    bbTooltip += (state.lang === 'es' ? 'Error: ' : 'Error: ') + (state.bitbucketError || '');
+  }
+
+  let glTooltip = 'GitLab: ';
+  if (glStatus === 'disconnected') {
+    glTooltip += state.lang === 'es' ? 'Desconectado' : 'Disconnected';
+  } else if (glStatus === 'connected') {
+    glTooltip += state.lang === 'es' ? 'Conectado' : 'Connected';
+  } else {
+    glTooltip += (state.lang === 'es' ? 'Error: ' : 'Error: ') + (state.gitlabError || '');
+  }
+
+  const ghClass = ghStatus === 'connected' ? 'github' : ghStatus;
+  const bbClass = bbStatus === 'connected' ? 'bitbucket' : bbStatus;
+  const glClass = glStatus === 'connected' ? 'gitlab' : glStatus;
+
+  const hasGitError = ghStatus === 'error' || bbStatus === 'error' || glStatus === 'error';
+  const gitWarningTooltip = state.lang === 'es'
+    ? 'Error al conectar con algunos servicios'
+    : 'Failed to connect to some services';
+
+  const gitWarningIconHTML = `<span class="status-warning-icon" data-tooltip="${escapeHtml(gitWarningTooltip)}" onclick="event.stopPropagation(); window.openSettingsGitTab();">⚠️</span>`;
+
+  const html = `
+    ${hasGitError ? gitWarningIconHTML : ''}
+    <span class="status-dot ${ghClass}" title="${escapeHtml(ghTooltip)}"></span>
+    <span class="status-dot ${bbClass}" title="${escapeHtml(bbTooltip)}"></span>
+    <span class="status-dot ${glClass}" title="${escapeHtml(glTooltip)}"></span>
+  `;
+
+  const ind1 = document.getElementById('git-status-indicators');
+  if (ind1) ind1.innerHTML = html;
+
+  const ghSettingsClass = ghStatus === 'connected' ? 'github' : 'disconnected';
+  const bbSettingsClass = bbStatus === 'connected' ? 'bitbucket' : 'disconnected';
+  const glSettingsClass = glStatus === 'connected' ? 'gitlab' : 'disconnected';
+
+  // Update dots in Settings panel
+  const setDotGh = document.getElementById('settings-git-dot-github');
+  const setDotBb = document.getElementById('settings-git-dot-bitbucket');
+  const setDotGl = document.getElementById('settings-git-dot-gitlab');
+
+  if (setDotGh) {
+    setDotGh.className = `status-dot ${ghSettingsClass}`;
+    setDotGh.title = ghTooltip;
+  }
+  if (setDotBb) {
+    setDotBb.className = `status-dot ${bbSettingsClass}`;
+    setDotBb.title = bbTooltip;
+  }
+  if (setDotGl) {
+    setDotGl.className = `status-dot ${glSettingsClass}`;
+    setDotGl.title = glTooltip;
+  }
+
+  const jiraStatus = state.jiraStatus || (state.jiraToken ? 'connected' : 'disconnected');
+  const jiraSettingsClass = jiraStatus === 'connected' ? 'connected' : (jiraStatus === 'error' ? 'error' : 'disconnected');
+  const setDotJira = document.getElementById('settings-jira-dot');
+  if (setDotJira) {
+    setDotJira.className = `status-dot ${jiraSettingsClass}`;
+    setDotJira.title = jiraStatus === 'connected' 
+      ? (state.lang === 'es' ? 'Jira: Conectado' : 'Jira: Connected') 
+      : (jiraStatus === 'error' ? (state.jiraError || 'Error') : (state.lang === 'es' ? 'Jira: Desconectado' : 'Jira: Disconnected'));
+  }
+}
+
+// Cooldown tracker for successful connection tests (60 seconds)
+function startTestCooldown(provider, button) {
+  state.lastSuccessGit = state.lastSuccessGit || {};
+  state.lastSuccessGit[provider] = Date.now();
+
+  let remaining = 60;
+  button.disabled = true;
+
+  const originalText = state.lang === 'es' ? 'Conectar' : 'Connect';
+  
+  const interval = setInterval(() => {
+    remaining--;
+    if (remaining <= 0) {
+      clearInterval(interval);
+      button.disabled = false;
+      button.textContent = originalText;
+      button.setAttribute('data-i18n', 'connect-btn');
+      if (typeof translatePage === 'function') translatePage();
+    } else {
+      button.textContent = `${originalText} (${remaining}s)`;
+    }
+  }, 1000);
+  
+  button.dataset.cooldownInterval = interval;
+}
+
+// Test connection endpoint validator using inputs currently in the settings form
+async function testGitConnection(provider, button) {
+  const originalText = state.lang === 'es' ? 'Conectar' : 'Connect';
+  button.textContent = state.lang === 'es' ? 'Conectando...' : 'Connecting...';
+  button.disabled = true;
+
+  let success = false;
+  let errorMsg = '';
+
+  try {
+    if (provider === 'github') {
+      const username = document.getElementById('github-username').value.trim();
+      const token = document.getElementById('github-token').value.trim();
+      if (!username || !token) {
+        throw new Error(state.lang === 'es' ? 'Rellena todos los campos' : 'Fill all fields');
+      }
+
+      const headers = {
+        'Authorization': `token ${token}`,
+        'Accept': 'application/vnd.github.v3+json'
+      };
+      const res = await fetch(`https://api.github.com/user`, { headers });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.login.toLowerCase() === username.toLowerCase()) {
+          success = true;
+        } else {
+          throw new Error(state.lang === 'es' ? 'El usuario no coincide con el token' : 'Username does not match token');
+        }
+      } else {
+        throw new Error(`${res.status} ${res.statusText}`);
+      }
+    } else if (provider === 'bitbucket') {
+      const workspace = document.getElementById('bitbucket-workspace').value.trim();
+      const email = document.getElementById('bitbucket-username').value.trim();
+      const token = document.getElementById('bitbucket-token').value.trim();
+      if (!workspace || !email || !token) {
+        throw new Error(state.lang === 'es' ? 'Rellena todos los campos' : 'Fill all fields');
+      }
+
+      const auth = btoa(`${email}:${token}`);
+      const res = await fetch(`https://api.bitbucket.org/2.0/repositories/${workspace}?pagelen=1`, {
+        headers: {
+          'Authorization': `Basic ${auth}`,
+          'Accept': 'application/json'
+        }
+      });
+      if (res.ok) {
+        success = true;
+      } else {
+        throw new Error(`${res.status} ${res.statusText}`);
+      }
+    } else if (provider === 'gitlab') {
+      let host = document.getElementById('gitlab-host').value.trim() || 'https://gitlab.com';
+      host = host.replace(/\/$/, "");
+      const username = document.getElementById('gitlab-username').value.trim();
+      const token = document.getElementById('gitlab-token').value.trim();
+      if (!username || !token) {
+        throw new Error(state.lang === 'es' ? 'Rellena todos los campos' : 'Fill all fields');
+      }
+
+      const headers = { 'PRIVATE-TOKEN': token };
+      const res = await fetch(`${host}/api/v4/user`, { headers });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.username.toLowerCase() === username.toLowerCase()) {
+          success = true;
+        } else {
+          throw new Error(state.lang === 'es' ? 'El usuario no coincide con el token' : 'Username does not match token');
+        }
+      } else {
+        throw new Error(`${res.status} ${res.statusText}`);
+      }
+    } else if (provider === 'jira') {
+      let host = document.getElementById('jira-host').value.trim();
+      host = host.replace(/\/$/, "");
+      const email = document.getElementById('jira-email').value.trim();
+      const token = document.getElementById('jira-token').value.trim();
+      if (!host || !email || !token) {
+        throw new Error(state.lang === 'es' ? 'Rellena todos los campos' : 'Fill all fields');
+      }
+
+      const auth = btoa(`${email}:${token}`);
+      const res = await fetch(`${host}/rest/api/3/myself`, {
+        headers: {
+          'Authorization': `Basic ${auth}`,
+          'Accept': 'application/json'
+        }
+      });
+      if (res.ok) {
+        success = true;
+      } else {
+        throw new Error(`${res.status} ${res.statusText}`);
+      }
+    }
+  } catch (e) {
+    errorMsg = e.message || String(e);
+  }
+
+  // Update State Status and Error Message
+  if (success) {
+    if (provider === 'github') { state.githubStatus = 'connected'; state.githubError = ''; }
+    if (provider === 'bitbucket') { state.bitbucketStatus = 'connected'; state.bitbucketError = ''; }
+    if (provider === 'gitlab') { state.gitlabStatus = 'connected'; state.gitlabError = ''; }
+    if (provider === 'jira') { state.jiraStatus = 'connected'; state.jiraError = ''; }
+  } else {
+    if (provider === 'github') { state.githubStatus = 'error'; state.githubError = errorMsg; }
+    if (provider === 'bitbucket') { state.bitbucketStatus = 'error'; state.bitbucketError = errorMsg; }
+    if (provider === 'gitlab') { state.gitlabStatus = 'error'; state.gitlabError = errorMsg; }
+    if (provider === 'jira') { state.jiraStatus = 'error'; state.jiraError = errorMsg; }
+  }
+
+  // Update Settings dot status and tooltips reactively
+  updateGitStatusIndicators();
+
+  if (success) {
+    button.textContent = state.lang === 'es' ? '¡Conectado!' : 'Connected!';
+    button.style.backgroundColor = 'rgba(39, 174, 96, 0.1)';
+    button.style.color = '#27ae60';
+    button.style.borderColor = '#27ae60';
+    
+    // Start 1 minute cooldown
+    startTestCooldown(provider, button);
+    
+    // Refresh main PRs list
+    fetchAllPRs();
+  } else {
+    button.textContent = state.lang === 'es' ? 'Error' : 'Failed';
+    button.style.backgroundColor = 'rgba(235, 87, 87, 0.1)';
+    button.style.color = '#eb5757';
+    button.style.borderColor = '#eb5757';
+    
+    const originalTexti18n = button.getAttribute('data-i18n');
+    setTimeout(() => {
+      button.disabled = false;
+      button.textContent = originalText;
+      button.style.backgroundColor = '';
+      button.style.color = '';
+      button.style.borderColor = '';
+      if (originalTexti18n) button.setAttribute('data-i18n', originalTexti18n);
+    }, 3000);
+    
+    fetchAllPRs();
+  }
+}
+
 // Fetch GitHub PRs
 async function fetchAllPRs() {
   const container = document.getElementById('prs-container');
@@ -2164,8 +2454,17 @@ async function fetchAllPRs() {
   const hasGithub = !!(state.settings.githubToken && state.settings.githubUsername);
   const hasBitbucket = !!(state.settings.bitbucketToken && state.settings.bitbucketUsername && state.settings.bitbucketWorkspace);
   const hasGitlab = !!(state.settings.gitlabToken && state.settings.gitlabUsername);
+
+  // Initialize status before fetching
+  state.githubStatus = hasGithub ? 'connected' : 'disconnected';
+  state.githubError = '';
+  state.bitbucketStatus = hasBitbucket ? 'connected' : 'disconnected';
+  state.bitbucketError = '';
+  state.gitlabStatus = hasGitlab ? 'connected' : 'disconnected';
+  state.gitlabError = '';
+  updateGitStatusIndicators();
   
-  if (state.settings.oooActive) {
+  if (state.settings.oooActive && (hasGithub || hasBitbucket || hasGitlab)) {
     const activeGithub = hasGithub && !state.settings.hideGithubOoo;
     const activeBitbucket = hasBitbucket && !state.settings.hideBitbucketOoo;
     const activeGitlab = hasGitlab && !state.settings.hideGitlabOoo;
@@ -2180,7 +2479,8 @@ async function fetchAllPRs() {
   }
 
   if (!hasGithub && !hasBitbucket && !hasGitlab) {
-    container.innerHTML = `<p class="empty-msg">${translations[state.lang]['status-unconfigured']}</p>`;
+    const configLinkText = state.lang === 'es' ? 'Configurar integración de Git' : 'Configure Git Integration';
+    container.innerHTML = `<p class="empty-msg" style="margin: 0.5rem 0;"><a href="#" onclick="event.preventDefault(); window.openSettingsGitTab();" style="color: var(--accent); text-decoration: underline; font-weight: 500;">${configLinkText}</a></p>`;
     return;
   }
 
@@ -2189,60 +2489,197 @@ async function fetchAllPRs() {
   // GitHub Fetch
   if (hasGithub && !(state.settings.oooActive && state.settings.hideGithubOoo)) {
     try {
-      const q = encodeURIComponent(`is:pr is:open review-requested:${state.settings.githubUsername} assignee:${state.settings.githubUsername}`);
-      const res = await fetch(`https://api.github.com/search/issues?q=${q}&per_page=5`, {
-        headers: {
-          'Authorization': `token ${state.settings.githubToken}`,
-          'Accept': 'application/vnd.github.v3+json'
-        }
-      });
-      if (res.ok) {
-        const data = await res.json();
-        if (data.items) {
-          data.items.forEach(pr => {
-            const repo = pr.repository_url.split('/').slice(-1)[0];
-            prList.push({
-              title: pr.title,
-              url: pr.html_url,
-              repo: repo,
-              number: pr.number,
-              source: 'GitHub'
-            });
-          });
-        }
+      const headers = {
+        'Authorization': `token ${state.settings.githubToken}`,
+        'Accept': 'application/vnd.github.v3+json'
+      };
+
+      // 1. Get the 5 most recently updated repositories
+      const reposRes = await fetch(`https://api.github.com/user/repos?sort=updated&direction=desc&per_page=5`, { headers });
+      if (reposRes.ok) {
+        const repos = await reposRes.json();
+        
+        // 2. Fetch open pull requests for each repository in parallel
+        const prPromises = repos.map(async (repo) => {
+          try {
+            const prsRes = await fetch(`https://api.github.com/repos/${repo.owner.login}/${repo.name}/pulls?state=open`, { headers });
+            if (prsRes.ok) {
+              return await prsRes.json();
+            }
+            return [];
+          } catch (e) {
+            console.error(`Error fetching GitHub PRs for ${repo.full_name}:`, e);
+            return [];
+          }
+        });
+
+        const allRepoPRs = await Promise.all(prPromises);
+        const openPRs = allRepoPRs.flat();
+        const prDetailPromises = [];
+
+        // 3. Process and filter PRs
+        openPRs.forEach(pr => {
+          const isAuthor = pr.user && pr.user.login === state.settings.githubUsername;
+          const isReviewer = pr.requested_reviewers && pr.requested_reviewers.some(r => r.login === state.settings.githubUsername);
+          
+          if (isReviewer) {
+            // Teammate's PR where I am requested to review
+            prDetailPromises.push((async () => {
+              prList.push({
+                title: `${pr.title} (${state.lang === 'es' ? 'Revisar' : 'Needs Review'})`,
+                url: pr.html_url,
+                repo: pr.base.repo.name,
+                number: pr.number,
+                source: 'GitHub',
+                sortTime: new Date(pr.updated_at).getTime()
+              });
+            })());
+          } else if (isAuthor) {
+            // My own PR: check for conflicts and requested changes
+            prDetailPromises.push((async () => {
+              try {
+                const [detailRes, reviewsRes] = await Promise.all([
+                  fetch(pr.url, { headers }).then(r => r.ok ? r.json() : null),
+                  fetch(`${pr.url}/reviews`, { headers }).then(r => r.ok ? r.json() : [])
+                ]);
+
+                const hasConflicts = detailRes && detailRes.mergeable === false;
+                const hasRequestedChanges = reviewsRes && reviewsRes.some(rev => rev.state === 'CHANGES_REQUESTED');
+
+                if (hasConflicts || hasRequestedChanges) {
+                  let label = '';
+                  if (hasConflicts && hasRequestedChanges) {
+                    label = state.lang === 'es' ? 'Conflictos | Cambios solicitados' : 'Conflicts | Changes requested';
+                  } else if (hasConflicts) {
+                    label = state.lang === 'es' ? 'Conflictos' : 'Conflicts';
+                  } else {
+                    label = state.lang === 'es' ? 'Cambios solicitados' : 'Changes requested';
+                  }
+
+                  prList.push({
+                    title: `${pr.title} (${label})`,
+                    url: pr.html_url,
+                    repo: pr.base.repo.name,
+                    number: pr.number,
+                    source: 'GitHub',
+                    sortTime: new Date(pr.updated_at).getTime()
+                  });
+                }
+              } catch (e) {
+                console.error(`Error fetching details for GitHub PR #${pr.number}:`, e);
+              }
+            })());
+          }
+        });
+
+        await Promise.all(prDetailPromises);
+      } else {
+        state.githubStatus = 'error';
+        state.githubError = `${reposRes.status} ${reposRes.statusText}`;
       }
     } catch (e) {
       console.error("Error fetching GitHub PRs:", e);
+      state.githubStatus = 'error';
+      state.githubError = e.message || String(e);
     }
+    updateGitStatusIndicators();
   }
 
   // Bitbucket Fetch
   if (hasBitbucket && !(state.settings.oooActive && state.settings.hideBitbucketOoo)) {
     try {
-      const auth = btoa(`${state.settings.bitbucketUsername}:${state.settings.bitbucketToken}`);
-      const res = await fetch(`https://api.bitbucket.org/2.0/pullrequests/${state.settings.bitbucketUsername}`, {
+      const token = state.settings.bitbucketToken;
+      const username = state.settings.bitbucketUsername;
+      const auth = btoa(`${username}:${token}`);
+
+      // 1. Get the 5 most recently updated repositories in the workspace
+      const reposRes = await fetch(`https://api.bitbucket.org/2.0/repositories/${state.settings.bitbucketWorkspace}?pagelen=5&sort=-updated_on`, {
         headers: {
           'Authorization': `Basic ${auth}`,
           'Accept': 'application/json'
         }
       });
-      if (res.ok) {
-        const data = await res.json();
-        if (data.values) {
-          data.values.forEach(pr => {
-            prList.push({
-              title: `[Bitbucket] ${pr.title}`,
-              url: pr.links.html.href,
-              repo: pr.source.repository.name,
-              number: pr.id,
-              source: 'Bitbucket'
+      if (reposRes.ok) {
+        const reposData = await reposRes.json();
+        const repos = reposData.values || [];
+
+        // 2. Fetch open pull requests for all repositories in parallel
+        const prPromises = repos.map(async (repo) => {
+          try {
+            const prsRes = await fetch(`https://api.bitbucket.org/2.0/repositories/${state.settings.bitbucketWorkspace}/${repo.slug}/pullrequests?state=OPEN`, {
+              headers: {
+                'Authorization': `Basic ${auth}`,
+                'Accept': 'application/json'
+              }
             });
-          });
-        }
+            if (prsRes.ok) {
+              const prsData = await prsRes.json();
+              return prsData.values || [];
+            }
+            return [];
+          } catch (e) {
+            console.error(`Error fetching PRs for ${repo.slug}:`, e);
+            return [];
+          }
+        });
+
+        const allRepoPRs = await Promise.all(prPromises);
+        const openPRs = allRepoPRs.flat();
+
+        // 3. Filter and map PRs
+        openPRs.forEach(pr => {
+          const isAuthor = pr.author && (pr.author.nickname === state.settings.bitbucketUsername || pr.author.username === state.settings.bitbucketUsername);
+          const isReviewer = pr.reviewers && pr.reviewers.some(r => r.nickname === state.settings.bitbucketUsername || r.username === state.settings.bitbucketUsername);
+
+          if (isReviewer) {
+            // Teammate's PR where I am requested to review and I have not approved it yet
+            const hasApproved = pr.participants && pr.participants.some(p => p.approved && (p.user.nickname === state.settings.bitbucketUsername || p.user.username === state.settings.bitbucketUsername));
+            if (!hasApproved) {
+              prList.push({
+                title: `${pr.title} (${state.lang === 'es' ? 'Revisar' : 'Needs Review'})`,
+                url: pr.links.html.href,
+                repo: pr.source.repository.name,
+                number: pr.id,
+                source: 'Bitbucket',
+                sortTime: new Date(pr.updated_on).getTime()
+              });
+            }
+          } else if (isAuthor) {
+            // My own PR: check for needs_work (requested changes) or task_count > 0 (blocked)
+            const hasNeedsWork = pr.participants && pr.participants.some(p => p.state === 'needs_work');
+            const hasTasks = pr.task_count > 0;
+            
+            if (hasNeedsWork || hasTasks) {
+              let label = '';
+              if (hasNeedsWork && hasTasks) {
+                label = state.lang === 'es' ? 'Cambios solicitados | Tareas' : 'Changes requested | Tasks';
+              } else if (hasNeedsWork) {
+                label = state.lang === 'es' ? 'Cambios solicitados' : 'Changes requested';
+              } else {
+                label = state.lang === 'es' ? 'Tareas pendientes' : 'Tasks open';
+              }
+
+              prList.push({
+                title: `${pr.title} (${label})`,
+                url: pr.links.html.href,
+                repo: pr.source.repository.name,
+                number: pr.id,
+                source: 'Bitbucket',
+                sortTime: new Date(pr.updated_on).getTime()
+              });
+            }
+          }
+        });
+      } else {
+        state.bitbucketStatus = 'error';
+        state.bitbucketError = `${reposRes.status} ${reposRes.statusText}`;
       }
     } catch (e) {
       console.error("Error fetching Bitbucket PRs:", e);
+      state.bitbucketStatus = 'error';
+      state.bitbucketError = e.message || String(e);
     }
+    updateGitStatusIndicators();
   }
 
   // GitLab Fetch
@@ -2251,44 +2688,121 @@ async function fetchAllPRs() {
       const host = (state.settings.gitlabHost || 'https://gitlab.com').replace(/\/$/, "");
       const token = state.settings.gitlabToken;
       const username = state.settings.gitlabUsername;
-      
-      const assigneeUrl = `${host}/api/v4/merge_requests?state=opened&assignee_username=${encodeURIComponent(username)}`;
-      const reviewerUrl = `${host}/api/v4/merge_requests?state=opened&reviewer_username=${encodeURIComponent(username)}`;
-      
       const headers = { 'PRIVATE-TOKEN': token };
-      
-      const [res1, res2] = await Promise.all([
-        fetch(assigneeUrl, { headers }).then(r => r.ok ? r.json() : []),
-        fetch(reviewerUrl, { headers }).then(r => r.ok ? r.json() : [])
-      ]);
-      
-      const uniqueMRs = new Map();
-      [...res1, ...res2].forEach(mr => {
-        uniqueMRs.set(mr.id, mr);
-      });
 
-      uniqueMRs.forEach(mr => {
-        let repo = String(mr.project_id);
-        try {
-          const pathParts = mr.web_url.split('/');
-          const idx = pathParts.indexOf('-');
-          if (idx !== -1) {
-            repo = pathParts.slice(3, idx).join('/');
+      // 1. Get the 5 most recently active projects (repositories)
+      const projectsRes = await fetch(`${host}/api/v4/projects?membership=true&order_by=last_activity_at&sort=desc&per_page=5`, { headers });
+      if (projectsRes.ok) {
+        const projects = await projectsRes.json();
+
+        // 2. Fetch open merge requests for each project in parallel
+        const mrPromises = projects.map(async (project) => {
+          try {
+            const mrsRes = await fetch(`${host}/api/v4/projects/${project.id}/merge_requests?state=opened`, { headers });
+            if (mrsRes.ok) {
+              return await mrsRes.json();
+            }
+            return [];
+          } catch (e) {
+            console.error(`Error fetching GitLab MRs for project ${project.path_with_namespace}:`, e);
+            return [];
           }
-        } catch (e) {}
-
-        prList.push({
-          title: `[GitLab] ${mr.title}`,
-          url: mr.web_url,
-          repo: repo,
-          number: mr.iid,
-          source: 'GitLab'
         });
-      });
+
+        const allProjectMRs = await Promise.all(mrPromises);
+        const openMRs = allProjectMRs.flat();
+        const mrDetailPromises = [];
+
+        // 3. Process and filter MRs
+        openMRs.forEach(mr => {
+          const isAuthor = mr.author && mr.author.username === username;
+          const isReviewer = mr.reviewers && mr.reviewers.some(r => r.username === username);
+
+          if (isReviewer) {
+            // Teammate's MR where I am requested to review: check if I have approved it yet
+            mrDetailPromises.push((async () => {
+              try {
+                const appRes = await fetch(`${host}/api/v4/projects/${mr.project_id}/merge_requests/${mr.iid}/approvals`, { headers });
+                if (appRes.ok) {
+                  const appData = await appRes.json();
+                  const hasApproved = appData.approved_by && appData.approved_by.some(app => app.user.username === username);
+                  if (!hasApproved) {
+                    let repoName = String(mr.project_id);
+                    try {
+                      const pathParts = mr.web_url.split('/');
+                      const idx = pathParts.indexOf('-');
+                      if (idx !== -1) {
+                        repoName = pathParts.slice(3, idx).join('/');
+                      }
+                    } catch (e) {}
+
+                    prList.push({
+                      title: `${mr.title} (${state.lang === 'es' ? 'Revisar' : 'Needs Review'})`,
+                      url: mr.web_url,
+                      repo: repoName,
+                      number: mr.iid,
+                      source: 'GitLab',
+                      sortTime: new Date(mr.updated_at).getTime()
+                    });
+                  }
+                }
+              } catch (e) {
+                console.error(`Error fetching approvals for GitLab MR #${mr.iid}:`, e);
+              }
+            })());
+          } else if (isAuthor) {
+            // My own MR: check for conflicts and unresolved threads (blocking discussions)
+            mrDetailPromises.push((async () => {
+              const hasConflicts = mr.has_conflicts === true || mr.merge_status === 'cannot_be_merged' || mr.detailed_merge_status === 'conflict';
+              const hasUnresolvedDiscussions = mr.blocking_discussions_resolved === false || mr.detailed_merge_status === 'discussions_not_resolved';
+
+              if (hasConflicts || hasUnresolvedDiscussions) {
+                let label = '';
+                if (hasConflicts && hasUnresolvedDiscussions) {
+                  label = state.lang === 'es' ? 'Conflictos | Hilos pendientes' : 'Conflicts | Threads open';
+                } else if (hasConflicts) {
+                  label = state.lang === 'es' ? 'Conflictos' : 'Conflicts';
+                } else {
+                  label = state.lang === 'es' ? 'Hilos pendientes' : 'Threads open';
+                }
+
+                let repoName = String(mr.project_id);
+                try {
+                  const pathParts = mr.web_url.split('/');
+                  const idx = pathParts.indexOf('-');
+                  if (idx !== -1) {
+                    repoName = pathParts.slice(3, idx).join('/');
+                  }
+                } catch (e) {}
+
+                prList.push({
+                  title: `${mr.title} (${label})`,
+                  url: mr.web_url,
+                  repo: repoName,
+                  number: mr.iid,
+                  source: 'GitLab',
+                  sortTime: new Date(mr.updated_at).getTime()
+                });
+              }
+            })());
+          }
+        });
+
+        await Promise.all(mrDetailPromises);
+      } else {
+        state.gitlabStatus = 'error';
+        state.gitlabError = `${projectsRes.status} ${projectsRes.statusText}`;
+      }
     } catch (e) {
       console.error("Error fetching GitLab MRs:", e);
+      state.gitlabStatus = 'error';
+      state.gitlabError = e.message || String(e);
     }
+    updateGitStatusIndicators();
   }
+
+  // Sort the final combined list by sortTime descending (most recent first)
+  prList.sort((a, b) => (b.sortTime || 0) - (a.sortTime || 0));
 
   // Render PRs
   if (prList.length === 0) {
@@ -2302,7 +2816,10 @@ async function fetchAllPRs() {
       <a href="${pr.url}" target="_blank" class="integration-item" data-tooltip="${escapeHtml(pr.title)}\nSource: ${pr.source}\nRepo: ${escapeHtml(pr.repo)}\nPR/MR: #${pr.number}">
         <span class="item-title">${escapeHtml(pr.title)}</span>
         <div class="item-meta">
-          <span>${escapeHtml(pr.repo)}</span>
+          <span style="display: flex; align-items: center; gap: 0.35rem; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+            <span class="pr-source-badge ${pr.source.toLowerCase()}">${pr.source}</span>
+            <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${escapeHtml(pr.repo)}</span>
+          </span>
           <span class="item-badge">#${pr.number}</span>
         </div>
       </a>
@@ -2353,6 +2870,18 @@ function openSettingsGoogleTab() {
 }
 window.openSettingsGoogleTab = openSettingsGoogleTab;
 
+function openSettingsGitTab() {
+  const toggle = document.getElementById('settings-toggle');
+  if (toggle) {
+    toggle.click();
+    setTimeout(() => {
+      const gitBtn = document.querySelector('.tab-btn[data-tab="tab-git"]');
+      if (gitBtn) gitBtn.click();
+    }, 50);
+  }
+}
+window.openSettingsGitTab = openSettingsGitTab;
+
 // Google APIs Integrations (Gmail, Tasks, Calendar)
 let googleTokenClient;
 let googleLoginTarget = 'personal';
@@ -2378,6 +2907,7 @@ function initGoogleOAuth() {
   if (!state.googlePersonalToken && !state.googleWorkToken) {
     fetchGoogleCalendar();
     fetchGmail();
+    fetchGoogleTasks();
   }
 
   if (typeof google === 'undefined' || !state.settings.googleClientId) {
@@ -2431,6 +2961,7 @@ function initGoogleOAuth() {
   } else {
     fetchGoogleCalendar();
     fetchGmail();
+    fetchGoogleTasks();
   }
 }
 
@@ -2462,6 +2993,8 @@ function refreshGoogleToken(accountType) {
 
 function handleInvalidToken(accountType) {
   console.warn(`Token expired (401) for ${accountType} account. Clearing token.`);
+  state.googleErrors = state.googleErrors || {};
+  state.googleErrors[accountType] = 'Token expired (401)';
   if (accountType === 'personal') {
     state.googlePersonalToken = null;
     sessionStorage.removeItem('google_personal_token');
@@ -2552,7 +3085,15 @@ function updateGoogleAuthStatus() {
     ? `${state.lang === 'es' ? 'Trabajo: Conectado' : 'Work: Connected'} (${state.googleWorkEmail || 'Google'})`
     : (state.lang === 'es' ? 'Trabajo: Desconectado' : 'Work: Disconnected');
 
+  const hasGoogleError = !!(state.googleErrors && (state.googleErrors.personal || state.googleErrors.work || state.googleErrors.tasks));
+  const googleWarningTooltip = state.lang === 'es'
+    ? 'Error al conectar con algunos servicios'
+    : 'Failed to connect to some services';
+
+  const googleWarningIconHTML = `<span class="status-warning-icon" data-tooltip="${escapeHtml(googleWarningTooltip)}" onclick="event.stopPropagation(); window.openSettingsGoogleTab();">⚠️</span>`;
+
   const indicatorsHTML = `
+    ${hasGoogleError ? googleWarningIconHTML : ''}
     <span class="status-dot ${personalClass}" title="${escapeHtml(personalTooltip)}"></span>
     <span class="status-dot ${workClass}" title="${escapeHtml(workTooltip)}"></span>
   `;
@@ -2560,10 +3101,14 @@ function updateGoogleAuthStatus() {
   const evInd = document.getElementById('google-events-status-indicators');
   const emInd = document.getElementById('google-emails-status-indicators');
   const wkInd = document.getElementById('google-weekly-status-indicators');
+  const gtTodayInd = document.getElementById('google-gtasks-today-status-indicators');
+  const gtWeekInd = document.getElementById('google-gtasks-week-status-indicators');
 
   if (evInd) evInd.innerHTML = indicatorsHTML;
   if (emInd) emInd.innerHTML = indicatorsHTML;
   if (wkInd) wkInd.innerHTML = indicatorsHTML;
+  if (gtTodayInd) gtTodayInd.innerHTML = indicatorsHTML;
+  if (gtWeekInd) gtWeekInd.innerHTML = indicatorsHTML;
 
   const settingsDotPers = document.getElementById('google-settings-dot-personal');
   const settingsDotWork = document.getElementById('google-settings-dot-work');
@@ -2581,6 +3126,8 @@ async function fetchGoogleData() {
   if (!token) return;
 
   state.googleClientToken = token;
+  state.googleErrors = { personal: null, work: null };
+  updateGoogleAuthStatus();
 
   // Run in parallel
   fetchGmail();
@@ -2635,6 +3182,9 @@ async function fetchGmail() {
       return details.map(item => ({ ...item, accountType: type, accountEmail: email }));
     } catch (e) {
       console.error(`Error fetching Gmail for ${type}:`, e);
+      state.googleErrors = state.googleErrors || {};
+      state.googleErrors[type] = e.message || 'Gmail fetch error';
+      updateGoogleAuthStatus();
       return [];
     }
   }
@@ -2711,11 +3261,60 @@ async function fetchGoogleTasks() {
   const oldWeek = document.getElementById('gtasks-week');
   if (oldWeek) oldWeek.remove();
 
-  if (state.settings.showGoogleTasks === false) {
+  const showToday = state.settings.showGoogleTasksToday !== false && state.settings.showGoogleTasks !== false;
+  const showWeek = state.settings.showGoogleTasksWeek !== false && state.settings.showGoogleTasks !== false;
+
+  if (!showToday && !showWeek) {
     return;
   }
 
+  function showPlaceholder(messageHTML) {
+    if (showToday) {
+      let gTodayCard = document.getElementById('gtasks-today');
+      if (!gTodayCard) {
+        gTodayCard = document.createElement('div');
+        gTodayCard.id = 'gtasks-today';
+        gTodayCard.className = 'section-card';
+        const colContent = document.querySelector('#col-today .col-content');
+        if (colContent) colContent.appendChild(gTodayCard);
+      }
+      gTodayCard.innerHTML = `
+        <h3 class="card-subtitle">
+          <span>${state.lang === 'es' ? 'Google Tasks (Hoy)' : 'Google Tasks (Today)'}</span>
+          <span class="header-status-indicators" id="google-gtasks-today-status-indicators"></span>
+        </h3>
+        <div class="integration-list">
+          ${messageHTML}
+        </div>
+      `;
+    }
+
+    if (showWeek) {
+      let gWeekCard = document.getElementById('gtasks-week');
+      if (!gWeekCard) {
+        gWeekCard = document.createElement('div');
+        gWeekCard.id = 'gtasks-week';
+        gWeekCard.className = 'section-card';
+        const colContent = document.querySelector('#col-week .col-content');
+        if (colContent) colContent.appendChild(gWeekCard);
+      }
+      gWeekCard.innerHTML = `
+        <h3 class="card-subtitle">
+          <span>${state.lang === 'es' ? 'Google Tasks (Semana)' : 'Google Tasks (This Week)'}</span>
+          <span class="header-status-indicators" id="google-gtasks-week-status-indicators"></span>
+        </h3>
+        <div class="integration-list">
+          ${messageHTML}
+        </div>
+      `;
+    }
+    updateGoogleAuthStatus();
+  }
+
   if (!state.googlePersonalToken && !state.googleWorkToken) {
+    const configLinkText = state.lang === 'es' ? 'Configurar Google Tasks' : 'Configure Google Tasks';
+    const msgHTML = `<p class="empty-msg" style="margin: 0.5rem 0;"><a href="#" onclick="event.preventDefault(); window.openSettingsGoogleTab();" style="color: var(--accent); text-decoration: underline; font-weight: 500;">${configLinkText}</a></p>`;
+    showPlaceholder(msgHTML);
     return;
   }
 
@@ -2756,6 +3355,9 @@ async function fetchGoogleTasks() {
         return items.map(t => ({ ...t, accountType: type }));
       } catch (fallbackError) {
         errors.push(`${type} account: ${fallbackError.message}`);
+        state.googleErrors = state.googleErrors || {};
+        state.googleErrors[type] = fallbackError.message;
+        updateGoogleAuthStatus();
         return [];
       }
     }
@@ -2773,9 +3375,10 @@ async function fetchGoogleTasks() {
     const results = await Promise.all(promises);
     const gTasks = results.flat();
 
-    // Check if we had errors and no tasks were successfully loaded
+    // Check if we had errors and update status indicators
     if (errors.length > 0 && gTasks.length === 0) {
       console.warn("Google Tasks fetch failed:", errors.join(' | '));
+      updateGoogleAuthStatus();
       return;
     }
 
@@ -2791,9 +3394,14 @@ async function fetchGoogleTasks() {
 
     const todayGTasks = [];
     const weekGTasks = [];
+    const showOverdue = state.settings.showGoogleTasksOverdue !== false;
 
     gTasks.forEach(t => {
       if (!t.title || t.title.trim() === '') return;
+
+      const isOverdue = t.due && new Date(t.due).getTime() < todayTime;
+      if (isOverdue && !showOverdue) return;
+
       if (!t.due) {
         weekGTasks.push(t);
         return;
@@ -2834,7 +3442,7 @@ async function fetchGoogleTasks() {
       return !!(task.recurrence || task.recurring);
     }
 
-    if (todayGTasks.length > 0) {
+    if (showToday && todayGTasks.length > 0) {
       let gTodayCard = document.getElementById('gtasks-today');
       if (!gTodayCard) {
         gTodayCard = document.createElement('div');
@@ -2844,7 +3452,10 @@ async function fetchGoogleTasks() {
         if (colContent) colContent.appendChild(gTodayCard);
       }
       gTodayCard.innerHTML = `
-        <h3 class="card-subtitle">Google Tasks (Hoy)</h3>
+        <h3 class="card-subtitle">
+          <span>${state.lang === 'es' ? 'Google Tasks (Hoy)' : 'Google Tasks (Today)'}</span>
+          <span class="header-status-indicators" id="google-gtasks-today-status-indicators"></span>
+        </h3>
         <div class="integration-list">
           ${todayGTasks.map(t => {
             const badgeClass = t.accountType === 'personal' ? 'personal' : 'work';
@@ -2879,7 +3490,7 @@ async function fetchGoogleTasks() {
       `;
     }
 
-    if (weekGTasks.length > 0) {
+    if (showWeek && weekGTasks.length > 0) {
       let gWeekCard = document.getElementById('gtasks-week');
       if (!gWeekCard) {
         gWeekCard = document.createElement('div');
@@ -2889,13 +3500,16 @@ async function fetchGoogleTasks() {
         if (colContent) colContent.appendChild(gWeekCard);
       }
       gWeekCard.innerHTML = `
-        <h3 class="card-subtitle">Google Tasks (Semana)</h3>
+        <h3 class="card-subtitle">
+          <span>${state.lang === 'es' ? 'Google Tasks (Semana)' : 'Google Tasks (This Week)'}</span>
+          <span class="header-status-indicators" id="google-gtasks-week-status-indicators"></span>
+        </h3>
         <div class="integration-list">
           ${weekGTasks.map(t => {
             const badgeClass = t.accountType === 'personal' ? 'personal' : 'work';
             const badgeLabel = translations[state.lang][`badge-${t.accountType}`] || t.accountType;
             const timeText = getTaskTimeText(t);
-            const dateText = t.due ? new Date(t.due.split('T')[0] + 'T00:00:00').toLocaleDateString(state.lang === 'es' ? 'es-ES' : 'en-US', { day: 'numeric', month: 'long' }) : '';
+            const dateText = t.due ? formatDateShort(t.due.split('T')[0]) : '';
             const isRecurring = checkTaskRecurring(t);
             const recurringClass = isRecurring ? 'recurring' : '';
             const repeatIcon = isRecurring 
@@ -2925,8 +3539,12 @@ async function fetchGoogleTasks() {
       `;
     }
 
+    updateGoogleAuthStatus();
   } catch (err) {
     console.error("Error fetching Google Tasks", err);
+    state.googleErrors = state.googleErrors || {};
+    state.googleErrors.tasks = err.message || 'Tasks error';
+    updateGoogleAuthStatus();
   }
 }
 
@@ -2973,6 +3591,9 @@ async function fetchGoogleCalendar() {
         fetchEventsForAccount(state.googlePersonalToken, 'personal')
           .catch(err => {
             console.error("Error fetching personal calendar:", err);
+            state.googleErrors = state.googleErrors || {};
+            state.googleErrors.personal = err.message || 'Calendar error';
+            updateGoogleAuthStatus();
             return [];
           })
       );
@@ -2982,6 +3603,9 @@ async function fetchGoogleCalendar() {
         fetchEventsForAccount(state.googleWorkToken, 'work')
           .catch(err => {
             console.error("Error fetching work calendar:", err);
+            state.googleErrors = state.googleErrors || {};
+            state.googleErrors.work = err.message || 'Calendar error';
+            updateGoogleAuthStatus();
             return [];
           })
       );
@@ -3166,6 +3790,15 @@ function setupEventListeners() {
       const hiddenInput = document.getElementById('google-color-work');
       if (hiddenInput) hiddenInput.value = selectedColor;
       updateAccountSwatchActiveState('google-color-work-swatches', selectedColor);
+    });
+  });
+
+  // Test connection button click handlers
+  const testConnButtons = document.querySelectorAll('.test-conn-btn');
+  testConnButtons.forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const provider = btn.getAttribute('data-provider');
+      await testGitConnection(provider, btn);
     });
   });
 
@@ -3752,7 +4385,12 @@ function setupEventListeners() {
     document.getElementById('settings-show-countdowns').checked = state.settings.showCountdowns !== false;
     document.getElementById('settings-show-tasks').checked = state.settings.showTasks !== false;
     document.getElementById('settings-show-google-emails').checked = state.settings.showGoogleEmails !== false;
-    document.getElementById('settings-show-google-tasks').checked = state.settings.showGoogleTasks !== false;
+    const gTasksTodayEl = document.getElementById('settings-show-google-tasks-today');
+    if (gTasksTodayEl) gTasksTodayEl.checked = state.settings.showGoogleTasksToday !== false;
+    const gTasksWeekEl = document.getElementById('settings-show-google-tasks-week');
+    if (gTasksWeekEl) gTasksWeekEl.checked = state.settings.showGoogleTasksWeek !== false;
+    const gTasksOverdueEl = document.getElementById('settings-show-google-tasks-overdue');
+    if (gTasksOverdueEl) gTasksOverdueEl.checked = state.settings.showGoogleTasksOverdue !== false;
     document.getElementById('settings-show-git').checked = state.settings.showGit !== false;
     document.getElementById('settings-show-jira').checked = state.settings.showJira !== false;
     
@@ -4104,7 +4742,12 @@ function setupEventListeners() {
     state.settings.showCountdowns = document.getElementById('settings-show-countdowns').checked;
     state.settings.showTasks = document.getElementById('settings-show-tasks').checked;
     state.settings.showGoogleEmails = document.getElementById('settings-show-google-emails').checked;
-    state.settings.showGoogleTasks = document.getElementById('settings-show-google-tasks').checked;
+    const gTasksTodayElSave = document.getElementById('settings-show-google-tasks-today');
+    if (gTasksTodayElSave) state.settings.showGoogleTasksToday = gTasksTodayElSave.checked;
+    const gTasksWeekElSave = document.getElementById('settings-show-google-tasks-week');
+    if (gTasksWeekElSave) state.settings.showGoogleTasksWeek = gTasksWeekElSave.checked;
+    const gTasksOverdueElSave = document.getElementById('settings-show-google-tasks-overdue');
+    if (gTasksOverdueElSave) state.settings.showGoogleTasksOverdue = gTasksOverdueElSave.checked;
     state.settings.showGit = document.getElementById('settings-show-git').checked;
     state.settings.showJira = document.getElementById('settings-show-jira').checked;
 
@@ -4195,11 +4838,8 @@ function setupEventListeners() {
       fetchGoogleData();
     } else {
       fetchGoogleCalendar();
-      document.getElementById('gmail-container').innerHTML = `<p class="empty-msg">${translations[state.lang]['no-emails']}</p>`;
-      const gT1 = document.getElementById('gtasks-today');
-      const gT2 = document.getElementById('gtasks-week');
-      if (gT1) gT1.remove();
-      if (gT2) gT2.remove();
+      fetchGmail();
+      fetchGoogleTasks();
     }
   });
 
@@ -4224,11 +4864,8 @@ function setupEventListeners() {
       fetchGoogleData();
     } else {
       fetchGoogleCalendar();
-      document.getElementById('gmail-container').innerHTML = `<p class="empty-msg">${translations[state.lang]['no-emails']}</p>`;
-      const gT1 = document.getElementById('gtasks-today');
-      const gT2 = document.getElementById('gtasks-week');
-      if (gT1) gT1.remove();
-      if (gT2) gT2.remove();
+      fetchGmail();
+      fetchGoogleTasks();
     }
   });
 
@@ -4312,6 +4949,22 @@ function formatDateShort(dateStr) {
   const parts = dateStr.split('-');
   if (parts.length !== 3) return dateStr;
   const d = new Date(dateStr + 'T00:00:00');
+  d.setHours(0, 0, 0, 0);
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const diffTime = d.getTime() - today.getTime();
+  const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+
+  if (diffDays === 0) {
+    return state.lang === 'es' ? 'Hoy' : 'Today';
+  } else if (diffDays === 1) {
+    return state.lang === 'es' ? 'Mañana' : 'Tomorrow';
+  } else if (diffDays === -1) {
+    return state.lang === 'es' ? 'Ayer' : 'Yesterday';
+  }
+
   const locale = state.lang === 'es' ? 'es-ES' : 'en-US';
   return d.toLocaleDateString(locale, { day: 'numeric', month: 'short' });
 }
@@ -4335,7 +4988,9 @@ function getRelativeDateLabel(dateVal) {
   const diffTime = target.getTime() - today.getTime();
   const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
   
-  if (diffDays === 0) {
+  if (diffDays === -1) {
+    return state.lang === 'es' ? 'Ayer' : 'Yesterday';
+  } else if (diffDays === 0) {
     return state.lang === 'es' ? 'Hoy' : 'Today';
   } else if (diffDays === 1) {
     return state.lang === 'es' ? 'Mañana' : 'Tomorrow';

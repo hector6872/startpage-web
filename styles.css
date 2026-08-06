@@ -648,7 +648,7 @@ html:not(.dark) .moon-icon { display: block; }
 @media (max-width: 1024px) {
   .dashboard-grid {
     grid-template-columns: 1fr;
-    gap: 1.5rem;
+    gap: 3rem;
   }
 }
 
@@ -749,6 +749,22 @@ html.dark .section-card:hover {
   align-items: center;
 }
 
+.status-warning-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  margin-right: 0.2rem;
+  font-size: 0.85rem;
+  line-height: 1;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.status-warning-icon:hover {
+  transform: scale(1.25);
+  opacity: 0.85;
+}
+
 .status-dot {
   width: 7px;
   height: 7px;
@@ -767,17 +783,46 @@ html.dark .section-card:hover {
   box-shadow: 0 0 6px var(--work-color);
 }
 
-.status-dot.disconnected {
+.status-dot.disconnected, .status-dot.error {
   background: var(--text-tertiary);
-  opacity: 0.4;
+  opacity: 0.35;
   box-shadow: none;
+}
+
+.status-dot.github {
+  background: #24292f;
+  box-shadow: 0 0 6px rgba(36, 41, 47, 0.4);
+}
+
+html.dark .status-dot.github {
+  background: #c9d1d9;
+  box-shadow: 0 0 6px rgba(201, 209, 217, 0.4);
+}
+
+.status-dot.bitbucket {
+  background: #0052cc;
+  box-shadow: 0 0 6px rgba(0, 82, 204, 0.4);
+}
+
+html.dark .status-dot.bitbucket {
+  background: #2684ff;
+  box-shadow: 0 0 6px rgba(38, 132, 255, 0.4);
+}
+
+.status-dot.gitlab {
+  background: #e24329;
+  box-shadow: 0 0 6px rgba(226, 67, 41, 0.4);
+}
+
+html.dark .status-dot.gitlab {
+  background: #fc6d26;
+  box-shadow: 0 0 6px rgba(252, 109, 38, 0.4);
 }
 
 /* Remove bottom padding from cards that contain scrollable integration lists */
 .section-card:has(.integration-list) {
   padding-bottom: 0;
 }
-
 .section-card:has(.integration-list) .card-subtitle {
   margin-bottom: 0;
 }
@@ -930,6 +975,48 @@ html.dark .integration-item {
   gap: 0.2rem;
 }
 
+.pr-source-badge {
+  font-size: 0.62rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  padding: 0.08rem 0.35rem;
+  border-radius: 4px;
+  letter-spacing: 0.02em;
+  display: inline-flex;
+  align-items: center;
+  line-height: 1;
+}
+
+.pr-source-badge.github {
+  background: rgba(36, 41, 47, 0.08);
+  color: #24292f;
+}
+
+html.dark .pr-source-badge.github {
+  background: rgba(240, 246, 252, 0.12);
+  color: #c9d1d9;
+}
+
+.pr-source-badge.bitbucket {
+  background: rgba(0, 82, 204, 0.08);
+  color: #0052cc;
+}
+
+html.dark .pr-source-badge.bitbucket {
+  background: rgba(38, 132, 255, 0.15);
+  color: #2684ff;
+}
+
+.pr-source-badge.gitlab {
+  background: rgba(226, 67, 41, 0.08);
+  color: #e24329;
+}
+
+html.dark .pr-source-badge.gitlab {
+  background: rgba(252, 109, 38, 0.15);
+  color: #fc6d26;
+}
+
 .item-badge.personal {
   background: var(--personal-bg);
   color: var(--personal-color);
@@ -951,6 +1038,16 @@ html.dark .integration-item {
   border-radius: var(--radius-md);
   padding: 1.5rem;
   box-shadow: var(--shadow-md);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.todo-wrapper:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.08);
+}
+
+html.dark .todo-wrapper:hover {
+  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.4);
 }
 
 .todo-form {
@@ -2302,6 +2399,7 @@ html.dark .countdown-badge-past {
   justify-content: space-between;
   align-items: center;
   width: 100%;
+  margin-top: 1.4rem;
 }
 
 .section-header.hidden {
