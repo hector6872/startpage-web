@@ -749,6 +749,22 @@ html.dark .section-card:hover {
   align-items: center;
 }
 
+.status-warning-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  margin-right: 0.2rem;
+  font-size: 0.85rem;
+  line-height: 1;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.status-warning-icon:hover {
+  transform: scale(1.25);
+  opacity: 0.85;
+}
+
 .status-dot {
   width: 7px;
   height: 7px;
@@ -1022,6 +1038,16 @@ html.dark .pr-source-badge.gitlab {
   border-radius: var(--radius-md);
   padding: 1.5rem;
   box-shadow: var(--shadow-md);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.todo-wrapper:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.08);
+}
+
+html.dark .todo-wrapper:hover {
+  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.4);
 }
 
 .todo-form {

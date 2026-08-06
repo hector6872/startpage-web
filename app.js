@@ -786,9 +786,12 @@ function updateUpcomingEventBanner() {
   } else if (pastEvents.length > 0) {
     pastEvents.sort((a, b) => a.daysAgo - b.daysAgo);
     const closestPast = pastEvents[0];
+    const timeAgoText = closestPast.daysAgo === 1
+      ? (state.lang === 'es' ? 'ayer' : 'yesterday')
+      : (state.lang === 'es' ? `hace ${closestPast.daysAgo} días` : `${closestPast.daysAgo} days ago`);
     const labelText = state.lang === 'es'
-      ? `⚠️ Evento pasado: ${closestPast.name} (hace ${closestPast.daysAgo} ${closestPast.daysAgo === 1 ? 'día' : 'días'})`
-      : `⚠️ Past event: ${closestPast.name} (${closestPast.daysAgo} ${closestPast.daysAgo === 1 ? 'day' : 'days'} ago)`;
+      ? `⚠️ Evento pasado: ${closestPast.name} (${timeAgoText})`
+      : `⚠️ Past event: ${closestPast.name} (${timeAgoText})`;
     activeChipsHTML += `<div class="event-banner past-warning">${escapeHtml(labelText)}</div>`;
     
     const remainingCount = events.length - 1;
@@ -1804,9 +1807,9 @@ function renderCountdowns() {
       
       const timeDiff = todayMs - eventDateThisYear.getTime();
       const daysAgo = Math.floor(timeDiff / (1000 * 3600 * 24));
-      relativeText = state.lang === 'es'
-        ? `hace ${daysAgo} ${daysAgo === 1 ? 'día' : 'días'}`
-        : `${daysAgo} ${daysAgo === 1 ? 'day' : 'days'} ago`;
+      relativeText = daysAgo === 1
+        ? (state.lang === 'es' ? 'ayer' : 'yesterday')
+        : (state.lang === 'es' ? `hace ${daysAgo} días` : `${daysAgo} days ago`);
     } else {
       const diffTime = eventDateThisYear.getTime() - todayMs;
       const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
@@ -1816,6 +1819,10 @@ function renderCountdowns() {
         daysLabel = state.lang === 'es' ? 'Hoy' : 'Today';
         badgeClass = 'countdown-badge-amber'; // Header banner today colors (orange/yellow)
         relativeText = state.lang === 'es' ? 'hoy' : 'today';
+      } else if (diffDays === 1) {
+        daysLabel = state.lang === 'es' ? 'Mañana' : 'Tomorrow';
+        badgeClass = 'countdown-badge-red';
+        relativeText = state.lang === 'es' ? 'mañana' : 'tomorrow';
       } else if (diffDays < 7) {
         daysLabel = state.lang === 'es' ? `En ${diffDays} d` : `In ${diffDays} d`;
         badgeClass = 'countdown-badge-red'; // Header banner soon colors (<7 days: red)
@@ -1834,7 +1841,7 @@ function renderCountdowns() {
     }
 
     const titleClass = 'countdown-title'; // Overdue events do not get line-through strikethrough
-    const formattedDate = eventDateThisYear.toLocaleDateString(state.lang === 'es' ? 'es-ES' : 'en-US', { day: 'numeric', month: 'short' });
+    const formattedDate = formatDateShort(getLocalDateString(eventDateThisYear));
     const fullMonthDate = eventDateThisYear.toLocaleDateString(state.lang === 'es' ? 'es-ES' : 'en-US', { day: 'numeric', month: 'long' });
     const tooltipText = evt.name + `\n${fullMonthDate} (${relativeText})`;
 
@@ -2199,7 +2206,15 @@ function updateGitStatusIndicators() {
   const bbClass = bbStatus === 'connected' ? 'bitbucket' : bbStatus;
   const glClass = glStatus === 'connected' ? 'gitlab' : glStatus;
 
+  const hasGitError = ghStatus === 'error' || bbStatus === 'error' || glStatus === 'error';
+  const gitWarningTooltip = state.lang === 'es'
+    ? 'Error al conectar con algunos servicios'
+    : 'Failed to connect to some services';
+
+  const gitWarningIconHTML = `<span class="status-warning-icon" data-tooltip="${escapeHtml(gitWarningTooltip)}" onclick="event.stopPropagation(); window.openSettingsGitTab();">⚠️</span>`;
+
   const html = `
+    ${hasGitError ? gitWarningIconHTML : ''}
     <span class="status-dot ${ghClass}" title="${escapeHtml(ghTooltip)}"></span>
     <span class="status-dot ${bbClass}" title="${escapeHtml(bbTooltip)}"></span>
     <span class="status-dot ${glClass}" title="${escapeHtml(glTooltip)}"></span>
@@ -2745,17 +2760,8 @@ async function fetchAllPRs() {
   prList.sort((a, b) => (b.sortTime || 0) - (a.sortTime || 0));
 
   // Render PRs
-  let errorHTML = '';
-  const hasErrors = state.githubStatus === 'error' || state.bitbucketStatus === 'error' || state.gitlabStatus === 'error';
-  if (hasErrors) {
-    const errorMsg = state.lang === 'es' 
-      ? 'Error al conectar con algún servicio. Pasa el ratón por los puntos de estado para más detalles.' 
-      : 'Failed to connect to some services. Hover over status dots for details.';
-    errorHTML = `<p class="empty-msg" style="margin-top: 0.5rem; font-size: 0.72rem; color: var(--danger); opacity: 0.85; padding: 0.5rem 0;">⚠️ ${errorMsg}</p>`;
-  }
-
   if (prList.length === 0) {
-    container.innerHTML = `<p class="empty-msg">${translations[state.lang]['no-prs']}</p>${errorHTML}`;
+    container.innerHTML = `<p class="empty-msg">${translations[state.lang]['no-prs']}</p>`;
     if (prsBadge) prsBadge.classList.add('hidden');
     return;
   }
@@ -2773,7 +2779,7 @@ async function fetchAllPRs() {
         </div>
       </a>
     `;
-  }).join('') + errorHTML;
+  }).join('');
 
   if (prsBadge && prList.length > 0) {
     prsBadge.textContent = prList.length;
@@ -2942,6 +2948,8 @@ function refreshGoogleToken(accountType) {
 
 function handleInvalidToken(accountType) {
   console.warn(`Token expired (401) for ${accountType} account. Clearing token.`);
+  state.googleErrors = state.googleErrors || {};
+  state.googleErrors[accountType] = 'Token expired (401)';
   if (accountType === 'personal') {
     state.googlePersonalToken = null;
     sessionStorage.removeItem('google_personal_token');
@@ -3032,7 +3040,15 @@ function updateGoogleAuthStatus() {
     ? `${state.lang === 'es' ? 'Trabajo: Conectado' : 'Work: Connected'} (${state.googleWorkEmail || 'Google'})`
     : (state.lang === 'es' ? 'Trabajo: Desconectado' : 'Work: Disconnected');
 
+  const hasGoogleError = !!(state.googleErrors && (state.googleErrors.personal || state.googleErrors.work));
+  const googleWarningTooltip = state.lang === 'es'
+    ? 'Error al conectar con algunos servicios'
+    : 'Failed to connect to some services';
+
+  const googleWarningIconHTML = `<span class="status-warning-icon" data-tooltip="${escapeHtml(googleWarningTooltip)}" onclick="event.stopPropagation(); window.openSettingsGoogleTab();">⚠️</span>`;
+
   const indicatorsHTML = `
+    ${hasGoogleError ? googleWarningIconHTML : ''}
     <span class="status-dot ${personalClass}" title="${escapeHtml(personalTooltip)}"></span>
     <span class="status-dot ${workClass}" title="${escapeHtml(workTooltip)}"></span>
   `;
@@ -3040,10 +3056,14 @@ function updateGoogleAuthStatus() {
   const evInd = document.getElementById('google-events-status-indicators');
   const emInd = document.getElementById('google-emails-status-indicators');
   const wkInd = document.getElementById('google-weekly-status-indicators');
+  const gtTodayInd = document.getElementById('google-gtasks-today-status-indicators');
+  const gtWeekInd = document.getElementById('google-gtasks-week-status-indicators');
 
   if (evInd) evInd.innerHTML = indicatorsHTML;
   if (emInd) emInd.innerHTML = indicatorsHTML;
   if (wkInd) wkInd.innerHTML = indicatorsHTML;
+  if (gtTodayInd) gtTodayInd.innerHTML = indicatorsHTML;
+  if (gtWeekInd) gtWeekInd.innerHTML = indicatorsHTML;
 
   const settingsDotPers = document.getElementById('google-settings-dot-personal');
   const settingsDotWork = document.getElementById('google-settings-dot-work');
@@ -3061,6 +3081,8 @@ async function fetchGoogleData() {
   if (!token) return;
 
   state.googleClientToken = token;
+  state.googleErrors = { personal: null, work: null };
+  updateGoogleAuthStatus();
 
   // Run in parallel
   fetchGmail();
@@ -3115,6 +3137,9 @@ async function fetchGmail() {
       return details.map(item => ({ ...item, accountType: type, accountEmail: email }));
     } catch (e) {
       console.error(`Error fetching Gmail for ${type}:`, e);
+      state.googleErrors = state.googleErrors || {};
+      state.googleErrors[type] = e.message || 'Gmail fetch error';
+      updateGoogleAuthStatus();
       return [];
     }
   }
@@ -3205,7 +3230,10 @@ async function fetchGoogleTasks() {
       if (colContent) colContent.appendChild(gTodayCard);
     }
     gTodayCard.innerHTML = `
-      <h3 class="card-subtitle">Google Tasks (Hoy)</h3>
+      <h3 class="card-subtitle">
+        <span>Google Tasks (Hoy)</span>
+        <span class="header-status-indicators" id="google-gtasks-today-status-indicators"></span>
+      </h3>
       <div class="integration-list">
         ${messageHTML}
       </div>
@@ -3220,11 +3248,15 @@ async function fetchGoogleTasks() {
       if (colContent) colContent.appendChild(gWeekCard);
     }
     gWeekCard.innerHTML = `
-      <h3 class="card-subtitle">Google Tasks (Semana)</h3>
+      <h3 class="card-subtitle">
+        <span>Google Tasks (Semana)</span>
+        <span class="header-status-indicators" id="google-gtasks-week-status-indicators"></span>
+      </h3>
       <div class="integration-list">
         ${messageHTML}
       </div>
     `;
+    updateGoogleAuthStatus();
   }
 
   if (!state.googlePersonalToken && !state.googleWorkToken) {
@@ -3271,6 +3303,9 @@ async function fetchGoogleTasks() {
         return items.map(t => ({ ...t, accountType: type }));
       } catch (fallbackError) {
         errors.push(`${type} account: ${fallbackError.message}`);
+        state.googleErrors = state.googleErrors || {};
+        state.googleErrors[type] = fallbackError.message;
+        updateGoogleAuthStatus();
         return [];
       }
     }
@@ -3366,7 +3401,10 @@ async function fetchGoogleTasks() {
         if (colContent) colContent.appendChild(gTodayCard);
       }
       gTodayCard.innerHTML = `
-        <h3 class="card-subtitle">Google Tasks (Hoy)</h3>
+        <h3 class="card-subtitle">
+          <span>${state.lang === 'es' ? 'Google Tasks (Hoy)' : 'Google Tasks (Today)'}</span>
+          <span class="header-status-indicators" id="google-gtasks-today-status-indicators"></span>
+        </h3>
         <div class="integration-list">
           ${todayGTasks.map(t => {
             const badgeClass = t.accountType === 'personal' ? 'personal' : 'work';
@@ -3411,13 +3449,16 @@ async function fetchGoogleTasks() {
         if (colContent) colContent.appendChild(gWeekCard);
       }
       gWeekCard.innerHTML = `
-        <h3 class="card-subtitle">Google Tasks (Semana)</h3>
+        <h3 class="card-subtitle">
+          <span>${state.lang === 'es' ? 'Google Tasks (Semana)' : 'Google Tasks (This Week)'}</span>
+          <span class="header-status-indicators" id="google-gtasks-week-status-indicators"></span>
+        </h3>
         <div class="integration-list">
           ${weekGTasks.map(t => {
             const badgeClass = t.accountType === 'personal' ? 'personal' : 'work';
             const badgeLabel = translations[state.lang][`badge-${t.accountType}`] || t.accountType;
             const timeText = getTaskTimeText(t);
-            const dateText = t.due ? new Date(t.due.split('T')[0] + 'T00:00:00').toLocaleDateString(state.lang === 'es' ? 'es-ES' : 'en-US', { day: 'numeric', month: 'long' }) : '';
+            const dateText = t.due ? formatDateShort(t.due.split('T')[0]) : '';
             const isRecurring = checkTaskRecurring(t);
             const recurringClass = isRecurring ? 'recurring' : '';
             const repeatIcon = isRecurring 
@@ -3447,6 +3488,7 @@ async function fetchGoogleTasks() {
       `;
     }
 
+    updateGoogleAuthStatus();
   } catch (err) {
     console.error("Error fetching Google Tasks", err);
     const errorText = state.lang === 'es' ? 'Error al cargar Google Tasks' : 'Error loading Google Tasks';
@@ -3504,6 +3546,9 @@ async function fetchGoogleCalendar() {
         fetchEventsForAccount(state.googlePersonalToken, 'personal')
           .catch(err => {
             console.error("Error fetching personal calendar:", err);
+            state.googleErrors = state.googleErrors || {};
+            state.googleErrors.personal = err.message || 'Calendar error';
+            updateGoogleAuthStatus();
             return [];
           })
       );
@@ -3513,6 +3558,9 @@ async function fetchGoogleCalendar() {
         fetchEventsForAccount(state.googleWorkToken, 'work')
           .catch(err => {
             console.error("Error fetching work calendar:", err);
+            state.googleErrors = state.googleErrors || {};
+            state.googleErrors.work = err.message || 'Calendar error';
+            updateGoogleAuthStatus();
             return [];
           })
       );
@@ -4846,6 +4894,22 @@ function formatDateShort(dateStr) {
   const parts = dateStr.split('-');
   if (parts.length !== 3) return dateStr;
   const d = new Date(dateStr + 'T00:00:00');
+  d.setHours(0, 0, 0, 0);
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const diffTime = d.getTime() - today.getTime();
+  const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+
+  if (diffDays === 0) {
+    return state.lang === 'es' ? 'Hoy' : 'Today';
+  } else if (diffDays === 1) {
+    return state.lang === 'es' ? 'Mañana' : 'Tomorrow';
+  } else if (diffDays === -1) {
+    return state.lang === 'es' ? 'Ayer' : 'Yesterday';
+  }
+
   const locale = state.lang === 'es' ? 'es-ES' : 'en-US';
   return d.toLocaleDateString(locale, { day: 'numeric', month: 'short' });
 }
@@ -4869,7 +4933,9 @@ function getRelativeDateLabel(dateVal) {
   const diffTime = target.getTime() - today.getTime();
   const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
   
-  if (diffDays === 0) {
+  if (diffDays === -1) {
+    return state.lang === 'es' ? 'Ayer' : 'Yesterday';
+  } else if (diffDays === 0) {
     return state.lang === 'es' ? 'Hoy' : 'Today';
   } else if (diffDays === 1) {
     return state.lang === 'es' ? 'Mañana' : 'Tomorrow';

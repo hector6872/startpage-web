@@ -28,8 +28,8 @@
       } catch (e) {}
     }
   </script>
-  <script type="module" crossorigin src="/assets/index-CKcgFY8b.js"></script>
-  <link rel="stylesheet" crossorigin href="/assets/index-B_K5KB0-.css">
+  <script type="module" crossorigin src="/assets/index-sOZXp5KO.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/index-Bh5stArr.css">
 </head>
 <body>
   <!-- Background Decorative Elements -->
@@ -173,14 +173,18 @@
 
       <!-- Column 3: Tasks List (CRUD) -->
       <section class="grid-col" id="col-tasks">
-        <h2 class="col-title" data-i18n="col-work" id="work-section-title">Work</h2>
+        <h2 class="col-title" id="work-section-title">
+          <span data-i18n="col-work">Work</span>
+          <span class="ooo-badge hidden" id="ooo-badge-work" title="Out of Office mode active. Click to open settings.">out of office</span>
+        </h2>
         <div class="col-content" id="work-section-content">
           <div class="section-card" id="prs-card">
-            <h3 class="card-subtitle">
+            <h3 class="card-subtitle" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
               <span style="display: inline-flex; align-items: center; gap: 0.4rem;">
                 <span data-i18n="pending-prs">Pull Requests (Git)</span>
                 <span id="prs-count-badge" class="filter-badge hidden" style="margin-left: 0;"></span>
               </span>
+              <span class="header-status-indicators" id="git-status-indicators"></span>
             </h3>
             <div id="prs-container" class="integration-list">
               <!-- Dynamically populated -->
@@ -596,14 +600,20 @@
                 </label>
               </div>
             </div>
-            <h3 data-i18n="github-settings">GitHub</h3>
-            <div class="form-group">
-              <label for="github-token" data-i18n="label-token">Personal Access Token (PAT)</label>
-              <input type="password" id="github-token" placeholder="ghp_xxxxxxxx">
+            <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; margin-top: 1rem; margin-bottom: 0.5rem;">
+              <h3 style="display: flex; align-items: center; gap: 0.35rem; margin: 0;">
+                <span class="status-dot disconnected" id="settings-git-dot-github"></span>
+                <span data-i18n="github-settings">GitHub</span>
+              </h3>
+              <button type="button" class="btn-secondary test-conn-btn" data-provider="github" data-i18n="connect-btn" style="padding: 0.3rem 0.6rem; font-size: 0.72rem; border-radius: var(--radius-sm); margin: 0; line-height: 1;">Connect</button>
             </div>
             <div class="form-group">
               <label for="github-username" data-i18n="label-username">Username</label>
               <input type="text" id="github-username" placeholder="octocat">
+            </div>
+            <div class="form-group">
+              <label for="github-token" data-i18n="label-token">Personal Access Token (PAT)</label>
+              <input type="password" id="github-token" placeholder="ghp_xxxxxxxx">
             </div>
             <div class="form-group row-align" style="margin-top: 0.5rem; margin-bottom: 1rem;">
               <label for="settings-github-ooo-hide" style="font-size: 0.8rem; color: var(--text-secondary);" data-i18n="label-hide-ooo">Hide if Out of Office is active</label>
@@ -615,18 +625,24 @@
 
             <hr class="form-divider">
 
-            <h3 data-i18n="bitbucket-settings">Bitbucket</h3>
+            <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; margin-top: 1.25rem; margin-bottom: 0.5rem;">
+              <h3 style="display: flex; align-items: center; gap: 0.35rem; margin: 0;">
+                <span class="status-dot disconnected" id="settings-git-dot-bitbucket"></span>
+                <span data-i18n="bitbucket-settings">Bitbucket</span>
+              </h3>
+              <button type="button" class="btn-secondary test-conn-btn" data-provider="bitbucket" data-i18n="connect-btn" style="padding: 0.3rem 0.6rem; font-size: 0.72rem; border-radius: var(--radius-sm); margin: 0; line-height: 1;">Connect</button>
+            </div>
             <div class="form-group">
               <label for="bitbucket-workspace" data-i18n="label-workspace">Workspace ID / Username</label>
               <input type="text" id="bitbucket-workspace" placeholder="my-workspace">
             </div>
             <div class="form-group">
-              <label for="bitbucket-username" data-i18n="label-bb-username">App Username</label>
-              <input type="text" id="bitbucket-username" placeholder="bb-username">
+              <label for="bitbucket-username" data-i18n="label-bb-username">Atlassian Account Email</label>
+              <input type="text" id="bitbucket-username" placeholder="email@example.com">
             </div>
             <div class="form-group">
-              <label for="bitbucket-token" data-i18n="label-bb-token">App Password / Token</label>
-              <input type="password" id="bitbucket-token" placeholder="App password">
+              <label for="bitbucket-token" data-i18n="label-bb-token">API Token</label>
+              <input type="password" id="bitbucket-token" placeholder="ATAT...">
             </div>
             <div class="form-group row-align" style="margin-top: 0.5rem; margin-bottom: 1rem;">
               <label for="settings-bitbucket-ooo-hide" style="font-size: 0.8rem; color: var(--text-secondary);" data-i18n="label-hide-ooo">Hide if Out of Office is active</label>
@@ -638,18 +654,24 @@
 
             <hr class="form-divider">
 
-            <h3>GitLab</h3>
+            <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; margin-top: 1.25rem; margin-bottom: 0.5rem;">
+              <h3 style="display: flex; align-items: center; gap: 0.35rem; margin: 0;">
+                <span class="status-dot disconnected" id="settings-git-dot-gitlab"></span>
+                <span data-i18n="gitlab-settings">GitLab Configuration</span>
+              </h3>
+              <button type="button" class="btn-secondary test-conn-btn" data-provider="gitlab" data-i18n="connect-btn" style="padding: 0.3rem 0.6rem; font-size: 0.72rem; border-radius: var(--radius-sm); margin: 0; line-height: 1;">Connect</button>
+            </div>
             <div class="form-group">
-              <label for="gitlab-host">GitLab Host URL</label>
+              <label for="gitlab-host" data-i18n="label-gitlab-host">GitLab Host URL</label>
               <input type="url" id="gitlab-host" placeholder="https://gitlab.com">
             </div>
             <div class="form-group">
-              <label for="gitlab-token">Personal Access Token (PAT)</label>
-              <input type="password" id="gitlab-token" placeholder="glpat-xxxxxxxx">
+              <label for="gitlab-username" data-i18n="label-gitlab-username">Username</label>
+              <input type="text" id="gitlab-username" placeholder="gitlab-user">
             </div>
             <div class="form-group">
-              <label for="gitlab-username">Username</label>
-              <input type="text" id="gitlab-username" placeholder="gitlab-user">
+              <label for="gitlab-token" data-i18n="label-gitlab-token">Personal Access Token (PAT)</label>
+              <input type="password" id="gitlab-token" placeholder="glpat-xxxxxxxx">
             </div>
             <div class="form-group row-align" style="margin-top: 0.5rem; margin-bottom: 1rem;">
               <label for="settings-gitlab-ooo-hide" style="font-size: 0.8rem; color: var(--text-secondary);" data-i18n="label-hide-ooo">Hide if Out of Office is active</label>
