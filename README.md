@@ -75,7 +75,9 @@ Before creating credentials, you must configure the OAuth consent screen to defi
 
 This dashboard supports aggregating pull requests and merge requests across GitHub, Bitbucket, and GitLab:
 
-- **GitHub**: Requires a [Personal Access Token (PAT)](https://github.com/settings/tokens/new?scopes=repo&description=Personal%20Startpage) with `repo` scope and your username.
+- **GitHub**: Requires your Username and a [Personal Access Token (PAT)](https://github.com/settings/tokens/new?scopes=repo&description=Personal%20Startpage) with `repo` scope.
+  * The dashboard will automatically fetch open Pull Requests from your 5 most recently updated repositories.
+  * It filters to show teammate PRs where you are a requested reviewer, and your own PRs that have merge conflicts or requested changes.
 - **Bitbucket**: Requires your Workspace ID (the slug/identifier of your workspace found in the URL after `bitbucket.org/`), your Atlassian Account Email, and your [Personal API Token](https://bitbucket.org/account/settings/api-tokens/) (ensure you select both `Repositories: Read` and `Pull requests: Read` scopes).
 - **GitLab**:
   1. Generate a [Personal Access Token (PAT)](https://gitlab.com/-/profile/personal_access_tokens?name=Personal%20Startpage&scopes=api) in your GitLab Account Settings with the `api` scope.
