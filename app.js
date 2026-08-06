@@ -100,6 +100,7 @@ const translations = {
     "label-jira-token": "Jira API Token",
     "save-settings": "Save Settings",
     "edit-task-title": "Edit Task",
+    "edit-event-title-modal": "Edit Event",
     "add-countdown-title": "Add New Event",
     "add-task-title-modal": "Add New Task",
     "label-task-text": "Task Name",
@@ -253,6 +254,7 @@ const translations = {
     "label-jira-token": "Token de API de Jira",
     "save-settings": "Guardar Configuración",
     "edit-task-title": "Editar Tarea",
+    "edit-event-title-modal": "Editar Evento",
     "add-countdown-title": "Añadir nuevo evento",
     "add-task-title-modal": "Añadir nueva tarea",
     "label-task-text": "Nombre de la Tarea",
@@ -1733,6 +1735,7 @@ function renderCountdowns() {
     let daysLabel = '';
     let badgeHTML = '';
     let relativeText = '';
+    let isFarFuture = false;
 
     if (isOverdue) {
       daysLabel = state.lang === 'es' ? 'Vencido' : 'Overdue';
@@ -1764,6 +1767,7 @@ function renderCountdowns() {
         daysLabel = state.lang === 'es' ? `En ${diffDays} d` : `In ${diffDays} d`;
         badgeClass = 'countdown-badge-neutral'; // Header banner upcoming colors (31+ days: neutral)
         relativeText = state.lang === 'es' ? `en ${diffDays} días` : `in ${diffDays} days`;
+        isFarFuture = true;
       }
       badgeHTML = `<span class="countdown-badge ${badgeClass}">${daysLabel}</span>`;
     }
@@ -1775,6 +1779,9 @@ function renderCountdowns() {
 
     const li = document.createElement('li');
     li.className = 'countdown-item';
+    if (isFarFuture) {
+      li.classList.add('far-future');
+    }
     li.setAttribute('data-tooltip', tooltipText);
     li.innerHTML = `
       <div class="todo-item-left">
@@ -1785,11 +1792,18 @@ function renderCountdowns() {
       </div>
       <div class="todo-actions countdown-actions">
         ${badgeHTML}
+        <button class="btn-item-action edit-countdown-btn" data-id="${evt.id}" title="${state.lang === 'es' ? 'Editar' : 'Edit'}">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+        </button>
         <button class="btn-item-action delete-countdown-btn" data-id="${evt.id}" title="${state.lang === 'es' ? 'Eliminar' : 'Delete'}">
           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
         </button>
       </div>
     `;
+
+    li.querySelector('.edit-countdown-btn').addEventListener('click', () => {
+      openEditEventModal(evt);
+    });
 
     li.querySelector('.delete-countdown-btn').addEventListener('click', () => {
       deleteCountdown(evt.id);
@@ -1831,6 +1845,15 @@ function deleteCountdown(id) {
     modal.querySelector('[data-i18n="delete-btn"]').textContent = dict['delete-btn'];
     modal.showModal();
   }
+}
+
+function openEditEventModal(evt) {
+  const modal = document.getElementById('edit-event-modal');
+  if (!modal) return;
+  document.getElementById('edit-event-id').value = evt.id;
+  document.getElementById('edit-event-name-input').value = evt.name;
+  document.getElementById('edit-event-date-input').value = evt.date;
+  modal.showModal();
 }
 
 async function addTodo(text, dueDate, priority) {
@@ -3285,6 +3308,40 @@ function setupEventListeners() {
       titleInput.value = '';
       dateInput.value = '';
       if (addCountdownModal) addCountdownModal.close();
+    });
+  }
+
+  // Edit Event Modal Close & Cancel & Submit
+  const editEventModal = document.getElementById('edit-event-modal');
+  const closeEditEventModalBtn = document.getElementById('close-edit-event-modal');
+  const cancelEditEventBtn = document.getElementById('btn-cancel-edit-event');
+  if (closeEditEventModalBtn && editEventModal) {
+    closeEditEventModalBtn.addEventListener('click', () => editEventModal.close());
+  }
+  if (cancelEditEventBtn && editEventModal) {
+    cancelEditEventBtn.addEventListener('click', () => editEventModal.close());
+  }
+
+  const editEventForm = document.getElementById('edit-event-form');
+  if (editEventForm) {
+    editEventForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const id = document.getElementById('edit-event-id').value;
+      const name = document.getElementById('edit-event-name-input').value.trim();
+      const date = document.getElementById('edit-event-date-input').value;
+      if (!name || !date) return;
+      
+      state.settings.customEvents = (state.settings.customEvents || []).map(evt => {
+        if (evt.id === id) {
+          return { ...evt, name, date };
+        }
+        return evt;
+      });
+      await saveSettings();
+      renderCountdowns();
+      renderSettingsEventsList();
+      updateUpcomingEventBanner();
+      editEventModal.close();
     });
   }
 

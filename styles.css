@@ -2211,7 +2211,7 @@ html.dark .countdown-item {
   font-size: 0.75rem;
   font-weight: 600;
   padding: 0.22rem 0.55rem;
-  border-radius: var(--radius-sm);
+  border-radius: 10px;
   white-space: nowrap;
   letter-spacing: 0.01em;
   display: inline-flex;
@@ -2674,5 +2674,14 @@ html.dark .integration-item.recurring {
 
 .section-flash-highlight {
   animation: flash-highlight 1.5s ease-out;
+}
+
+.countdown-item.far-future {
+  opacity: 0.5;
+  transition: opacity 0.2s ease;
+}
+
+.countdown-item.far-future:hover {
+  opacity: 1;
 }
 
