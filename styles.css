@@ -2657,3 +2657,22 @@ html.dark .integration-item.recurring {
   line-height: 1.2;
 }
 
+@keyframes flash-highlight {
+  0% {
+    box-shadow: 0 0 0 2px var(--accent);
+    background: rgba(139, 92, 246, 0.1);
+  }
+  50% {
+    box-shadow: 0 0 0 4px var(--accent);
+    background: rgba(139, 92, 246, 0.2);
+  }
+  100% {
+    box-shadow: none;
+    background: var(--bg-card);
+  }
+}
+
+.section-flash-highlight {
+  animation: flash-highlight 1.5s ease-out;
+}
+

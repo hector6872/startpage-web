@@ -659,6 +659,13 @@ function updateNotesBadge() {
 function updateUpcomingEventBanner() {
   const container = document.getElementById('events-banner-container');
   if (!container) return;
+  
+  if (state.settings.showCountdowns === false) {
+    container.classList.add('hidden');
+    container.innerHTML = '';
+    return;
+  }
+  container.classList.remove('hidden');
   container.innerHTML = '';
 
   const events = state.settings.customEvents || [];
@@ -1724,38 +1731,51 @@ function renderCountdowns() {
     const isOverdue = eventDateThisYear < today && !(today.getMonth() === parseInt(m, 10) - 1 && today.getDate() === parseInt(d, 10));
     
     let daysLabel = '';
-    let badgeClass = '';
+    let badgeHTML = '';
+    let relativeText = '';
 
     if (isOverdue) {
       daysLabel = state.lang === 'es' ? 'Vencido' : 'Overdue';
-      badgeClass = 'countdown-badge-past';
+      badgeHTML = `<span class="event-overdue-badge" style="margin-left: 0;">${daysLabel}</span>`;
+      
+      const timeDiff = todayMs - eventDateThisYear.getTime();
+      const daysAgo = Math.floor(timeDiff / (1000 * 3600 * 24));
+      relativeText = state.lang === 'es'
+        ? `hace ${daysAgo} ${daysAgo === 1 ? 'día' : 'días'}`
+        : `${daysAgo} ${daysAgo === 1 ? 'day' : 'days'} ago`;
     } else {
       const diffTime = eventDateThisYear.getTime() - todayMs;
       const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
       
+      let badgeClass = '';
       if (diffDays === 0) {
         daysLabel = state.lang === 'es' ? 'Hoy' : 'Today';
-        badgeClass = 'countdown-badge-red';
-      } else if (diffDays === 1) {
-        daysLabel = state.lang === 'es' ? 'Mañana' : 'Tomorrow';
-        badgeClass = 'countdown-badge-red';
-      } else if (diffDays <= 3) {
+        badgeClass = 'countdown-badge-amber'; // Header banner today colors (orange/yellow)
+        relativeText = state.lang === 'es' ? 'hoy' : 'today';
+      } else if (diffDays < 7) {
         daysLabel = state.lang === 'es' ? `En ${diffDays} d` : `In ${diffDays} d`;
-        badgeClass = 'countdown-badge-red';
-      } else if (diffDays <= 7) {
+        badgeClass = 'countdown-badge-red'; // Header banner soon colors (<7 days: red)
+        relativeText = state.lang === 'es' ? `en ${diffDays} días` : `in ${diffDays} days`;
+      } else if (diffDays < 31) {
         daysLabel = state.lang === 'es' ? `En ${diffDays} d` : `In ${diffDays} d`;
-        badgeClass = 'countdown-badge-amber';
+        badgeClass = 'countdown-badge-amber'; // Header banner today colors (7 to 30 days: orange/yellow)
+        relativeText = state.lang === 'es' ? `en ${diffDays} días` : `in ${diffDays} days`;
       } else {
         daysLabel = state.lang === 'es' ? `En ${diffDays} d` : `In ${diffDays} d`;
-        badgeClass = 'countdown-badge-neutral';
+        badgeClass = 'countdown-badge-neutral'; // Header banner upcoming colors (31+ days: neutral)
+        relativeText = state.lang === 'es' ? `en ${diffDays} días` : `in ${diffDays} days`;
       }
+      badgeHTML = `<span class="countdown-badge ${badgeClass}">${daysLabel}</span>`;
     }
 
-    const titleClass = isOverdue ? 'countdown-title countdown-title-past' : 'countdown-title';
+    const titleClass = 'countdown-title'; // Overdue events do not get line-through strikethrough
     const formattedDate = eventDateThisYear.toLocaleDateString(state.lang === 'es' ? 'es-ES' : 'en-US', { day: 'numeric', month: 'short' });
+    const fullMonthDate = eventDateThisYear.toLocaleDateString(state.lang === 'es' ? 'es-ES' : 'en-US', { day: 'numeric', month: 'long' });
+    const tooltipText = evt.name + `\n${fullMonthDate} (${relativeText})`;
 
     const li = document.createElement('li');
     li.className = 'countdown-item';
+    li.setAttribute('data-tooltip', tooltipText);
     li.innerHTML = `
       <div class="todo-item-left">
         <div class="todo-item-details">
@@ -1764,7 +1784,7 @@ function renderCountdowns() {
         </div>
       </div>
       <div class="todo-actions countdown-actions">
-        <span class="countdown-badge ${badgeClass}">${daysLabel}</span>
+        ${badgeHTML}
         <button class="btn-item-action delete-countdown-btn" data-id="${evt.id}" title="${state.lang === 'es' ? 'Eliminar' : 'Delete'}">
           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
         </button>
@@ -1804,8 +1824,8 @@ function deleteCountdown(id) {
     const descEl = modal.querySelector('[data-i18n="confirm-delete-desc"]');
     if (descEl) {
       descEl.innerHTML = state.lang === 'es'
-        ? `¿Estás seguro de que quieres eliminar el countdown: <strong>"${escapeHtml(countdown.title)}"</strong>?`
-        : `Are you sure you want to delete the countdown: <strong>"${escapeHtml(countdown.title)}"</strong>?`;
+        ? `¿Estás seguro de que quieres eliminar el evento: <strong>"${escapeHtml(countdown.name)}"</strong>?`
+        : `Are you sure you want to delete the event: <strong>"${escapeHtml(countdown.name)}"</strong>?`;
     }
     modal.querySelector('[data-i18n="cancel-btn"]').textContent = dict['cancel-btn'];
     modal.querySelector('[data-i18n="delete-btn"]').textContent = dict['delete-btn'];
@@ -2775,7 +2795,7 @@ async function fetchGoogleTasks() {
             const badgeClass = t.accountType === 'personal' ? 'personal' : 'work';
             const badgeLabel = translations[state.lang][`badge-${t.accountType}`] || t.accountType;
             const timeText = getTaskTimeText(t);
-            const dateText = t.due ? formatDateShort(t.due.split('T')[0]) : '';
+            const dateText = t.due ? new Date(t.due.split('T')[0] + 'T00:00:00').toLocaleDateString(state.lang === 'es' ? 'es-ES' : 'en-US', { day: 'numeric', month: 'long' }) : '';
             const isRecurring = checkTaskRecurring(t);
             const recurringClass = isRecurring ? 'recurring' : '';
             const repeatIcon = isRecurring 
@@ -2908,8 +2928,12 @@ async function fetchGoogleCalendar() {
         ? `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="opacity: 0.65; display: inline-block; vertical-align: middle; margin-right: 0.25rem;"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>` 
         : '';
 
+      const evtDateObj = new Date(startStr.split('T')[0] + 'T00:00:00');
+      const dateText = evtDateObj.toLocaleDateString(state.lang === 'es' ? 'es-ES' : 'en-US', { day: 'numeric', month: 'long' });
+      const tooltipText = evt.summary + `\n${dateText}\nTime: ${timeStr}` + (isRecurring ? (state.lang === 'es' ? ' (Recurrente)' : ' (Recurring)') : '');
+
       const eventHTML = `
-        <a href="${escapeHtml(eventLink)}" target="_blank" rel="noopener noreferrer" class="integration-item ${badgeClass} ${recurringClass}" data-tooltip="${escapeHtml(evt.summary)}\nTime: ${escapeHtml(timeStr)}${isRecurring ? (state.lang === 'es' ? ' (Recurrente)' : ' (Recurring)') : ''}">
+        <a href="${escapeHtml(eventLink)}" target="_blank" rel="noopener noreferrer" class="integration-item ${badgeClass} ${recurringClass}" data-tooltip="${escapeHtml(tooltipText)}">
           <span class="item-title">${escapeHtml(evt.summary)}</span>
           <div class="item-meta">
             <span>${repeatIcon}${escapeHtml(timeStr)}</span>
@@ -3097,13 +3121,26 @@ function setupEventListeners() {
     }
   });
 
-  // Click banner to open Events settings directly
+  // Click banner to scroll to My Events and highlight it
   const eventBanner = document.getElementById('events-banner-container');
   if (eventBanner) {
-    eventBanner.addEventListener('click', () => {
-      document.getElementById('settings-toggle').click();
-      const eventsTab = document.querySelector('.tab-btn[data-tab="tab-events"]');
-      if (eventsTab) eventsTab.click();
+    eventBanner.addEventListener('click', (e) => {
+      e.preventDefault();
+      const targetHeader = document.getElementById('countdown-section-header');
+      if (targetHeader) {
+        targetHeader.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        
+        const wrapper = document.querySelector('.countdown-wrapper');
+        if (wrapper) {
+          if (wrapper.classList.contains('section-flash-highlight')) {
+            return;
+          }
+          wrapper.classList.add('section-flash-highlight');
+          wrapper.onanimationend = () => {
+            wrapper.classList.remove('section-flash-highlight');
+          };
+        }
+      }
     });
   }
 
@@ -3111,14 +3148,24 @@ function setupEventListeners() {
   const confirmDeleteModal = document.getElementById('confirm-delete-modal');
   if (confirmDeleteModal) {
     document.getElementById('btn-cancel-delete').addEventListener('click', () => {
+      if (confirmActionType === 'hide-events') {
+        const cb = document.getElementById('settings-show-countdowns');
+        if (cb) cb.checked = true;
+      }
       confirmDeleteModal.close();
       todoIdToDelete = null;
+      confirmActionType = null;
     });
     
     document.getElementById('close-delete-modal').addEventListener('click', () => {
+      if (confirmActionType === 'hide-events') {
+        const cb = document.getElementById('settings-show-countdowns');
+        if (cb) cb.checked = true;
+      }
       confirmDeleteModal.close();
       todoIdToDelete = null;
       countdownIdToDelete = null;
+      confirmActionType = null;
     });
 
     document.getElementById('btn-confirm-delete').addEventListener('click', async () => {
@@ -3144,6 +3191,30 @@ function setupEventListeners() {
         confirmDeleteModal.close();
         countdownIdToDelete = null;
         confirmActionType = null;
+      } else if (confirmActionType === 'hide-events') {
+        confirmDeleteModal.close();
+        confirmActionType = null;
+      }
+    });
+  }
+
+  // Handle immediate change on show-events switch
+  const showEventsCheckbox = document.getElementById('settings-show-countdowns');
+  if (showEventsCheckbox) {
+    showEventsCheckbox.addEventListener('change', () => {
+      if (!showEventsCheckbox.checked && (state.settings.customEvents && state.settings.customEvents.length > 0)) {
+        confirmActionType = 'hide-events';
+        confirmDeleteModal.querySelector('[data-i18n="confirm-delete-title"]').textContent = state.lang === 'es' ? 'Ocultar Eventos' : 'Hide Events';
+        const descEl = confirmDeleteModal.querySelector('[data-i18n="confirm-delete-desc"]');
+        if (descEl) {
+          descEl.innerHTML = state.lang === 'es'
+            ? 'Tienes eventos configurados (pendientes o vencidos). ¿Seguro que quieres ocultar la sección de Eventos?'
+            : 'You have configured events (pending or overdue). Are you sure you want to hide the Events section?';
+        }
+        const dict = translations[state.lang];
+        confirmDeleteModal.querySelector('[data-i18n="cancel-btn"]').textContent = dict['cancel-btn'];
+        confirmDeleteModal.querySelector('[data-i18n="delete-btn"]').textContent = state.lang === 'es' ? 'Confirmar' : 'Confirm';
+        confirmDeleteModal.showModal();
       }
     });
   }
@@ -3673,6 +3744,9 @@ function setupEventListeners() {
 
       document.querySelectorAll('.tab-pane').forEach(pane => pane.classList.remove('active'));
       document.getElementById(targetTab).classList.add('active');
+
+      // Scroll the selected tab into view inside the tab bar container
+      btn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
     });
   });
 
@@ -3915,11 +3989,7 @@ function setupEventListeners() {
     const dateInput = document.getElementById('todo-date');
     const prioritySelect = document.getElementById('todo-priority');
 
-    if (!input.value.trim()) {
-      const msg = state.lang === 'es' ? 'Por favor, escribe un nombre para la tarea.' : 'Please enter a task name.';
-      showInputErrorFeedback(input, msg);
-      return;
-    }
+
 
     addTodo(input.value.trim(), dateInput.value, prioritySelect.value);
 
@@ -3955,11 +4025,7 @@ function setupEventListeners() {
     const date = document.getElementById('edit-task-date').value;
     const priority = document.getElementById('edit-task-priority').value;
 
-    if (!text) {
-      const msg = state.lang === 'es' ? 'Por favor, escribe un nombre para la tarea.' : 'Please enter a task name.';
-      showInputErrorFeedback(textInput, msg);
-      return;
-    }
+
 
     updateTodo(id, text, date, priority);
     editModal.close();

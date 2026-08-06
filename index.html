@@ -194,6 +194,23 @@
           </div>
         </div>
 
+        <!-- My Events Header -->
+        <div class="section-header" id="countdown-section-header">
+          <h2 class="col-title" id="countdown-section-title" data-i18n="col-countdowns">My Events</h2>
+          <button id="btn-show-add-countdown" class="add-section-btn" title="Add Event" aria-label="Add Event">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          </button>
+        </div>
+        <div class="col-content" id="countdown-section-content">
+          <!-- Countdowns Card -->
+          <div class="todo-wrapper countdown-wrapper">
+            <ul id="countdown-list" class="countdown-list">
+              <!-- Dynamically populated -->
+            </ul>
+            <p id="countdown-empty" class="countdown-empty" data-i18n="countdown-empty">No events configured.</p>
+          </div>
+        </div>
+
         <!-- My Tasks Header -->
         <div class="section-header" id="tasks-section-header">
           <h2 class="col-title" id="tasks-section-title" data-i18n="tasks-card-title">My Tasks</h2>
@@ -232,23 +249,6 @@
             </div>
           </div>
         </div>
-
-        <!-- My Events Header -->
-        <div class="section-header" id="countdown-section-header">
-          <h2 class="col-title" id="countdown-section-title" data-i18n="col-countdowns">My Events</h2>
-          <button id="btn-show-add-countdown" class="add-section-btn" title="Add Event" aria-label="Add Event">
-            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-          </button>
-        </div>
-        <div class="col-content" id="countdown-section-content">
-          <!-- Countdowns Card -->
-          <div class="todo-wrapper countdown-wrapper">
-            <ul id="countdown-list" class="countdown-list">
-              <!-- Dynamically populated -->
-            </ul>
-            <p id="countdown-empty" class="countdown-empty" data-i18n="countdown-empty">No events configured.</p>
-          </div>
-        </div>
       </section>
     </main>
 
@@ -281,7 +281,6 @@
         <nav class="settings-tabs">
           <button type="button" class="tab-btn active" data-tab="tab-general" data-i18n="tab-general">General</button>
           <button type="button" class="tab-btn" data-tab="tab-shortcuts" data-i18n="tab-shortcuts">Shortcuts</button>
-          <button type="button" class="tab-btn" data-tab="tab-events" data-i18n="tab-events">Events</button>
           <button type="button" class="tab-btn" data-tab="tab-google" data-i18n="tab-google">Google</button>
           <button type="button" class="tab-btn" data-tab="tab-git" data-i18n="tab-git">GitHub & Bitbucket</button>
           <button type="button" class="tab-btn" data-tab="tab-jira" data-i18n="tab-jira">Jira</button>
@@ -615,7 +614,6 @@
                 </label>
               </div>
             </div>
-            <p class="tab-desc" data-i18n="jira-cors-warning">Note: Jira API requires CORS. If tasks fail to load, you may need a browser CORS extension or configure your Jira Cloud to allow local requests.</p>
             <div class="form-group">
               <label for="jira-host" data-i18n="label-jira-host">Jira Host URL</label>
               <input type="url" id="jira-host" placeholder="https://your-company.atlassian.net">
@@ -663,25 +661,6 @@
             </div>
           </div>
 
-          <!-- Tab: Events -->
-          <div id="tab-events" class="tab-pane">
-            <p class="tab-desc">Configure birthdays or important events. If an event falls on today, it will be displayed prominently. Otherwise, the closest upcoming event is shown.</p>
-            <div class="form-group">
-              <label>Add New Event</label>
-              <div style="display: grid; grid-template-columns: 1fr auto auto; gap: 0.5rem; margin-top: 0.5rem; width: 100%;">
-                <input type="text" id="event-name-input" placeholder="e.g. Hector's Birthday" style="margin-bottom: 0;">
-                <input type="date" id="event-date-input" style="margin-bottom: 0;">
-                <button type="button" id="btn-add-event" class="btn-primary" style="padding: 0 1rem;">Add</button>
-              </div>
-            </div>
-
-            <div class="form-group" style="margin-top: 1.5rem;">
-              <label>Configured Events</label>
-              <ul id="settings-events-list" class="settings-list" style="list-style: none; padding: 0; margin-top: 0.5rem; max-height: 180px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: var(--radius-sm); background: rgba(255,255,255,0.02); padding: 0.5rem;">
-                <!-- Dynamically populated -->
-              </ul>
-            </div>
-          </div>
         </div>
 
         <div class="modal-footer">
@@ -745,7 +724,7 @@
         <form id="todo-form" class="todo-form" style="gap: 1.25rem; margin-bottom: 0;">
           <div class="form-group">
             <label for="todo-input" data-i18n="label-task-text">Task Name</label>
-            <input type="text" id="todo-input" placeholder="Task text...">
+            <input type="text" id="todo-input" placeholder="Task text..." required>
           </div>
           <div class="form-group">
             <label for="todo-date" data-i18n="label-due-date">Due Date</label>
@@ -780,7 +759,7 @@
           <input type="hidden" id="edit-task-id">
           <div class="form-group">
             <label for="edit-task-text" data-i18n="label-task-text">Task Name</label>
-            <input type="text" id="edit-task-text" placeholder="Task text...">
+            <input type="text" id="edit-task-text" placeholder="Task text..." required>
           </div>
           <div class="form-group">
             <label for="edit-task-date" data-i18n="label-due-date">Due Date</label>
