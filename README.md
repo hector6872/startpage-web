@@ -73,17 +73,17 @@ Before creating credentials, you must configure the OAuth consent screen to defi
 
 ## Git Integrations (GitHub, Bitbucket, GitLab)
 
-This dashboard supports aggregating pull requests and merge requests across GitHub, Bitbucket, and GitLab:
+This dashboard supports aggregating pull requests and merge requests across GitHub, Bitbucket, and GitLab. 
+
+For all three services, the dashboard:
+* Automatically fetches open Pull/Merge Requests from your **5 most recently updated** repositories/projects.
+* Filters to show teammate PRs/MRs where you are a **requested reviewer** (and have not approved yet), and your own open PRs/MRs that have **merge conflicts, requested changes, or unresolved discussion threads**.
+
+### Configuration Requirements:
 
 - **GitHub**: Requires your Username and a [Personal Access Token (PAT)](https://github.com/settings/tokens/new?scopes=repo&description=Personal%20Startpage) with `repo` scope.
-  * The dashboard will automatically fetch open Pull Requests from your 5 most recently updated repositories.
-  * It filters to show teammate PRs where you are a requested reviewer, and your own PRs that have merge conflicts or requested changes.
 - **Bitbucket**: Requires your Workspace ID (the slug/identifier of your workspace found in the URL after `bitbucket.org/`), your Atlassian Account Email, and your [Personal API Token](https://bitbucket.org/account/settings/api-tokens/) (ensure you select both `Repositories: Read` and `Pull requests: Read` scopes).
-- **GitLab**:
-  1. Generate a [Personal Access Token (PAT)](https://gitlab.com/-/profile/personal_access_tokens?name=Personal%20Startpage&scopes=api) in your GitLab Account Settings with the `api` scope.
-  2. Enter the GitLab Host URL (defaults to `https://gitlab.com` but supports self-hosted GitLab instances) and your username.
-  3. The dashboard will automatically fetch open Merge Requests from your 5 most recently active projects.
-  4. It filters to show teammate MRs where you are a reviewer (and have not approved yet), and your own MRs that have merge conflicts or unresolved discussion threads.
+- **GitLab**: Requires your GitLab Username, a [Personal Access Token (PAT)](https://gitlab.com/-/profile/personal_access_tokens?name=Personal%20Startpage&scopes=api) with the `api` scope, and the GitLab Host URL (defaults to `https://gitlab.com` but supports self-hosted GitLab instances).
 
 ## Out of Office (OOO) Mode
 
