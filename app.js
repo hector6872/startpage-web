@@ -639,8 +639,10 @@ function updateOooBadges() {
   const active = state.settings.oooActive === true;
   const badgeToday = document.getElementById('ooo-badge-today');
   const badgeWeek = document.getElementById('ooo-badge-week');
+  const badgeWork = document.getElementById('ooo-badge-work');
   if (badgeToday) badgeToday.classList.toggle('hidden', !active);
   if (badgeWeek) badgeWeek.classList.toggle('hidden', !active);
+  if (badgeWork) badgeWork.classList.toggle('hidden', !active);
 }
 
 async function cleanupOldCompletedTodos() {
@@ -1693,18 +1695,6 @@ function updateOrganizerVisibility() {
   }
 
   let showGit = state.settings.showGit !== false;
-  const hasGithub = !!(state.settings.githubToken && state.settings.githubUsername);
-  const hasBitbucket = !!(state.settings.bitbucketToken && state.settings.bitbucketUsername && state.settings.bitbucketWorkspace);
-  const hasGitlab = !!(state.settings.gitlabToken && state.settings.gitlabUsername);
-  
-  if (state.settings.oooActive) {
-    const activeGithub = hasGithub && !state.settings.hideGithubOoo;
-    const activeBitbucket = hasBitbucket && !state.settings.hideBitbucketOoo;
-    const activeGitlab = hasGitlab && !state.settings.hideGitlabOoo;
-    if (!activeGithub && !activeBitbucket && !activeGitlab) {
-      showGit = false;
-    }
-  }
 
   const showWork = showGit || showJira;
 
@@ -2171,7 +2161,7 @@ async function fetchAllPRs() {
   const hasBitbucket = !!(state.settings.bitbucketToken && state.settings.bitbucketUsername && state.settings.bitbucketWorkspace);
   const hasGitlab = !!(state.settings.gitlabToken && state.settings.gitlabUsername);
   
-  if (state.settings.oooActive) {
+  if (state.settings.oooActive && (hasGithub || hasBitbucket || hasGitlab)) {
     const activeGithub = hasGithub && !state.settings.hideGithubOoo;
     const activeBitbucket = hasBitbucket && !state.settings.hideBitbucketOoo;
     const activeGitlab = hasGitlab && !state.settings.hideGitlabOoo;
@@ -2186,7 +2176,8 @@ async function fetchAllPRs() {
   }
 
   if (!hasGithub && !hasBitbucket && !hasGitlab) {
-    container.innerHTML = `<p class="empty-msg">${translations[state.lang]['status-unconfigured']}</p>`;
+    const configLinkText = state.lang === 'es' ? 'Configurar integración de Git' : 'Configure Git Integration';
+    container.innerHTML = `<p class="empty-msg" style="margin: 0.5rem 0;"><a href="#" onclick="event.preventDefault(); window.openSettingsGitTab();" style="color: var(--accent); text-decoration: underline; font-weight: 500;">${configLinkText}</a></p>`;
     return;
   }
 
@@ -2195,28 +2186,33 @@ async function fetchAllPRs() {
   // GitHub Fetch
   if (hasGithub && !(state.settings.oooActive && state.settings.hideGithubOoo)) {
     try {
-      const q = encodeURIComponent(`is:pr is:open review-requested:${state.settings.githubUsername} assignee:${state.settings.githubUsername}`);
-      const res = await fetch(`https://api.github.com/search/issues?q=${q}&per_page=5`, {
-        headers: {
-          'Authorization': `token ${state.settings.githubToken}`,
-          'Accept': 'application/vnd.github.v3+json'
-        }
+      const qReview = encodeURIComponent(`is:pr is:open review-requested:${state.settings.githubUsername}`);
+      const qAssign = encodeURIComponent(`is:pr is:open assignee:${state.settings.githubUsername}`);
+      
+      const headers = {
+        'Authorization': `token ${state.settings.githubToken}`,
+        'Accept': 'application/vnd.github.v3+json'
+      };
+
+      const [resReview, resAssign] = await Promise.all([
+        fetch(`https://api.github.com/search/issues?q=${qReview}&per_page=5`, { headers }).then(r => r.ok ? r.json() : { items: [] }),
+        fetch(`https://api.github.com/search/issues?q=${qAssign}&per_page=5`, { headers }).then(r => r.ok ? r.json() : { items: [] })
+      ]);
+
+      const itemsMap = new Map();
+      (resReview.items || []).forEach(item => itemsMap.set(item.id, item));
+      (resAssign.items || []).forEach(item => itemsMap.set(item.id, item));
+
+      itemsMap.forEach(pr => {
+        const repo = pr.repository_url.split('/').slice(-1)[0];
+        prList.push({
+          title: pr.title,
+          url: pr.html_url,
+          repo: repo,
+          number: pr.number,
+          source: 'GitHub'
+        });
       });
-      if (res.ok) {
-        const data = await res.json();
-        if (data.items) {
-          data.items.forEach(pr => {
-            const repo = pr.repository_url.split('/').slice(-1)[0];
-            prList.push({
-              title: pr.title,
-              url: pr.html_url,
-              repo: repo,
-              number: pr.number,
-              source: 'GitHub'
-            });
-          });
-        }
-      }
     } catch (e) {
       console.error("Error fetching GitHub PRs:", e);
     }
@@ -2358,6 +2354,18 @@ function openSettingsGoogleTab() {
   }
 }
 window.openSettingsGoogleTab = openSettingsGoogleTab;
+
+function openSettingsGitTab() {
+  const toggle = document.getElementById('settings-toggle');
+  if (toggle) {
+    toggle.click();
+    setTimeout(() => {
+      const gitBtn = document.querySelector('.tab-btn[data-tab="tab-git"]');
+      if (gitBtn) gitBtn.click();
+    }, 50);
+  }
+}
+window.openSettingsGitTab = openSettingsGitTab;
 
 // Google APIs Integrations (Gmail, Tasks, Calendar)
 let googleTokenClient;
