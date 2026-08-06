@@ -41,7 +41,7 @@
       <div class="header-left">
         <h1 id="greeting" class="greeting">Hello</h1>
         <p id="current-date" class="date-subtitle">Monday, 20 July</p>
-        <div id="upcoming-event" class="event-banner hidden"></div>
+        <div id="events-banner-container" class="events-banner-container"></div>
       </div>
       <div class="header-right">
         <!-- Shortcut Buttons Stack -->
@@ -112,28 +112,36 @@
     <main class="dashboard-grid">
       <!-- Column 1: Today -->
       <section class="grid-col" id="col-today">
-        <h2 class="col-title" data-i18n="col-today">Today</h2>
+        <h2 class="col-title">
+          <span data-i18n="col-today">Today</span>
+          <span class="ooo-badge hidden" id="ooo-badge-today" title="Out of Office mode active. Click to open settings.">out of office</span>
+        </h2>
         <div class="col-content">
           <!-- Calendar and tasks summaries will go here -->
           <div class="section-card">
-            <h3 class="card-subtitle" data-i18n="calendar-events">Events</h3>
+            <h3 class="card-subtitle">
+              <span style="display: inline-flex; align-items: center; gap: 0.4rem;">
+                <span data-i18n="calendar-events">Events</span>
+                <span id="events-count-badge" class="filter-badge hidden" style="margin-left: 0;"></span>
+              </span>
+              <span class="header-status-indicators" id="google-events-status-indicators"></span>
+            </h3>
             <div id="google-events-container" class="integration-list">
               <!-- Dynamically populated -->
               <p class="empty-msg" data-i18n="no-events">No events scheduled.</p>
             </div>
           </div>
-          <div class="section-card">
-            <h3 class="card-subtitle" data-i18n="urgent-emails">Urgent Emails</h3>
+          <div class="section-card" id="gmail-card">
+            <h3 class="card-subtitle">
+              <span style="display: inline-flex; align-items: center; gap: 0.4rem;">
+                <span data-i18n="urgent-emails">Urgent Emails</span>
+                <span id="emails-count-badge" class="filter-badge hidden" style="margin-left: 0;"></span>
+              </span>
+              <span class="header-status-indicators" id="google-emails-status-indicators"></span>
+            </h3>
             <div id="gmail-container" class="integration-list">
               <!-- Dynamically populated -->
               <p class="empty-msg" data-i18n="no-emails">No unread emails.</p>
-            </div>
-          </div>
-          <div class="section-card">
-            <h3 class="card-subtitle" data-i18n="pending-prs">Pull Requests (Git)</h3>
-            <div id="prs-container" class="integration-list">
-              <!-- Dynamically populated -->
-              <p class="empty-msg" data-i18n="no-prs">No pending PRs.</p>
             </div>
           </div>
         </div>
@@ -141,20 +149,22 @@
 
       <!-- Column 2: This Week -->
       <section class="grid-col" id="col-week">
-        <h2 class="col-title" data-i18n="col-week">This Week</h2>
+        <h2 class="col-title">
+          <span data-i18n="col-week">This Week</span>
+          <span class="ooo-badge hidden" id="ooo-badge-week" title="Out of Office mode active. Click to open settings.">out of office</span>
+        </h2>
         <div class="col-content">
           <div class="section-card">
-            <h3 class="card-subtitle" data-i18n="weekly-schedule">Weekly Schedule</h3>
+            <h3 class="card-subtitle">
+              <span style="display: inline-flex; align-items: center; gap: 0.4rem;">
+                <span data-i18n="weekly-schedule">Weekly Schedule</span>
+                <span id="weekly-count-badge" class="filter-badge hidden" style="margin-left: 0;"></span>
+              </span>
+              <span class="header-status-indicators" id="google-weekly-status-indicators"></span>
+            </h3>
             <div id="weekly-events-container" class="integration-list">
               <!-- Dynamically populated -->
               <p class="empty-msg" data-i18n="no-weekly-events">No events this week.</p>
-            </div>
-          </div>
-          <div class="section-card">
-            <h3 class="card-subtitle" data-i18n="jira-tasks">Jira Tasks</h3>
-            <div id="jira-container" class="integration-list">
-              <!-- Dynamically populated -->
-              <p class="empty-msg" data-i18n="no-jira-tasks">No Jira tasks assigned.</p>
             </div>
           </div>
         </div>
@@ -162,29 +172,59 @@
 
       <!-- Column 3: Tasks List (CRUD) -->
       <section class="grid-col" id="col-tasks">
+        <h2 class="col-title" data-i18n="col-work" id="work-section-title">Work</h2>
+        <div class="col-content" id="work-section-content">
+          <div class="section-card" id="prs-card">
+            <h3 class="card-subtitle">
+              <span style="display: inline-flex; align-items: center; gap: 0.4rem;">
+                <span data-i18n="pending-prs">Pull Requests (Git)</span>
+                <span id="prs-count-badge" class="filter-badge hidden" style="margin-left: 0;"></span>
+              </span>
+            </h3>
+            <div id="prs-container" class="integration-list">
+              <!-- Dynamically populated -->
+              <p class="empty-msg" data-i18n="no-prs">No pending PRs.</p>
+            </div>
+          </div>
+          <div class="section-card" id="jira-card">
+            <h3 class="card-subtitle">
+              <span style="display: inline-flex; align-items: center; gap: 0.4rem;">
+                <span data-i18n="jira-tasks">Jira Tasks</span>
+                <span id="jira-count-badge" class="filter-badge hidden" style="margin-left: 0;"></span>
+              </span>
+            </h3>
+            <div id="jira-container" class="integration-list">
+              <!-- Dynamically populated -->
+              <p class="empty-msg" data-i18n="no-jira-tasks">No Jira tasks assigned.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- My Events Header -->
         <div class="section-header" id="countdown-section-header">
-          <h2 class="col-title" id="countdown-section-title" data-i18n="col-countdowns">My Countdowns</h2>
-          <button id="btn-show-add-countdown" class="add-section-btn" title="Add Countdown" aria-label="Add Countdown">
+          <h2 class="col-title" id="countdown-section-title" data-i18n="col-countdowns">My Events</h2>
+          <button id="btn-show-add-countdown" class="add-section-btn" title="Add Event" aria-label="Add Event">
             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
           </button>
         </div>
-        <div class="col-content">
+        <div class="col-content" id="countdown-section-content">
           <!-- Countdowns Card -->
           <div class="todo-wrapper countdown-wrapper">
             <ul id="countdown-list" class="countdown-list">
               <!-- Dynamically populated -->
             </ul>
-            <p id="countdown-empty" class="countdown-empty" data-i18n="countdown-empty">No countdowns yet.</p>
+            <p id="countdown-empty" class="countdown-empty" data-i18n="countdown-empty">No events configured.</p>
           </div>
+        </div>
 
-          <!-- Tasks Section Header -->
-          <div class="section-header" id="tasks-section-header">
-            <h2 class="col-title" id="tasks-section-title" data-i18n="tasks-card-title">My Tasks</h2>
-            <button id="btn-show-add-task" class="add-section-btn" title="Add Task" aria-label="Add Task">
-              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-            </button>
-          </div>
-
+        <!-- My Tasks Header -->
+        <div class="section-header" id="tasks-section-header">
+          <h2 class="col-title" id="tasks-section-title" data-i18n="tasks-card-title">My Tasks</h2>
+          <button id="btn-show-add-task" class="add-section-btn" title="Add Task" aria-label="Add Task">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          </button>
+        </div>
+        <div class="col-content" id="tasks-section-content">
           <!-- Focus Task Card -->
           <div id="todo-focus-card" class="todo-wrapper todo-focus-card hidden">
             <h3 class="card-subtitle">
@@ -247,7 +287,6 @@
         <nav class="settings-tabs">
           <button type="button" class="tab-btn active" data-tab="tab-general" data-i18n="tab-general">General</button>
           <button type="button" class="tab-btn" data-tab="tab-shortcuts" data-i18n="tab-shortcuts">Shortcuts</button>
-          <button type="button" class="tab-btn" data-tab="tab-events" data-i18n="tab-events">Events</button>
           <button type="button" class="tab-btn" data-tab="tab-google" data-i18n="tab-google">Google</button>
           <button type="button" class="tab-btn" data-tab="tab-git" data-i18n="tab-git">GitHub & Bitbucket</button>
           <button type="button" class="tab-btn" data-tab="tab-jira" data-i18n="tab-jira">Jira</button>
@@ -433,22 +472,129 @@
           <!-- Tab: Google -->
           <div id="tab-google" class="tab-pane">
             <p class="tab-desc" data-i18n="google-desc">Requires a Google Cloud project with OAuth credentials. Ensure you add your local origin (e.g. http://localhost:5173 or the server URL) in Google Console.</p>
-            <div class="form-group">
+            <div class="form-group" style="margin-bottom: 1rem;">
               <label for="google-client-id" data-i18n="label-client-id">Google Client ID</label>
               <input type="text" id="google-client-id" placeholder="xxxxxxxx.apps.googleusercontent.com">
             </div>
-            <div class="form-group row-align">
-              <label data-i18n="google-status">Authentication Status:</label>
-              <span id="google-auth-status" class="auth-status disconnected" data-i18n="disconnected">Disconnected</span>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+              <div class="settings-section-card" style="margin-bottom: 0;">
+                <div class="card-toggle-header" style="padding: 0.6rem 0.8rem;">
+                  <span class="card-toggle-title" style="font-size: 0.85rem;">
+                    <span data-i18n="label-show-google-emails">Show Emails (Gmail)</span>
+                  </span>
+                  <label class="switch-control">
+                    <input type="checkbox" id="settings-show-google-emails" checked>
+                    <span class="switch-slider"></span>
+                  </label>
+                </div>
+              </div>
+              <div class="settings-section-card" style="margin-bottom: 0;">
+                <div class="card-toggle-header" style="padding: 0.6rem 0.8rem;">
+                  <span class="card-toggle-title" style="font-size: 0.85rem;">
+                    <span data-i18n="label-show-google-tasks">Show Tasks (Google Tasks)</span>
+                  </span>
+                  <label class="switch-control">
+                    <input type="checkbox" id="settings-show-google-tasks" checked>
+                    <span class="switch-slider"></span>
+                  </label>
+                </div>
+              </div>
             </div>
-            <div class="google-auth-actions">
-              <button type="button" id="google-login-btn" class="btn-secondary" data-i18n="google-login">Log In with Google</button>
-              <button type="button" id="google-logout-btn" class="btn-danger hidden" data-i18n="google-logout">Log Out</button>
+
+            <!-- Personal Account -->
+            <div class="google-account-section" style="margin-bottom: 1.5rem; padding-bottom: 1.5rem; border-bottom: 1px solid var(--border-color, rgba(255,255,255,0.1));">
+              <h4 style="margin-top: 0; margin-bottom: 0.5rem; font-family: var(--font-title); display: flex; align-items: center; gap: 0.4rem;">
+                <span class="status-dot disconnected" id="google-settings-dot-personal"></span>
+                <span data-i18n="badge-personal">Personal</span>
+              </h4>
+              <div class="form-group row-align" style="margin-bottom: 0.75rem;">
+                <label data-i18n="google-status-personal">Personal Account:</label>
+                <span id="google-auth-status-personal" class="auth-status disconnected" data-i18n="disconnected">Disconnected</span>
+              </div>
+              <div class="form-group row-align" style="margin-bottom: 0.75rem;">
+                <label data-i18n="google-color">Account Color:</label>
+                <div class="color-picker-grid" id="google-color-personal-swatches" style="margin-top: 0;">
+                  <button type="button" class="color-swatch-btn" data-color="blue" title="Blue" style="--swatch-color: #3b82f6;"></button>
+                  <button type="button" class="color-swatch-btn" data-color="indigo" title="Indigo" style="--swatch-color: #6366f1;"></button>
+                  <button type="button" class="color-swatch-btn" data-color="purple" title="Purple" style="--swatch-color: #8b5cf6;"></button>
+                  <button type="button" class="color-swatch-btn" data-color="pink" title="Pink" style="--swatch-color: #ec4899;"></button>
+                  <button type="button" class="color-swatch-btn" data-color="red" title="Red" style="--swatch-color: #ef4444;"></button>
+                  <button type="button" class="color-swatch-btn" data-color="orange" title="Orange" style="--swatch-color: #f97316;"></button>
+                  <button type="button" class="color-swatch-btn" data-color="green" title="Green" style="--swatch-color: #10b981;"></button>
+                  <button type="button" class="color-swatch-btn" data-color="teal" title="Teal" style="--swatch-color: #06b6d4;"></button>
+                  <button type="button" class="color-swatch-btn" data-color="slate" title="Slate Gray" style="--swatch-color: #64748b;"></button>
+                  <button type="button" class="color-swatch-btn" data-color="black" title="Black / Onyx" style="--swatch-color: #18181b;"></button>
+                </div>
+                <input type="hidden" id="google-color-personal" value="blue">
+              </div>
+              <div class="google-auth-actions">
+                <button type="button" id="google-login-btn-personal" class="btn-secondary" data-i18n="google-login-personal">Log In (Personal)</button>
+                <button type="button" id="google-logout-btn-personal" class="btn-danger hidden" data-i18n="google-logout">Log Out</button>
+              </div>
+            </div>
+
+            <!-- Work Account -->
+            <div class="google-account-section">
+              <h4 style="margin-top: 0; margin-bottom: 0.5rem; font-family: var(--font-title); display: flex; align-items: center; gap: 0.4rem;">
+                <span class="status-dot disconnected" id="google-settings-dot-work"></span>
+                <span data-i18n="badge-work">Work</span>
+              </h4>
+              <div class="form-group row-align" style="margin-bottom: 0.75rem;">
+                <label data-i18n="google-status-work">Work Account:</label>
+                <span id="google-auth-status-work" class="auth-status disconnected" data-i18n="disconnected">Disconnected</span>
+              </div>
+              <div class="form-group row-align" style="margin-bottom: 0.75rem;">
+                <label data-i18n="google-color">Account Color:</label>
+                <div class="color-picker-grid" id="google-color-work-swatches" style="margin-top: 0;">
+                  <button type="button" class="color-swatch-btn" data-color="blue" title="Blue" style="--swatch-color: #3b82f6;"></button>
+                  <button type="button" class="color-swatch-btn" data-color="indigo" title="Indigo" style="--swatch-color: #6366f1;"></button>
+                  <button type="button" class="color-swatch-btn" data-color="purple" title="Purple" style="--swatch-color: #8b5cf6;"></button>
+                  <button type="button" class="color-swatch-btn" data-color="pink" title="Pink" style="--swatch-color: #ec4899;"></button>
+                  <button type="button" class="color-swatch-btn" data-color="red" title="Red" style="--swatch-color: #ef4444;"></button>
+                  <button type="button" class="color-swatch-btn" data-color="orange" title="Orange" style="--swatch-color: #f97316;"></button>
+                  <button type="button" class="color-swatch-btn" data-color="green" title="Green" style="--swatch-color: #10b981;"></button>
+                  <button type="button" class="color-swatch-btn" data-color="teal" title="Teal" style="--swatch-color: #06b6d4;"></button>
+                  <button type="button" class="color-swatch-btn" data-color="slate" title="Slate Gray" style="--swatch-color: #64748b;"></button>
+                  <button type="button" class="color-swatch-btn" data-color="black" title="Black / Onyx" style="--swatch-color: #18181b;"></button>
+                </div>
+                <input type="hidden" id="google-color-work" value="black">
+              </div>
+              <div class="settings-section-card" style="margin-top: 1rem; margin-bottom: 1rem; background: rgba(255,255,255,0.01);">
+                <div class="card-toggle-header" style="padding: 0.6rem 0.8rem;">
+                  <span class="card-toggle-title" style="font-size: 0.85rem; font-weight: 500;">
+                    <span data-i18n="label-ooo-active">Out of Office (OOO)</span>
+                  </span>
+                  <label class="switch-control">
+                    <input type="checkbox" id="settings-ooo-active">
+                    <span class="switch-slider"></span>
+                  </label>
+                </div>
+                <div id="ooo-date-display" class="form-group row-align hidden" style="padding: 0.5rem 0.8rem; margin: 0; border-top: 1px solid var(--border-color, rgba(255,255,255,0.05));">
+                  <span style="font-size: 0.75rem; color: var(--text-secondary);" data-i18n="ooo-until">Active until:</span>
+                  <span id="ooo-return-date-text" style="font-size: 0.75rem; font-weight: 600; color: var(--accent);">--</span>
+                </div>
+              </div>
+              <div class="google-auth-actions">
+                <button type="button" id="google-login-btn-work" class="btn-secondary" data-i18n="google-login-work">Log In (Work)</button>
+                <button type="button" id="google-logout-btn-work" class="btn-danger hidden" data-i18n="google-logout">Log Out</button>
+              </div>
             </div>
           </div>
 
           <!-- Tab: Git -->
           <div id="tab-git" class="tab-pane">
+            <div class="settings-section-card" style="margin-bottom: 1.5rem;">
+              <div class="card-toggle-header" style="padding: 0.6rem 0.8rem;">
+                <span class="card-toggle-title" style="font-size: 0.85rem;">
+                  <span data-i18n="label-show-git">Show Git Integration (PRs)</span>
+                </span>
+                <label class="switch-control">
+                  <input type="checkbox" id="settings-show-git" checked>
+                  <span class="switch-slider"></span>
+                </label>
+              </div>
+            </div>
             <h3 data-i18n="github-settings">GitHub</h3>
             <div class="form-group">
               <label for="github-token" data-i18n="label-token">Personal Access Token (PAT)</label>
@@ -457,6 +603,13 @@
             <div class="form-group">
               <label for="github-username" data-i18n="label-username">Username</label>
               <input type="text" id="github-username" placeholder="octocat">
+            </div>
+            <div class="form-group row-align" style="margin-top: 0.5rem; margin-bottom: 1rem;">
+              <label for="settings-github-ooo-hide" style="font-size: 0.8rem; color: var(--text-secondary);" data-i18n="label-hide-ooo">Hide if Out of Office is active</label>
+              <label class="switch-control" style="transform: scale(0.85);">
+                <input type="checkbox" id="settings-github-ooo-hide">
+                <span class="switch-slider"></span>
+              </label>
             </div>
 
             <hr class="form-divider">
@@ -474,11 +627,51 @@
               <label for="bitbucket-token" data-i18n="label-bb-token">App Password / Token</label>
               <input type="password" id="bitbucket-token" placeholder="App password">
             </div>
+            <div class="form-group row-align" style="margin-top: 0.5rem; margin-bottom: 1rem;">
+              <label for="settings-bitbucket-ooo-hide" style="font-size: 0.8rem; color: var(--text-secondary);" data-i18n="label-hide-ooo">Hide if Out of Office is active</label>
+              <label class="switch-control" style="transform: scale(0.85);">
+                <input type="checkbox" id="settings-bitbucket-ooo-hide">
+                <span class="switch-slider"></span>
+              </label>
+            </div>
+
+            <hr class="form-divider">
+
+            <h3>GitLab</h3>
+            <div class="form-group">
+              <label for="gitlab-host">GitLab Host URL</label>
+              <input type="url" id="gitlab-host" placeholder="https://gitlab.com">
+            </div>
+            <div class="form-group">
+              <label for="gitlab-token">Personal Access Token (PAT)</label>
+              <input type="password" id="gitlab-token" placeholder="glpat-xxxxxxxx">
+            </div>
+            <div class="form-group">
+              <label for="gitlab-username">Username</label>
+              <input type="text" id="gitlab-username" placeholder="gitlab-user">
+            </div>
+            <div class="form-group row-align" style="margin-top: 0.5rem; margin-bottom: 1rem;">
+              <label for="settings-gitlab-ooo-hide" style="font-size: 0.8rem; color: var(--text-secondary);" data-i18n="label-hide-ooo">Hide if Out of Office is active</label>
+              <label class="switch-control" style="transform: scale(0.85);">
+                <input type="checkbox" id="settings-gitlab-ooo-hide">
+                <span class="switch-slider"></span>
+              </label>
+            </div>
           </div>
 
           <!-- Tab: Jira -->
           <div id="tab-jira" class="tab-pane">
-            <p class="tab-desc" data-i18n="jira-cors-warning">Note: Jira API requires CORS. If tasks fail to load, you may need a browser CORS extension or configure your Jira Cloud to allow local requests.</p>
+            <div class="settings-section-card" style="margin-bottom: 1.5rem;">
+              <div class="card-toggle-header" style="padding: 0.6rem 0.8rem;">
+                <span class="card-toggle-title" style="font-size: 0.85rem;">
+                  <span data-i18n="label-show-jira">Show Jira Integration</span>
+                </span>
+                <label class="switch-control">
+                  <input type="checkbox" id="settings-show-jira" checked>
+                  <span class="switch-slider"></span>
+                </label>
+              </div>
+            </div>
             <div class="form-group">
               <label for="jira-host" data-i18n="label-jira-host">Jira Host URL</label>
               <input type="url" id="jira-host" placeholder="https://your-company.atlassian.net">
@@ -487,11 +680,18 @@
               <label for="jira-email" data-i18n="label-jira-email">Account Email</label>
               <input type="email" id="jira-email" placeholder="name@company.com">
             </div>
-            <div class="form-group">
-              <label for="jira-token" data-i18n="label-jira-token">API Token</label>
-              <input type="password" id="jira-token" placeholder="API token from Atlassian Account">
-            </div>
-          </div>
+             <div class="form-group">
+               <label for="jira-token" data-i18n="label-jira-token">API Token</label>
+               <input type="password" id="jira-token" placeholder="API token from Atlassian Account">
+             </div>
+             <div class="form-group row-align" style="margin-top: 0.5rem; margin-bottom: 1rem;">
+               <label for="settings-jira-ooo-hide" style="font-size: 0.8rem; color: var(--text-secondary);" data-i18n="label-hide-ooo">Hide if Out of Office is active</label>
+               <label class="switch-control" style="transform: scale(0.85);">
+                 <input type="checkbox" id="settings-jira-ooo-hide">
+                 <span class="switch-slider"></span>
+               </label>
+             </div>
+           </div>
 
           <!-- Tab: Storage -->
           <div id="tab-storage" class="tab-pane">
@@ -526,25 +726,6 @@
             </div>
           </div>
 
-          <!-- Tab: Events -->
-          <div id="tab-events" class="tab-pane">
-            <p class="tab-desc">Configure birthdays or important events. If an event falls on today, it will be displayed prominently. Otherwise, the closest upcoming event is shown.</p>
-            <div class="form-group">
-              <label>Add New Event</label>
-              <div style="display: grid; grid-template-columns: 1fr auto auto; gap: 0.5rem; margin-top: 0.5rem; width: 100%;">
-                <input type="text" id="event-name-input" placeholder="e.g. Hector's Birthday" style="margin-bottom: 0;">
-                <input type="date" id="event-date-input" style="margin-bottom: 0;">
-                <button type="button" id="btn-add-event" class="btn-primary" style="padding: 0 1rem;">Add</button>
-              </div>
-            </div>
-
-            <div class="form-group" style="margin-top: 1.5rem;">
-              <label>Configured Events</label>
-              <ul id="settings-events-list" class="settings-list" style="list-style: none; padding: 0; margin-top: 0.5rem; max-height: 180px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: var(--radius-sm); background: rgba(255,255,255,0.02); padding: 0.5rem;">
-                <!-- Dynamically populated -->
-              </ul>
-            </div>
-          </div>
         </div>
 
         <div class="modal-footer">
@@ -597,6 +778,33 @@
     </div>
   </dialog>
 
+  <!-- Edit Event Modal -->
+  <dialog id="edit-event-modal" class="modal-dialog">
+    <div class="modal-content" style="max-width: 450px;">
+      <header class="modal-header">
+        <h2 data-i18n="edit-event-title-modal">Edit Event</h2>
+        <button id="close-edit-event-modal" class="btn-close">&times;</button>
+      </header>
+      <div class="modal-body" style="padding-bottom: 1rem;">
+        <form id="edit-event-form" class="todo-form" style="gap: 1.25rem; margin-bottom: 0;">
+          <input type="hidden" id="edit-event-id">
+          <div class="form-group">
+            <label for="edit-event-name-input" data-i18n="countdown-placeholder">Event Title</label>
+            <input type="text" id="edit-event-name-input" placeholder="e.g. Vacation!" required>
+          </div>
+          <div class="form-group">
+            <label for="edit-event-date-input">Target Date</label>
+            <input type="date" id="edit-event-date-input" required>
+          </div>
+          <div class="modal-footer" style="padding: 1rem 0 0 0; margin-top: 1rem; border-top: 1px solid var(--border-color);">
+            <button type="button" id="btn-cancel-edit-event" class="btn-secondary" data-i18n="cancel-btn">Cancel</button>
+            <button type="submit" class="btn-primary" data-i18n="save-btn">Save Changes</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </dialog>
+
   <!-- Add Task Modal -->
   <dialog id="add-task-modal" class="modal-dialog">
     <div class="modal-content" style="max-width: 450px;">
@@ -643,7 +851,7 @@
           <input type="hidden" id="edit-task-id">
           <div class="form-group">
             <label for="edit-task-text" data-i18n="label-task-text">Task Name</label>
-            <input type="text" id="edit-task-text" required placeholder="Task text...">
+            <input type="text" id="edit-task-text" placeholder="Task text..." required>
           </div>
           <div class="form-group">
             <label for="edit-task-date" data-i18n="label-due-date">Due Date</label>
@@ -696,6 +904,31 @@
   </button>
 
 
+
+  <!-- Out of Office Date Modal -->
+  <dialog id="ooo-date-modal" class="modal-dialog">
+    <div class="modal-content" style="max-width: 400px;">
+      <header class="modal-header">
+        <h2 data-i18n="ooo-title">Return Date</h2>
+        <button id="close-ooo-modal" class="btn-close">&times;</button>
+      </header>
+      <div class="modal-body" style="padding-bottom: 1rem;">
+        <form id="ooo-form" style="display: flex; flex-direction: column; gap: 1rem; margin-bottom: 0;">
+          <div class="form-group">
+            <label for="ooo-date-input">Until when will you be away?</label>
+            <input type="date" id="ooo-date-input" required>
+          </div>
+          <div class="modal-footer" style="padding: 1rem 0 0 0; margin-top: 1rem; border-top: 1px solid var(--border-color);">
+            <button type="button" id="btn-cancel-ooo" class="btn-secondary" data-i18n="cancel-btn">Cancel</button>
+            <button type="submit" class="btn-primary" data-i18n="save-btn">Save</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- Custom Tooltip -->
+  <div id="custom-tooltip" class="custom-tooltip hidden"></div>
 
   <!-- Load script -->
   <script src="app.js" type="module"></script>

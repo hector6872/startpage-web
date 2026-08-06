@@ -3,6 +3,7 @@ const translations = {
   en: {
     "col-today": "Today",
     "col-week": "This Week",
+    "col-work": "Work",
     "col-tasks": "Workspace",
     "tasks-card-title": "My Tasks",
     "calendar-events": "Events & Meetings",
@@ -11,9 +12,9 @@ const translations = {
     "weekly-schedule": "Weekly Schedule",
     "jira-tasks": "Jira Assigned Tasks",
     "todo-placeholder": "Add a new task...",
-    "countdown-placeholder": "Countdown title...",
-    "col-countdowns": "My Countdowns",
-    "countdown-empty": "No countdowns yet.",
+    "countdown-placeholder": "Event title...",
+    "col-countdowns": "My Events",
+    "countdown-empty": "No events configured.",
     "priority-low": "Low",
     "priority-medium": "Medium",
     "priority-high": "High",
@@ -48,7 +49,7 @@ const translations = {
     "world-clock-sub": "World Time",
     "label-show-weather": "Show Weather Widget",
     "label-show-world-clock": "Show World Clock Widget",
-    "label-show-countdowns": "Show Countdowns",
+    "label-show-countdowns": "Show Events",
     "label-show-tasks": "Show Tasks",
     "label-city": "Weather City",
     "label-weather-url": "Weather Web URL (Optional)",
@@ -79,6 +80,13 @@ const translations = {
     "connected": "Connected",
     "google-login": "Log In with Google",
     "google-logout": "Log Out",
+    "google-login-personal": "Log In (Personal)",
+    "google-login-work": "Log In (Work)",
+    "google-status-personal": "Personal Account:",
+    "google-status-work": "Work Account:",
+    "google-color": "Account Color:",
+    "badge-personal": "Personal",
+    "badge-work": "Work",
     "github-settings": "GitHub Configuration",
     "label-token": "Personal Access Token (PAT)",
     "label-username": "GitHub Username",
@@ -92,7 +100,8 @@ const translations = {
     "label-jira-token": "Jira API Token",
     "save-settings": "Save Settings",
     "edit-task-title": "Edit Task",
-    "add-countdown-title": "Add New Countdown",
+    "edit-event-title-modal": "Edit Event",
+    "add-countdown-title": "Add New Event",
     "add-task-title-modal": "Add New Task",
     "label-task-text": "Task Name",
     "label-due-date": "Due Date",
@@ -148,6 +157,7 @@ const translations = {
   es: {
     "col-today": "Hoy",
     "col-week": "Esta Semana",
+    "col-work": "Trabajo",
     "col-tasks": "Espacio de Trabajo",
     "tasks-card-title": "Mis Tareas",
     "calendar-events": "Eventos y Reuniones",
@@ -156,9 +166,9 @@ const translations = {
     "weekly-schedule": "Agenda Semanal",
     "jira-tasks": "Tareas de Jira",
     "todo-placeholder": "Añadir nueva tarea...",
-    "countdown-placeholder": "Título del countdown...",
-    "col-countdowns": "Mis Countdowns",
-    "countdown-empty": "Sin countdowns todavía.",
+    "countdown-placeholder": "Nombre del evento...",
+    "col-countdowns": "Mis Eventos",
+    "countdown-empty": "No hay eventos configurados.",
     "priority-low": "Baja",
     "priority-medium": "Media",
     "priority-high": "Alta",
@@ -193,7 +203,7 @@ const translations = {
     "world-clock-sub": "Hora Mundial",
     "label-show-weather": "Mostrar Clima",
     "label-show-world-clock": "Mostrar Reloj Mundial",
-    "label-show-countdowns": "Mostrar Countdowns",
+    "label-show-countdowns": "Mostrar Eventos",
     "label-show-tasks": "Mostrar Tareas",
     "label-city": "Ciudad para el clima",
     "label-weather-url": "URL de la web del clima (Opcional)",
@@ -224,6 +234,13 @@ const translations = {
     "connected": "Conectado",
     "google-login": "Iniciar Sesión con Google",
     "google-logout": "Cerrar Sesión",
+    "google-login-personal": "Iniciar Sesión (Personal)",
+    "google-login-work": "Iniciar Sesión (Trabajo)",
+    "google-status-personal": "Cuenta Personal:",
+    "google-status-work": "Cuenta de Trabajo:",
+    "google-color": "Color de Cuenta:",
+    "badge-personal": "Personal",
+    "badge-work": "Trabajo",
     "github-settings": "Configuración de GitHub",
     "label-token": "Token de Acceso Personal (PAT)",
     "label-username": "Usuario de GitHub",
@@ -237,7 +254,8 @@ const translations = {
     "label-jira-token": "Token de API de Jira",
     "save-settings": "Guardar Configuración",
     "edit-task-title": "Editar Tarea",
-    "add-countdown-title": "Añadir nuevo countdown",
+    "edit-event-title-modal": "Editar Evento",
+    "add-countdown-title": "Añadir nuevo evento",
     "add-task-title-modal": "Añadir nueva tarea",
     "label-task-text": "Nombre de la Tarea",
     "label-due-date": "Fecha de Vencimiento",
@@ -325,6 +343,10 @@ let state = {
   todos: [],
   countdowns: [],
   googleClientToken: sessionStorage.getItem('google_access_token') || null,
+  googlePersonalToken: sessionStorage.getItem('google_personal_token') || null,
+  googleWorkToken: sessionStorage.getItem('google_work_token') || null,
+  googlePersonalEmail: sessionStorage.getItem('google_personal_email') || null,
+  googleWorkEmail: sessionStorage.getItem('google_work_email') || null,
   settings: {
     lang: 'en',
     theme: 'system',
@@ -349,7 +371,16 @@ let state = {
     bitbucketToken: '',
     jiraHost: '',
     jiraEmail: '',
-    jiraToken: ''
+    jiraToken: '',
+    oooActive: false,
+    oooUntil: null,
+    hideJiraOoo: false,
+    hideGithubOoo: false,
+    hideBitbucketOoo: false,
+    hideGitlabOoo: false,
+    gitlabHost: 'https://gitlab.com',
+    gitlabToken: '',
+    gitlabUsername: ''
   }
 };
 
@@ -568,17 +599,29 @@ async function loadState() {
   state.lang = state.settings.lang || 'en';
   state.theme = state.settings.theme || localStorage.getItem('theme') || 'system';
 
+  // Check Out of Office (OOO) expiration
+  if (state.settings.oooActive && state.settings.oooUntil) {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const oooUntilDate = new Date(state.settings.oooUntil + 'T00:00:00');
+    if (today >= oooUntilDate) {
+      state.settings.oooActive = false;
+      state.settings.oooUntil = null;
+      localStorage.setItem('dashboard_settings', JSON.stringify(state.settings));
+    }
+  }
+
+  updateOooBadges();
+
   applyPrimaryColor(state.settings.primaryColor);
+  applyAccountColors();
 
   const storedTodos = localStorage.getItem('todos');
   if (storedTodos) {
     state.todos = JSON.parse(storedTodos);
   }
 
-  const storedCountdowns = localStorage.getItem('countdowns');
-  if (storedCountdowns) {
-    state.countdowns = JSON.parse(storedCountdowns);
-  }
+  // Countdowns are now customEvents from settings, no local countdowns needed
 
   // Initialize file sync if enabled
   if (state.settings.storageMode === 'file') {
@@ -590,6 +633,14 @@ async function loadState() {
 
   // Initialize organizer visibility settings
   updateOrganizerVisibility();
+}
+
+function updateOooBadges() {
+  const active = state.settings.oooActive === true;
+  const badgeToday = document.getElementById('ooo-badge-today');
+  const badgeWeek = document.getElementById('ooo-badge-week');
+  if (badgeToday) badgeToday.classList.toggle('hidden', !active);
+  if (badgeWeek) badgeWeek.classList.toggle('hidden', !active);
 }
 
 async function cleanupOldCompletedTodos() {
@@ -639,12 +690,19 @@ function updateNotesBadge() {
 }
 
 function updateUpcomingEventBanner() {
-  const banner = document.getElementById('upcoming-event');
-  if (!banner) return;
+  const container = document.getElementById('events-banner-container');
+  if (!container) return;
+  
+  if (state.settings.showCountdowns === false) {
+    container.classList.add('hidden');
+    container.innerHTML = '';
+    return;
+  }
+  container.classList.remove('hidden');
+  container.innerHTML = '';
 
   const events = state.settings.customEvents || [];
   if (events.length === 0) {
-    banner.classList.add('hidden');
     return;
   }
 
@@ -653,6 +711,7 @@ function updateUpcomingEventBanner() {
   const currentYear = today.getFullYear();
 
   let todayEvents = [];
+  let pastEvents = [];
   let upcomingEvents = [];
 
   events.forEach(evt => {
@@ -665,10 +724,24 @@ function updateUpcomingEventBanner() {
     
     if (today.getMonth() === month && today.getDate() === day) {
       todayEvents.push(evt);
+    } else if (eventDateThisYear < today) {
+      const timeDiff = today.getTime() - eventDateThisYear.getTime();
+      const daysAgo = Math.floor(timeDiff / (1000 * 3600 * 24));
+      pastEvents.push({
+        ...evt,
+        daysAgo
+      });
+      
+      // Also calculate next year's upcoming occurrence
+      let nextYearEvent = new Date(eventDateThisYear);
+      nextYearEvent.setFullYear(currentYear + 1);
+      const nextDiff = nextYearEvent.getTime() - today.getTime();
+      const daysLeft = Math.ceil(nextDiff / (1000 * 3600 * 24));
+      upcomingEvents.push({
+        ...evt,
+        daysLeft
+      });
     } else {
-      if (eventDateThisYear < today) {
-        eventDateThisYear.setFullYear(currentYear + 1);
-      }
       const timeDiff = eventDateThisYear.getTime() - today.getTime();
       const daysLeft = Math.ceil(timeDiff / (1000 * 3600 * 24));
       upcomingEvents.push({
@@ -678,22 +751,41 @@ function updateUpcomingEventBanner() {
     }
   });
 
+  let activeChipsHTML = '';
+
   if (todayEvents.length > 0) {
-    banner.className = 'event-banner today';
     const names = todayEvents.map(e => e.name).join(', ');
     const labelText = state.lang === 'es' 
       ? `🎉 Hoy: ¡${names}! 🎂`
       : `🎉 Today: ${names}! 🎂`;
-    banner.textContent = labelText;
+    activeChipsHTML += `<div class="event-banner today">${escapeHtml(labelText)}</div>`;
+    
+    const remainingCount = events.length - todayEvents.length;
+    if (remainingCount > 0) {
+      const moreText = state.lang === 'es' ? `+${remainingCount} más` : `+${remainingCount} more`;
+      activeChipsHTML += `<div class="event-banner more-chip">${escapeHtml(moreText)}</div>`;
+    }
+  } else if (pastEvents.length > 0) {
+    pastEvents.sort((a, b) => a.daysAgo - b.daysAgo);
+    const closestPast = pastEvents[0];
+    const labelText = state.lang === 'es'
+      ? `⚠️ Evento pasado: ${closestPast.name} (hace ${closestPast.daysAgo} ${closestPast.daysAgo === 1 ? 'día' : 'días'})`
+      : `⚠️ Past event: ${closestPast.name} (${closestPast.daysAgo} ${closestPast.daysAgo === 1 ? 'day' : 'days'} ago)`;
+    activeChipsHTML += `<div class="event-banner past-warning">${escapeHtml(labelText)}</div>`;
+    
+    const remainingCount = events.length - 1;
+    if (remainingCount > 0) {
+      const moreText = state.lang === 'es' ? `+${remainingCount} más` : `+${remainingCount} more`;
+      activeChipsHTML += `<div class="event-banner more-chip">${escapeHtml(moreText)}</div>`;
+    }
   } else if (upcomingEvents.length > 0) {
     upcomingEvents.sort((a, b) => a.daysLeft - b.daysLeft);
     const closest = upcomingEvents[0];
+    let bannerClass = 'upcoming';
     if (closest.daysLeft < 7) {
-      banner.className = 'event-banner soon';
+      bannerClass = 'soon';
     } else if (closest.daysLeft < 31) {
-      banner.className = 'event-banner today';
-    } else {
-      banner.className = 'event-banner upcoming';
+      bannerClass = 'today';
     }
     
     const isBirthday = closest.name.toLowerCase().includes('birthday') || closest.name.toLowerCase().includes('cumpleaños');
@@ -706,11 +798,16 @@ function updateUpcomingEventBanner() {
       timeText = closest.daysLeft === 1 ? 'tomorrow' : `in ${closest.daysLeft} days`;
     }
     const labelText = `${icon} ${closest.name} (${timeText})`;
+    activeChipsHTML += `<div class="event-banner ${bannerClass}">${escapeHtml(labelText)}</div>`;
     
-    banner.textContent = labelText;
-  } else {
-    banner.classList.add('hidden');
+    const remainingCount = upcomingEvents.length - 1;
+    if (remainingCount > 0) {
+      const moreText = state.lang === 'es' ? `+${remainingCount} más` : `+${remainingCount} more`;
+      activeChipsHTML += `<div class="event-banner more-chip">${escapeHtml(moreText)}</div>`;
+    }
   }
+
+  container.innerHTML = activeChipsHTML;
 }
 
 function renderSettingsEventsList() {
@@ -737,6 +834,10 @@ function renderSettingsEventsList() {
     return dA - dB;
   });
 
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const currentYear = today.getFullYear();
+
   sortedEvents.forEach((evt) => {
     const li = document.createElement('li');
     
@@ -747,14 +848,30 @@ function renderSettingsEventsList() {
     nameSpan.className = 'event-item-name';
     nameSpan.textContent = evt.name;
     
+    const dateRow = document.createElement('div');
+    dateRow.style.display = 'flex';
+    dateRow.style.alignItems = 'center';
+    dateRow.style.gap = '0.5rem';
+    
     const dateSpan = document.createElement('span');
     dateSpan.className = 'event-item-date';
     const [y, m, d] = evt.date.split('-');
     const dateObj = new Date(y, parseInt(m, 10) - 1, d);
     dateSpan.textContent = dateObj.toLocaleDateString(state.lang === 'es' ? 'es-ES' : 'en-US', { day: 'numeric', month: 'short' });
     
+    dateRow.appendChild(dateSpan);
+    
+    const eventDateThisYear = new Date(currentYear, parseInt(m, 10) - 1, parseInt(d, 10));
+    const isOverdue = eventDateThisYear < today && !(today.getMonth() === parseInt(m, 10) - 1 && today.getDate() === parseInt(d, 10));
+    if (isOverdue) {
+      const overdueBadge = document.createElement('span');
+      overdueBadge.className = 'event-overdue-badge';
+      overdueBadge.textContent = state.lang === 'es' ? 'Vencido' : 'Overdue';
+      dateRow.appendChild(overdueBadge);
+    }
+
     infoDiv.appendChild(nameSpan);
-    infoDiv.appendChild(dateSpan);
+    infoDiv.appendChild(dateRow);
     
     const deleteBtn = document.createElement('button');
     deleteBtn.type = 'button';
@@ -1010,8 +1127,42 @@ function applyPrimaryColor(colorName = 'blue') {
   document.documentElement.setAttribute('data-accent', color);
 }
 
+// Personal & Work Custom Colors Management
+function applyAccountColors() {
+  const isDark = document.documentElement.classList.contains('dark');
+  const colorMap = {
+    blue: isDark ? '#60a5fa' : '#1e70e0',
+    indigo: '#6366f1',
+    purple: isDark ? '#a78bfa' : '#7c3aed',
+    pink: '#ec4899',
+    red: '#ef4444',
+    orange: '#f97316',
+    green: '#10b981',
+    teal: '#06b6d4',
+    slate: '#64748b',
+    black: isDark ? '#e4e4e7' : '#18181b'
+  };
+
+  const personal = state.settings.personalColor || 'blue';
+  const work = state.settings.workColor || 'black';
+
+  document.documentElement.style.setProperty('--personal-color', colorMap[personal] || colorMap.blue);
+  document.documentElement.style.setProperty('--work-color', colorMap[work] || colorMap.black);
+}
+
 function updateSwatchActiveState(selectedColor) {
   const swatches = document.querySelectorAll('#color-picker-swatches .color-swatch-btn');
+  swatches.forEach(btn => {
+    if (btn.getAttribute('data-color') === selectedColor) {
+      btn.classList.add('active');
+    } else {
+      btn.classList.remove('active');
+    }
+  });
+}
+
+function updateAccountSwatchActiveState(containerId, selectedColor) {
+  const swatches = document.querySelectorAll(`#${containerId} .color-swatch-btn`);
   swatches.forEach(btn => {
     if (btn.getAttribute('data-color') === selectedColor) {
       btn.classList.add('active');
@@ -1037,6 +1188,8 @@ function applyTheme() {
       html.classList.add('dark');
     }
   }
+  
+  applyAccountColors();
 }
 
 // Theme switch action
@@ -1246,6 +1399,17 @@ let activeFilter = 'pending';
 function renderTodos() {
   const todoList = document.getElementById('todo-list');
   todoList.innerHTML = '';
+
+  const pendingCount = state.todos.filter(todo => !todo.completed).length;
+  const pendingBtn = document.querySelector('.filter-btn[data-filter="pending"]');
+  if (pendingBtn) {
+    const baseText = translations[state.lang]['filter-pending'] || 'Pending';
+    if (pendingCount > 0) {
+      pendingBtn.innerHTML = `${baseText} <span class="filter-badge">${pendingCount}</span>`;
+    } else {
+      pendingBtn.textContent = baseText;
+    }
+  }
   
   const filteredTodos = state.todos.filter(todo => {
     if (activeFilter === 'pending') return !todo.completed;
@@ -1516,6 +1680,37 @@ async function saveTodos() {
 function updateOrganizerVisibility() {
   const showCountdowns = state.settings.showCountdowns !== false;
   const showTasks = state.settings.showTasks !== false;
+  
+  let showJira = state.settings.showJira !== false;
+  if (state.settings.oooActive && state.settings.hideJiraOoo) {
+    showJira = false;
+  }
+
+  let showGit = state.settings.showGit !== false;
+  const hasGithub = !!(state.settings.githubToken && state.settings.githubUsername);
+  const hasBitbucket = !!(state.settings.bitbucketToken && state.settings.bitbucketUsername && state.settings.bitbucketWorkspace);
+  const hasGitlab = !!(state.settings.gitlabToken && state.settings.gitlabUsername);
+  
+  if (state.settings.oooActive) {
+    const activeGithub = hasGithub && !state.settings.hideGithubOoo;
+    const activeBitbucket = hasBitbucket && !state.settings.hideBitbucketOoo;
+    const activeGitlab = hasGitlab && !state.settings.hideGitlabOoo;
+    if (!activeGithub && !activeBitbucket && !activeGitlab) {
+      showGit = false;
+    }
+  }
+
+  const showWork = showGit || showJira;
+
+  const prsCard = document.getElementById('prs-card');
+  const jiraCard = document.getElementById('jira-card');
+  const workTitle = document.getElementById('work-section-title');
+  const workContent = document.getElementById('work-section-content');
+
+  if (prsCard) prsCard.classList.toggle('hidden', !showGit);
+  if (jiraCard) jiraCard.classList.toggle('hidden', !showJira);
+  if (workTitle) workTitle.classList.toggle('hidden', !showWork);
+  if (workContent) workContent.classList.toggle('hidden', !showWork);
 
   const countdownHeader = document.getElementById('countdown-section-header');
   const countdownCard = document.querySelector('.countdown-wrapper');
@@ -1539,22 +1734,18 @@ function updateOrganizerVisibility() {
 
   const colTasks = document.getElementById('col-tasks');
   const dashboardGrid = document.querySelector('.dashboard-grid');
-  const bothHidden = !showCountdowns && !showTasks;
+  const colTasksHidden = !showCountdowns && !showTasks && !showWork;
   if (colTasks) {
-    colTasks.classList.toggle('hidden', bothHidden);
+    colTasks.classList.toggle('hidden', colTasksHidden);
   }
   if (dashboardGrid) {
-    dashboardGrid.classList.toggle('two-cols', bothHidden);
+    dashboardGrid.classList.toggle('two-cols', colTasksHidden);
   }
 }
 
 // ------------------------------------------------------------
 // COUNTDOWNS
 // ------------------------------------------------------------
-
-async function saveCountdowns() {
-  localStorage.setItem('countdowns', JSON.stringify(state.countdowns));
-}
 
 function renderCountdowns() {
   const list = document.getElementById('countdown-list');
@@ -1563,99 +1754,155 @@ function renderCountdowns() {
 
   list.innerHTML = '';
 
-  const todayStr = getLocalDateString(new Date());
-  const todayMs = new Date(todayStr + 'T00:00:00').getTime();
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const todayMs = today.getTime();
+  const currentYear = today.getFullYear();
 
-  if (state.countdowns.length === 0) {
+  const events = state.settings.customEvents || [];
+  if (events.length === 0) {
     if (emptyEl) emptyEl.classList.remove('hidden');
     return;
   }
   if (emptyEl) emptyEl.classList.add('hidden');
 
-  // Sort by target date ascending
-  const sorted = [...state.countdowns].sort((a, b) => a.targetDate.localeCompare(b.targetDate));
+  // Sort events chronologically (January -> December)
+  const sorted = [...events].sort((a, b) => {
+    const [, mA, dA] = a.date.split('-').map(Number);
+    const [, mB, dB] = b.date.split('-').map(Number);
+    if (mA !== mB) return mA - mB;
+    return dA - dB;
+  });
 
-  sorted.forEach(countdown => {
-    const targetMs = new Date(countdown.targetDate + 'T00:00:00').getTime();
-    const diffDays = Math.ceil((targetMs - todayMs) / (1000 * 60 * 60 * 24));
+  sorted.forEach(evt => {
+    const [, m, d] = evt.date.split('-');
+    const eventDateThisYear = new Date(currentYear, parseInt(m, 10) - 1, parseInt(d, 10));
+    
+    // Check if the event is overdue (passed this year already)
+    const isOverdue = eventDateThisYear < today && !(today.getMonth() === parseInt(m, 10) - 1 && today.getDate() === parseInt(d, 10));
+    
+    let daysLabel = '';
+    let badgeHTML = '';
+    let relativeText = '';
+    let isFarFuture = false;
 
-    let daysLabel, badgeClass;
-    if (diffDays < 0) {
-      daysLabel = state.lang === 'es' ? `Hace ${Math.abs(diffDays)} días` : `${Math.abs(diffDays)} days ago`;
-      badgeClass = 'countdown-badge-past';
-    } else if (diffDays === 0) {
-      daysLabel = state.lang === 'es' ? '¡Hoy!' : 'Today!';
-      badgeClass = 'countdown-badge-red';
-    } else if (diffDays === 1) {
-      daysLabel = state.lang === 'es' ? 'Mañana' : 'Tomorrow';
-      badgeClass = 'countdown-badge-red';
-    } else if (diffDays < 7) {
-      daysLabel = state.lang === 'es' ? `En ${diffDays} días` : `In ${diffDays} days`;
-      badgeClass = 'countdown-badge-red';
-    } else if (diffDays < 31) {
-      daysLabel = state.lang === 'es' ? `En ${diffDays} días` : `In ${diffDays} days`;
-      badgeClass = 'countdown-badge-amber';
+    if (isOverdue) {
+      daysLabel = state.lang === 'es' ? 'Vencido' : 'Overdue';
+      badgeHTML = `<span class="event-overdue-badge" style="margin-left: 0;">${daysLabel}</span>`;
+      
+      const timeDiff = todayMs - eventDateThisYear.getTime();
+      const daysAgo = Math.floor(timeDiff / (1000 * 3600 * 24));
+      relativeText = state.lang === 'es'
+        ? `hace ${daysAgo} ${daysAgo === 1 ? 'día' : 'días'}`
+        : `${daysAgo} ${daysAgo === 1 ? 'day' : 'days'} ago`;
     } else {
-      daysLabel = state.lang === 'es' ? `En ${diffDays} días` : `In ${diffDays} days`;
-      badgeClass = 'countdown-badge-neutral';
+      const diffTime = eventDateThisYear.getTime() - todayMs;
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      
+      let badgeClass = '';
+      if (diffDays === 0) {
+        daysLabel = state.lang === 'es' ? 'Hoy' : 'Today';
+        badgeClass = 'countdown-badge-amber'; // Header banner today colors (orange/yellow)
+        relativeText = state.lang === 'es' ? 'hoy' : 'today';
+      } else if (diffDays < 7) {
+        daysLabel = state.lang === 'es' ? `En ${diffDays} d` : `In ${diffDays} d`;
+        badgeClass = 'countdown-badge-red'; // Header banner soon colors (<7 days: red)
+        relativeText = state.lang === 'es' ? `en ${diffDays} días` : `in ${diffDays} days`;
+      } else if (diffDays < 31) {
+        daysLabel = state.lang === 'es' ? `En ${diffDays} d` : `In ${diffDays} d`;
+        badgeClass = 'countdown-badge-amber'; // Header banner today colors (7 to 30 days: orange/yellow)
+        relativeText = state.lang === 'es' ? `en ${diffDays} días` : `in ${diffDays} days`;
+      } else {
+        daysLabel = state.lang === 'es' ? `En ${diffDays} d` : `In ${diffDays} d`;
+        badgeClass = 'countdown-badge-neutral'; // Header banner upcoming colors (31+ days: neutral)
+        relativeText = state.lang === 'es' ? `en ${diffDays} días` : `in ${diffDays} days`;
+        isFarFuture = true;
+      }
+      badgeHTML = `<span class="countdown-badge ${badgeClass}">${daysLabel}</span>`;
     }
 
-    const isPast = diffDays < 0;
-    const titleClass = isPast ? 'countdown-title countdown-title-past' : 'countdown-title';
+    const titleClass = 'countdown-title'; // Overdue events do not get line-through strikethrough
+    const formattedDate = eventDateThisYear.toLocaleDateString(state.lang === 'es' ? 'es-ES' : 'en-US', { day: 'numeric', month: 'short' });
+    const fullMonthDate = eventDateThisYear.toLocaleDateString(state.lang === 'es' ? 'es-ES' : 'en-US', { day: 'numeric', month: 'long' });
+    const tooltipText = evt.name + `\n${fullMonthDate} (${relativeText})`;
 
     const li = document.createElement('li');
     li.className = 'countdown-item';
+    if (isFarFuture) {
+      li.classList.add('far-future');
+    }
+    li.setAttribute('data-tooltip', tooltipText);
     li.innerHTML = `
       <div class="todo-item-left">
         <div class="todo-item-details">
-          <span class="${titleClass}">${escapeHtml(countdown.title)}</span>
-          <span class="countdown-date" style="margin-top: 0.15rem; display: block;">${formatDateShort(countdown.targetDate)}</span>
+          <span class="${titleClass}">${escapeHtml(evt.name)}</span>
+          <span class="countdown-date" style="margin-top: 0.15rem; display: block;">${formattedDate}</span>
         </div>
       </div>
       <div class="todo-actions countdown-actions">
-        <span class="countdown-badge ${badgeClass}">${daysLabel}</span>
-        <button class="btn-item-action delete-countdown-btn" data-id="${countdown.id}" title="${state.lang === 'es' ? 'Eliminar' : 'Delete'}">
-          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+        ${badgeHTML}
+        <button class="btn-item-action edit-countdown-btn" data-id="${evt.id}" title="${state.lang === 'es' ? 'Editar' : 'Edit'}">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+        </button>
+        <button class="btn-item-action delete-countdown-btn" data-id="${evt.id}" title="${state.lang === 'es' ? 'Eliminar' : 'Delete'}">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
         </button>
       </div>
     `;
 
+    li.querySelector('.edit-countdown-btn').addEventListener('click', () => {
+      openEditEventModal(evt);
+    });
+
     li.querySelector('.delete-countdown-btn').addEventListener('click', () => {
-      deleteCountdown(countdown.id);
+      deleteCountdown(evt.id);
     });
 
     list.appendChild(li);
   });
 }
 
-async function addCountdown(title, targetDate) {
-  state.countdowns.push({ id: Date.now().toString(), title, targetDate });
-  await saveCountdowns();
+async function addCountdown(name, date) {
+  state.settings.customEvents = state.settings.customEvents || [];
+  state.settings.customEvents.push({ id: Date.now().toString(), name, date });
+  await saveSettings();
   renderCountdowns();
+  renderSettingsEventsList();
+  updateUpcomingEventBanner();
 }
 
 let countdownIdToDelete = null;
 
 function deleteCountdown(id) {
   countdownIdToDelete = id;
-  const countdown = state.countdowns.find(c => c.id === id);
+  const events = state.settings.customEvents || [];
+  const countdown = events.find(c => c.id === id);
   if (!countdown) return;
 
   const modal = document.getElementById('confirm-delete-modal');
   if (modal) {
     const dict = translations[state.lang];
     confirmActionType = 'delete-countdown';
-    modal.querySelector('[data-i18n="confirm-delete-title"]').textContent = state.lang === 'es' ? 'Eliminar Countdown' : 'Delete Countdown';
+    modal.querySelector('[data-i18n="confirm-delete-title"]').textContent = state.lang === 'es' ? 'Eliminar Evento' : 'Delete Event';
     const descEl = modal.querySelector('[data-i18n="confirm-delete-desc"]');
     if (descEl) {
       descEl.innerHTML = state.lang === 'es'
-        ? `¿Estás seguro de que quieres eliminar el countdown: <strong>"${escapeHtml(countdown.title)}"</strong>?`
-        : `Are you sure you want to delete the countdown: <strong>"${escapeHtml(countdown.title)}"</strong>?`;
+        ? `¿Estás seguro de que quieres eliminar el evento: <strong>"${escapeHtml(countdown.name)}"</strong>?`
+        : `Are you sure you want to delete the event: <strong>"${escapeHtml(countdown.name)}"</strong>?`;
     }
     modal.querySelector('[data-i18n="cancel-btn"]').textContent = dict['cancel-btn'];
     modal.querySelector('[data-i18n="delete-btn"]').textContent = dict['delete-btn'];
     modal.showModal();
   }
+}
+
+function openEditEventModal(evt) {
+  const modal = document.getElementById('edit-event-modal');
+  if (!modal) return;
+  document.getElementById('edit-event-id').value = evt.id;
+  document.getElementById('edit-event-name-input').value = evt.name;
+  document.getElementById('edit-event-date-input').value = evt.date;
+  modal.showModal();
 }
 
 async function addTodo(text, dueDate, priority) {
@@ -1843,6 +2090,11 @@ function getJiraAuthHeader() {
 // Fetch Jira Tasks
 async function fetchJira() {
   const container = document.getElementById('jira-container');
+  const jiraBadge = document.getElementById('jira-count-badge');
+  if (jiraBadge) {
+    jiraBadge.classList.add('hidden');
+  }
+
   if (!state.settings.jiraHost || !state.settings.jiraEmail || !state.settings.jiraToken) {
     container.innerHTML = `<p class="empty-msg">${translations[state.lang]['status-unconfigured']}</p>`;
     return;
@@ -1861,6 +2113,15 @@ async function fetchJira() {
     if (!response.ok) throw new Error();
     const data = await response.json();
 
+    if (jiraBadge) {
+      if (data.issues && data.issues.length > 0) {
+        jiraBadge.textContent = data.issues.length;
+        jiraBadge.classList.remove('hidden');
+      } else {
+        jiraBadge.classList.add('hidden');
+      }
+    }
+
     if (!data.issues || data.issues.length === 0) {
       container.innerHTML = `<p class="empty-msg">${translations[state.lang]['no-jira-tasks']}</p>`;
       return;
@@ -1871,11 +2132,13 @@ async function fetchJira() {
       const key = issue.key;
       const url = `${domain}/browse/${key}`;
       const priority = issue.fields.priority ? issue.fields.priority.name : 'medium';
+      const titleText = `[${key}] ${summary}`;
+      const statusText = issue.fields.status.name;
       return `
-        <a href="${url}" target="_blank" class="integration-item">
+        <a href="${url}" target="_blank" class="integration-item" data-tooltip="${escapeHtml(titleText)}\nStatus: ${escapeHtml(statusText)}\nPriority: ${escapeHtml(priority)}">
           <span class="item-title">[${key}] ${escapeHtml(summary)}</span>
           <div class="item-meta">
-            <span>${escapeHtml(issue.fields.status.name)}</span>
+            <span>${escapeHtml(statusText)}</span>
             <span class="item-badge">${escapeHtml(priority)}</span>
           </div>
         </a>
@@ -1888,152 +2151,436 @@ async function fetchJira() {
 }
 
 // Fetch GitHub PRs
-async function fetchGitHub() {
+async function fetchAllPRs() {
   const container = document.getElementById('prs-container');
-  if (!state.settings.githubToken || !state.settings.githubUsername) {
+  const prsBadge = document.getElementById('prs-count-badge');
+  if (prsBadge) prsBadge.classList.add('hidden');
+  
+  if (state.settings.showGit === false) {
+    return;
+  }
+
+  let gitHiddenByOoo = false;
+  const hasGithub = !!(state.settings.githubToken && state.settings.githubUsername);
+  const hasBitbucket = !!(state.settings.bitbucketToken && state.settings.bitbucketUsername && state.settings.bitbucketWorkspace);
+  const hasGitlab = !!(state.settings.gitlabToken && state.settings.gitlabUsername);
+  
+  if (state.settings.oooActive) {
+    const activeGithub = hasGithub && !state.settings.hideGithubOoo;
+    const activeBitbucket = hasBitbucket && !state.settings.hideBitbucketOoo;
+    const activeGitlab = hasGitlab && !state.settings.hideGitlabOoo;
+    if (!activeGithub && !activeBitbucket && !activeGitlab) {
+      gitHiddenByOoo = true;
+    }
+  }
+
+  if (gitHiddenByOoo) {
+    container.innerHTML = `<p class="empty-msg">${state.lang === 'es' ? 'Out of Office Activo' : 'Out of Office Active'}</p>`;
+    return;
+  }
+
+  if (!hasGithub && !hasBitbucket && !hasGitlab) {
     container.innerHTML = `<p class="empty-msg">${translations[state.lang]['status-unconfigured']}</p>`;
     return;
   }
 
-  try {
-    const q = encodeURIComponent(`is:pr is:open review-requested:${state.settings.githubUsername} assignee:${state.settings.githubUsername}`);
-    const response = await fetch(`https://api.github.com/search/issues?q=${q}&per_page=5`, {
-      headers: {
-        'Authorization': `token ${state.settings.githubToken}`,
-        'Accept': 'application/vnd.github.v3+json'
+  let prList = [];
+
+  // GitHub Fetch
+  if (hasGithub && !(state.settings.oooActive && state.settings.hideGithubOoo)) {
+    try {
+      const q = encodeURIComponent(`is:pr is:open review-requested:${state.settings.githubUsername} assignee:${state.settings.githubUsername}`);
+      const res = await fetch(`https://api.github.com/search/issues?q=${q}&per_page=5`, {
+        headers: {
+          'Authorization': `token ${state.settings.githubToken}`,
+          'Accept': 'application/vnd.github.v3+json'
+        }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.items) {
+          data.items.forEach(pr => {
+            const repo = pr.repository_url.split('/').slice(-1)[0];
+            prList.push({
+              title: pr.title,
+              url: pr.html_url,
+              repo: repo,
+              number: pr.number,
+              source: 'GitHub'
+            });
+          });
+        }
       }
-    });
-
-    if (!response.ok) throw new Error();
-    const data = await response.json();
-
-    if (!data.items || data.items.length === 0) {
-      container.innerHTML = `<p class="empty-msg">${translations[state.lang]['no-prs']}</p>`;
-      return;
+    } catch (e) {
+      console.error("Error fetching GitHub PRs:", e);
     }
-
-    container.innerHTML = data.items.map(pr => {
-      const repo = pr.repository_url.split('/').slice(-1)[0];
-      return `
-        <a href="${pr.html_url}" target="_blank" class="integration-item">
-          <span class="item-title">${escapeHtml(pr.title)}</span>
-          <div class="item-meta">
-            <span>${escapeHtml(repo)}</span>
-            <span class="item-badge">#${pr.number}</span>
-          </div>
-        </a>
-      `;
-    }).join('');
-
-  } catch (error) {
-    container.innerHTML = `<p class="empty-msg" style="color:var(--danger)">GitHub Auth / Connection Error</p>`;
   }
-}
 
-// Fetch Bitbucket PRs
-async function fetchBitbucket() {
-  // If GitHub has loaded, let's append Bitbucket PRs to the same container, or clear it
-  const container = document.getElementById('prs-container');
-  
-  if (!state.settings.bitbucketWorkspace || !state.settings.bitbucketToken || !state.settings.bitbucketUsername) {
-    // If GitHub is also unconfigured, show unconfigured
-    if (!state.settings.githubToken) {
-      container.innerHTML = `<p class="empty-msg">${translations[state.lang]['status-unconfigured']}</p>`;
+  // Bitbucket Fetch
+  if (hasBitbucket && !(state.settings.oooActive && state.settings.hideBitbucketOoo)) {
+    try {
+      const auth = btoa(`${state.settings.bitbucketUsername}:${state.settings.bitbucketToken}`);
+      const res = await fetch(`https://api.bitbucket.org/2.0/pullrequests/${state.settings.bitbucketUsername}`, {
+        headers: {
+          'Authorization': `Basic ${auth}`,
+          'Accept': 'application/json'
+        }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.values) {
+          data.values.forEach(pr => {
+            prList.push({
+              title: `[Bitbucket] ${pr.title}`,
+              url: pr.links.html.href,
+              repo: pr.source.repository.name,
+              number: pr.id,
+              source: 'Bitbucket'
+            });
+          });
+        }
+      }
+    } catch (e) {
+      console.error("Error fetching Bitbucket PRs:", e);
     }
+  }
+
+  // GitLab Fetch
+  if (hasGitlab && !(state.settings.oooActive && state.settings.hideGitlabOoo)) {
+    try {
+      const host = (state.settings.gitlabHost || 'https://gitlab.com').replace(/\/$/, "");
+      const token = state.settings.gitlabToken;
+      const username = state.settings.gitlabUsername;
+      
+      const assigneeUrl = `${host}/api/v4/merge_requests?state=opened&assignee_username=${encodeURIComponent(username)}`;
+      const reviewerUrl = `${host}/api/v4/merge_requests?state=opened&reviewer_username=${encodeURIComponent(username)}`;
+      
+      const headers = { 'PRIVATE-TOKEN': token };
+      
+      const [res1, res2] = await Promise.all([
+        fetch(assigneeUrl, { headers }).then(r => r.ok ? r.json() : []),
+        fetch(reviewerUrl, { headers }).then(r => r.ok ? r.json() : [])
+      ]);
+      
+      const uniqueMRs = new Map();
+      [...res1, ...res2].forEach(mr => {
+        uniqueMRs.set(mr.id, mr);
+      });
+
+      uniqueMRs.forEach(mr => {
+        let repo = String(mr.project_id);
+        try {
+          const pathParts = mr.web_url.split('/');
+          const idx = pathParts.indexOf('-');
+          if (idx !== -1) {
+            repo = pathParts.slice(3, idx).join('/');
+          }
+        } catch (e) {}
+
+        prList.push({
+          title: `[GitLab] ${mr.title}`,
+          url: mr.web_url,
+          repo: repo,
+          number: mr.iid,
+          source: 'GitLab'
+        });
+      });
+    } catch (e) {
+      console.error("Error fetching GitLab MRs:", e);
+    }
+  }
+
+  // Render PRs
+  if (prList.length === 0) {
+    container.innerHTML = `<p class="empty-msg">${translations[state.lang]['no-prs']}</p>`;
+    if (prsBadge) prsBadge.classList.add('hidden');
     return;
   }
 
-  try {
-    const auth = btoa(`${state.settings.bitbucketUsername}:${state.settings.bitbucketToken}`);
-    // Fetch pull requests for workspace
-    const workspace = state.settings.bitbucketWorkspace;
-    const response = await fetch(`https://api.bitbucket.org/2.0/pullrequests/${state.settings.bitbucketUsername}`, {
-      headers: {
-        'Authorization': `Basic ${auth}`,
-        'Accept': 'application/json'
-      }
-    });
+  container.innerHTML = prList.map(pr => {
+    return `
+      <a href="${pr.url}" target="_blank" class="integration-item" data-tooltip="${escapeHtml(pr.title)}\nSource: ${pr.source}\nRepo: ${escapeHtml(pr.repo)}\nPR/MR: #${pr.number}">
+        <span class="item-title">${escapeHtml(pr.title)}</span>
+        <div class="item-meta">
+          <span>${escapeHtml(pr.repo)}</span>
+          <span class="item-badge">#${pr.number}</span>
+        </div>
+      </a>
+    `;
+  }).join('');
 
-    if (!response.ok) throw new Error();
-    const data = await response.json();
-
-    const prs = data.values || [];
-    if (prs.length === 0) return; // let GitHub messages remain
-
-    // Append to existing HTML or replace if empty
-    const currentHTML = container.innerHTML.includes('empty-msg') || container.innerHTML.includes('Unconfigured') ? '' : container.innerHTML;
-    
-    const bbHTML = prs.map(pr => {
-      return `
-        <a href="${pr.links.html.href}" target="_blank" class="integration-item">
-          <span class="item-title">[Bitbucket] ${escapeHtml(pr.title)}</span>
-          <div class="item-meta">
-            <span>${escapeHtml(pr.source.repository.name)}</span>
-            <span class="item-badge">#${pr.id}</span>
-          </div>
-        </a>
-      `;
-    }).join('');
-
-    container.innerHTML = currentHTML + bbHTML;
-  } catch (error) {
-    // only write error if container was empty
-    if (container.innerHTML.includes('empty-msg')) {
-      container.innerHTML = `<p class="empty-msg" style="color:var(--danger)">Bitbucket Auth / Connection Error</p>`;
-    }
+  if (prsBadge && prList.length > 0) {
+    prsBadge.textContent = prList.length;
+    prsBadge.classList.remove('hidden');
   }
 }
 
+const fetchGitHub = fetchAllPRs;
+const fetchBitbucket = fetchAllPRs;
+const fetchGitLab = fetchAllPRs;
+function showInputErrorFeedback(inputEl, errorMessage) {
+  if (inputEl.classList.contains('invalid-field')) return;
+  inputEl.classList.add('invalid-field');
+  inputEl.focus();
+
+  let errorEl = inputEl.nextElementSibling;
+  if (!errorEl || !errorEl.classList.contains('field-error-msg')) {
+    errorEl = document.createElement('span');
+    errorEl.className = 'field-error-msg';
+    errorEl.style.color = 'var(--danger)';
+    errorEl.style.fontSize = '0.75rem';
+    errorEl.style.marginTop = '0.25rem';
+    errorEl.style.display = 'block';
+    inputEl.parentNode.insertBefore(errorEl, inputEl.nextSibling);
+  }
+  errorEl.textContent = errorMessage;
+
+  setTimeout(() => {
+    inputEl.classList.remove('invalid-field');
+    errorEl.remove();
+  }, 2500);
+}
+
+function openSettingsGoogleTab() {
+  const toggle = document.getElementById('settings-toggle');
+  if (toggle) {
+    toggle.click();
+    setTimeout(() => {
+      const googleBtn = document.querySelector('.tab-btn[data-tab="tab-google"]');
+      if (googleBtn) googleBtn.click();
+    }, 50);
+  }
+}
+window.openSettingsGoogleTab = openSettingsGoogleTab;
+
 // Google APIs Integrations (Gmail, Tasks, Calendar)
 let googleTokenClient;
+let googleLoginTarget = 'personal';
+
+async function fetchGoogleUserEmail(token) {
+  try {
+    const res = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    if (res.ok) {
+      const data = await res.json();
+      return data.email;
+    }
+  } catch (e) {
+    console.error("Failed to fetch user email", e);
+  }
+  return null;
+}
 
 function initGoogleOAuth() {
+  updateGoogleAuthStatus();
+
+  if (!state.googlePersonalToken && !state.googleWorkToken) {
+    fetchGoogleCalendar();
+    fetchGmail();
+  }
+
   if (typeof google === 'undefined' || !state.settings.googleClientId) {
     return;
   }
 
   googleTokenClient = google.accounts.oauth2.initTokenClient({
     client_id: state.settings.googleClientId,
-    scope: 'https://www.googleapis.com/auth/gmail.readonly https://www.googleapis.com/auth/tasks.readonly https://www.googleapis.com/auth/calendar.readonly',
+    scope: 'https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/gmail.readonly https://www.googleapis.com/auth/tasks.readonly https://www.googleapis.com/auth/calendar.readonly',
     callback: async (response) => {
       if (response.error) {
         console.error(response.error);
         return;
       }
-      state.googleClientToken = response.access_token;
-      sessionStorage.setItem('google_access_token', response.access_token);
-      updateGoogleAuthStatus(true);
+      
+      const token = response.access_token;
+      
+      if (googleLoginTarget === 'personal') {
+        state.googlePersonalToken = token;
+        sessionStorage.setItem('google_personal_token', token);
+        const email = await fetchGoogleUserEmail(token);
+        if (email) {
+          state.googlePersonalEmail = email;
+          sessionStorage.setItem('google_personal_email', email);
+        }
+      } else {
+        state.googleWorkToken = token;
+        sessionStorage.setItem('google_work_token', token);
+        const email = await fetchGoogleUserEmail(token);
+        if (email) {
+          state.googleWorkEmail = email;
+          sessionStorage.setItem('google_work_email', email);
+        }
+      }
+      
+      // Keep googleClientToken for backward compatibility
+      state.googleClientToken = state.googlePersonalToken || state.googleWorkToken;
+      sessionStorage.setItem('google_access_token', state.googleClientToken || '');
+      
+      isRefreshingToken[googleLoginTarget] = false;
+      updateGoogleAuthStatus();
       await fetchGoogleData();
     }
   });
 
-  if (state.googleClientToken) {
-    updateGoogleAuthStatus(true);
+  checkAndFetchGoogleEmails();
+  
+  updateGoogleAuthStatus();
+  if (state.googlePersonalToken || state.googleWorkToken) {
     fetchGoogleData();
+  } else {
+    fetchGoogleCalendar();
+    fetchGmail();
   }
 }
 
-function updateGoogleAuthStatus(connected) {
-  const statusEl = document.getElementById('google-auth-status');
-  const loginBtn = document.getElementById('google-login-btn');
-  const logoutBtn = document.getElementById('google-logout-btn');
-  const dict = translations[state.lang];
+let isRefreshingToken = { personal: false, work: false };
 
-  if (connected) {
-    statusEl.textContent = dict['connected'];
-    statusEl.className = "auth-status connected";
-    loginBtn.classList.add('hidden');
-    logoutBtn.classList.remove('hidden');
+function refreshGoogleToken(accountType) {
+  if (isRefreshingToken[accountType]) return;
+  if (typeof google === 'undefined' || !googleTokenClient) {
+    console.warn("Google Client not initialized for refresh");
+    return;
+  }
+  
+  console.log(`Attempting silent token refresh for ${accountType}...`);
+  isRefreshingToken[accountType] = true;
+  googleLoginTarget = accountType;
+  const emailHint = accountType === 'personal' ? state.googlePersonalEmail : state.googleWorkEmail;
+  
+  try {
+    googleTokenClient.requestAccessToken({
+      hint: emailHint || '',
+      prompt: 'none'
+    });
+    setTimeout(() => { isRefreshingToken[accountType] = false; }, 8000);
+  } catch (e) {
+    console.error("Silent refresh failed", e);
+    isRefreshingToken[accountType] = false;
+  }
+}
+
+function handleInvalidToken(accountType) {
+  console.warn(`Token expired (401) for ${accountType} account. Clearing token.`);
+  if (accountType === 'personal') {
+    state.googlePersonalToken = null;
+    sessionStorage.removeItem('google_personal_token');
   } else {
-    statusEl.textContent = dict['disconnected'];
-    statusEl.className = "auth-status disconnected";
-    loginBtn.classList.remove('hidden');
-    logoutBtn.classList.add('hidden');
+    state.googleWorkToken = null;
+    sessionStorage.removeItem('google_work_token');
+  }
+  state.googleClientToken = state.googlePersonalToken || state.googleWorkToken;
+  sessionStorage.setItem('google_access_token', state.googleClientToken || '');
+  
+  updateGoogleAuthStatus();
+}
+
+async function checkAndFetchGoogleEmails() {
+  let changed = false;
+  if (state.googlePersonalToken && !state.googlePersonalEmail) {
+    const email = await fetchGoogleUserEmail(state.googlePersonalToken);
+    if (email) {
+      state.googlePersonalEmail = email;
+      sessionStorage.setItem('google_personal_email', email);
+      changed = true;
+    }
+  }
+  if (state.googleWorkToken && !state.googleWorkEmail) {
+    const email = await fetchGoogleUserEmail(state.googleWorkToken);
+    if (email) {
+      state.googleWorkEmail = email;
+      sessionStorage.setItem('google_work_email', email);
+      changed = true;
+    }
+  }
+  if (changed) {
+    updateGoogleAuthStatus();
+  }
+}
+
+function updateGoogleAuthStatus() {
+  const dict = translations[state.lang];
+  
+  // Personal account status
+  const personalStatusEl = document.getElementById('google-auth-status-personal');
+  const personalLoginBtn = document.getElementById('google-login-btn-personal');
+  const personalLogoutBtn = document.getElementById('google-logout-btn-personal');
+  
+  if (personalStatusEl && personalLoginBtn && personalLogoutBtn) {
+    if (state.googlePersonalToken) {
+      const emailStr = state.googlePersonalEmail ? ` (${state.googlePersonalEmail})` : '';
+      personalStatusEl.textContent = `${dict['connected']}${emailStr}`;
+      personalStatusEl.className = "auth-status connected";
+      personalLoginBtn.classList.add('hidden');
+      personalLogoutBtn.classList.remove('hidden');
+    } else {
+      personalStatusEl.textContent = dict['disconnected'];
+      personalStatusEl.className = "auth-status disconnected";
+      personalLoginBtn.classList.remove('hidden');
+      personalLogoutBtn.classList.add('hidden');
+    }
+  }
+  
+  // Work account status
+  const workStatusEl = document.getElementById('google-auth-status-work');
+  const workLoginBtn = document.getElementById('google-login-btn-work');
+  const workLogoutBtn = document.getElementById('google-logout-btn-work');
+  
+  if (workStatusEl && workLoginBtn && workLogoutBtn) {
+    if (state.googleWorkToken) {
+      const emailStr = state.googleWorkEmail ? ` (${state.googleWorkEmail})` : '';
+      workStatusEl.textContent = `${dict['connected']}${emailStr}`;
+      workStatusEl.className = "auth-status connected";
+      workLoginBtn.classList.add('hidden');
+      workLogoutBtn.classList.remove('hidden');
+    } else {
+      workStatusEl.textContent = dict['disconnected'];
+      workStatusEl.className = "auth-status disconnected";
+      workLoginBtn.classList.remove('hidden');
+      workLogoutBtn.classList.add('hidden');
+    }
+  }
+
+  // Update header status indicators (dots) for Events, Emails, and Weekly Schedule
+  const personalClass = state.googlePersonalToken ? 'personal' : 'disconnected';
+  const personalTooltip = state.googlePersonalToken 
+    ? `${state.lang === 'es' ? 'Personal: Conectado' : 'Personal: Connected'} (${state.googlePersonalEmail || 'Google'})`
+    : (state.lang === 'es' ? 'Personal: Desconectado' : 'Personal: Disconnected');
+    
+  const workClass = state.googleWorkToken ? 'work' : 'disconnected';
+  const workTooltip = state.googleWorkToken 
+    ? `${state.lang === 'es' ? 'Trabajo: Conectado' : 'Work: Connected'} (${state.googleWorkEmail || 'Google'})`
+    : (state.lang === 'es' ? 'Trabajo: Desconectado' : 'Work: Disconnected');
+
+  const indicatorsHTML = `
+    <span class="status-dot ${personalClass}" title="${escapeHtml(personalTooltip)}"></span>
+    <span class="status-dot ${workClass}" title="${escapeHtml(workTooltip)}"></span>
+  `;
+
+  const evInd = document.getElementById('google-events-status-indicators');
+  const emInd = document.getElementById('google-emails-status-indicators');
+  const wkInd = document.getElementById('google-weekly-status-indicators');
+
+  if (evInd) evInd.innerHTML = indicatorsHTML;
+  if (emInd) emInd.innerHTML = indicatorsHTML;
+  if (wkInd) wkInd.innerHTML = indicatorsHTML;
+
+  const settingsDotPers = document.getElementById('google-settings-dot-personal');
+  const settingsDotWork = document.getElementById('google-settings-dot-work');
+
+  if (settingsDotPers) {
+    settingsDotPers.className = `status-dot ${personalClass}`;
+  }
+  if (settingsDotWork) {
+    settingsDotWork.className = `status-dot ${workClass}`;
   }
 }
 
 async function fetchGoogleData() {
-  if (!state.googleClientToken) return;
+  const token = state.googlePersonalToken || state.googleWorkToken;
+  if (!token) return;
+
+  state.googleClientToken = token;
 
   // Run in parallel
   fetchGmail();
@@ -2042,29 +2589,90 @@ async function fetchGoogleData() {
 }
 
 async function fetchGmail() {
-  const container = document.getElementById('gmail-container');
-  try {
-    const res = await fetch('https://gmail.googleapis.com/v1/users/me/messages?q=is:unread&maxResults=5', {
-      headers: { 'Authorization': `Bearer ${state.googleClientToken}` }
-    });
-    if (!res.ok) throw new Error();
-    const data = await res.json();
+  const gmailCard = document.getElementById('gmail-card');
+  if (state.settings.showGoogleEmails === false) {
+    if (gmailCard) gmailCard.classList.add('hidden');
+    return;
+  }
+  if (gmailCard) gmailCard.classList.remove('hidden');
 
-    if (!data.messages || data.messages.length === 0) {
+  const container = document.getElementById('gmail-container');
+  const emailsBadge = document.getElementById('emails-count-badge');
+  if (emailsBadge) {
+    emailsBadge.classList.add('hidden');
+  }
+
+  if (!state.googlePersonalToken && !state.googleWorkToken) {
+    const configLinkText = state.lang === 'es' ? 'Configurar Gmail' : 'Configure Gmail';
+    container.innerHTML = `<p class="empty-msg" style="margin: 0.5rem 0;"><a href="#" onclick="event.preventDefault(); window.openSettingsGoogleTab();" style="color: var(--accent); text-decoration: underline; font-weight: 500;">${configLinkText}</a></p>`;
+    return;
+  }
+
+  async function fetchEmailsForAccount(token, type, email) {
+    if (!token) return [];
+    try {
+      const res = await fetch('https://www.googleapis.com/gmail/v1/users/me/messages?q=is:unread%20in:inbox&maxResults=5', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (!res.ok) {
+        if (res.status === 401) {
+          handleInvalidToken(type);
+        }
+        throw new Error(`HTTP ${res.status}`);
+      }
+      const data = await res.json();
+      if (!data.messages || data.messages.length === 0) return [];
+
+      const detailsPromises = data.messages.map(msg =>
+        fetch(`https://www.googleapis.com/gmail/v1/users/me/messages/${msg.id}`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        }).then(r => {
+          if (!r.ok) throw new Error(`HTTP ${r.status}`);
+          return r.json();
+        })
+      );
+      const details = await Promise.all(detailsPromises);
+      return details.map(item => ({ ...item, accountType: type, accountEmail: email }));
+    } catch (e) {
+      console.error(`Error fetching Gmail for ${type}:`, e);
+      return [];
+    }
+  }
+
+  try {
+    const promises = [];
+    if (state.googlePersonalToken) {
+      promises.push(fetchEmailsForAccount(state.googlePersonalToken, 'personal', state.googlePersonalEmail));
+    }
+    if (state.googleWorkToken && !state.settings.oooActive) {
+      promises.push(fetchEmailsForAccount(state.googleWorkToken, 'work', state.googleWorkEmail));
+    }
+
+    const results = await Promise.all(promises);
+    const allEmails = results.flat();
+
+    // Sort by internalDate (newest first)
+    allEmails.sort((a, b) => {
+      const aDate = parseInt(a.internalDate) || 0;
+      const bDate = parseInt(b.internalDate) || 0;
+      return bDate - aDate;
+    });
+
+    if (emailsBadge) {
+      if (allEmails.length > 0) {
+        emailsBadge.textContent = allEmails.length;
+        emailsBadge.classList.remove('hidden');
+      } else {
+        emailsBadge.classList.add('hidden');
+      }
+    }
+
+    if (allEmails.length === 0) {
       container.innerHTML = `<p class="empty-msg">${translations[state.lang]['no-emails']}</p>`;
       return;
     }
 
-    // Fetch details for each message
-    const detailsPromises = data.messages.map(msg => 
-      fetch(`https://gmail.googleapis.com/v1/users/me/messages/${msg.id}`, {
-        headers: { 'Authorization': `Bearer ${state.googleClientToken}` }
-      }).then(r => r.json())
-    );
-
-    const messagesDetails = await Promise.all(detailsPromises);
-    
-    container.innerHTML = messagesDetails.map(msg => {
+    container.innerHTML = allEmails.slice(0, 5).map(msg => {
       const headers = msg.payload.headers;
       const subjectHeader = headers.find(h => h.name.toLowerCase() === 'subject');
       const fromHeader = headers.find(h => h.name.toLowerCase() === 'from');
@@ -2072,77 +2680,201 @@ async function fetchGmail() {
       const from = fromHeader ? fromHeader.value.split('<')[0].trim() : 'Unknown';
       const snippet = msg.snippet;
 
+      const badgeClass = msg.accountType === 'personal' ? 'personal' : 'work';
+      const badgeLabel = translations[state.lang][`badge-${msg.accountType}`] || msg.accountType;
+
+      let gmailLink = `https://mail.google.com/mail/#inbox/${msg.threadId}`;
+      if (msg.accountEmail) {
+        gmailLink = `https://mail.google.com/mail/?authuser=${encodeURIComponent(msg.accountEmail)}#inbox/${msg.threadId}`;
+      }
+
       return `
-        <div class="integration-item">
+        <a href="${escapeHtml(gmailLink)}" target="_blank" rel="noopener noreferrer" class="integration-item ${badgeClass}" data-tooltip="Subject: ${escapeHtml(subject)}\nFrom: ${escapeHtml(from)}\nSnippet: ${escapeHtml(snippet)}">
           <span class="item-title">${escapeHtml(subject)}</span>
           <div class="item-meta">
             <span>${escapeHtml(from)}</span>
-            <span class="item-badge" title="${escapeHtml(snippet)}">Gmail</span>
+            <span class="item-badge ${badgeClass}">${escapeHtml(badgeLabel)}</span>
           </div>
-        </div>
+        </a>
       `;
     }).join('');
 
   } catch (err) {
-    container.innerHTML = `<p class="empty-msg" style="color:var(--danger)">Gmail Loading Error</p>`;
+    console.error("Gmail Loading Error:", err);
+    container.innerHTML = `<p class="empty-msg" style="color:var(--danger)">Gmail Loading Error (${err.message || 'Error'})</p>`;
   }
 }
 
 async function fetchGoogleTasks() {
-  // We can merge Google Tasks into our standard ToDo list visually, or display them separately.
-  // Let's merge them under Hoy / Esta Semana if they have dates, or list them.
-  // For simplicity, let's fetch Google Tasks and show them as uncompleted items in Hoy / Esta semana.
+  const oldToday = document.getElementById('gtasks-today');
+  if (oldToday) oldToday.remove();
+  const oldWeek = document.getElementById('gtasks-week');
+  if (oldWeek) oldWeek.remove();
+
+  if (state.settings.showGoogleTasks === false) {
+    return;
+  }
+
+  if (!state.googlePersonalToken && !state.googleWorkToken) {
+    return;
+  }
+
+  let errors = [];
+
+  async function fetchTasksForAccount(token, type) {
+    if (!token) return [];
+    try {
+      const tasksRes = await fetch('https://www.googleapis.com/tasks/v1/lists/@default/tasks?showCompleted=false', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (!tasksRes.ok) {
+        if (tasksRes.status === 401) {
+          handleInvalidToken(type);
+        }
+        throw new Error(`HTTP ${tasksRes.status}`);
+      }
+      const tasksData = await tasksRes.json();
+      const items = tasksData.items || [];
+      return items.map(t => ({ ...t, accountType: type }));
+    } catch (e) {
+      console.warn(`Direct fetch from @default failed for ${type}, trying lists fallback...`, e);
+      try {
+        const listsRes = await fetch('https://www.googleapis.com/tasks/v1/users/@me/lists', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (!listsRes.ok) throw new Error(`Fallback HTTP ${listsRes.status}`);
+        const listsData = await listsRes.json();
+        if (!listsData.items || listsData.items.length === 0) return [];
+
+        const listId = listsData.items[0].id;
+        const tasksRes = await fetch(`https://www.googleapis.com/tasks/v1/lists/${listId}/tasks?showCompleted=false`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (!tasksRes.ok) throw new Error(`Fallback Tasks HTTP ${tasksRes.status}`);
+        const tasksData = await tasksRes.json();
+        const items = tasksData.items || [];
+        return items.map(t => ({ ...t, accountType: type }));
+      } catch (fallbackError) {
+        errors.push(`${type} account: ${fallbackError.message}`);
+        return [];
+      }
+    }
+  }
+
   try {
-    // 1. Get task lists
-    const listsRes = await fetch('https://tasks.googleapis.com/v1/users/@me/lists', {
-      headers: { 'Authorization': `Bearer ${state.googleClientToken}` }
-    });
-    if (!listsRes.ok) throw new Error();
-    const listsData = await listsRes.json();
-    if (!listsData.items || listsData.items.length === 0) return;
-
-    // 2. Fetch tasks from primary list (first one usually)
-    const listId = listsData.items[0].id;
-    const tasksRes = await fetch(`https://tasks.googleapis.com/v1/lists/${listId}/tasks?showCompleted=false`, {
-      headers: { 'Authorization': `Bearer ${state.googleClientToken}` }
-    });
-    const tasksData = await tasksRes.json();
-    const gTasks = tasksData.items || [];
-
-    // Store in global state or overlay on UI
-    // We will render Google Tasks directly into the columns!
-    const todayStr = getLocalDateString(new Date());
-    const next7Days = [];
-    for (let i = 1; i <= 7; i++) {
-      const d = new Date();
-      d.setDate(d.getDate() + i);
-      next7Days.push(getLocalDateString(d));
+    const promises = [];
+    if (state.googlePersonalToken) {
+      promises.push(fetchTasksForAccount(state.googlePersonalToken, 'personal'));
+    }
+    if (state.googleWorkToken && !state.settings.oooActive) {
+      promises.push(fetchTasksForAccount(state.googleWorkToken, 'work'));
     }
 
-    const todayGTasks = gTasks.filter(t => t.due && t.due.startsWith(todayStr));
-    const weekGTasks = gTasks.filter(t => t.due && next7Days.some(day => t.due.startsWith(day)));
+    const results = await Promise.all(promises);
+    const gTasks = results.flat();
 
-    // Insert into DOM
+    // Check if we had errors and no tasks were successfully loaded
+    if (errors.length > 0 && gTasks.length === 0) {
+      console.warn("Google Tasks fetch failed:", errors.join(' | '));
+      return;
+    }
+
+    if (gTasks.length === 0) return;
+
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+    const todayTime = todayStart.getTime();
+
+    const weekEnd = new Date(todayStart);
+    weekEnd.setDate(weekEnd.getDate() + 7);
+    const weekEndTime = weekEnd.getTime();
+
+    const todayGTasks = [];
+    const weekGTasks = [];
+
+    gTasks.forEach(t => {
+      if (!t.title || t.title.trim() === '') return;
+      if (!t.due) {
+        weekGTasks.push(t);
+        return;
+      }
+      
+      const dueTime = new Date(t.due).getTime();
+      if (dueTime <= todayTime + 24 * 60 * 60 * 1000 - 1) {
+        todayGTasks.push(t);
+      } else if (dueTime <= weekEndTime) {
+        weekGTasks.push(t);
+      } else {
+        weekGTasks.push(t);
+      }
+    });
+
+    todayGTasks.sort((a, b) => {
+      const aOverdue = a.due && new Date(a.due).getTime() < todayTime;
+      const bOverdue = b.due && new Date(b.due).getTime() < todayTime;
+      if (aOverdue && !bOverdue) return -1;
+      if (!aOverdue && bOverdue) return 1;
+      return 0;
+    });
+
+    function getTaskTimeText(task) {
+      if (!task.due) return '';
+      const hasTime = !task.due.endsWith('T00:00:00.000Z') && !task.due.endsWith('T00:00:00Z') && task.due.includes('T');
+      if (!hasTime) {
+        return '';
+      }
+      const d = new Date(task.due);
+      return d.toLocaleTimeString(state.lang === 'es' ? 'es-ES' : 'en-US', {
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    }
+
+    function checkTaskRecurring(task) {
+      return !!(task.recurrence || task.recurring);
+    }
+
     if (todayGTasks.length > 0) {
-      // Find today list container or append
       let gTodayCard = document.getElementById('gtasks-today');
       if (!gTodayCard) {
         gTodayCard = document.createElement('div');
         gTodayCard.id = 'gtasks-today';
         gTodayCard.className = 'section-card';
-        document.querySelector('#col-today .col-content').appendChild(gTodayCard);
+        const colContent = document.querySelector('#col-today .col-content');
+        if (colContent) colContent.appendChild(gTodayCard);
       }
       gTodayCard.innerHTML = `
         <h3 class="card-subtitle">Google Tasks (Hoy)</h3>
         <div class="integration-list">
-          ${todayGTasks.map(t => `
-            <div class="integration-item urgent">
-              <span class="item-title">${escapeHtml(t.title)}</span>
-              <div class="item-meta">
-                <span class="item-badge">Google</span>
-              </div>
-            </div>
-          `).join('')}
+          ${todayGTasks.map(t => {
+            const badgeClass = t.accountType === 'personal' ? 'personal' : 'work';
+            const badgeLabel = translations[state.lang][`badge-${t.accountType}`] || t.accountType;
+            const isOverdue = t.due && new Date(t.due).getTime() < todayTime;
+            const dueLabel = isOverdue ? (state.lang === 'es' ? 'Vencido' : 'Overdue') : '';
+            const timeText = getTaskTimeText(t);
+            const isRecurring = checkTaskRecurring(t);
+            const recurringClass = isRecurring ? 'recurring' : '';
+            const repeatIcon = isRecurring 
+              ? `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="opacity: 0.65; display: inline-block; vertical-align: middle; margin-right: 0.25rem; flex-shrink: 0;"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>` 
+              : '';
+            const tooltipText = t.title + (isOverdue ? ` (${dueLabel})` : '') + (timeText ? `\n${timeText}` : '') + (isRecurring ? (state.lang === 'es' ? ' (Recurrente)' : ' (Recurring)') : '');
+            
+            const email = t.accountType === 'personal' ? state.googlePersonalEmail : state.googleWorkEmail;
+            const tasksLink = email 
+              ? `https://tasks.google.com/?authuser=${encodeURIComponent(email)}` 
+              : 'https://tasks.google.com/';
+
+            return `
+              <a href="${escapeHtml(tasksLink)}" target="_blank" rel="noopener noreferrer" class="integration-item one-line ${recurringClass}" data-tooltip="${escapeHtml(tooltipText)}">
+                <div style="display: flex; align-items: center; gap: 0.4rem; min-width: 0; flex: 1;">
+                  ${isOverdue ? `<span class="event-overdue-badge" style="margin-left: 0; flex-shrink: 0; padding: 0.05rem 0.25rem; font-size: 0.6rem;">${dueLabel}</span>` : ''}
+                  ${repeatIcon}
+                  <span class="item-title">${escapeHtml(t.title)}</span>
+                </div>
+                <span class="item-badge ${badgeClass}">${escapeHtml(badgeLabel)}</span>
+              </a>
+            `;
+          }).join('')}
         </div>
       `;
     }
@@ -2153,20 +2885,42 @@ async function fetchGoogleTasks() {
         gWeekCard = document.createElement('div');
         gWeekCard.id = 'gtasks-week';
         gWeekCard.className = 'section-card';
-        document.querySelector('#col-week .col-content').appendChild(gWeekCard);
+        const colContent = document.querySelector('#col-week .col-content');
+        if (colContent) colContent.appendChild(gWeekCard);
       }
       gWeekCard.innerHTML = `
         <h3 class="card-subtitle">Google Tasks (Semana)</h3>
         <div class="integration-list">
-          ${weekGTasks.map(t => `
-            <div class="integration-item">
-              <span class="item-title">${escapeHtml(t.title)}</span>
-              <div class="item-meta">
-                <span>${formatDateShort(t.due.split('T')[0])}</span>
-                <span class="item-badge">Google</span>
-              </div>
-            </div>
-          `).join('')}
+          ${weekGTasks.map(t => {
+            const badgeClass = t.accountType === 'personal' ? 'personal' : 'work';
+            const badgeLabel = translations[state.lang][`badge-${t.accountType}`] || t.accountType;
+            const timeText = getTaskTimeText(t);
+            const dateText = t.due ? new Date(t.due.split('T')[0] + 'T00:00:00').toLocaleDateString(state.lang === 'es' ? 'es-ES' : 'en-US', { day: 'numeric', month: 'long' }) : '';
+            const isRecurring = checkTaskRecurring(t);
+            const recurringClass = isRecurring ? 'recurring' : '';
+            const repeatIcon = isRecurring 
+              ? `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="opacity: 0.65; display: inline-block; vertical-align: middle; margin-right: 0.25rem; flex-shrink: 0;"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>` 
+              : '';
+            const tooltipText = t.title + (t.due ? `\n${dateText}` : '') + (isRecurring ? (state.lang === 'es' ? ' (Recurrente)' : ' (Recurring)') : '');
+            
+            const email = t.accountType === 'personal' ? state.googlePersonalEmail : state.googleWorkEmail;
+            const tasksLink = email 
+              ? `https://tasks.google.com/?authuser=${encodeURIComponent(email)}` 
+              : 'https://tasks.google.com/';
+
+            return `
+              <a href="${escapeHtml(tasksLink)}" target="_blank" rel="noopener noreferrer" class="integration-item one-line ${recurringClass}" data-tooltip="${escapeHtml(tooltipText)}">
+                <div style="display: flex; align-items: center; gap: 0.4rem; min-width: 0; flex: 1;">
+                  ${repeatIcon}
+                  <span class="item-title">${escapeHtml(t.title)}</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 0.4rem; flex-shrink: 0;">
+                  ${dateText ? `<span style="font-size: 0.72rem; color: var(--text-secondary);">${escapeHtml(dateText)}</span>` : ''}
+                  <span class="item-badge ${badgeClass}">${escapeHtml(badgeLabel)}</span>
+                </div>
+              </a>
+            `;
+          }).join('')}
         </div>
       `;
     }
@@ -2179,56 +2933,159 @@ async function fetchGoogleTasks() {
 async function fetchGoogleCalendar() {
   const todayEventsContainer = document.getElementById('google-events-container');
   const weeklyEventsContainer = document.getElementById('weekly-events-container');
+  const weeklyBadge = document.getElementById('weekly-count-badge');
+  if (weeklyBadge) {
+    weeklyBadge.classList.add('hidden');
+  }
 
-  try {
-    const timeMin = new Date().toISOString();
-    const timeMax = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(); // 7 days ahead
+  if (!state.googlePersonalToken && !state.googleWorkToken) {
+    const configLinkText = state.lang === 'es' ? 'Configurar Google Calendar' : 'Configure Google Calendar';
+    const msgHTML = `<p class="empty-msg" style="margin: 0.5rem 0;"><a href="#" onclick="event.preventDefault(); window.openSettingsGoogleTab();" style="color: var(--accent); text-decoration: underline; font-weight: 500;">${configLinkText}</a></p>`;
+    todayEventsContainer.innerHTML = msgHTML;
+    weeklyEventsContainer.innerHTML = msgHTML;
+    return;
+  }
 
+  const timeMin = new Date().toISOString();
+  const timeMax = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(); // 7 days ahead
+
+  async function fetchEventsForAccount(token, type) {
+    if (!token) return [];
     const url = `https://www.googleapis.com/calendar/v3/calendars/primary/events?timeMin=${timeMin}&timeMax=${timeMax}&singleEvents=true&orderBy=startTime`;
     const res = await fetch(url, {
-      headers: { 'Authorization': `Bearer ${state.googleClientToken}` }
+      headers: { 'Authorization': `Bearer ${token}` }
     });
-    if (!res.ok) throw new Error();
+    if (!res.ok) {
+      if (res.status === 401) {
+        handleInvalidToken(type);
+      }
+      throw new Error(`HTTP ${res.status}`);
+    }
     const data = await res.json();
+    const items = data.items || [];
+    return items.map(item => ({ ...item, accountType: type }));
+  }
 
-    const events = data.items || [];
+  try {
+    const promises = [];
+    if (state.googlePersonalToken) {
+      promises.push(
+        fetchEventsForAccount(state.googlePersonalToken, 'personal')
+          .catch(err => {
+            console.error("Error fetching personal calendar:", err);
+            return [];
+          })
+      );
+    }
+    if (state.googleWorkToken && !state.settings.oooActive) {
+      promises.push(
+        fetchEventsForAccount(state.googleWorkToken, 'work')
+          .catch(err => {
+            console.error("Error fetching work calendar:", err);
+            return [];
+          })
+      );
+    }
 
-    if (events.length === 0) {
+    const results = await Promise.all(promises);
+    const allEvents = results.flat();
+
+    // Sort all events by start time
+    allEvents.sort((a, b) => {
+      const aStart = a.start.dateTime || a.start.date;
+      const bStart = b.start.dateTime || b.start.date;
+      return aStart.localeCompare(bStart);
+    });
+
+    if (allEvents.length === 0) {
       todayEventsContainer.innerHTML = `<p class="empty-msg">${translations[state.lang]['no-events']}</p>`;
       weeklyEventsContainer.innerHTML = `<p class="empty-msg">${translations[state.lang]['no-weekly-events']}</p>`;
       return;
     }
 
     const todayStr = getLocalDateString(new Date());
-
     const todayEvents = [];
-    const weeklyEvents = [];
+    const weeklyGroups = {}; // relative date string -> list of event HTMLs
 
-    events.forEach(evt => {
+    allEvents.forEach(evt => {
       const startStr = evt.start.dateTime || evt.start.date;
       const isToday = startStr.startsWith(todayStr);
       
+      const badgeClass = evt.accountType === 'personal' ? 'personal' : 'work';
+      const badgeLabel = translations[state.lang][`badge-${evt.accountType}`] || evt.accountType;
+
+      let eventLink = evt.htmlLink || 'https://calendar.google.com/calendar/r';
+      const email = evt.accountType === 'personal' ? state.googlePersonalEmail : state.googleWorkEmail;
+      if (email) {
+        const separator = eventLink.includes('?') ? '&' : '?';
+        eventLink = `${eventLink}${separator}authuser=${encodeURIComponent(email)}`;
+      }
+
+      const timeStr = formatEventTime(evt);
+      const isRecurring = !!evt.recurringEventId;
+      const recurringClass = isRecurring ? 'recurring' : '';
+      const repeatIcon = isRecurring 
+        ? `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="opacity: 0.65; display: inline-block; vertical-align: middle; margin-right: 0.25rem;"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>` 
+        : '';
+
+      const evtDateObj = new Date(startStr.split('T')[0] + 'T00:00:00');
+      const dateText = evtDateObj.toLocaleDateString(state.lang === 'es' ? 'es-ES' : 'en-US', { day: 'numeric', month: 'long' });
+      const tooltipText = evt.summary + `\n${dateText}\nTime: ${timeStr}` + (isRecurring ? (state.lang === 'es' ? ' (Recurrente)' : ' (Recurring)') : '');
+
       const eventHTML = `
-        <div class="integration-item">
+        <a href="${escapeHtml(eventLink)}" target="_blank" rel="noopener noreferrer" class="integration-item ${badgeClass} ${recurringClass}" data-tooltip="${escapeHtml(tooltipText)}">
           <span class="item-title">${escapeHtml(evt.summary)}</span>
           <div class="item-meta">
-            <span>${formatEventTime(evt)}</span>
-            <span class="item-badge">Cal</span>
+            <span>${repeatIcon}${escapeHtml(timeStr)}</span>
+            <span class="item-badge ${badgeClass}">${escapeHtml(badgeLabel)}</span>
           </div>
-        </div>
+        </a>
       `;
 
       if (isToday) {
         todayEvents.push(eventHTML);
       } else {
-        weeklyEvents.push(eventHTML);
+        const dateVal = evt.start.dateTime || evt.start.date;
+        const relativeLabel = getRelativeDateLabel(dateVal);
+        if (!weeklyGroups[relativeLabel]) {
+          weeklyGroups[relativeLabel] = [];
+        }
+        weeklyGroups[relativeLabel].push(eventHTML);
       }
     });
 
+    const weeklyHTML = [];
+    let totalWeeklyCount = 0;
+    Object.keys(weeklyGroups).forEach(label => {
+      weeklyHTML.push(`<div class="schedule-group-header">${escapeHtml(label)}</div>`);
+      weeklyHTML.push(...weeklyGroups[label]);
+      totalWeeklyCount += weeklyGroups[label].length;
+    });
+
+    if (weeklyBadge) {
+      if (totalWeeklyCount > 0) {
+        weeklyBadge.textContent = totalWeeklyCount;
+        weeklyBadge.classList.remove('hidden');
+      } else {
+        weeklyBadge.classList.add('hidden');
+      }
+    }
+
+    const todayBadge = document.getElementById('events-count-badge');
+    if (todayBadge) {
+      if (todayEvents.length > 0) {
+        todayBadge.textContent = todayEvents.length;
+        todayBadge.classList.remove('hidden');
+      } else {
+        todayBadge.classList.add('hidden');
+      }
+    }
+
     todayEventsContainer.innerHTML = todayEvents.length > 0 ? todayEvents.join('') : `<p class="empty-msg">${translations[state.lang]['no-events']}</p>`;
-    weeklyEventsContainer.innerHTML = weeklyEvents.length > 0 ? weeklyEvents.join('') : `<p class="empty-msg">${translations[state.lang]['no-weekly-events']}</p>`;
+    weeklyEventsContainer.innerHTML = weeklyHTML.length > 0 ? weeklyHTML.join('') : `<p class="empty-msg">${translations[state.lang]['no-weekly-events']}</p>`;
 
   } catch (err) {
+    console.error("Failed to load calendars", err);
     todayEventsContainer.innerHTML = `<p class="empty-msg" style="color:var(--danger)">Calendar Loading Error</p>`;
     weeklyEventsContainer.innerHTML = `<p class="empty-msg" style="color:var(--danger)">Calendar Loading Error</p>`;
   }
@@ -2291,6 +3148,27 @@ function setupEventListeners() {
     });
   });
 
+  // Google Account color swatches click handlers
+  const personalSwatches = document.querySelectorAll('#google-color-personal-swatches .color-swatch-btn');
+  personalSwatches.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const selectedColor = btn.getAttribute('data-color');
+      const hiddenInput = document.getElementById('google-color-personal');
+      if (hiddenInput) hiddenInput.value = selectedColor;
+      updateAccountSwatchActiveState('google-color-personal-swatches', selectedColor);
+    });
+  });
+
+  const workSwatches = document.querySelectorAll('#google-color-work-swatches .color-swatch-btn');
+  workSwatches.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const selectedColor = btn.getAttribute('data-color');
+      const hiddenInput = document.getElementById('google-color-work');
+      if (hiddenInput) hiddenInput.value = selectedColor;
+      updateAccountSwatchActiveState('google-color-work-swatches', selectedColor);
+    });
+  });
+
   // Scroll to Top Listener
   const scrollToTopBtn = document.getElementById('scroll-to-top');
   if (scrollToTopBtn) {
@@ -2310,13 +3188,59 @@ function setupEventListeners() {
     });
   }
 
-  // Click banner to open Events settings directly
-  const eventBanner = document.getElementById('upcoming-event');
+  // Dynamic immediate tooltip events
+  document.addEventListener('mouseover', (e) => {
+    const target = e.target.closest('[data-tooltip]');
+    if (!target) return;
+    const text = target.getAttribute('data-tooltip');
+    if (!text) return;
+    
+    const tooltip = document.getElementById('custom-tooltip');
+    if (!tooltip) return;
+    
+    tooltip.textContent = text;
+    tooltip.classList.remove('hidden');
+    
+    const rect = target.getBoundingClientRect();
+    tooltip.style.left = `${rect.left + rect.width / 2}px`;
+    tooltip.style.top = `${rect.top - 8}px`;
+    
+    // Force layout reflow
+    tooltip.getBoundingClientRect();
+    tooltip.classList.add('visible');
+  });
+
+  document.addEventListener('mouseout', (e) => {
+    const target = e.target.closest('[data-tooltip]');
+    if (!target) return;
+    
+    const tooltip = document.getElementById('custom-tooltip');
+    if (tooltip) {
+      tooltip.classList.remove('visible');
+      tooltip.classList.add('hidden');
+    }
+  });
+
+  // Click banner to scroll to My Events and highlight it
+  const eventBanner = document.getElementById('events-banner-container');
   if (eventBanner) {
-    eventBanner.addEventListener('click', () => {
-      document.getElementById('settings-toggle').click();
-      const eventsTab = document.querySelector('.tab-btn[data-tab="tab-events"]');
-      if (eventsTab) eventsTab.click();
+    eventBanner.addEventListener('click', (e) => {
+      e.preventDefault();
+      const targetHeader = document.getElementById('countdown-section-header');
+      if (targetHeader) {
+        targetHeader.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        
+        const wrapper = document.querySelector('.countdown-wrapper');
+        if (wrapper) {
+          if (wrapper.classList.contains('section-flash-highlight')) {
+            return;
+          }
+          wrapper.classList.add('section-flash-highlight');
+          wrapper.onanimationend = () => {
+            wrapper.classList.remove('section-flash-highlight');
+          };
+        }
+      }
     });
   }
 
@@ -2324,14 +3248,24 @@ function setupEventListeners() {
   const confirmDeleteModal = document.getElementById('confirm-delete-modal');
   if (confirmDeleteModal) {
     document.getElementById('btn-cancel-delete').addEventListener('click', () => {
+      if (confirmActionType === 'hide-events') {
+        const cb = document.getElementById('settings-show-countdowns');
+        if (cb) cb.checked = true;
+      }
       confirmDeleteModal.close();
       todoIdToDelete = null;
+      confirmActionType = null;
     });
     
     document.getElementById('close-delete-modal').addEventListener('click', () => {
+      if (confirmActionType === 'hide-events') {
+        const cb = document.getElementById('settings-show-countdowns');
+        if (cb) cb.checked = true;
+      }
       confirmDeleteModal.close();
       todoIdToDelete = null;
       countdownIdToDelete = null;
+      confirmActionType = null;
     });
 
     document.getElementById('btn-confirm-delete').addEventListener('click', async () => {
@@ -2349,12 +3283,38 @@ function setupEventListeners() {
         confirmDeleteModal.close();
         confirmActionType = null;
       } else if (confirmActionType === 'delete-countdown' && countdownIdToDelete !== null) {
-        state.countdowns = state.countdowns.filter(c => c.id !== countdownIdToDelete);
-        await saveCountdowns();
+        state.settings.customEvents = (state.settings.customEvents || []).filter(c => c.id !== countdownIdToDelete);
+        await saveSettings();
         renderCountdowns();
+        renderSettingsEventsList();
+        updateUpcomingEventBanner();
         confirmDeleteModal.close();
         countdownIdToDelete = null;
         confirmActionType = null;
+      } else if (confirmActionType === 'hide-events') {
+        confirmDeleteModal.close();
+        confirmActionType = null;
+      }
+    });
+  }
+
+  // Handle immediate change on show-events switch
+  const showEventsCheckbox = document.getElementById('settings-show-countdowns');
+  if (showEventsCheckbox) {
+    showEventsCheckbox.addEventListener('change', () => {
+      if (!showEventsCheckbox.checked && (state.settings.customEvents && state.settings.customEvents.length > 0)) {
+        confirmActionType = 'hide-events';
+        confirmDeleteModal.querySelector('[data-i18n="confirm-delete-title"]').textContent = state.lang === 'es' ? 'Ocultar Eventos' : 'Hide Events';
+        const descEl = confirmDeleteModal.querySelector('[data-i18n="confirm-delete-desc"]');
+        if (descEl) {
+          descEl.innerHTML = state.lang === 'es'
+            ? 'Tienes eventos configurados (pendientes o vencidos). ¿Seguro que quieres ocultar la sección de Eventos?'
+            : 'You have configured events (pending or overdue). Are you sure you want to hide the Events section?';
+        }
+        const dict = translations[state.lang];
+        confirmDeleteModal.querySelector('[data-i18n="cancel-btn"]').textContent = dict['cancel-btn'];
+        confirmDeleteModal.querySelector('[data-i18n="delete-btn"]').textContent = state.lang === 'es' ? 'Confirmar' : 'Confirm';
+        confirmDeleteModal.showModal();
       }
     });
   }
@@ -2425,6 +3385,40 @@ function setupEventListeners() {
       titleInput.value = '';
       dateInput.value = '';
       if (addCountdownModal) addCountdownModal.close();
+    });
+  }
+
+  // Edit Event Modal Close & Cancel & Submit
+  const editEventModal = document.getElementById('edit-event-modal');
+  const closeEditEventModalBtn = document.getElementById('close-edit-event-modal');
+  const cancelEditEventBtn = document.getElementById('btn-cancel-edit-event');
+  if (closeEditEventModalBtn && editEventModal) {
+    closeEditEventModalBtn.addEventListener('click', () => editEventModal.close());
+  }
+  if (cancelEditEventBtn && editEventModal) {
+    cancelEditEventBtn.addEventListener('click', () => editEventModal.close());
+  }
+
+  const editEventForm = document.getElementById('edit-event-form');
+  if (editEventForm) {
+    editEventForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const id = document.getElementById('edit-event-id').value;
+      const name = document.getElementById('edit-event-name-input').value.trim();
+      const date = document.getElementById('edit-event-date-input').value;
+      if (!name || !date) return;
+      
+      state.settings.customEvents = (state.settings.customEvents || []).map(evt => {
+        if (evt.id === id) {
+          return { ...evt, name, date };
+        }
+        return evt;
+      });
+      await saveSettings();
+      renderCountdowns();
+      renderSettingsEventsList();
+      updateUpcomingEventBanner();
+      editEventModal.close();
     });
   }
 
@@ -2650,6 +3644,81 @@ function setupEventListeners() {
     });
   }
 
+  // Click OOO badge to open settings at Google tab
+  const oooBadges = document.querySelectorAll('.ooo-badge');
+  oooBadges.forEach(b => {
+    b.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const toggleBtn = document.getElementById('settings-toggle');
+      if (toggleBtn) {
+        toggleBtn.click();
+        const googleTab = document.querySelector('.tab-btn[data-tab="tab-google"]');
+        if (googleTab) googleTab.click();
+      }
+    });
+  });
+
+  // OOO switch change handler
+  const oooActiveSwitch = document.getElementById('settings-ooo-active');
+  const oooDateModal = document.getElementById('ooo-date-modal');
+  const oooForm = document.getElementById('ooo-form');
+  const oooDateInput = document.getElementById('ooo-date-input');
+
+  if (oooActiveSwitch) {
+    oooActiveSwitch.addEventListener('change', () => {
+      if (oooActiveSwitch.checked) {
+        // Ask for a future date
+        const today = new Date();
+        today.setDate(today.getDate() + 1); // Minimum date: tomorrow
+        const yyyy = today.getFullYear();
+        const mm = String(today.getMonth() + 1).padStart(2, '0');
+        const dd = String(today.getDate()).padStart(2, '0');
+        if (oooDateInput) {
+          oooDateInput.min = `${yyyy}-${mm}-${dd}`;
+          oooDateInput.value = `${yyyy}-${mm}-${dd}`;
+        }
+        if (oooDateModal) oooDateModal.showModal();
+      } else {
+        const display = document.getElementById('ooo-date-display');
+        if (display) display.classList.add('hidden');
+      }
+    });
+  }
+
+  if (oooForm && oooDateModal) {
+    oooForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const val = oooDateInput.value;
+      if (!val) return;
+      
+      if (oooActiveSwitch) {
+        oooActiveSwitch.setAttribute('data-until', val);
+      }
+
+      const display = document.getElementById('ooo-date-display');
+      const text = document.getElementById('ooo-return-date-text');
+      if (display) display.classList.remove('hidden');
+      if (text) text.textContent = new Date(val + 'T00:00:00').toLocaleDateString(state.lang === 'es' ? 'es-ES' : 'en-US', { day: 'numeric', month: 'long', year: 'numeric' });
+      
+      oooDateModal.close();
+    });
+  }
+
+  const cancelOooBtn = document.getElementById('btn-cancel-ooo');
+  const closeOooModalBtn = document.getElementById('close-ooo-modal');
+  if (cancelOooBtn && oooDateModal) {
+    cancelOooBtn.addEventListener('click', () => {
+      if (oooActiveSwitch) oooActiveSwitch.checked = false;
+      oooDateModal.close();
+    });
+  }
+  if (closeOooModalBtn && oooDateModal) {
+    closeOooModalBtn.addEventListener('click', () => {
+      if (oooActiveSwitch) oooActiveSwitch.checked = false;
+      oooDateModal.close();
+    });
+  }
+
   // Settings Modal Open
   let isSettingsFormSaved = false;
   const settingsModal = document.getElementById('settings-modal');
@@ -2682,20 +3751,55 @@ function setupEventListeners() {
     document.getElementById('settings-show-world-clock').checked = state.settings.showWorldClock !== false;
     document.getElementById('settings-show-countdowns').checked = state.settings.showCountdowns !== false;
     document.getElementById('settings-show-tasks').checked = state.settings.showTasks !== false;
+    document.getElementById('settings-show-google-emails').checked = state.settings.showGoogleEmails !== false;
+    document.getElementById('settings-show-google-tasks').checked = state.settings.showGoogleTasks !== false;
+    document.getElementById('settings-show-git').checked = state.settings.showGit !== false;
+    document.getElementById('settings-show-jira').checked = state.settings.showJira !== false;
     
     toggleWeatherInputs();
     toggleClockInputs();
     
     document.getElementById('settings-storage-mode').value = state.settings.storageMode || 'local';
     document.getElementById('google-client-id').value = state.settings.googleClientId;
-    document.getElementById('github-token').value = state.settings.githubToken;
-    document.getElementById('github-username').value = state.settings.githubUsername;
-    document.getElementById('bitbucket-workspace').value = state.settings.bitbucketWorkspace;
-    document.getElementById('bitbucket-username').value = state.settings.bitbucketUsername;
-    document.getElementById('bitbucket-token').value = state.settings.bitbucketToken;
-    document.getElementById('jira-host').value = state.settings.jiraHost;
-    document.getElementById('jira-email').value = state.settings.jiraEmail;
-    document.getElementById('jira-token').value = state.settings.jiraToken;
+    
+    const personalCol = state.settings.personalColor || 'blue';
+    const workCol = state.settings.workColor || 'black';
+    document.getElementById('google-color-personal').value = personalCol;
+    document.getElementById('google-color-work').value = workCol;
+    updateAccountSwatchActiveState('google-color-personal-swatches', personalCol);
+    updateAccountSwatchActiveState('google-color-work-swatches', workCol);
+
+    document.getElementById('github-token').value = state.settings.githubToken || '';
+    document.getElementById('github-username').value = state.settings.githubUsername || '';
+    document.getElementById('settings-github-ooo-hide').checked = state.settings.hideGithubOoo === true;
+
+    document.getElementById('bitbucket-workspace').value = state.settings.bitbucketWorkspace || '';
+    document.getElementById('bitbucket-username').value = state.settings.bitbucketUsername || '';
+    document.getElementById('bitbucket-token').value = state.settings.bitbucketToken || '';
+    document.getElementById('settings-bitbucket-ooo-hide').checked = state.settings.hideBitbucketOoo === true;
+
+    document.getElementById('gitlab-host').value = state.settings.gitlabHost || 'https://gitlab.com';
+    document.getElementById('gitlab-token').value = state.settings.gitlabToken || '';
+    document.getElementById('gitlab-username').value = state.settings.gitlabUsername || '';
+    document.getElementById('settings-gitlab-ooo-hide').checked = state.settings.hideGitlabOoo === true;
+
+    document.getElementById('jira-host').value = state.settings.jiraHost || '';
+    document.getElementById('jira-email').value = state.settings.jiraEmail || '';
+    document.getElementById('jira-token').value = state.settings.jiraToken || '';
+    document.getElementById('settings-jira-ooo-hide').checked = state.settings.hideJiraOoo === true;
+
+    const oooActiveInput = document.getElementById('settings-ooo-active');
+    if (oooActiveInput) {
+      oooActiveInput.checked = state.settings.oooActive === true;
+      const display = document.getElementById('ooo-date-display');
+      const text = document.getElementById('ooo-return-date-text');
+      if (state.settings.oooActive && state.settings.oooUntil) {
+        if (display) display.classList.remove('hidden');
+        if (text) text.textContent = new Date(state.settings.oooUntil + 'T00:00:00').toLocaleDateString(state.lang === 'es' ? 'es-ES' : 'en-US', { day: 'numeric', month: 'long', year: 'numeric' });
+      } else {
+        if (display) display.classList.add('hidden');
+      }
+    }
 
     // Toggle sync details visibility depending on current storageMode
     if (state.settings.storageMode === 'file') {
@@ -2872,6 +3976,9 @@ function setupEventListeners() {
 
       document.querySelectorAll('.tab-pane').forEach(pane => pane.classList.remove('active'));
       document.getElementById(targetTab).classList.add('active');
+
+      // Scroll the selected tab into view inside the tab bar container
+      btn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
     });
   });
 
@@ -2951,14 +4058,35 @@ function setupEventListeners() {
     state.settings.storageMode = newStorageMode;
     
     state.settings.googleClientId = document.getElementById('google-client-id').value.trim();
+    state.settings.personalColor = document.getElementById('google-color-personal').value;
+    state.settings.workColor = document.getElementById('google-color-work').value;
+    applyAccountColors();
     state.settings.githubToken = document.getElementById('github-token').value.trim();
     state.settings.githubUsername = document.getElementById('github-username').value.trim();
+    state.settings.hideGithubOoo = document.getElementById('settings-github-ooo-hide').checked;
+
     state.settings.bitbucketWorkspace = document.getElementById('bitbucket-workspace').value.trim();
     state.settings.bitbucketUsername = document.getElementById('bitbucket-username').value.trim();
     state.settings.bitbucketToken = document.getElementById('bitbucket-token').value.trim();
+    state.settings.hideBitbucketOoo = document.getElementById('settings-bitbucket-ooo-hide').checked;
+
+    state.settings.gitlabHost = document.getElementById('gitlab-host').value.trim();
+    state.settings.gitlabToken = document.getElementById('gitlab-token').value.trim();
+    state.settings.gitlabUsername = document.getElementById('gitlab-username').value.trim();
+    state.settings.hideGitlabOoo = document.getElementById('settings-gitlab-ooo-hide').checked;
+
     state.settings.jiraHost = document.getElementById('jira-host').value.trim();
     state.settings.jiraEmail = document.getElementById('jira-email').value.trim();
     state.settings.jiraToken = document.getElementById('jira-token').value.trim();
+    state.settings.hideJiraOoo = document.getElementById('settings-jira-ooo-hide').checked;
+
+    const oooActive = document.getElementById('settings-ooo-active').checked;
+    const oooUntil = document.getElementById('settings-ooo-active').getAttribute('data-until') || state.settings.oooUntil;
+    state.settings.oooActive = oooActive;
+    state.settings.oooUntil = oooActive ? oooUntil : null;
+
+    updateOooBadges();
+
     state.settings.worldClockTz = document.getElementById('settings-world-clock-tz').value;
     state.settings.worldClockLabel = document.getElementById('settings-world-clock-label').value.trim();
     const wUrlEl = document.getElementById('settings-weather-url');
@@ -2975,6 +4103,10 @@ function setupEventListeners() {
     state.settings.showWorldClock = document.getElementById('settings-show-world-clock').checked;
     state.settings.showCountdowns = document.getElementById('settings-show-countdowns').checked;
     state.settings.showTasks = document.getElementById('settings-show-tasks').checked;
+    state.settings.showGoogleEmails = document.getElementById('settings-show-google-emails').checked;
+    state.settings.showGoogleTasks = document.getElementById('settings-show-google-tasks').checked;
+    state.settings.showGit = document.getElementById('settings-show-git').checked;
+    state.settings.showJira = document.getElementById('settings-show-jira').checked;
 
     state.lang = state.settings.lang;
 
@@ -2995,6 +4127,9 @@ function setupEventListeners() {
     fetchGitHub();
     fetchBitbucket();
     fetchJira();
+    fetchGmail();
+    fetchGoogleTasks();
+    fetchGoogleCalendar();
 
     if (state.settings.googleClientId) {
       initGoogleOAuth();
@@ -3003,37 +4138,98 @@ function setupEventListeners() {
     settingsModal.close();
   });
 
-  // Google OAuth Login Action
-  document.getElementById('google-login-btn').addEventListener('click', () => {
+  // Google OAuth Personal Login Action
+  const loginBtnPersonal = document.getElementById('google-login-btn-personal');
+  loginBtnPersonal.addEventListener('click', () => {
     if (!state.settings.googleClientId) {
-      alert(state.lang === 'es' ? 'Por favor, configura primero tu Google Client ID.' : 'Please configure your Google Client ID first.');
+      const clientIdInput = document.getElementById('google-client-id');
+      const msg = state.lang === 'es' ? 'Por favor, introduce tu Google Client ID.' : 'Please enter your Google Client ID.';
+      showInputErrorFeedback(clientIdInput, msg);
       return;
     }
+    googleLoginTarget = 'personal';
     if (googleTokenClient) {
-      googleTokenClient.requestAccessToken();
+      googleTokenClient.requestAccessToken({ prompt: 'select_account' });
     } else {
       initGoogleOAuth();
-      googleTokenClient.requestAccessToken();
+      googleTokenClient.requestAccessToken({ prompt: 'select_account' });
     }
   });
 
-  // Google OAuth Logout Action
-  document.getElementById('google-logout-btn').addEventListener('click', () => {
-    if (state.googleClientToken) {
-      google.accounts.oauth2.revokeToken(state.googleClientToken, () => {});
+  // Google OAuth Work Login Action
+  const loginBtnWork = document.getElementById('google-login-btn-work');
+  loginBtnWork.addEventListener('click', () => {
+    if (!state.settings.googleClientId) {
+      const clientIdInput = document.getElementById('google-client-id');
+      const msg = state.lang === 'es' ? 'Por favor, introduce tu Google Client ID.' : 'Please enter your Google Client ID.';
+      showInputErrorFeedback(clientIdInput, msg);
+      return;
     }
-    state.googleClientToken = null;
-    sessionStorage.removeItem('google_access_token');
-    updateGoogleAuthStatus(false);
+    googleLoginTarget = 'work';
+    if (googleTokenClient) {
+      googleTokenClient.requestAccessToken({ prompt: 'select_account' });
+    } else {
+      initGoogleOAuth();
+      googleTokenClient.requestAccessToken({ prompt: 'select_account' });
+    }
+  });
+
+  // Google OAuth Personal Logout Action
+  document.getElementById('google-logout-btn-personal').addEventListener('click', () => {
+    if (state.googlePersonalToken) {
+      google.accounts.oauth2.revokeToken(state.googlePersonalToken, () => {});
+    }
+    state.googlePersonalToken = null;
+    state.googlePersonalEmail = null;
+    sessionStorage.removeItem('google_personal_token');
+    sessionStorage.removeItem('google_personal_email');
     
-    // Clear Google components
-    document.getElementById('google-events-container').innerHTML = `<p class="empty-msg">${translations[state.lang]['no-events']}</p>`;
-    document.getElementById('gmail-container').innerHTML = `<p class="empty-msg">${translations[state.lang]['no-emails']}</p>`;
-    document.getElementById('weekly-events-container').innerHTML = `<p class="empty-msg">${translations[state.lang]['no-weekly-events']}</p>`;
-    const gT1 = document.getElementById('gtasks-today');
-    const gT2 = document.getElementById('gtasks-week');
-    if (gT1) gT1.remove();
-    if (gT2) gT2.remove();
+    // Sync legacy/compatibility tokens
+    state.googleClientToken = state.googleWorkToken;
+    sessionStorage.setItem('google_access_token', state.googleClientToken || '');
+    
+    updateGoogleAuthStatus();
+    
+    // Clear / Refetch Google components
+    if (state.googleWorkToken) {
+      fetchGoogleData();
+    } else {
+      fetchGoogleCalendar();
+      document.getElementById('gmail-container').innerHTML = `<p class="empty-msg">${translations[state.lang]['no-emails']}</p>`;
+      const gT1 = document.getElementById('gtasks-today');
+      const gT2 = document.getElementById('gtasks-week');
+      if (gT1) gT1.remove();
+      if (gT2) gT2.remove();
+    }
+  });
+
+  // Google OAuth Work Logout Action
+  document.getElementById('google-logout-btn-work').addEventListener('click', () => {
+    if (state.googleWorkToken) {
+      google.accounts.oauth2.revokeToken(state.googleWorkToken, () => {});
+    }
+    state.googleWorkToken = null;
+    state.googleWorkEmail = null;
+    sessionStorage.removeItem('google_work_token');
+    sessionStorage.removeItem('google_work_email');
+    
+    // Sync legacy/compatibility tokens
+    state.googleClientToken = state.googlePersonalToken;
+    sessionStorage.setItem('google_access_token', state.googleClientToken || '');
+    
+    updateGoogleAuthStatus();
+    
+    // Clear / Refetch Google components
+    if (state.googlePersonalToken) {
+      fetchGoogleData();
+    } else {
+      fetchGoogleCalendar();
+      document.getElementById('gmail-container').innerHTML = `<p class="empty-msg">${translations[state.lang]['no-emails']}</p>`;
+      const gT1 = document.getElementById('gtasks-today');
+      const gT2 = document.getElementById('gtasks-week');
+      if (gT1) gT1.remove();
+      if (gT2) gT2.remove();
+    }
   });
 
   // Todo Form Submit (Add Task)
@@ -3042,6 +4238,8 @@ function setupEventListeners() {
     const input = document.getElementById('todo-input');
     const dateInput = document.getElementById('todo-date');
     const prioritySelect = document.getElementById('todo-priority');
+
+
 
     addTodo(input.value.trim(), dateInput.value, prioritySelect.value);
 
@@ -3072,9 +4270,12 @@ function setupEventListeners() {
   document.getElementById('edit-task-form').addEventListener('submit', (e) => {
     e.preventDefault();
     const id = document.getElementById('edit-task-id').value;
-    const text = document.getElementById('edit-task-text').value.trim();
+    const textInput = document.getElementById('edit-task-text');
+    const text = textInput.value.trim();
     const date = document.getElementById('edit-task-date').value;
     const priority = document.getElementById('edit-task-priority').value;
+
+
 
     updateTodo(id, text, date, priority);
     editModal.close();
@@ -3124,6 +4325,29 @@ function formatEventTime(evt) {
   return date.toLocaleTimeString(state.lang === 'es' ? 'es-ES' : 'en-US', options);
 }
 
+function getRelativeDateLabel(dateVal) {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  
+  const target = new Date(dateVal);
+  target.setHours(0, 0, 0, 0);
+  
+  const diffTime = target.getTime() - today.getTime();
+  const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+  
+  if (diffDays === 0) {
+    return state.lang === 'es' ? 'Hoy' : 'Today';
+  } else if (diffDays === 1) {
+    return state.lang === 'es' ? 'Mañana' : 'Tomorrow';
+  } else if (diffDays === 2) {
+    return state.lang === 'es' ? 'Pasado mañana' : 'Day after tomorrow';
+  } else {
+    const options = { weekday: 'long', day: 'numeric', month: 'short' };
+    const formatted = target.toLocaleDateString(state.lang === 'es' ? 'es-ES' : 'en-US', options);
+    return formatted.charAt(0).toUpperCase() + formatted.slice(1);
+  }
+}
+
 // -------------------------------------------------------------
 // APP INITIALIZATION
 // -------------------------------------------------------------
@@ -3153,10 +4377,8 @@ async function init() {
   fetchBitbucket();
   fetchJira();
 
-  // If Client ID is present, wait and load Google Auth
-  if (state.settings.googleClientId) {
-    setTimeout(initGoogleOAuth, 1000);
-  }
+  // Load Google Auth and render setup links
+  setTimeout(initGoogleOAuth, 1000);
 }
 
 // Start application
