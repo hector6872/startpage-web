@@ -2223,13 +2223,12 @@ async function fetchAllPRs() {
     try {
       const token = state.settings.bitbucketToken;
       const username = state.settings.bitbucketUsername;
-      const isBasic = token.startsWith('ATAT') || token.startsWith('ATBB') || (username && username.includes('@'));
-      const authHeader = isBasic ? 'Basic ' + btoa(`${username}:${token}`) : `Bearer ${token}`;
+      const auth = btoa(`${username}:${token}`);
 
-      // 1. Get the 10 most recently updated repositories in the workspace
-      const reposRes = await fetch(`https://api.bitbucket.org/2.0/repositories/${state.settings.bitbucketWorkspace}?pagelen=10&sort=-updated_on`, {
+      // 1. Get the 5 most recently updated repositories in the workspace
+      const reposRes = await fetch(`https://api.bitbucket.org/2.0/repositories/${state.settings.bitbucketWorkspace}?pagelen=5&sort=-updated_on`, {
         headers: {
-          'Authorization': authHeader,
+          'Authorization': `Basic ${auth}`,
           'Accept': 'application/json'
         }
       });
@@ -2242,7 +2241,7 @@ async function fetchAllPRs() {
           try {
             const prsRes = await fetch(`https://api.bitbucket.org/2.0/repositories/${state.settings.bitbucketWorkspace}/${repo.slug}/pullrequests?state=OPEN`, {
               headers: {
-                'Authorization': authHeader,
+                'Authorization': `Basic ${auth}`,
                 'Accept': 'application/json'
               }
             });
