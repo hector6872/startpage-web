@@ -443,6 +443,35 @@
                 </label>
               </div>
             </div>
+
+            <!-- Wikipedia Card -->
+            <div class="settings-section-card">
+              <div class="card-toggle-header">
+                <span class="card-toggle-title">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+                    <path d="M2 12h20"></path>
+                  </svg>
+                  <span data-i18n="label-show-wikipedia">Wikipedia</span>
+                </span>
+                <label class="switch-control">
+                  <input type="checkbox" id="settings-show-wikipedia" checked>
+                  <span class="switch-slider"></span>
+                </label>
+              </div>
+              <div id="wikipedia-settings-group" class="card-collapsible-content">
+                <div class="form-group">
+                  <label for="settings-wikipedia-type" data-i18n="label-wikipedia-type">Which one do you want to see?</label>
+                  <select id="settings-wikipedia-type">
+                    <option value="quote" data-i18n="wiki-type-quote">Quote</option>
+                    <option value="topread" data-i18n="wiki-type-topread">Top read</option>
+                    <option value="news" data-i18n="wiki-type-news">News</option>
+                    <option value="onthisday" data-i18n="wiki-type-onthisday">On this day</option>
+                  </select>
+                </div>
+              </div>
+            </div>
           </div>
 
           <!-- Tab: Shortcuts -->

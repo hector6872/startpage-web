@@ -1524,6 +1524,95 @@ html.dark .copy-quote-btn:hover {
   opacity: 1;
 }
 
+/* Wikipedia & Dynamic Footer Content */
+.wiki-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 0.15rem 0.5rem;
+  border-radius: 20px;
+  background: var(--accent-bg);
+  color: var(--accent);
+  margin-right: 0.35rem;
+  vertical-align: middle;
+  line-height: 1.2;
+}
+
+.wiki-badge svg {
+  width: 12px;
+  height: 12px;
+}
+
+.wiki-year-badge {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.1rem 0.45rem;
+  border-radius: var(--radius-sm);
+  background: var(--border-color);
+  color: var(--text-primary);
+  margin-right: 0.35rem;
+}
+
+.wiki-views-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--text-tertiary);
+  margin-left: 0.4rem;
+}
+
+.wiki-link {
+  color: var(--text-primary);
+  font-weight: 500;
+  text-decoration: none;
+  border-bottom: 1px dotted var(--text-tertiary);
+  transition: all 0.2s ease;
+}
+
+.wiki-link:hover {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+
+.wiki-nav-btn {
+  background: none;
+  border: none;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  padding: 3px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-sm);
+  transition: all 0.2s ease;
+  opacity: 0.6;
+}
+
+.wiki-nav-btn:hover {
+  color: var(--accent);
+  opacity: 1;
+  background: rgba(0, 0, 0, 0.05);
+}
+
+html.dark .wiki-nav-btn:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.wiki-nav-controls {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.15rem;
+  margin-left: 0.35rem;
+}
+
 /* Modal / Dialog styling */
 .modal-dialog {
   border: none;
