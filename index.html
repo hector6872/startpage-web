@@ -38,72 +38,88 @@
   <div class="container">
     <!-- Header -->
     <header class="app-header">
-      <div class="header-left">
-        <h1 id="greeting" class="greeting">Hello</h1>
-        <p id="current-date" class="date-subtitle">Monday, 20 July</p>
-        <div id="events-banner-container" class="events-banner-container"></div>
-      </div>
-      <div class="header-right">
-        <!-- Shortcut Buttons Stack -->
-        <div class="shortcut-buttons-column">
-          <button id="notes-btn-header" type="button" class="btn-icon shortcut-btn" title="Notas" aria-label="Notas" data-i18n-title="notes-btn-title">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-              <polyline points="14 2 14 8 20 8"></polyline>
-              <line x1="16" y1="13" x2="8" y2="13"></line>
-              <line x1="16" y1="17" x2="8" y2="17"></line>
-              <polyline points="10 9 9 9 8 9"></polyline>
-            </svg>
-            <span id="notes-badge" class="notes-badge hidden"></span>
-          </button>
-          <button id="timer-btn-header" type="button" class="btn-icon shortcut-btn" title="Timer" aria-label="Timer" data-i18n-title="timer-btn-title">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <line x1="10" y1="2" x2="14" y2="2"></line>
-              <line x1="12" y1="14" x2="15" y2="11"></line>
-              <circle cx="12" cy="14" r="8"></circle>
-            </svg>
-          </button>
-          <button id="finance-btn-header" type="button" class="btn-icon shortcut-btn" title="Finanzas" aria-label="Finanzas" data-i18n-title="finance-btn-title">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <polyline points="22 7 13.5 15.5 8.5 10.5 2 17"></polyline>
-              <polyline points="16 7 22 7 22 13"></polyline>
-            </svg>
-          </button>
-          <button id="stopwatch-btn-header" type="button" class="btn-icon shortcut-btn" title="Stopwatch" aria-label="Stopwatch" data-i18n-title="stopwatch-btn-title">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="12" cy="13" r="8"></circle>
-              <path d="M12 9v4l2 2"></path>
-              <path d="M5 3L2 6"></path>
-              <path d="M22 6l-3-3"></path>
-              <path d="M12 2v2"></path>
-            </svg>
-          </button>
+      <div class="header-main-row">
+        <div class="header-left">
+          <h1 id="greeting" class="greeting">Hello</h1>
+          <p id="current-date" class="date-subtitle">Monday, 20 July</p>
+          <div id="events-banner-container" class="events-banner-container"></div>
         </div>
-        <!-- World Clock Widget -->
-        <div id="world-clock-widget" class="world-clock-widget hidden">
-          <div class="clock-info">
-            <span class="clock-label">--</span>
-            <div class="clock-time">--:--</div>
-            <span class="clock-diff">--</span>
-            <span class="clock-unconfigured-text"></span>
+        <div class="header-right">
+          <!-- Shortcut Buttons Stack -->
+          <div class="shortcut-buttons-column">
+            <button id="notes-btn-header" type="button" class="btn-icon shortcut-btn" title="Notas" aria-label="Notas" data-i18n-title="notes-btn-title">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                <polyline points="14 2 14 8 20 8"></polyline>
+                <line x1="16" y1="13" x2="8" y2="13"></line>
+                <line x1="16" y1="17" x2="8" y2="17"></line>
+                <polyline points="10 9 9 9 8 9"></polyline>
+              </svg>
+              <span id="notes-badge" class="notes-badge hidden"></span>
+            </button>
+            <button id="timer-btn-header" type="button" class="btn-icon shortcut-btn" title="Timer" aria-label="Timer" data-i18n-title="timer-btn-title">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="10" y1="2" x2="14" y2="2"></line>
+                <line x1="12" y1="14" x2="15" y2="11"></line>
+                <circle cx="12" cy="14" r="8"></circle>
+              </svg>
+            </button>
+            <button id="finance-btn-header" type="button" class="btn-icon shortcut-btn" title="Finanzas" aria-label="Finanzas" data-i18n-title="finance-btn-title">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="22 7 13.5 15.5 8.5 10.5 2 17"></polyline>
+                <polyline points="16 7 22 7 22 13"></polyline>
+              </svg>
+            </button>
+            <button id="stopwatch-btn-header" type="button" class="btn-icon shortcut-btn" title="Stopwatch" aria-label="Stopwatch" data-i18n-title="stopwatch-btn-title">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="13" r="8"></circle>
+                <path d="M12 9v4l2 2"></path>
+                <path d="M5 3L2 6"></path>
+                <path d="M22 6l-3-3"></path>
+                <path d="M12 2v2"></path>
+              </svg>
+            </button>
           </div>
-        </div>
-        <!-- Weather Widget -->
-        <div id="weather-widget" class="weather-widget loading">
-          <div class="weather-info">
-            <span class="weather-loc">--</span>
-            <div class="weather-details-grid">
-              <div class="weather-col-1">
-                <div class="weather-temp">--°C</div>
-                <span class="weather-feels">--</span>
-              </div>
-              <div class="weather-col-2">
-                <span class="weather-desc">Loading weather...</span>
-                <span class="weather-precip"></span>
-              </div>
+          <!-- World Clock Widget -->
+          <div id="world-clock-widget" class="world-clock-widget hidden">
+            <div class="clock-info">
+              <span class="clock-label">--</span>
+              <div class="clock-time">--:--</div>
+              <span class="clock-diff">--</span>
+              <span class="clock-unconfigured-text"></span>
             </div>
-            <span class="weather-unconfigured-text"></span>
           </div>
+          <!-- Weather Widget -->
+          <div id="weather-widget" class="weather-widget loading">
+            <div class="weather-info">
+              <span class="weather-loc">--</span>
+              <div class="weather-details-grid">
+                <div class="weather-col-1">
+                  <div class="weather-temp">--°C</div>
+                  <span class="weather-feels">--</span>
+                </div>
+                <div class="weather-col-2">
+                  <span class="weather-desc">Loading weather...</span>
+                  <span class="weather-precip"></span>
+                </div>
+              </div>
+              <span class="weather-unconfigured-text"></span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- Dedicated Wikipedia Row in Header -->
+      <div id="quote-widget" class="quote-widget">
+        <div class="quote-container">
+          <span class="quote-text">"Loading quote of the day..."</span>
+          <span class="quote-sep"> – </span>
+          <a id="quote-author" class="quote-author" href="#" target="_blank" rel="noopener noreferrer"></a>
+          <button id="copy-quote-btn" class="copy-quote-btn" title="Copy quote" aria-label="Copy quote">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+            </svg>
+          </button>
         </div>
       </div>
     </header>
@@ -123,6 +139,12 @@
               <span style="display: inline-flex; align-items: center; gap: 0.4rem;">
                 <span data-i18n="calendar-events">Events</span>
                 <span id="events-count-badge" class="filter-badge hidden" style="margin-left: 0;"></span>
+                <button type="button" id="btn-create-event-today" class="card-action-btn" data-tooltip="Create Event (C)" aria-label="Create Event">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                  </svg>
+                </button>
               </span>
               <span class="header-status-indicators" id="google-events-status-indicators"></span>
             </h3>
@@ -136,6 +158,12 @@
               <span style="display: inline-flex; align-items: center; gap: 0.4rem;">
                 <span data-i18n="urgent-emails">Urgent Emails</span>
                 <span id="emails-count-badge" class="filter-badge hidden" style="margin-left: 0;"></span>
+                <button type="button" id="btn-compose-email" class="card-action-btn" data-tooltip="Compose Email (E)" aria-label="Compose Email">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                  </svg>
+                </button>
               </span>
               <span class="header-status-indicators" id="google-emails-status-indicators"></span>
             </h3>
@@ -159,6 +187,12 @@
               <span style="display: inline-flex; align-items: center; gap: 0.4rem;">
                 <span data-i18n="weekly-schedule">Weekly Schedule</span>
                 <span id="weekly-count-badge" class="filter-badge hidden" style="margin-left: 0;"></span>
+                <button type="button" id="btn-create-event-week" class="card-action-btn" data-tooltip="Create Event (C)" aria-label="Create Event">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                  </svg>
+                </button>
               </span>
               <span class="header-status-indicators" id="google-weekly-status-indicators"></span>
             </h3>
@@ -224,7 +258,7 @@
         <!-- My Tasks Header -->
         <div class="section-header" id="tasks-section-header">
           <h2 class="col-title" id="tasks-section-title" data-i18n="tasks-card-title">My Tasks</h2>
-          <button id="btn-show-add-task" class="add-section-btn" title="Add Task" aria-label="Add Task">
+          <button id="btn-show-add-task" class="add-section-btn" title="Add Task (T)" data-tooltip="Add Task (T)" aria-label="Add Task">
             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
           </button>
         </div>
@@ -261,23 +295,6 @@
         </div>
       </section>
     </main>
-
-    <!-- Footer Quote -->
-    <footer class="app-footer">
-      <div id="quote-widget" class="quote-widget">
-        <div class="quote-container">
-          <span class="quote-text">"Loading quote of the day..."</span>
-          <span class="quote-sep"> – </span>
-          <a id="quote-author" class="quote-author" href="#" target="_blank" rel="noopener noreferrer"></a>
-          <button id="copy-quote-btn" class="copy-quote-btn" title="Copy quote" aria-label="Copy quote">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-            </svg>
-          </button>
-        </div>
-      </div>
-    </footer>
   </div>
 
   <!-- Settings Modal -->
@@ -441,6 +458,35 @@
                   <input type="checkbox" id="settings-show-tasks" checked>
                   <span class="switch-slider"></span>
                 </label>
+              </div>
+            </div>
+
+            <!-- Wikipedia Card -->
+            <div class="settings-section-card">
+              <div class="card-toggle-header">
+                <span class="card-toggle-title">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+                    <path d="M2 12h20"></path>
+                  </svg>
+                  <span data-i18n="label-show-wikipedia">Wikipedia</span>
+                </span>
+                <label class="switch-control">
+                  <input type="checkbox" id="settings-show-wikipedia" checked>
+                  <span class="switch-slider"></span>
+                </label>
+              </div>
+              <div id="wikipedia-settings-group" class="card-collapsible-content">
+                <div class="form-group">
+                  <label for="settings-wikipedia-type" data-i18n="label-wikipedia-type">Content</label>
+                  <select id="settings-wikipedia-type">
+                    <option value="news" data-i18n="wiki-type-news" selected>News</option>
+                    <option value="onthisday" data-i18n="wiki-type-onthisday">On this day</option>
+                    <option value="quote" data-i18n="wiki-type-quote">Quote</option>
+                    <option value="topread" data-i18n="wiki-type-topread">Top read</option>
+                  </select>
+                </div>
               </div>
             </div>
           </div>
@@ -779,10 +825,6 @@
             </div>
           </div>
 
-        </div>
-
-        <div class="modal-footer">
-          <button type="submit" class="btn-primary" data-i18n="save-settings">Save Settings</button>
         </div>
       </form>
     </div>

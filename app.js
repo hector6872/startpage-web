@@ -51,6 +51,22 @@ const translations = {
     "label-show-world-clock": "Show World Clock Widget",
     "label-show-countdowns": "Show Events",
     "label-show-tasks": "Show Tasks",
+    "label-show-wikipedia": "Wikipedia",
+    "label-wikipedia-type": "Content",
+    "wiki-type-quote": "Quote",
+    "wiki-type-topread": "Top read",
+    "wiki-type-news": "News",
+    "wiki-type-onthisday": "On this day",
+    "wiki-badge-quote": "Quote",
+    "wiki-badge-topread": "Top Read",
+    "wiki-badge-news": "In the News",
+    "wiki-badge-onthisday": "On This Day",
+    "wiki-views": "views",
+    "wiki-loading": "Loading Wikipedia...",
+    "wiki-error": "Wikipedia content unavailable",
+    "wiki-prev": "Previous",
+    "wiki-next": "Next",
+    "wiki-refresh": "Shuffle / New Quote",
     "label-show-google-tasks-title": "Tasks (Google Tasks)",
     "label-show-google-tasks-today": "Today",
     "label-show-google-tasks-week": "This Week",
@@ -216,6 +232,22 @@ const translations = {
     "label-show-world-clock": "Mostrar Reloj Mundial",
     "label-show-countdowns": "Mostrar Eventos",
     "label-show-tasks": "Mostrar Tareas",
+    "label-show-wikipedia": "Wikipedia",
+    "label-wikipedia-type": "Contenido",
+    "wiki-type-quote": "Quote",
+    "wiki-type-topread": "Top read",
+    "wiki-type-news": "News",
+    "wiki-type-onthisday": "On this day",
+    "wiki-badge-quote": "Frase",
+    "wiki-badge-topread": "Más Leído",
+    "wiki-badge-news": "En las Noticias",
+    "wiki-badge-onthisday": "Un Día Como Hoy",
+    "wiki-views": "visitas",
+    "wiki-loading": "Cargando Wikipedia...",
+    "wiki-error": "Contenido de Wikipedia no disponible",
+    "wiki-prev": "Anterior",
+    "wiki-next": "Siguiente",
+    "wiki-refresh": "Aleatorio / Otra Frase",
     "label-show-google-tasks-title": "Tareas (Google Tasks)",
     "label-show-google-tasks-today": "Hoy",
     "label-show-google-tasks-week": "Esta Semana",
@@ -390,6 +422,8 @@ let state = {
     stopwatchUrl: 'https://www.google.com/search?q=stopwatch',
     showWeather: true,
     showWorldClock: true,
+    showWikipedia: true,
+    wikipediaType: 'news',
     storageMode: 'local', // local or file
     googleClientId: '',
     githubToken: '',
@@ -1248,59 +1282,449 @@ function toSentenceCase(str) {
   return lower.replace(/(^\s*|[.!?]\s+)([a-z])/g, (match, separator, char) => separator + char.toUpperCase());
 }
 
-// Quotes System
-function loadQuote() {
-  const dictionary = translations[state.lang];
+// Wikipedia & Dynamic Content System
+let wikiFeaturedCache = {};
+let wikiOnThisDayCache = {};
+let wikiTopReadIndex = 0;
+let wikiNewsIndex = 0;
+let wikiOnThisDayIndex = 0;
+let currentQuoteData = null;
+
+function formatViewsCount(num) {
+  if (!num) return '';
+  if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
+  if (num >= 1000) return (num / 1000).toFixed(1) + 'k';
+  return num.toString();
+}
+
+async function loadWikipediaContent() {
   const quoteWidget = document.getElementById('quote-widget');
-  quoteWidget.querySelector('.quote-text').textContent = dictionary['quote-loading'];
-  const authorEl = quoteWidget.querySelector('.quote-author');
-  if (authorEl) {
-    authorEl.textContent = '';
-    authorEl.removeAttribute('href');
+  if (!quoteWidget) return;
+
+  if (state.settings.showWikipedia === false) {
+    quoteWidget.classList.add('hidden');
+    return;
+  }
+  quoteWidget.classList.remove('hidden');
+
+  const type = state.settings.wikipediaType || 'news';
+  const lang = state.lang === 'es' ? 'es' : 'en';
+  const dict = translations[state.lang] || translations.en;
+  const container = quoteWidget.querySelector('.quote-container');
+  if (!container) return;
+
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+
+  if (type === 'quote') {
+    renderQuoteMode();
+  } else if (type === 'topread') {
+    await renderTopReadMode();
+  } else if (type === 'news') {
+    await renderNewsMode();
+  } else if (type === 'onthisday') {
+    await renderOnThisDayMode();
   }
 
-  // Attempt to fetch from public API, fallback to curated local list
-  fetch('https://dummyjson.com/quotes/random')
-    .then(res => {
-      if (!res.ok) throw new Error();
-      return res.json();
-    })
-    .then(data => {
-      // API provides quotes in English. If page is in Spanish, translate or use local
-      if (state.lang === 'es') {
+  function renderQuoteMode() {
+    if (currentQuoteData) {
+      displayQuote(currentQuoteData.text, currentQuoteData.author);
+      return;
+    }
+    container.innerHTML = `<span class="quote-text">${dict['quote-loading']}</span>`;
+    fetch('https://dummyjson.com/quotes/random')
+      .then(res => {
+        if (!res.ok) throw new Error();
+        return res.json();
+      })
+      .then(data => {
+        if (state.lang === 'es') {
+          useLocalQuote();
+        } else {
+          currentQuoteData = { text: data.quote, author: data.author };
+          displayQuote(currentQuoteData.text, currentQuoteData.author);
+        }
+      })
+      .catch(() => {
         useLocalQuote();
-      } else {
-        updateQuoteDisplay(data.quote, data.author);
-      }
-    })
-    .catch(() => {
-      useLocalQuote();
-    });
+      });
 
-  function useLocalQuote() {
-    const list = quotesDb[state.lang] || quotesDb['en'];
-    const randomQuote = list[Math.floor(Math.random() * list.length)];
-    updateQuoteDisplay(randomQuote.text, randomQuote.author);
-  }
-
-  function updateQuoteDisplay(text, author) {
-    const quoteTextEl = quoteWidget.querySelector('.quote-text');
-    const quoteSepEl = quoteWidget.querySelector('.quote-sep');
-    quoteTextEl.textContent = `"${toSentenceCase(text)}"`;
-    if (author && authorEl) {
-      const cleanAuthor = author.replace(/^[\s–—-]+/, '').trim();
-      const wikiLang = state.lang === 'es' ? 'es' : 'en';
-      if (quoteSepEl) quoteSepEl.style.display = 'inline';
-      authorEl.href = `https://${wikiLang}.wikipedia.org/wiki/Special:Search?search=${encodeURIComponent(cleanAuthor)}`;
-      authorEl.textContent = cleanAuthor;
-      authorEl.title = state.lang === 'es' ? `Ver ${cleanAuthor} en Wikipedia` : `View ${cleanAuthor} on Wikipedia`;
-      authorEl.style.display = 'inline';
-    } else if (authorEl) {
-      if (quoteSepEl) quoteSepEl.style.display = 'none';
-      authorEl.textContent = '';
-      authorEl.style.display = 'none';
+    function useLocalQuote() {
+      const list = quotesDb[state.lang] || quotesDb['en'];
+      const item = list[Math.floor(Math.random() * list.length)];
+      currentQuoteData = { text: item.text, author: item.author };
+      displayQuote(item.text, item.author);
     }
   }
+
+  function displayQuote(text, author) {
+    const cleanAuthor = author ? author.replace(/^[\s–—-]+/, '').trim() : '';
+    const wikiLang = state.lang === 'es' ? 'es' : 'en';
+    const authorUrl = cleanAuthor ? `https://${wikiLang}.wikipedia.org/wiki/Special:Search?search=${encodeURIComponent(cleanAuthor)}` : '';
+    const authorTitle = state.lang === 'es' ? `Ver ${cleanAuthor} en Wikipedia` : `View ${cleanAuthor} on Wikipedia`;
+    const badgeTooltip = state.lang === 'es' ? 'Cambiar contenido en Configuración' : 'Change content in Settings';
+    
+    container.innerHTML = `
+      <span class="wiki-badge" data-tooltip="${badgeTooltip}" onclick="window.openSettingsWikipediaTab()" title="${badgeTooltip}">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14h2v2h-2zm0-10h2v8h-2z"/></svg>
+        ${dict['wiki-badge-quote'] || 'Quote'}
+      </span>
+      <div class="wiki-nav-controls">
+        <button id="copy-quote-btn" class="wiki-nav-btn copy-quote-btn" title="Copy quote" aria-label="Copy quote">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+          </svg>
+        </button>
+        <button id="refresh-quote-btn" class="wiki-nav-btn" title="${dict['wiki-refresh'] || 'Shuffle'}" aria-label="Shuffle quote">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="23 4 23 10 17 10"></polyline>
+            <polyline points="1 20 1 14 7 14"></polyline>
+            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+          </svg>
+        </button>
+      </div>
+      <span class="quote-text">"${toSentenceCase(text)}"</span>
+      ${cleanAuthor ? `<span class="quote-sep"> – </span><a class="quote-author wiki-link" href="${authorUrl}" target="_blank" rel="noopener noreferrer" title="${authorTitle}">${cleanAuthor}</a>` : ''}
+    `;
+
+    const copyBtn = container.querySelector('#copy-quote-btn');
+    if (copyBtn) {
+      copyBtn.addEventListener('click', () => {
+        const textToCopy = cleanAuthor ? `"${text}" – ${cleanAuthor}` : `"${text}"`;
+        navigator.clipboard.writeText(textToCopy).then(() => {
+          const originalSVG = copyBtn.innerHTML;
+          copyBtn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
+          copyBtn.classList.add('copied');
+          setTimeout(() => {
+            copyBtn.innerHTML = originalSVG;
+            copyBtn.classList.remove('copied');
+          }, 2000);
+        });
+      });
+    }
+
+    const refreshBtn = container.querySelector('#refresh-quote-btn');
+    if (refreshBtn) {
+      refreshBtn.addEventListener('click', () => {
+        currentQuoteData = null;
+        renderQuoteMode();
+      });
+    }
+  }
+
+  async function fetchFeaturedFeed(feedLang) {
+    const key = `${feedLang}-${year}-${month}-${day}`;
+    if (wikiFeaturedCache[key]) return wikiFeaturedCache[key];
+
+    try {
+      const res = await fetch(`https://${feedLang}.wikipedia.org/api/rest_v1/feed/featured/${year}/${month}/${day}`);
+      if (res.ok) {
+        const data = await res.json();
+        wikiFeaturedCache[key] = data;
+        return data;
+      }
+    } catch (e) {
+      console.warn('Failed to fetch Wikipedia featured feed for', feedLang, e);
+    }
+    return null;
+  }
+
+  async function renderTopReadMode() {
+    container.innerHTML = `<span class="quote-text">${dict['wiki-loading']}</span>`;
+    let data = await fetchFeaturedFeed(lang);
+    if (!data || !data.mostread || !data.mostread.articles || data.mostread.articles.length === 0) {
+      if (lang !== 'en') {
+        data = await fetchFeaturedFeed('en');
+      }
+    }
+
+    if (!data || !data.mostread || !data.mostread.articles || data.mostread.articles.length === 0) {
+      container.innerHTML = `<span class="quote-text">${dict['wiki-error']}</span>`;
+      return;
+    }
+
+    const articles = data.mostread.articles.filter(a => 
+      !a.title.includes('Special:') && 
+      !a.title.includes('Wikipedia:') && 
+      !a.title.includes('Main_Page') && 
+      !a.title.includes('Portada')
+    );
+
+    if (articles.length === 0) {
+      container.innerHTML = `<span class="quote-text">${dict['wiki-error']}</span>`;
+      return;
+    }
+
+    if (wikiTopReadIndex >= articles.length) wikiTopReadIndex = 0;
+    if (wikiTopReadIndex < 0) wikiTopReadIndex = articles.length - 1;
+
+    const cur = articles[wikiTopReadIndex];
+    const pageUrl = cur.content_urls?.desktop?.page || `https://${lang}.wikipedia.org/wiki/${encodeURIComponent(cur.title)}`;
+    const displayTitle = cur.displaytitle ? cur.displaytitle.replace(/<[^>]+>/g, '') : cur.title.replace(/_/g, ' ');
+    const viewsStr = formatViewsCount(cur.views);
+    const badgeTooltip = state.lang === 'es' ? 'Cambiar contenido en Configuración' : 'Change content in Settings';
+
+    container.innerHTML = `
+      <span class="wiki-badge" data-tooltip="${badgeTooltip}" onclick="window.openSettingsWikipediaTab()" title="${badgeTooltip}">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 6l-9.5 9.5-5-5L1 18"></path><path d="M17 6h6v6"></path></svg>
+        ${dict['wiki-badge-topread'] || 'Top Read'} #${wikiTopReadIndex + 1}
+      </span>
+      <div class="wiki-nav-controls">
+        <button id="wiki-prev-btn" class="wiki-nav-btn" title="${dict['wiki-prev']}" aria-label="Previous">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+        </button>
+        <button id="wiki-next-btn" class="wiki-nav-btn" title="${dict['wiki-next']}" aria-label="Next">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+        </button>
+      </div>
+      <a class="wiki-link" href="${pageUrl}" target="_blank" rel="noopener noreferrer" title="${cur.extract || displayTitle}">${displayTitle}</a>
+      ${viewsStr ? `<span class="wiki-views-badge">👁️ ${viewsStr} ${dict['wiki-views']}</span>` : ''}
+    `;
+
+    container.querySelector('#wiki-prev-btn')?.addEventListener('click', () => {
+      wikiTopReadIndex--;
+      renderTopReadMode();
+    });
+    container.querySelector('#wiki-next-btn')?.addEventListener('click', () => {
+      wikiTopReadIndex++;
+      renderTopReadMode();
+    });
+  }
+
+  function formatNewsHtml(cur, feedLang) {
+    let rawHtml = cur.story || '';
+    const linksMap = new Map();
+
+    if (Array.isArray(cur.links)) {
+      cur.links.forEach(item => {
+        const title = item.title ? item.title.replace(/_/g, ' ') : '';
+        const url = item.content_urls?.desktop?.page || `https://${feedLang}.wikipedia.org/wiki/${encodeURIComponent(item.title || title)}`;
+        if (title) {
+          linksMap.set(title.toLowerCase(), { title, url, extract: item.extract || '' });
+        }
+        if (item.displaytitle) {
+          const cleanDisplay = item.displaytitle.replace(/<[^>]+>/g, '');
+          linksMap.set(cleanDisplay.toLowerCase(), { title: cleanDisplay, url, extract: item.extract || '' });
+        }
+      });
+    }
+
+    const temp = document.createElement('div');
+    temp.innerHTML = rawHtml;
+
+    // Convert existing <a> tags into working Wikipedia / Google search links
+    const aTags = temp.querySelectorAll('a');
+    if (aTags.length > 0) {
+      aTags.forEach(a => {
+        a.className = 'wiki-link';
+        a.target = '_blank';
+        a.rel = 'noopener noreferrer';
+        const text = a.textContent.trim();
+        let href = a.getAttribute('href') || '';
+        const matched = linksMap.get(text.toLowerCase());
+
+        if (matched) {
+          a.href = matched.url;
+          if (matched.extract) a.title = matched.extract;
+        } else if (href.startsWith('/wiki/') || href.startsWith('./')) {
+          const rawTitle = href.replace(/^(\/wiki\/|\.\/)/, '');
+          a.href = `https://${feedLang}.wikipedia.org/wiki/${rawTitle}`;
+        } else if (href.startsWith('http')) {
+          a.href = href;
+        } else if (text) {
+          a.href = `https://${feedLang}.wikipedia.org/wiki/Special:Search?search=${encodeURIComponent(text)}`;
+        } else {
+          a.href = `https://www.google.com/search?q=${encodeURIComponent(cur.story?.replace(/<[^>]+>/g, '') || '')}`;
+        }
+      });
+    }
+
+    // Convert bold <b> / <strong> tags to clickable links if they correspond to articles
+    const bTags = temp.querySelectorAll('b, strong');
+    bTags.forEach(b => {
+      if (b.closest('a')) return;
+      const text = b.textContent.trim();
+      const matched = linksMap.get(text.toLowerCase());
+      const a = document.createElement('a');
+      a.className = 'wiki-link';
+      a.target = '_blank';
+      a.rel = 'noopener noreferrer';
+      a.innerHTML = b.innerHTML;
+
+      if (matched) {
+        a.href = matched.url;
+        if (matched.extract) a.title = matched.extract;
+      } else if (text) {
+        a.href = `https://${feedLang}.wikipedia.org/wiki/Special:Search?search=${encodeURIComponent(text)}`;
+      } else {
+        a.href = `https://www.google.com/search?q=${encodeURIComponent(text)}`;
+      }
+      b.replaceWith(a);
+    });
+
+    let resultHtml = temp.innerHTML;
+
+    // Check if there are any clickable links in the rendered output
+    if (!resultHtml.includes('<a class="wiki-link"')) {
+      const cleanStory = cur.story ? cur.story.replace(/<[^>]+>/g, '').trim() : '';
+      if (cleanStory) {
+        const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(cleanStory)}`;
+        resultHtml = `<a class="wiki-link" href="${searchUrl}" target="_blank" rel="noopener noreferrer" title="Buscar en Google">${resultHtml}</a>`;
+      }
+    }
+
+    // Append extra article links from cur.links if they were not already mentioned in the text
+    if (Array.isArray(cur.links)) {
+      cur.links.forEach(item => {
+        const title = item.displaytitle ? item.displaytitle.replace(/<[^>]+>/g, '') : (item.title ? item.title.replace(/_/g, ' ') : '');
+        const url = item.content_urls?.desktop?.page || `https://${feedLang}.wikipedia.org/wiki/${encodeURIComponent(item.title || title)}`;
+        if (title && !resultHtml.includes(url) && !resultHtml.toLowerCase().includes(title.toLowerCase())) {
+          resultHtml += ` <a class="wiki-link" href="${url}" target="_blank" rel="noopener noreferrer" title="${item.extract || title}">↗ ${title}</a>`;
+        }
+      });
+    }
+
+    return resultHtml;
+  }
+
+  async function renderNewsMode() {
+    container.innerHTML = `<span class="quote-text">${dict['wiki-loading']}</span>`;
+    let data = await fetchFeaturedFeed(lang);
+    if (!data || !data.news || data.news.length === 0) {
+      if (lang !== 'en') {
+        data = await fetchFeaturedFeed('en');
+      }
+    }
+
+    if (!data || !data.news || data.news.length === 0) {
+      container.innerHTML = `<span class="quote-text">${dict['wiki-error']}</span>`;
+      return;
+    }
+
+    const newsItems = data.news;
+    if (wikiNewsIndex >= newsItems.length) wikiNewsIndex = 0;
+    if (wikiNewsIndex < 0) wikiNewsIndex = newsItems.length - 1;
+
+    const cur = newsItems[wikiNewsIndex];
+    const storyHtml = formatNewsHtml(cur, lang);
+    const badgeTooltip = state.lang === 'es' ? 'Cambiar contenido en Configuración' : 'Change content in Settings';
+
+    container.innerHTML = `
+      <span class="wiki-badge" data-tooltip="${badgeTooltip}" onclick="window.openSettingsWikipediaTab()" title="${badgeTooltip}">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"></path><path d="M18 14h-8"></path><path d="M15 18h-5"></path><path d="M10 6h8v4h-8V6Z"></path></svg>
+        ${dict['wiki-badge-news'] || 'In the News'}
+      </span>
+      <div class="wiki-nav-controls">
+        <button id="wiki-prev-btn" class="wiki-nav-btn" title="${dict['wiki-prev']}" aria-label="Previous">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+        </button>
+        <button id="wiki-next-btn" class="wiki-nav-btn" title="${dict['wiki-next']}" aria-label="Next">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+        </button>
+      </div>
+      <span>${storyHtml}</span>
+    `;
+
+    container.querySelector('#wiki-prev-btn')?.addEventListener('click', () => {
+      wikiNewsIndex--;
+      renderNewsMode();
+    });
+    container.querySelector('#wiki-next-btn')?.addEventListener('click', () => {
+      wikiNewsIndex++;
+      renderNewsMode();
+    });
+  }
+
+  async function renderOnThisDayMode() {
+    container.innerHTML = `<span class="quote-text">${dict['wiki-loading']}</span>`;
+    const cacheKey = `${lang}-${month}-${day}`;
+    let events = wikiOnThisDayCache[cacheKey];
+
+    if (!events) {
+      try {
+        const res = await fetch(`https://${lang}.wikipedia.org/api/rest_v1/feed/onthisday/selected/${month}/${day}`);
+        if (res.ok) {
+          const resData = await res.json();
+          events = resData.selected || resData.events || [];
+        }
+      } catch (e) {
+        console.warn('Failed to fetch onthisday for', lang, e);
+      }
+
+      if ((!events || events.length === 0) && lang !== 'en') {
+        try {
+          const res = await fetch(`https://en.wikipedia.org/api/rest_v1/feed/onthisday/selected/${month}/${day}`);
+          if (res.ok) {
+            const resData = await res.json();
+            events = resData.selected || resData.events || [];
+          }
+        } catch (e) {
+          console.warn('Failed to fetch English onthisday', e);
+        }
+      }
+
+      if (events && events.length > 0) {
+        wikiOnThisDayCache[cacheKey] = events;
+      }
+    }
+
+    if (!events || events.length === 0) {
+      container.innerHTML = `<span class="quote-text">${dict['wiki-error']}</span>`;
+      return;
+    }
+
+    if (wikiOnThisDayIndex >= events.length) wikiOnThisDayIndex = 0;
+    if (wikiOnThisDayIndex < 0) wikiOnThisDayIndex = events.length - 1;
+
+    const cur = events[wikiOnThisDayIndex];
+    let pageLinkHtml = '';
+    if (cur.pages && cur.pages.length > 0) {
+      cur.pages.slice(0, 3).forEach(p => {
+        const pageUrl = p.content_urls?.desktop?.page || `https://${lang}.wikipedia.org/wiki/${encodeURIComponent(p.title)}`;
+        const pageTitle = p.titles?.normalized || p.title.replace(/_/g, ' ');
+        pageLinkHtml += ` <a class="wiki-link" href="${pageUrl}" target="_blank" rel="noopener noreferrer" title="${p.extract || pageTitle}">↗ ${pageTitle}</a>`;
+      });
+    } else if (cur.text) {
+      const searchUrl = `https://www.google.com/search?q=${encodeURIComponent((cur.year ? cur.year + ' ' : '') + cur.text)}`;
+      pageLinkHtml = ` <a class="wiki-link" href="${searchUrl}" target="_blank" rel="noopener noreferrer" title="Buscar en Google">↗ Google</a>`;
+    }
+
+    const badgeTooltip = state.lang === 'es' ? 'Cambiar contenido en Configuración' : 'Change content in Settings';
+
+    container.innerHTML = `
+      <span class="wiki-badge" data-tooltip="${badgeTooltip}" onclick="window.openSettingsWikipediaTab()" title="${badgeTooltip}">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+        ${dict['wiki-badge-onthisday'] || 'On This Day'}
+      </span>
+      <div class="wiki-nav-controls">
+        <button id="wiki-prev-btn" class="wiki-nav-btn" title="${dict['wiki-prev']}" aria-label="Previous">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+        </button>
+        <button id="wiki-next-btn" class="wiki-nav-btn" title="${dict['wiki-next']}" aria-label="Next">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+        </button>
+      </div>
+      ${cur.year ? `<span class="wiki-year-badge">${cur.year}</span>` : ''}
+      <span>${cur.text}</span>
+      ${pageLinkHtml}
+    `;
+
+    container.querySelector('#wiki-prev-btn')?.addEventListener('click', () => {
+      wikiOnThisDayIndex--;
+      renderOnThisDayMode();
+    });
+    container.querySelector('#wiki-next-btn')?.addEventListener('click', () => {
+      wikiOnThisDayIndex++;
+      renderOnThisDayMode();
+    });
+  }
+}
+
+function loadQuote() {
+  loadWikipediaContent();
 }
 
 // Weather System (Open-Meteo)
@@ -1764,9 +2188,25 @@ function updateOrganizerVisibility() {
   const colTasksHidden = !showCountdowns && !showTasks && !showWork;
   if (colTasks) {
     colTasks.classList.toggle('hidden', colTasksHidden);
+
+    // If section-header is the first visible header in col-tasks, remove top margin so it aligns cleanly with other column titles
+    const allSectionHeaders = colTasks.querySelectorAll('.section-header');
+    allSectionHeaders.forEach(sh => sh.style.marginTop = '');
+
+    const firstVisibleHeader = colTasks.querySelector('.col-title:not(.hidden), .section-header:not(.hidden)');
+    if (firstVisibleHeader && firstVisibleHeader.classList.contains('section-header')) {
+      firstVisibleHeader.style.marginTop = '0';
+    }
   }
   if (dashboardGrid) {
     dashboardGrid.classList.toggle('two-cols', colTasksHidden);
+  }
+
+  // Update World Clock and Weather widgets visibility
+  updateWorldClock();
+  const weatherWidget = document.getElementById('weather-widget');
+  if (weatherWidget) {
+    weatherWidget.classList.toggle('hidden', state.settings.showWeather === false);
   }
 }
 
@@ -2110,7 +2550,36 @@ function syncDashboardColumns() {
 
 // -------------------------------------------------------------
 // EXTERNAL SERVICES INTEGRATIONS
-// -------------------------------------------------------------
+// Universal Fetch Helper (with transparent CORS proxy for Jira & Gmail)
+async function safeFetch(url, options = {}) {
+  const isJira = url.includes('/rest/api/3/') || url.includes('/rest/api/2/');
+  const isGmail = url.includes('gmail.googleapis.com');
+  
+  if (isJira || isGmail) {
+    const proxyUrl = `/api/proxy?url=${encodeURIComponent(url)}`;
+    try {
+      const res = await fetch(proxyUrl, options);
+      return res;
+    } catch (e) {
+      return fetch(url, options);
+    }
+  }
+
+  try {
+    const res = await fetch(url, options);
+    return res;
+  } catch (err) {
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      try {
+        const proxyUrl = `/api/proxy?url=${encodeURIComponent(url)}`;
+        return await fetch(proxyUrl, options);
+      } catch (proxyErr) {
+        throw err;
+      }
+    }
+    throw err;
+  }
+}
 
 // General helper to encode Jira Basic Auth
 function getJiraAuthHeader() {
@@ -2126,27 +2595,78 @@ async function fetchJira() {
     jiraBadge.classList.add('hidden');
   }
 
-  if (!state.settings.jiraHost || !state.settings.jiraEmail || !state.settings.jiraToken) {
+  let host = (state.settings.jiraHost || '').trim().replace(/\/$/, "");
+  if (host && !host.startsWith('http://') && !host.startsWith('https://')) {
+    host = 'https://' + host;
+  }
+
+  if (!host || !state.settings.jiraEmail || !state.settings.jiraToken) {
     container.innerHTML = `<p class="empty-msg">${translations[state.lang]['status-unconfigured']}</p>`;
     return;
   }
 
   try {
-    const domain = state.settings.jiraHost.replace(/\/$/, "");
-    const jql = encodeURIComponent("assignee = currentUser() AND statusCategory != Done");
-    const response = await fetch(`${domain}/rest/api/3/search?jql=${jql}&maxResults=5`, {
-      headers: {
-        'Authorization': getJiraAuthHeader(),
-        'Accept': 'application/json'
-      }
+    const jql = 'assignee = currentUser() AND statusCategory != Done ORDER BY updated DESC';
+    const authHeaders = {
+      'Authorization': getJiraAuthHeader(),
+      'Accept': 'application/json'
+    };
+    const fieldsParam = encodeURIComponent('summary,status,priority,updated');
+
+    // 1. Try new Jira Cloud GET /rest/api/3/search/jql
+    let response = await safeFetch(`${host}/rest/api/3/search/jql?jql=${encodeURIComponent(jql)}&maxResults=50&fields=${fieldsParam}`, {
+      headers: authHeaders
     });
 
-    if (!response.ok) throw new Error();
+    // 2. If GET /rest/api/3/search/jql is not OK, try POST /rest/api/3/search/jql
+    if (!response.ok) {
+      response = await safeFetch(`${host}/rest/api/3/search/jql`, {
+        method: 'POST',
+        headers: {
+          ...authHeaders,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          jql: jql,
+          maxResults: 50,
+          fields: ['summary', 'status', 'priority', 'updated']
+        })
+      });
+    }
+
+    // 3. If v3 fails, fallback to v2 search endpoint
+    if (!response.ok) {
+      response = await safeFetch(`${host}/rest/api/2/search?jql=${encodeURIComponent(jql)}&maxResults=50&fields=${fieldsParam}`, {
+        headers: authHeaders
+      });
+    }
+
+    // 4. Try simplified query if statusCategory is unsupported
+    if (!response.ok) {
+      const simpleJql = 'assignee = currentUser() ORDER BY updated DESC';
+      response = await safeFetch(`${host}/rest/api/3/search/jql?jql=${encodeURIComponent(simpleJql)}&maxResults=50&fields=${fieldsParam}`, {
+        headers: authHeaders
+      });
+      if (!response.ok) {
+        response = await safeFetch(`${host}/rest/api/2/search?jql=${encodeURIComponent(simpleJql)}&maxResults=50&fields=${fieldsParam}`, {
+          headers: authHeaders
+        });
+      }
+    }
+
+    if (!response.ok) {
+      const errBody = await response.text().catch(() => '');
+      console.error("Jira API Error Response:", response.status, errBody);
+      throw new Error(`HTTP ${response.status}`);
+    }
+
     const data = await response.json();
+    const totalCount = typeof data.total === 'number' ? data.total : (data.issues ? data.issues.length : 0);
 
     if (jiraBadge) {
       if (data.issues && data.issues.length > 0) {
-        jiraBadge.textContent = data.issues.length;
+        jiraBadge.textContent = totalCount > 5 ? '5+' : totalCount;
+        jiraBadge.setAttribute('data-tooltip', state.lang === 'es' ? `${totalCount} tareas asignadas en Jira` : `${totalCount} assigned tasks in Jira`);
         jiraBadge.classList.remove('hidden');
       } else {
         jiraBadge.classList.add('hidden');
@@ -2158,26 +2678,67 @@ async function fetchJira() {
       return;
     }
 
-    container.innerHTML = data.issues.map(issue => {
-      const summary = issue.fields.summary;
-      const key = issue.key;
-      const url = `${domain}/browse/${key}`;
-      const priority = issue.fields.priority ? issue.fields.priority.name : 'medium';
+    // Helper to calculate status category rank: 1: IN PROGRESS, 2: BLOCKED, 3: TO DO, 4: DONE
+    const getStatusRank = (statusName) => {
+      if (!statusName) return 3;
+      const s = statusName.toLowerCase();
+      if (s.includes('progress') || s.includes('review') || s.includes('pr') || s.includes('pull') || s.includes('develop') || s.includes('testing') || s.includes('qa') || s.includes('active')) return 1;
+      if (s.includes('block') || s.includes('hold') || s.includes('wait') || s.includes('imped') || s.includes('paus')) return 2;
+      if (s.includes('done') || s.includes('closed') || s.includes('resolved') || s.includes('complet')) return 4;
+      return 3; // To Do / Open / Backlog
+    };
+
+    // Sort issues by Status Rank (In Progress -> Blocked -> To Do -> Done), then by updated timestamp DESC
+    const sortedIssues = [...data.issues].sort((a, b) => {
+      const rankA = getStatusRank(a.fields?.status?.name);
+      const rankB = getStatusRank(b.fields?.status?.name);
+      if (rankA !== rankB) {
+        return rankA - rankB;
+      }
+      const timeA = a.fields?.updated ? new Date(a.fields.updated).getTime() : 0;
+      const timeB = b.fields?.updated ? new Date(b.fields.updated).getTime() : 0;
+      return timeB - timeA;
+    });
+
+    container.innerHTML = sortedIssues.slice(0, 5).map(issue => {
+      const fields = issue.fields || {};
+      const summary = fields.summary || issue.summary || '';
+      const key = issue.key || '';
+      const url = `${host}/browse/${key}`;
+      const priorityName = (fields.priority && fields.priority.name) ? fields.priority.name : 'Medium';
+      const statusName = (fields.status && fields.status.name) ? fields.status.name : '';
+
+      const pLower = priorityName.toLowerCase();
+      let priorityClass = 'medium';
+      if (pLower.includes('highest') || pLower.includes('blocker') || pLower.includes('critical') || pLower.includes('urgent') || pLower.includes('p1')) priorityClass = 'highest';
+      else if (pLower.includes('high') || pLower.includes('major') || pLower.includes('p2')) priorityClass = 'high';
+      else if (pLower.includes('low') || pLower.includes('minor') || pLower.includes('trivial') || pLower.includes('lowest') || pLower.includes('p4') || pLower.includes('p5')) priorityClass = 'low';
+
+      const sLower = statusName.toLowerCase();
+      let statusClass = 'todo';
+      if (sLower.includes('done') || sLower.includes('closed') || sLower.includes('resolved') || sLower.includes('complet')) statusClass = 'done';
+      else if (sLower.includes('progress') || sLower.includes('review') || sLower.includes('pr') || sLower.includes('pull') || sLower.includes('develop') || sLower.includes('testing') || sLower.includes('qa')) statusClass = 'progress';
+      else if (sLower.includes('block') || sLower.includes('hold') || sLower.includes('wait') || sLower.includes('imped')) statusClass = 'blocked';
+
       const titleText = `[${key}] ${summary}`;
-      const statusText = issue.fields.status.name;
+
       return `
-        <a href="${url}" target="_blank" class="integration-item" data-tooltip="${escapeHtml(titleText)}\nStatus: ${escapeHtml(statusText)}\nPriority: ${escapeHtml(priority)}">
-          <span class="item-title">[${key}] ${escapeHtml(summary)}</span>
+        <a href="${url}" target="_blank" class="integration-item" data-tooltip="${escapeHtml(titleText)}\nStatus: ${escapeHtml(statusName)}\nPriority: ${escapeHtml(priorityName)}">
+          <span class="item-title">${escapeHtml(summary)}</span>
           <div class="item-meta">
-            <span>${escapeHtml(statusText)}</span>
-            <span class="item-badge">${escapeHtml(priority)}</span>
+            <span style="display: flex; align-items: center; gap: 0.35rem; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+              <span class="jira-key-badge">${escapeHtml(key)}</span>
+              <span class="jira-priority-badge ${priorityClass}">${escapeHtml(priorityName)}</span>
+            </span>
+            <span class="jira-status-badge ${statusClass}">${escapeHtml(statusName)}</span>
           </div>
         </a>
       `;
     }).join('');
 
   } catch (error) {
-    container.innerHTML = `<p class="empty-msg" style="color:var(--danger)">API Error / CORS Blocked</p>`;
+    console.error("Jira fetch error:", error);
+    container.innerHTML = `<p class="empty-msg" style="color:var(--danger)">API Error (${error.message || 'Error'})</p>`;
   }
 }
 
@@ -2368,8 +2929,10 @@ async function testGitConnection(provider, button) {
         throw new Error(`${res.status} ${res.statusText}`);
       }
     } else if (provider === 'jira') {
-      let host = document.getElementById('jira-host').value.trim();
-      host = host.replace(/\/$/, "");
+      let host = document.getElementById('jira-host').value.trim().replace(/\/$/, "");
+      if (host && !host.startsWith('http://') && !host.startsWith('https://')) {
+        host = 'https://' + host;
+      }
       const email = document.getElementById('jira-email').value.trim();
       const token = document.getElementById('jira-token').value.trim();
       if (!host || !email || !token) {
@@ -2377,7 +2940,7 @@ async function testGitConnection(provider, button) {
       }
 
       const auth = btoa(`${email}:${token}`);
-      const res = await fetch(`${host}/rest/api/3/myself`, {
+      const res = await safeFetch(`${host}/rest/api/3/myself`, {
         headers: {
           'Authorization': `Basic ${auth}`,
           'Accept': 'application/json'
@@ -2385,6 +2948,10 @@ async function testGitConnection(provider, button) {
       });
       if (res.ok) {
         success = true;
+        state.settings.jiraHost = host;
+        state.settings.jiraEmail = email;
+        state.settings.jiraToken = token;
+        await saveSettings();
       } else {
         throw new Error(`${res.status} ${res.statusText}`);
       }
@@ -2882,6 +3449,30 @@ function openSettingsGitTab() {
 }
 window.openSettingsGitTab = openSettingsGitTab;
 
+function openSettingsWikipediaTab() {
+  const toggle = document.getElementById('settings-toggle');
+  if (toggle) {
+    toggle.click();
+    setTimeout(() => {
+      const generalBtn = document.querySelector('.tab-btn[data-tab="tab-general"]');
+      if (generalBtn) generalBtn.click();
+      setTimeout(() => {
+        const wikiGroup = document.getElementById('wikipedia-settings-group') || document.getElementById('settings-show-wikipedia');
+        if (wikiGroup) {
+          wikiGroup.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          const selectEl = document.getElementById('settings-wikipedia-type');
+          if (selectEl) {
+            selectEl.focus();
+            selectEl.style.outline = '2px solid var(--accent)';
+            setTimeout(() => { selectEl.style.outline = ''; }, 2000);
+          }
+        }
+      }, 120);
+    }, 50);
+  }
+}
+window.openSettingsWikipediaTab = openSettingsWikipediaTab;
+
 // Google APIs Integrations (Gmail, Tasks, Calendar)
 let googleTokenClient;
 let googleLoginTarget = 'personal';
@@ -3158,7 +3749,7 @@ async function fetchGmail() {
   async function fetchEmailsForAccount(token, type, email) {
     if (!token) return [];
     try {
-      const res = await fetch('https://www.googleapis.com/gmail/v1/users/me/messages?q=is:unread%20in:inbox&maxResults=5', {
+      const res = await safeFetch('https://www.googleapis.com/gmail/v1/users/me/messages?q=is:unread%20in:inbox&maxResults=5', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (!res.ok) {
@@ -3171,7 +3762,7 @@ async function fetchGmail() {
       if (!data.messages || data.messages.length === 0) return [];
 
       const detailsPromises = data.messages.map(msg =>
-        fetch(`https://www.googleapis.com/gmail/v1/users/me/messages/${msg.id}`, {
+        safeFetch(`https://www.googleapis.com/gmail/v1/users/me/messages/${msg.id}`, {
           headers: { 'Authorization': `Bearer ${token}` }
         }).then(r => {
           if (!r.ok) throw new Error(`HTTP ${r.status}`);
@@ -3280,7 +3871,15 @@ async function fetchGoogleTasks() {
       }
       gTodayCard.innerHTML = `
         <h3 class="card-subtitle">
-          <span>${state.lang === 'es' ? 'Google Tasks (Hoy)' : 'Google Tasks (Today)'}</span>
+          <span style="display: inline-flex; align-items: center; gap: 0.4rem;">
+            <span>${state.lang === 'es' ? 'Google Tasks (Hoy)' : 'Google Tasks (Today)'}</span>
+            <button type="button" class="card-action-btn btn-open-gtasks" data-tooltip="${state.lang === 'es' ? 'Abrir Google Tasks' : 'Open Google Tasks'}" aria-label="Open Google Tasks">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+              </svg>
+            </button>
+          </span>
           <span class="header-status-indicators" id="google-gtasks-today-status-indicators"></span>
         </h3>
         <div class="integration-list">
@@ -3300,7 +3899,15 @@ async function fetchGoogleTasks() {
       }
       gWeekCard.innerHTML = `
         <h3 class="card-subtitle">
-          <span>${state.lang === 'es' ? 'Google Tasks (Semana)' : 'Google Tasks (This Week)'}</span>
+          <span style="display: inline-flex; align-items: center; gap: 0.4rem;">
+            <span>${state.lang === 'es' ? 'Google Tasks (Semana)' : 'Google Tasks (This Week)'}</span>
+            <button type="button" class="card-action-btn btn-open-gtasks" data-tooltip="${state.lang === 'es' ? 'Abrir Google Tasks' : 'Open Google Tasks'}" aria-label="Open Google Tasks">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+              </svg>
+            </button>
+          </span>
           <span class="header-status-indicators" id="google-gtasks-week-status-indicators"></span>
         </h3>
         <div class="integration-list">
@@ -3453,7 +4060,15 @@ async function fetchGoogleTasks() {
       }
       gTodayCard.innerHTML = `
         <h3 class="card-subtitle">
-          <span>${state.lang === 'es' ? 'Google Tasks (Hoy)' : 'Google Tasks (Today)'}</span>
+          <span style="display: inline-flex; align-items: center; gap: 0.4rem;">
+            <span>${state.lang === 'es' ? 'Google Tasks (Hoy)' : 'Google Tasks (Today)'}</span>
+            <button type="button" class="card-action-btn btn-open-gtasks" data-tooltip="${state.lang === 'es' ? 'Abrir Google Tasks' : 'Open Google Tasks'}" aria-label="Open Google Tasks">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+              </svg>
+            </button>
+          </span>
           <span class="header-status-indicators" id="google-gtasks-today-status-indicators"></span>
         </h3>
         <div class="integration-list">
@@ -3501,7 +4116,15 @@ async function fetchGoogleTasks() {
       }
       gWeekCard.innerHTML = `
         <h3 class="card-subtitle">
-          <span>${state.lang === 'es' ? 'Google Tasks (Semana)' : 'Google Tasks (This Week)'}</span>
+          <span style="display: inline-flex; align-items: center; gap: 0.4rem;">
+            <span>${state.lang === 'es' ? 'Google Tasks (Semana)' : 'Google Tasks (This Week)'}</span>
+            <button type="button" class="card-action-btn btn-open-gtasks" data-tooltip="${state.lang === 'es' ? 'Abrir Google Tasks' : 'Open Google Tasks'}" aria-label="Open Google Tasks">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+              </svg>
+            </button>
+          </span>
           <span class="header-status-indicators" id="google-gtasks-week-status-indicators"></span>
         </h3>
         <div class="integration-list">
@@ -3747,6 +4370,97 @@ function setupEventListeners() {
     });
   }
 
+  // Quick Action Helpers
+  const composeEmail = () => {
+    let emailUrl = 'https://mail.google.com/mail/?view=cm&fs=1';
+    if (state.googleWorkEmail && state.settings.oooActive !== true) {
+      emailUrl = `https://mail.google.com/mail/?authuser=${encodeURIComponent(state.googleWorkEmail)}&view=cm&fs=1`;
+    } else if (state.googlePersonalEmail) {
+      emailUrl = `https://mail.google.com/mail/?authuser=${encodeURIComponent(state.googlePersonalEmail)}&view=cm&fs=1`;
+    }
+    window.open(emailUrl, '_blank', 'noopener,noreferrer');
+  };
+
+  const createCalendarEvent = () => {
+    let calUrl = 'https://calendar.google.com/calendar/r/eventedit';
+    if (state.googleWorkEmail && state.settings.oooActive !== true) {
+      calUrl = `https://calendar.google.com/calendar/r/eventedit?authuser=${encodeURIComponent(state.googleWorkEmail)}`;
+    } else if (state.googlePersonalEmail) {
+      calUrl = `https://calendar.google.com/calendar/r/eventedit?authuser=${encodeURIComponent(state.googlePersonalEmail)}`;
+    }
+    window.open(calUrl, '_blank', 'noopener,noreferrer');
+  };
+
+  const openGoogleTasks = () => {
+    let tasksUrl = 'https://tasks.google.com/';
+    if (state.googleWorkEmail && state.settings.oooActive !== true) {
+      tasksUrl = `https://tasks.google.com/?authuser=${encodeURIComponent(state.googleWorkEmail)}`;
+    } else if (state.googlePersonalEmail) {
+      tasksUrl = `https://tasks.google.com/?authuser=${encodeURIComponent(state.googlePersonalEmail)}`;
+    }
+    window.open(tasksUrl, '_blank', 'noopener,noreferrer');
+  };
+
+  const openAddTaskModal = () => {
+    const modal = document.getElementById('add-task-modal');
+    if (modal && typeof modal.showModal === 'function') {
+      modal.showModal();
+    }
+  };
+
+  const openNotesModal = () => {
+    const modal = document.getElementById('notes-modal');
+    if (modal && typeof modal.showModal === 'function') {
+      modal.showModal();
+    }
+  };
+
+  // Header quick action button listeners
+  const composeBtn = document.getElementById('btn-compose-email');
+  if (composeBtn) composeBtn.addEventListener('click', composeEmail);
+
+  const createEventTodayBtn = document.getElementById('btn-create-event-today');
+  if (createEventTodayBtn) createEventTodayBtn.addEventListener('click', createCalendarEvent);
+
+  const createEventWeekBtn = document.getElementById('btn-create-event-week');
+  if (createEventWeekBtn) createEventWeekBtn.addEventListener('click', createCalendarEvent);
+
+  // Delegation for Google Tasks '+' buttons
+  document.addEventListener('click', (e) => {
+    const btn = e.target.closest('.btn-open-gtasks');
+    if (btn) {
+      e.preventDefault();
+      openGoogleTasks();
+    }
+  });
+
+  // Global Keyboard Shortcuts (E: Compose Email, C: Create Event, T: Add Task, N: Quick Notes)
+  window.addEventListener('keydown', (e) => {
+    const target = e.target;
+    const tagName = target ? target.tagName : '';
+    const isInput = tagName === 'INPUT' || tagName === 'TEXTAREA' || tagName === 'SELECT' || (target && target.isContentEditable);
+    if (isInput) return;
+
+    if (e.metaKey || e.ctrlKey || e.altKey) return;
+
+    const openModal = document.querySelector('dialog[open]');
+    if (openModal) return;
+
+    if (e.key === 'e' || e.key === 'E') {
+      e.preventDefault();
+      composeEmail();
+    } else if (e.key === 'c' || e.key === 'C') {
+      e.preventDefault();
+      createCalendarEvent();
+    } else if (e.key === 't' || e.key === 'T') {
+      e.preventDefault();
+      openAddTaskModal();
+    } else if (e.key === 'n' || e.key === 'N') {
+      e.preventDefault();
+      openNotesModal();
+    }
+  });
+
   // Weather/Clock settings checkboxes visibility toggle
   const toggleWeatherInputs = () => {
     const show = document.getElementById('settings-show-weather').checked;
@@ -3760,6 +4474,29 @@ function setupEventListeners() {
   };
   document.getElementById('settings-show-world-clock').addEventListener('change', toggleClockInputs);
 
+  const toggleWikipediaInputs = () => {
+    const showEl = document.getElementById('settings-show-wikipedia');
+    const show = showEl ? showEl.checked : true;
+    const group = document.getElementById('wikipedia-settings-group');
+    if (group) group.classList.toggle('collapsed', !show);
+  };
+  const showWikiEl = document.getElementById('settings-show-wikipedia');
+  if (showWikiEl) {
+    showWikiEl.addEventListener('change', () => {
+      toggleWikipediaInputs();
+      state.settings.showWikipedia = showWikiEl.checked;
+      loadWikipediaContent();
+    });
+  }
+
+  const wikiTypeSelect = document.getElementById('settings-wikipedia-type');
+  if (wikiTypeSelect) {
+    wikiTypeSelect.addEventListener('change', () => {
+      state.settings.wikipediaType = wikiTypeSelect.value;
+      loadWikipediaContent();
+    });
+  }
+
   // Color swatches click handlers
   const swatches = document.querySelectorAll('#color-picker-swatches .color-swatch-btn');
   swatches.forEach(btn => {
@@ -3769,6 +4506,7 @@ function setupEventListeners() {
       if (hiddenInput) hiddenInput.value = selectedColor;
       updateSwatchActiveState(selectedColor);
       applyPrimaryColor(selectedColor);
+      autoSaveSettingsForm();
     });
   });
 
@@ -3780,6 +4518,7 @@ function setupEventListeners() {
       const hiddenInput = document.getElementById('google-color-personal');
       if (hiddenInput) hiddenInput.value = selectedColor;
       updateAccountSwatchActiveState('google-color-personal-swatches', selectedColor);
+      autoSaveSettingsForm();
     });
   });
 
@@ -3790,6 +4529,7 @@ function setupEventListeners() {
       const hiddenInput = document.getElementById('google-color-work');
       if (hiddenInput) hiddenInput.value = selectedColor;
       updateAccountSwatchActiveState('google-color-work-swatches', selectedColor);
+      autoSaveSettingsForm();
     });
   });
 
@@ -3884,6 +4624,7 @@ function setupEventListeners() {
       if (confirmActionType === 'hide-events') {
         const cb = document.getElementById('settings-show-countdowns');
         if (cb) cb.checked = true;
+        autoSaveSettingsForm();
       }
       confirmDeleteModal.close();
       todoIdToDelete = null;
@@ -3894,6 +4635,7 @@ function setupEventListeners() {
       if (confirmActionType === 'hide-events') {
         const cb = document.getElementById('settings-show-countdowns');
         if (cb) cb.checked = true;
+        autoSaveSettingsForm();
       }
       confirmDeleteModal.close();
       todoIdToDelete = null;
@@ -3927,6 +4669,7 @@ function setupEventListeners() {
       } else if (confirmActionType === 'hide-events') {
         confirmDeleteModal.close();
         confirmActionType = null;
+        autoSaveSettingsForm();
       }
     });
   }
@@ -4353,10 +5096,8 @@ function setupEventListeners() {
   }
 
   // Settings Modal Open
-  let isSettingsFormSaved = false;
   const settingsModal = document.getElementById('settings-modal');
   document.getElementById('settings-toggle').addEventListener('click', () => {
-    isSettingsFormSaved = false;
     // Fill form fields with current settings
     document.getElementById('settings-lang').value = state.settings.lang;
     document.getElementById('settings-theme').value = state.settings.theme || 'system';
@@ -4394,8 +5135,14 @@ function setupEventListeners() {
     document.getElementById('settings-show-git').checked = state.settings.showGit !== false;
     document.getElementById('settings-show-jira').checked = state.settings.showJira !== false;
     
+    const showWikiModalInput = document.getElementById('settings-show-wikipedia');
+    if (showWikiModalInput) showWikiModalInput.checked = state.settings.showWikipedia !== false;
+    const wikiTypeModalInput = document.getElementById('settings-wikipedia-type');
+    if (wikiTypeModalInput) wikiTypeModalInput.value = state.settings.wikipediaType || 'news';
+
     toggleWeatherInputs();
     toggleClockInputs();
+    toggleWikipediaInputs();
     
     document.getElementById('settings-storage-mode').value = state.settings.storageMode || 'local';
     document.getElementById('google-client-id').value = state.settings.googleClientId;
@@ -4463,7 +5210,7 @@ function setupEventListeners() {
       translatePage();
       updateTimeAndGreeting();
       loadWeather();
-      loadQuote();
+      loadWikipediaContent();
     });
   }
 
@@ -4475,40 +5222,42 @@ function setupEventListeners() {
     });
   }
 
-  // Close Settings Modal
+  // Close Settings Modal on X button or clicking outside (backdrop)
   document.getElementById('close-settings').addEventListener('click', () => {
     settingsModal.close();
   });
 
+  settingsModal.addEventListener('click', (e) => {
+    if (e.target === settingsModal) {
+      settingsModal.close();
+    }
+  });
+
+  // Allow closing any modal by clicking outside on its backdrop
+  document.querySelectorAll('.modal-dialog').forEach(modal => {
+    if (modal !== settingsModal) {
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+          modal.close();
+        }
+      });
+    }
+  });
+
   settingsModal.addEventListener('close', () => {
-    if (!isSettingsFormSaved) {
-      // Revert Language
-      state.lang = state.settings.lang || 'en';
-      const langSelect = document.getElementById('settings-lang');
-      if (langSelect) langSelect.value = state.lang;
-      translatePage();
-      updateTimeAndGreeting();
-      loadWeather();
-      loadQuote();
-
-      // Revert Theme
-      state.theme = state.settings.theme || 'system';
-      const themeSelect = document.getElementById('settings-theme');
-      if (themeSelect) themeSelect.value = state.theme;
-      applyTheme();
-
-      // Revert Primary Color
-      const savedColor = state.settings.primaryColor || 'blue';
-      applyPrimaryColor(savedColor);
-      const colorInput = document.getElementById('settings-primary-color');
-      if (colorInput) colorInput.value = savedColor;
-      updateSwatchActiveState(savedColor);
-
-      // Revert URLs
-      const wUrlInput = document.getElementById('settings-weather-url');
-      if (wUrlInput) wUrlInput.value = state.settings.weatherUrl || '';
-      const cUrlInput = document.getElementById('settings-world-clock-url');
-      if (cUrlInput) cUrlInput.value = state.settings.worldClockUrl || '';
+    updateOrganizerVisibility();
+    renderTodos();
+    renderCountdowns();
+    loadWeather();
+    loadWikipediaContent();
+    fetchGitHub();
+    fetchBitbucket();
+    fetchJira();
+    fetchGmail();
+    fetchGoogleTasks();
+    fetchGoogleCalendar();
+    if (state.settings.googleClientId) {
+      initGoogleOAuth();
     }
   });
 
@@ -4673,10 +5422,10 @@ function setupEventListeners() {
     });
   }
 
-  // Save Settings Form
-  document.getElementById('settings-form').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    isSettingsFormSaved = true;
+  // Auto-Save Settings Form
+  let autoSaveTimeout = null;
+
+  async function autoSaveSettingsForm() {
     state.settings.lang = document.getElementById('settings-lang').value;
     state.settings.city = document.getElementById('settings-city').value.trim();
     state.settings.theme = document.getElementById('settings-theme').value;
@@ -4689,7 +5438,7 @@ function setupEventListeners() {
     state.theme = state.settings.theme;
     
     const newStorageMode = document.getElementById('settings-storage-mode').value;
-    if (newStorageMode !== 'file') {
+    if (newStorageMode !== 'file' && state.settings.storageMode === 'file') {
       fileHandle = null;
       await clearFileHandle();
     }
@@ -4751,10 +5500,15 @@ function setupEventListeners() {
     state.settings.showGit = document.getElementById('settings-show-git').checked;
     state.settings.showJira = document.getElementById('settings-show-jira').checked;
 
+    const showWikiSave = document.getElementById('settings-show-wikipedia');
+    if (showWikiSave) state.settings.showWikipedia = showWikiSave.checked;
+    const wikiTypeSave = document.getElementById('settings-wikipedia-type');
+    if (wikiTypeSave) state.settings.wikipediaType = wikiTypeSave.value || 'news';
+
+    const prevLang = state.lang;
     state.lang = state.settings.lang;
 
     await saveSettings();
-    updateOrganizerVisibility();
     
     // If we just toggled file-sync on, let's initialize it
     if (state.settings.storageMode === 'file') {
@@ -4762,24 +5516,31 @@ function setupEventListeners() {
     }
 
     applyTheme();
-    translatePage();
-    updateTimeAndGreeting();
-    loadWeather();
-    
-    // Refresh integrations
-    fetchGitHub();
-    fetchBitbucket();
-    fetchJira();
-    fetchGmail();
-    fetchGoogleTasks();
-    fetchGoogleCalendar();
 
-    if (state.settings.googleClientId) {
-      initGoogleOAuth();
+    if (prevLang !== state.lang) {
+      translatePage();
+      updateTimeAndGreeting();
     }
+  }
 
-    settingsModal.close();
-  });
+  const settingsForm = document.getElementById('settings-form');
+  if (settingsForm) {
+    settingsForm.addEventListener('change', () => {
+      autoSaveSettingsForm();
+    });
+
+    settingsForm.addEventListener('input', () => {
+      if (autoSaveTimeout) clearTimeout(autoSaveTimeout);
+      autoSaveTimeout = setTimeout(() => {
+        autoSaveSettingsForm();
+      }, 300);
+    });
+
+    settingsForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      autoSaveSettingsForm();
+    });
+  }
 
   // Google OAuth Personal Login Action
   const loginBtnPersonal = document.getElementById('google-login-btn-personal');
