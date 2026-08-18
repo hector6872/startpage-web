@@ -742,6 +742,46 @@ html.dark .section-card:hover {
   font-style: italic;
 }
 
+/* Card Header Actions & Quick Buttons */
+.card-header-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.card-action-btn {
+  background: transparent;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm, 6px);
+  color: var(--text-secondary);
+  width: 22px;
+  height: 22px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  opacity: 0.7;
+  flex-shrink: 0;
+}
+
+.card-action-btn:hover {
+  opacity: 1;
+  color: var(--accent);
+  border-color: var(--accent);
+  background: var(--accent-bg);
+  transform: translateY(-1px);
+}
+
+html.dark .card-action-btn {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+html.dark .card-action-btn:hover {
+  background: var(--accent-bg);
+}
+
 /* Header status indicators styling */
 .header-status-indicators {
   display: inline-flex;

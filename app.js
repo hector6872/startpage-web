@@ -2511,7 +2511,7 @@ async function fetchJira() {
     const fieldsParam = encodeURIComponent('summary,status,priority,updated');
 
     // 1. Try new Jira Cloud GET /rest/api/3/search/jql
-    let response = await safeFetch(`${host}/rest/api/3/search/jql?jql=${encodeURIComponent(jql)}&maxResults=10&fields=${fieldsParam}`, {
+    let response = await safeFetch(`${host}/rest/api/3/search/jql?jql=${encodeURIComponent(jql)}&maxResults=50&fields=${fieldsParam}`, {
       headers: authHeaders
     });
 
@@ -2525,7 +2525,7 @@ async function fetchJira() {
         },
         body: JSON.stringify({
           jql: jql,
-          maxResults: 10,
+          maxResults: 50,
           fields: ['summary', 'status', 'priority', 'updated']
         })
       });
@@ -2533,7 +2533,7 @@ async function fetchJira() {
 
     // 3. If v3 fails, fallback to v2 search endpoint
     if (!response.ok) {
-      response = await safeFetch(`${host}/rest/api/2/search?jql=${encodeURIComponent(jql)}&maxResults=10&fields=${fieldsParam}`, {
+      response = await safeFetch(`${host}/rest/api/2/search?jql=${encodeURIComponent(jql)}&maxResults=50&fields=${fieldsParam}`, {
         headers: authHeaders
       });
     }
@@ -2541,11 +2541,11 @@ async function fetchJira() {
     // 4. Try simplified query if statusCategory is unsupported
     if (!response.ok) {
       const simpleJql = 'assignee = currentUser() ORDER BY updated DESC';
-      response = await safeFetch(`${host}/rest/api/3/search/jql?jql=${encodeURIComponent(simpleJql)}&maxResults=10&fields=${fieldsParam}`, {
+      response = await safeFetch(`${host}/rest/api/3/search/jql?jql=${encodeURIComponent(simpleJql)}&maxResults=50&fields=${fieldsParam}`, {
         headers: authHeaders
       });
       if (!response.ok) {
-        response = await safeFetch(`${host}/rest/api/2/search?jql=${encodeURIComponent(simpleJql)}&maxResults=10&fields=${fieldsParam}`, {
+        response = await safeFetch(`${host}/rest/api/2/search?jql=${encodeURIComponent(simpleJql)}&maxResults=50&fields=${fieldsParam}`, {
           headers: authHeaders
         });
       }
@@ -2562,7 +2562,7 @@ async function fetchJira() {
 
     if (jiraBadge) {
       if (data.issues && data.issues.length > 0) {
-        jiraBadge.textContent = totalCount > 10 ? '10+' : totalCount;
+        jiraBadge.textContent = totalCount > 5 ? '5+' : totalCount;
         jiraBadge.setAttribute('data-tooltip', state.lang === 'es' ? `${totalCount} tareas asignadas en Jira` : `${totalCount} assigned tasks in Jira`);
         jiraBadge.classList.remove('hidden');
       } else {
@@ -2597,7 +2597,7 @@ async function fetchJira() {
       return timeB - timeA;
     });
 
-    container.innerHTML = sortedIssues.map(issue => {
+    container.innerHTML = sortedIssues.slice(0, 5).map(issue => {
       const fields = issue.fields || {};
       const summary = fields.summary || issue.summary || '';
       const key = issue.key || '';
@@ -3744,7 +3744,15 @@ async function fetchGoogleTasks() {
       }
       gTodayCard.innerHTML = `
         <h3 class="card-subtitle">
-          <span>${state.lang === 'es' ? 'Google Tasks (Hoy)' : 'Google Tasks (Today)'}</span>
+          <span style="display: inline-flex; align-items: center; gap: 0.4rem;">
+            <span>${state.lang === 'es' ? 'Google Tasks (Hoy)' : 'Google Tasks (Today)'}</span>
+            <button type="button" class="card-action-btn btn-open-gtasks" data-tooltip="${state.lang === 'es' ? 'Abrir Google Tasks' : 'Open Google Tasks'}" aria-label="Open Google Tasks">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+              </svg>
+            </button>
+          </span>
           <span class="header-status-indicators" id="google-gtasks-today-status-indicators"></span>
         </h3>
         <div class="integration-list">
@@ -3764,7 +3772,15 @@ async function fetchGoogleTasks() {
       }
       gWeekCard.innerHTML = `
         <h3 class="card-subtitle">
-          <span>${state.lang === 'es' ? 'Google Tasks (Semana)' : 'Google Tasks (This Week)'}</span>
+          <span style="display: inline-flex; align-items: center; gap: 0.4rem;">
+            <span>${state.lang === 'es' ? 'Google Tasks (Semana)' : 'Google Tasks (This Week)'}</span>
+            <button type="button" class="card-action-btn btn-open-gtasks" data-tooltip="${state.lang === 'es' ? 'Abrir Google Tasks' : 'Open Google Tasks'}" aria-label="Open Google Tasks">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+              </svg>
+            </button>
+          </span>
           <span class="header-status-indicators" id="google-gtasks-week-status-indicators"></span>
         </h3>
         <div class="integration-list">
@@ -3917,7 +3933,15 @@ async function fetchGoogleTasks() {
       }
       gTodayCard.innerHTML = `
         <h3 class="card-subtitle">
-          <span>${state.lang === 'es' ? 'Google Tasks (Hoy)' : 'Google Tasks (Today)'}</span>
+          <span style="display: inline-flex; align-items: center; gap: 0.4rem;">
+            <span>${state.lang === 'es' ? 'Google Tasks (Hoy)' : 'Google Tasks (Today)'}</span>
+            <button type="button" class="card-action-btn btn-open-gtasks" data-tooltip="${state.lang === 'es' ? 'Abrir Google Tasks' : 'Open Google Tasks'}" aria-label="Open Google Tasks">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+              </svg>
+            </button>
+          </span>
           <span class="header-status-indicators" id="google-gtasks-today-status-indicators"></span>
         </h3>
         <div class="integration-list">
@@ -3965,7 +3989,15 @@ async function fetchGoogleTasks() {
       }
       gWeekCard.innerHTML = `
         <h3 class="card-subtitle">
-          <span>${state.lang === 'es' ? 'Google Tasks (Semana)' : 'Google Tasks (This Week)'}</span>
+          <span style="display: inline-flex; align-items: center; gap: 0.4rem;">
+            <span>${state.lang === 'es' ? 'Google Tasks (Semana)' : 'Google Tasks (This Week)'}</span>
+            <button type="button" class="card-action-btn btn-open-gtasks" data-tooltip="${state.lang === 'es' ? 'Abrir Google Tasks' : 'Open Google Tasks'}" aria-label="Open Google Tasks">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+              </svg>
+            </button>
+          </span>
           <span class="header-status-indicators" id="google-gtasks-week-status-indicators"></span>
         </h3>
         <div class="integration-list">
@@ -4210,6 +4242,97 @@ function setupEventListeners() {
       });
     });
   }
+
+  // Quick Action Helpers
+  const composeEmail = () => {
+    let emailUrl = 'https://mail.google.com/mail/?view=cm&fs=1';
+    if (state.googleWorkEmail && state.settings.oooActive !== true) {
+      emailUrl = `https://mail.google.com/mail/?authuser=${encodeURIComponent(state.googleWorkEmail)}&view=cm&fs=1`;
+    } else if (state.googlePersonalEmail) {
+      emailUrl = `https://mail.google.com/mail/?authuser=${encodeURIComponent(state.googlePersonalEmail)}&view=cm&fs=1`;
+    }
+    window.open(emailUrl, '_blank', 'noopener,noreferrer');
+  };
+
+  const createCalendarEvent = () => {
+    let calUrl = 'https://calendar.google.com/calendar/r/eventedit';
+    if (state.googleWorkEmail && state.settings.oooActive !== true) {
+      calUrl = `https://calendar.google.com/calendar/r/eventedit?authuser=${encodeURIComponent(state.googleWorkEmail)}`;
+    } else if (state.googlePersonalEmail) {
+      calUrl = `https://calendar.google.com/calendar/r/eventedit?authuser=${encodeURIComponent(state.googlePersonalEmail)}`;
+    }
+    window.open(calUrl, '_blank', 'noopener,noreferrer');
+  };
+
+  const openGoogleTasks = () => {
+    let tasksUrl = 'https://tasks.google.com/';
+    if (state.googleWorkEmail && state.settings.oooActive !== true) {
+      tasksUrl = `https://tasks.google.com/?authuser=${encodeURIComponent(state.googleWorkEmail)}`;
+    } else if (state.googlePersonalEmail) {
+      tasksUrl = `https://tasks.google.com/?authuser=${encodeURIComponent(state.googlePersonalEmail)}`;
+    }
+    window.open(tasksUrl, '_blank', 'noopener,noreferrer');
+  };
+
+  const openAddTaskModal = () => {
+    const modal = document.getElementById('add-task-modal');
+    if (modal && typeof modal.showModal === 'function') {
+      modal.showModal();
+    }
+  };
+
+  const openNotesModal = () => {
+    const modal = document.getElementById('notes-modal');
+    if (modal && typeof modal.showModal === 'function') {
+      modal.showModal();
+    }
+  };
+
+  // Header quick action button listeners
+  const composeBtn = document.getElementById('btn-compose-email');
+  if (composeBtn) composeBtn.addEventListener('click', composeEmail);
+
+  const createEventTodayBtn = document.getElementById('btn-create-event-today');
+  if (createEventTodayBtn) createEventTodayBtn.addEventListener('click', createCalendarEvent);
+
+  const createEventWeekBtn = document.getElementById('btn-create-event-week');
+  if (createEventWeekBtn) createEventWeekBtn.addEventListener('click', createCalendarEvent);
+
+  // Delegation for Google Tasks '+' buttons
+  document.addEventListener('click', (e) => {
+    const btn = e.target.closest('.btn-open-gtasks');
+    if (btn) {
+      e.preventDefault();
+      openGoogleTasks();
+    }
+  });
+
+  // Global Keyboard Shortcuts (E: Compose Email, C: Create Event, T: Add Task, N: Quick Notes)
+  window.addEventListener('keydown', (e) => {
+    const target = e.target;
+    const tagName = target ? target.tagName : '';
+    const isInput = tagName === 'INPUT' || tagName === 'TEXTAREA' || tagName === 'SELECT' || (target && target.isContentEditable);
+    if (isInput) return;
+
+    if (e.metaKey || e.ctrlKey || e.altKey) return;
+
+    const openModal = document.querySelector('dialog[open]');
+    if (openModal) return;
+
+    if (e.key === 'e' || e.key === 'E') {
+      e.preventDefault();
+      composeEmail();
+    } else if (e.key === 'c' || e.key === 'C') {
+      e.preventDefault();
+      createCalendarEvent();
+    } else if (e.key === 't' || e.key === 'T') {
+      e.preventDefault();
+      openAddTaskModal();
+    } else if (e.key === 'n' || e.key === 'N') {
+      e.preventDefault();
+      openNotesModal();
+    }
+  });
 
   // Weather/Clock settings checkboxes visibility toggle
   const toggleWeatherInputs = () => {

@@ -28,8 +28,8 @@
       } catch (e) {}
     }
   </script>
-  <script type="module" crossorigin src="/assets/index-DEbQSGZR.js"></script>
-  <link rel="stylesheet" crossorigin href="/assets/index-COG0DG_5.css">
+  <script type="module" crossorigin src="/assets/index-C0WOjOSm.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/index-BE80hMgJ.css">
 </head>
 <body>
   <!-- Background Decorative Elements -->
@@ -124,6 +124,12 @@
               <span style="display: inline-flex; align-items: center; gap: 0.4rem;">
                 <span data-i18n="calendar-events">Events</span>
                 <span id="events-count-badge" class="filter-badge hidden" style="margin-left: 0;"></span>
+                <button type="button" id="btn-create-event-today" class="card-action-btn" data-tooltip="Create Event (C)" aria-label="Create Event">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                  </svg>
+                </button>
               </span>
               <span class="header-status-indicators" id="google-events-status-indicators"></span>
             </h3>
@@ -137,6 +143,12 @@
               <span style="display: inline-flex; align-items: center; gap: 0.4rem;">
                 <span data-i18n="urgent-emails">Urgent Emails</span>
                 <span id="emails-count-badge" class="filter-badge hidden" style="margin-left: 0;"></span>
+                <button type="button" id="btn-compose-email" class="card-action-btn" data-tooltip="Compose Email (E)" aria-label="Compose Email">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                  </svg>
+                </button>
               </span>
               <span class="header-status-indicators" id="google-emails-status-indicators"></span>
             </h3>
@@ -160,6 +172,12 @@
               <span style="display: inline-flex; align-items: center; gap: 0.4rem;">
                 <span data-i18n="weekly-schedule">Weekly Schedule</span>
                 <span id="weekly-count-badge" class="filter-badge hidden" style="margin-left: 0;"></span>
+                <button type="button" id="btn-create-event-week" class="card-action-btn" data-tooltip="Create Event (C)" aria-label="Create Event">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                  </svg>
+                </button>
               </span>
               <span class="header-status-indicators" id="google-weekly-status-indicators"></span>
             </h3>
@@ -225,7 +243,7 @@
         <!-- My Tasks Header -->
         <div class="section-header" id="tasks-section-header">
           <h2 class="col-title" id="tasks-section-title" data-i18n="tasks-card-title">My Tasks</h2>
-          <button id="btn-show-add-task" class="add-section-btn" title="Add Task" aria-label="Add Task">
+          <button id="btn-show-add-task" class="add-section-btn" title="Add Task (T)" data-tooltip="Add Task (T)" aria-label="Add Task">
             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
           </button>
         </div>

@@ -163,3 +163,18 @@ To solve this completely without requiring browser extensions, this project incl
 
 ### 6. Self-Hosted Server / Docker (Node.js, Nginx)
 - Run `npm run preview` or configure a reverse proxy in Nginx forwarding `/api/proxy` to target services.
+
+## Quick Actions & Keyboard Shortcuts
+
+The dashboard includes one-click creation buttons in section headers and instant global keyboard shortcuts:
+
+| Shortcut | Action | Destination |
+|:---:|---|---|
+| <kbd>E</kbd> | **Compose Email** | Opens Gmail compose window directly |
+| <kbd>C</kbd> | **Create Event** | Opens Google Calendar event creation |
+| <kbd>T</kbd> | **New Task** | Opens the Quick Task creation modal |
+| <kbd>N</kbd> | **Quick Notes** | Opens the Quick Notes drawer / modal |
+| <kbd>Esc</kbd> | **Close Modal** | Closes any open dialog or modal |
+
+> **Note**: Keyboard shortcuts are automatically disabled while typing in text inputs, textareas, notes, or when dialogs are open. You can also click the subtle `+` button in the header of Events, Gmail, and Tasks sections.
+
