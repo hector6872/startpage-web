@@ -216,17 +216,39 @@ body {
 /* Header Styles */
 .app-header {
   display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  margin-bottom: 2.5rem;
+  width: 100%;
+}
+
+.header-main-row {
+  display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 2.5rem;
-  flex-wrap: wrap;
+  width: 100%;
   gap: 1.5rem;
+}
+
+.header-left {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-shrink: 0;
 }
 
 .greeting {
   font-family: var(--font-title);
   font-weight: 500;
   font-size: 2.5rem;
+  line-height: 1.08;
   letter-spacing: -0.03em;
   margin-bottom: 0.25rem;
 }
@@ -378,14 +400,6 @@ body {
   color: var(--text-secondary);
   font-size: 1rem;
   font-weight: 400;
-}
-
-.header-right {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  flex-wrap: wrap;
-  max-width: 100%;
 }
 
 /* Weather Widget Styles */
@@ -1604,25 +1618,28 @@ html.dark .priority-low {
   color: var(--danger);
 }
 
-/* Quote Section */
+/* Quote & Wikipedia Header Section */
 .quote-widget {
-  text-align: center;
-  max-width: 650px;
-  margin: 2rem auto 1rem;
-  padding: 0.85rem 1.25rem;
+  text-align: left;
+  width: 100%;
+  max-width: 100%;
+  margin-top: 0.65rem;
+  padding-top: 0.55rem;
   border-top: 1px solid var(--border-color);
   animation: fadeIn 0.6s ease;
+  display: flex;
+  align-items: center;
 }
 
 .quote-container {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   flex-wrap: wrap;
-  gap: 0.25rem;
-  line-height: 1.5;
+  gap: 0.3rem;
+  line-height: 1.45;
   font-family: var(--font-sans);
-  font-size: 0.85rem;
+  font-size: 0.82rem;
   color: var(--text-secondary);
 }
 
@@ -1683,7 +1700,7 @@ html.dark .copy-quote-btn:hover {
   opacity: 1;
 }
 
-/* Wikipedia & Dynamic Footer Content */
+/* Wikipedia & Dynamic Header Content */
 .wiki-badge {
   display: inline-flex;
   align-items: center;
@@ -1699,6 +1716,15 @@ html.dark .copy-quote-btn:hover {
   margin-right: 0.35rem;
   vertical-align: middle;
   line-height: 1.2;
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.wiki-badge:hover {
+  transform: scale(1.05);
+  background: var(--accent-bg-hover);
+  box-shadow: 0 2px 8px var(--accent-bg);
 }
 
 .wiki-badge svg {
@@ -1769,7 +1795,7 @@ html.dark .wiki-nav-btn:hover {
   display: inline-flex;
   align-items: center;
   gap: 0.15rem;
-  margin-left: 0.35rem;
+  margin-right: 0.35rem;
 }
 
 /* Modal / Dialog styling */
@@ -2090,20 +2116,27 @@ html.dark .notes-textarea {
   to { opacity: 1; transform: translateY(0); }
 }
 
-/* Responsive adjustments */
-@media (max-width: 600px) {
+/* Responsive header layout (triggers earlier below 900px) */
+@media (max-width: 900px) {
   .app-header {
-    display: grid;
-    grid-template-columns: 1fr auto;
+    display: flex;
+    flex-direction: column;
     gap: 0.75rem;
     width: 100%;
     max-width: 100%;
+  }
+  .header-main-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem 0.5rem;
+    align-items: start;
+    width: 100%;
   }
   .header-left {
     grid-column: 1;
     grid-row: 1;
     width: 100%;
-    max-width: 100%;
+    min-width: 0;
   }
   .header-right {
     display: contents;
@@ -2111,14 +2144,41 @@ html.dark .notes-textarea {
   .shortcut-buttons-column {
     grid-column: 2;
     grid-row: 1;
-    align-self: center;
+    justify-self: end;
+    align-self: start;
+    margin-top: 0.25rem;
   }
-  .weather-widget,
   .world-clock-widget {
-    grid-column: 1 / -1;
+    grid-column: 1;
+    grid-row: 2;
     width: 100%;
-    max-width: 100%;
+    min-width: 0;
     box-sizing: border-box;
+    padding: 0.45rem 0.55rem;
+  }
+  .weather-widget {
+    grid-column: 2;
+    grid-row: 2;
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+    padding: 0.45rem 0.55rem;
+  }
+  .world-clock-widget.hidden ~ .weather-widget {
+    grid-column: 1 / -1;
+  }
+  .weather-details-grid {
+    gap: 0.35rem;
+  }
+  .weather-col-2 {
+    padding-left: 0.35rem;
+  }
+}
+
+/* Mobile adjustments (< 600px) */
+@media (max-width: 600px) {
+  .greeting {
+    font-size: 2.1rem;
   }
   .container {
     padding: 1.25rem 1rem;
