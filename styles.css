@@ -2982,7 +2982,7 @@ html.dark[data-accent="black"] {
 }
 
 /* ==========================================================================
-   Clean Focus State Overrides (Removes Awkward White Focus Rings)
+   Accessible Keyboard Navigation & Focus Ring System
    ========================================================================== */
 button,
 .btn-icon,
@@ -2991,35 +2991,96 @@ button,
 .filter-btn,
 .color-swatch-btn,
 .btn-primary,
-.btn-secondary {
+.btn-secondary,
+.card-action-btn,
+.btn-item-action {
   -webkit-tap-highlight-color: transparent;
 }
 
-button:focus,
-button:focus-visible,
-.btn-icon:focus,
-.btn-icon:focus-visible,
-.btn-close:focus,
-.btn-close:focus-visible,
-.tab-btn:focus,
-.tab-btn:focus-visible,
-.filter-btn:focus,
-.filter-btn:focus-visible,
-.color-swatch-btn:focus,
-.color-swatch-btn:focus-visible,
-.btn-primary:focus,
-.btn-primary:focus-visible,
-.btn-secondary:focus,
-.btn-secondary:focus-visible {
+/* Suppress default browser outline on mouse/touch clicks only */
+:focus:not(:focus-visible) {
   outline: none !important;
 }
 
+/* Universal high-contrast, accessible focus ring on keyboard navigation */
+:focus-visible {
+  outline: 2px solid var(--accent, #4f46e5) !important;
+  outline-offset: 2px !important;
+  box-shadow: 0 0 0 4px var(--accent-bg-hover, rgba(79, 70, 229, 0.2)) !important;
+}
+
+/* Dedicated focus refinements for specific component types */
 .btn-icon:focus-visible,
-.btn-primary:focus-visible,
-.btn-secondary:focus-visible,
-.filter-btn:focus-visible,
-.tab-btn:focus-visible {
-  box-shadow: 0 0 0 3px var(--accent-bg-hover) !important;
+.settings-btn-floating:focus-visible,
+.scroll-to-top-btn:focus-visible,
+.add-section-btn:focus-visible,
+.card-action-btn:focus-visible,
+.btn-close:focus-visible,
+.btn-item-action:focus-visible,
+.copy-quote-btn:focus-visible,
+.wiki-nav-btn:focus-visible {
+  outline: 2px solid var(--accent, #4f46e5) !important;
+  outline-offset: 2px !important;
+  box-shadow: 0 0 0 3px var(--accent-bg-hover, rgba(79, 70, 229, 0.2)) !important;
+}
+
+.tab-btn:focus-visible,
+.filter-btn:focus-visible {
+  outline: 2px solid var(--accent, #4f46e5) !important;
+  outline-offset: 2px !important;
+  box-shadow: 0 0 0 3px var(--accent-bg-hover, rgba(79, 70, 229, 0.2)) !important;
+  position: relative;
+  z-index: 2;
+}
+
+.color-swatch-btn:focus-visible {
+  outline: 2px solid var(--accent, #4f46e5) !important;
+  outline-offset: 3px !important;
+  transform: scale(1.1);
+  box-shadow: 0 0 0 3px var(--accent-bg-hover, rgba(79, 70, 229, 0.2)) !important;
+}
+
+.todo-checkbox:focus-visible {
+  outline: 2px solid var(--accent, #4f46e5) !important;
+  outline-offset: 2px !important;
+  border-radius: 4px;
+}
+
+.toggle-switch input:focus-visible + .slider {
+  outline: 2px solid var(--accent, #4f46e5) !important;
+  outline-offset: 3px !important;
+  box-shadow: 0 0 0 3px var(--accent-bg-hover, rgba(79, 70, 229, 0.2)) !important;
+}
+
+.custom-checkbox input:focus-visible + .checkbox-box {
+  outline: 2px solid var(--accent, #4f46e5) !important;
+  outline-offset: 2px !important;
+  box-shadow: 0 0 0 3px var(--accent-bg-hover, rgba(79, 70, 229, 0.2)) !important;
+}
+
+.weather-widget:focus-visible,
+.world-clock-widget:focus-visible,
+.events-banner-container:focus-visible,
+.ooo-badge:focus-visible,
+.wiki-badge:focus-visible {
+  outline: 2px solid var(--accent, #4f46e5) !important;
+  outline-offset: 2px !important;
+  box-shadow: 0 0 0 3px var(--accent-bg-hover, rgba(79, 70, 229, 0.2)) !important;
+  cursor: pointer;
+}
+
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  border-color: var(--accent, #4f46e5) !important;
+  outline: 2px solid var(--accent, #4f46e5) !important;
+  outline-offset: 0 !important;
+  box-shadow: 0 0 0 3px var(--accent-bg-hover, rgba(79, 70, 229, 0.2)) !important;
+}
+
+.modal-dialog:focus,
+.modal-dialog:focus-visible {
+  outline: none !important;
 }
 
 /* Button error feedback */

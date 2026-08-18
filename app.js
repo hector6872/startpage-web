@@ -1966,11 +1966,17 @@ function renderTodos() {
         </span>`;
     }
 
+    const escapedText = escapeHtml(todo.text);
+    const checkLabel = (state.lang === 'es' ? 'Marcar tarea como completada: ' : 'Mark task as complete: ') + todo.text;
+    const focusLabel = (state.lang === 'es' ? 'Trabajar en esta tarea: ' : 'Focus on this task: ') + todo.text;
+    const editLabel = (state.lang === 'es' ? 'Editar tarea: ' : 'Edit task: ') + todo.text;
+    const deleteLabel = (state.lang === 'es' ? 'Eliminar tarea: ' : 'Delete task: ') + todo.text;
+
     li.innerHTML = `
       <div class="todo-item-left">
-        <input type="checkbox" class="todo-checkbox" ${todo.completed ? 'checked' : ''} data-id="${todo.id}">
+        <input type="checkbox" class="todo-checkbox" ${todo.completed ? 'checked' : ''} data-id="${todo.id}" aria-label="${escapeHtml(checkLabel)}">
         <div class="todo-item-details">
-          <span class="todo-text">${escapeHtml(todo.text)}</span>
+          <span class="todo-text">${escapedText}</span>
           <div class="todo-meta">
             <span class="todo-priority-badge priority-${todo.priority}">${translations[state.lang]['priority-' + todo.priority]}</span>
             ${dateBadgeHTML}
@@ -1980,17 +1986,17 @@ function renderTodos() {
       </div>
       <div class="todo-actions">
         ${!todo.completed ? `
-        <button class="btn-item-action focus-btn ${todo.isFocused ? 'active' : ''}" data-id="${todo.id}" title="${state.lang === 'es' ? 'Trabajando en esta tarea' : 'Focus on this task'}">
+        <button class="btn-item-action focus-btn ${todo.isFocused ? 'active' : ''}" data-id="${todo.id}" title="${state.lang === 'es' ? 'Trabajando en esta tarea' : 'Focus on this task'}" aria-label="${escapeHtml(focusLabel)}">
           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <circle cx="12" cy="12" r="10"/>
             <circle cx="12" cy="12" r="3"/>
           </svg>
         </button>
         ` : ''}
-        <button class="btn-item-action edit-btn" data-id="${todo.id}">
+        <button class="btn-item-action edit-btn" data-id="${todo.id}" title="${state.lang === 'es' ? 'Editar' : 'Edit'}" aria-label="${escapeHtml(editLabel)}">
           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
         </button>
-        <button class="btn-item-action delete-btn" data-id="${todo.id}">
+        <button class="btn-item-action delete-btn" data-id="${todo.id}" title="${state.lang === 'es' ? 'Eliminar' : 'Delete'}" aria-label="${escapeHtml(deleteLabel)}">
           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
         </button>
       </div>
@@ -2056,11 +2062,16 @@ function renderTodos() {
           </span>`;
       }
 
+      const focusCheckLabel = (state.lang === 'es' ? 'Marcar tarea como completada: ' : 'Mark task as complete: ') + focusedTodo.text;
+      const focusClearLabel = (state.lang === 'es' ? 'Quitar del enfoque: ' : 'Clear focus: ') + focusedTodo.text;
+      const focusEditLabel = (state.lang === 'es' ? 'Editar tarea enfocada: ' : 'Edit focused task: ') + focusedTodo.text;
+      const focusDeleteLabel = (state.lang === 'es' ? 'Eliminar tarea enfocada: ' : 'Delete focused task: ') + focusedTodo.text;
+
       const focusItemDiv = document.createElement('div');
       focusItemDiv.className = 'todo-item borderless-todo-item';
       focusItemDiv.innerHTML = `
         <div class="todo-item-left">
-          <input type="checkbox" class="todo-checkbox" data-id="${focusedTodo.id}">
+          <input type="checkbox" class="todo-checkbox" data-id="${focusedTodo.id}" aria-label="${escapeHtml(focusCheckLabel)}">
           <div class="todo-item-details">
             <span class="todo-text">${escapeHtml(focusedTodo.text)}</span>
             <div class="todo-meta">
@@ -2070,16 +2081,16 @@ function renderTodos() {
           </div>
         </div>
         <div class="todo-actions">
-          <button class="btn-item-action focus-btn active" data-id="${focusedTodo.id}" title="${state.lang === 'es' ? 'Quitar del enfoque' : 'Clear focus'}">
+          <button class="btn-item-action focus-btn active" data-id="${focusedTodo.id}" title="${state.lang === 'es' ? 'Quitar del enfoque' : 'Clear focus'}" aria-label="${escapeHtml(focusClearLabel)}">
             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <circle cx="12" cy="12" r="10"/>
               <circle cx="12" cy="12" r="3"/>
             </svg>
           </button>
-          <button class="btn-item-action edit-btn" data-id="${focusedTodo.id}">
+          <button class="btn-item-action edit-btn" data-id="${focusedTodo.id}" title="${state.lang === 'es' ? 'Editar' : 'Edit'}" aria-label="${escapeHtml(focusEditLabel)}">
             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
           </button>
-          <button class="btn-item-action delete-btn" data-id="${focusedTodo.id}">
+          <button class="btn-item-action delete-btn" data-id="${focusedTodo.id}" title="${state.lang === 'es' ? 'Eliminar' : 'Delete'}" aria-label="${escapeHtml(focusDeleteLabel)}">
             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
           </button>
         </div>
@@ -2297,6 +2308,9 @@ function renderCountdowns() {
     const fullMonthDate = eventDateThisYear.toLocaleDateString(state.lang === 'es' ? 'es-ES' : 'en-US', { day: 'numeric', month: 'long' });
     const tooltipText = evt.name + `\n${fullMonthDate} (${relativeText})`;
 
+    const editCountdownLabel = (state.lang === 'es' ? 'Editar evento: ' : 'Edit event: ') + evt.name;
+    const deleteCountdownLabel = (state.lang === 'es' ? 'Eliminar evento: ' : 'Delete event: ') + evt.name;
+
     const li = document.createElement('li');
     li.className = 'countdown-item';
     if (isFarFuture) {
@@ -2312,10 +2326,10 @@ function renderCountdowns() {
       </div>
       <div class="todo-actions countdown-actions">
         ${badgeHTML}
-        <button class="btn-item-action edit-countdown-btn" data-id="${evt.id}" title="${state.lang === 'es' ? 'Editar' : 'Edit'}">
+        <button class="btn-item-action edit-countdown-btn" data-id="${evt.id}" title="${state.lang === 'es' ? 'Editar' : 'Edit'}" aria-label="${escapeHtml(editCountdownLabel)}">
           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
         </button>
-        <button class="btn-item-action delete-countdown-btn" data-id="${evt.id}" title="${state.lang === 'es' ? 'Eliminar' : 'Delete'}">
+        <button class="btn-item-action delete-countdown-btn" data-id="${evt.id}" title="${state.lang === 'es' ? 'Eliminar' : 'Delete'}" aria-label="${escapeHtml(deleteCountdownLabel)}">
           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
         </button>
       </div>
@@ -2331,6 +2345,58 @@ function renderCountdowns() {
 
     list.appendChild(li);
   });
+}
+
+// -------------------------------------------------------------
+// ACCESSIBLE FOCUS & MODAL DIALOG MANAGEMENT
+// -------------------------------------------------------------
+let lastActiveElementBeforeModal = null;
+
+function getFocusableElements(container) {
+  if (!container) return [];
+  return Array.from(container.querySelectorAll(
+    'button:not([disabled]):not([tabindex="-1"]), [href]:not([tabindex="-1"]), input:not([disabled]):not([type="hidden"]):not([tabindex="-1"]), select:not([disabled]):not([tabindex="-1"]), textarea:not([disabled]):not([tabindex="-1"]), [tabindex]:not([tabindex="-1"]):not([disabled])'
+  )).filter(el => {
+    return el.offsetWidth > 0 || el.offsetHeight > 0 || el.getClientRects().length > 0;
+  });
+}
+
+function openModalAccessible(dialog, initialFocusTarget = null) {
+  if (!dialog) return;
+  lastActiveElementBeforeModal = document.activeElement;
+  if (typeof dialog.showModal === 'function') {
+    dialog.showModal();
+  }
+  setTimeout(() => {
+    if (initialFocusTarget && typeof initialFocusTarget.focus === 'function') {
+      initialFocusTarget.focus();
+    } else {
+      const focusables = getFocusableElements(dialog);
+      if (focusables.length > 0) {
+        focusables[0].focus();
+      }
+    }
+  }, 40);
+}
+
+function trapFocusInDialog(e, dialog) {
+  if (e.key !== 'Tab' || !dialog || !dialog.open) return;
+  const focusables = getFocusableElements(dialog);
+  if (focusables.length === 0) return;
+  const first = focusables[0];
+  const last = focusables[focusables.length - 1];
+
+  if (e.shiftKey) {
+    if (document.activeElement === first || !dialog.contains(document.activeElement)) {
+      e.preventDefault();
+      last.focus();
+    }
+  } else {
+    if (document.activeElement === last || !dialog.contains(document.activeElement)) {
+      e.preventDefault();
+      first.focus();
+    }
+  }
 }
 
 async function addCountdown(name, date) {
@@ -2363,7 +2429,7 @@ function deleteCountdown(id) {
     }
     modal.querySelector('[data-i18n="cancel-btn"]').textContent = dict['cancel-btn'];
     modal.querySelector('[data-i18n="delete-btn"]').textContent = dict['delete-btn'];
-    modal.showModal();
+    openModalAccessible(modal, document.getElementById('btn-cancel-delete'));
   }
 }
 
@@ -2373,7 +2439,7 @@ function openEditEventModal(evt) {
   document.getElementById('edit-event-id').value = evt.id;
   document.getElementById('edit-event-name-input').value = evt.name;
   document.getElementById('edit-event-date-input').value = evt.date;
-  modal.showModal();
+  openModalAccessible(modal, document.getElementById('edit-event-name-input'));
 }
 
 async function addTodo(text, dueDate, priority) {
@@ -2387,17 +2453,19 @@ async function addTodo(text, dueDate, priority) {
   state.todos.push(newTodo);
   await saveTodos();
   renderTodos();
+  renderFocusCard();
+  updateTodoCountBadges();
 }
 
 async function toggleTodo(id) {
   state.todos = state.todos.map(todo => {
     if (todo.id === id) {
-      const nextCompleted = !todo.completed;
+      const isNowCompleted = !todo.completed;
       return { 
         ...todo, 
-        completed: nextCompleted,
-        completedAt: nextCompleted ? new Date().toISOString() : null,
-        isFocused: nextCompleted ? false : todo.isFocused 
+        completed: isNowCompleted,
+        completedAt: isNowCompleted ? new Date().toISOString() : null,
+        isFocused: isNowCompleted ? false : todo.isFocused // Clear focus if completed
       };
     }
     return todo;
@@ -2559,7 +2627,13 @@ async function safeFetch(url, options = {}) {
     const proxyUrl = `/api/proxy?url=${encodeURIComponent(url)}`;
     try {
       const res = await fetch(proxyUrl, options);
-      return res;
+      // If the proxy is active and returns a response, or if it gave a valid JSON error from target API
+      const contentType = res.headers.get('content-type') || '';
+      if (res.status !== 404 || contentType.includes('application/json')) {
+        return res;
+      }
+      // If the proxy route itself returned 404 (e.g. static hosting without /api/proxy function), fallback to direct fetch
+      return await fetch(url, options);
     } catch (e) {
       return fetch(url, options);
     }
@@ -2599,6 +2673,8 @@ async function fetchJira() {
   if (host && !host.startsWith('http://') && !host.startsWith('https://')) {
     host = 'https://' + host;
   }
+  // Sanitize host in case user entered a specific subpath like /jira or /secure
+  host = host.replace(/\/jira\/?$/, '').replace(/\/secure.*$/, '');
 
   if (!host || !state.settings.jiraEmail || !state.settings.jiraToken) {
     container.innerHTML = `<p class="empty-msg">${translations[state.lang]['status-unconfigured']}</p>`;
@@ -2613,14 +2689,14 @@ async function fetchJira() {
     };
     const fieldsParam = encodeURIComponent('summary,status,priority,updated');
 
-    // 1. Try new Jira Cloud GET /rest/api/3/search/jql
-    let response = await safeFetch(`${host}/rest/api/3/search/jql?jql=${encodeURIComponent(jql)}&maxResults=50&fields=${fieldsParam}`, {
+    // 1. Standard Jira Cloud GET /rest/api/3/search
+    let response = await safeFetch(`${host}/rest/api/3/search?jql=${encodeURIComponent(jql)}&maxResults=50&fields=${fieldsParam}`, {
       headers: authHeaders
     });
 
-    // 2. If GET /rest/api/3/search/jql is not OK, try POST /rest/api/3/search/jql
+    // 2. Standard Jira Cloud POST /rest/api/3/search
     if (!response.ok) {
-      response = await safeFetch(`${host}/rest/api/3/search/jql`, {
+      response = await safeFetch(`${host}/rest/api/3/search`, {
         method: 'POST',
         headers: {
           ...authHeaders,
@@ -2634,17 +2710,40 @@ async function fetchJira() {
       });
     }
 
-    // 3. If v3 fails, fallback to v2 search endpoint
+    // 3. Jira Server / DC GET /rest/api/2/search
     if (!response.ok) {
       response = await safeFetch(`${host}/rest/api/2/search?jql=${encodeURIComponent(jql)}&maxResults=50&fields=${fieldsParam}`, {
         headers: authHeaders
       });
     }
 
-    // 4. Try simplified query if statusCategory is unsupported
+    // 4. Jira Server / DC POST /rest/api/2/search
+    if (!response.ok) {
+      response = await safeFetch(`${host}/rest/api/2/search`, {
+        method: 'POST',
+        headers: {
+          ...authHeaders,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          jql: jql,
+          maxResults: 50,
+          fields: ['summary', 'status', 'priority', 'updated']
+        })
+      });
+    }
+
+    // 5. Alternate Jira Cloud /rest/api/3/search/jql
+    if (!response.ok) {
+      response = await safeFetch(`${host}/rest/api/3/search/jql?jql=${encodeURIComponent(jql)}&maxResults=50&fields=${fieldsParam}`, {
+        headers: authHeaders
+      });
+    }
+
+    // 6. Simplified JQL fallback if statusCategory is not supported
     if (!response.ok) {
       const simpleJql = 'assignee = currentUser() ORDER BY updated DESC';
-      response = await safeFetch(`${host}/rest/api/3/search/jql?jql=${encodeURIComponent(simpleJql)}&maxResults=50&fields=${fieldsParam}`, {
+      response = await safeFetch(`${host}/rest/api/3/search?jql=${encodeURIComponent(simpleJql)}&maxResults=50&fields=${fieldsParam}`, {
         headers: authHeaders
       });
       if (!response.ok) {
@@ -2933,6 +3032,7 @@ async function testGitConnection(provider, button) {
       if (host && !host.startsWith('http://') && !host.startsWith('https://')) {
         host = 'https://' + host;
       }
+      host = host.replace(/\/jira\/?$/, '').replace(/\/secure.*$/, '');
       const email = document.getElementById('jira-email').value.trim();
       const token = document.getElementById('jira-token').value.trim();
       if (!host || !email || !token) {
@@ -2940,12 +3040,20 @@ async function testGitConnection(provider, button) {
       }
 
       const auth = btoa(`${email}:${token}`);
-      const res = await safeFetch(`${host}/rest/api/3/myself`, {
+      let res = await safeFetch(`${host}/rest/api/3/myself`, {
         headers: {
           'Authorization': `Basic ${auth}`,
           'Accept': 'application/json'
         }
       });
+      if (!res.ok) {
+        res = await safeFetch(`${host}/rest/api/2/myself`, {
+          headers: {
+            'Authorization': `Basic ${auth}`,
+            'Accept': 'application/json'
+          }
+        });
+      }
       if (res.ok) {
         success = true;
         state.settings.jiraHost = host;
@@ -4403,16 +4511,16 @@ function setupEventListeners() {
 
   const openAddTaskModal = () => {
     const modal = document.getElementById('add-task-modal');
-    if (modal && typeof modal.showModal === 'function') {
-      modal.showModal();
-    }
+    openModalAccessible(modal, document.getElementById('todo-input'));
   };
 
   const openNotesModal = () => {
     const modal = document.getElementById('notes-modal');
-    if (modal && typeof modal.showModal === 'function') {
-      modal.showModal();
+    const notesTextarea = document.getElementById('notes-textarea');
+    if (notesTextarea) {
+      notesTextarea.value = state.settings.notes || '';
     }
+    openModalAccessible(modal, notesTextarea);
   };
 
   // Header quick action button listeners
@@ -4711,7 +4819,7 @@ function setupEventListeners() {
 
   if (showAddCountdownBtn && addCountdownModal) {
     showAddCountdownBtn.addEventListener('click', () => {
-      addCountdownModal.showModal();
+      openModalAccessible(addCountdownModal, document.getElementById('countdown-title-input'));
     });
   }
   if (closeAddCountdownBtn && addCountdownModal) {
@@ -4733,7 +4841,7 @@ function setupEventListeners() {
 
   if (showAddTaskBtn && addTaskModal) {
     showAddTaskBtn.addEventListener('click', () => {
-      addTaskModal.showModal();
+      openModalAccessible(addTaskModal, document.getElementById('todo-input'));
     });
   }
   if (closeAddTaskBtn && addTaskModal) {
@@ -4784,17 +4892,14 @@ function setupEventListeners() {
       const date = document.getElementById('edit-event-date-input').value;
       if (!name || !date) return;
       
-      state.settings.customEvents = (state.settings.customEvents || []).map(evt => {
-        if (evt.id === id) {
-          return { ...evt, name, date };
-        }
-        return evt;
-      });
+      const events = state.settings.customEvents || [];
+      const updated = events.map(c => c.id === id ? { ...c, name, date } : c);
+      state.settings.customEvents = updated;
       await saveSettings();
       renderCountdowns();
       renderSettingsEventsList();
       updateUpcomingEventBanner();
-      editEventModal.close();
+      if (editEventModal) editEventModal.close();
     });
   }
 
@@ -4893,7 +4998,7 @@ function setupEventListeners() {
         notesHistory = [notesTextarea.value];
         notesHistoryIndex = 0;
       }
-      notesModal.showModal();
+      openModalAccessible(notesModal, notesTextarea);
     });
   }
 
@@ -5034,6 +5139,25 @@ function setupEventListeners() {
     });
   });
 
+  // Accessible Keyboard Activations (Enter & Space) for widgets and OOO badges
+  const accessibleClickables = [
+    document.getElementById('events-banner-container'),
+    document.getElementById('world-clock-widget'),
+    document.getElementById('weather-widget'),
+    ...document.querySelectorAll('.ooo-badge')
+  ];
+
+  accessibleClickables.forEach(el => {
+    if (el) {
+      el.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar') {
+          e.preventDefault();
+          el.click();
+        }
+      });
+    }
+  });
+
   // OOO switch change handler
   const oooActiveSwitch = document.getElementById('settings-ooo-active');
   const oooDateModal = document.getElementById('ooo-date-modal');
@@ -5053,7 +5177,7 @@ function setupEventListeners() {
           oooDateInput.min = `${yyyy}-${mm}-${dd}`;
           oooDateInput.value = `${yyyy}-${mm}-${dd}`;
         }
-        if (oooDateModal) oooDateModal.showModal();
+        if (oooDateModal) openModalAccessible(oooDateModal, oooDateInput);
       } else {
         const display = document.getElementById('ooo-date-display');
         if (display) display.classList.add('hidden');
@@ -5199,7 +5323,7 @@ function setupEventListeners() {
     }
 
     renderSettingsEventsList();
-    settingsModal.showModal();
+    openModalAccessible(settingsModal, document.querySelector('.settings-tabs .tab-btn.active'));
   });
 
   // Live Preview Handlers for Language and Theme
@@ -5233,7 +5357,7 @@ function setupEventListeners() {
     }
   });
 
-  // Allow closing any modal by clicking outside on its backdrop
+  // Manage all dialogs: Backdrop clicks, Focus trap on Tab, Focus restore on close
   document.querySelectorAll('.modal-dialog').forEach(modal => {
     if (modal !== settingsModal) {
       modal.addEventListener('click', (e) => {
@@ -5242,6 +5366,22 @@ function setupEventListeners() {
         }
       });
     }
+
+    // Focus trapping within open modal dialog
+    modal.addEventListener('keydown', (e) => {
+      if (e.key === 'Tab') {
+        trapFocusInDialog(e, modal);
+      }
+    });
+
+    // Return focus to previous trigger when dialog closes
+    modal.addEventListener('close', () => {
+      if (lastActiveElementBeforeModal && typeof lastActiveElementBeforeModal.focus === 'function') {
+        try {
+          lastActiveElementBeforeModal.focus();
+        } catch (err) {}
+      }
+    });
   });
 
   settingsModal.addEventListener('close', () => {
@@ -5351,21 +5491,57 @@ function setupEventListeners() {
     }
   });
 
-  // Settings Tabs Switch
-  const tabButtons = document.querySelectorAll('.settings-tabs .tab-btn');
-  tabButtons.forEach(btn => {
+  // Settings Tabs Switch with WAI-ARIA arrow navigation & roving tabindex
+  const tabButtons = Array.from(document.querySelectorAll('.settings-tabs .tab-btn'));
+  
+  function activateSettingsTab(targetBtn, shouldFocus = true) {
+    if (!targetBtn) return;
+    const targetTab = targetBtn.getAttribute('data-tab');
+    
+    tabButtons.forEach(btn => {
+      const isActive = btn === targetBtn;
+      btn.classList.toggle('active', isActive);
+      btn.setAttribute('aria-selected', isActive ? 'true' : 'false');
+      btn.setAttribute('tabindex', isActive ? '0' : '-1');
+    });
+
+    document.querySelectorAll('.tab-pane').forEach(pane => {
+      const isTarget = pane.id === targetTab;
+      pane.classList.toggle('active', isTarget);
+    });
+
+    // Scroll the selected tab into view inside the tab bar container
+    targetBtn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+    if (shouldFocus) {
+      targetBtn.focus();
+    }
+  }
+
+  tabButtons.forEach((btn, index) => {
     btn.addEventListener('click', (e) => {
       e.preventDefault();
-      const targetTab = btn.getAttribute('data-tab');
-      
-      tabButtons.forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
+      activateSettingsTab(btn, false);
+    });
 
-      document.querySelectorAll('.tab-pane').forEach(pane => pane.classList.remove('active'));
-      document.getElementById(targetTab).classList.add('active');
+    btn.addEventListener('keydown', (e) => {
+      let newIndex = -1;
+      if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+        e.preventDefault();
+        newIndex = (index + 1) % tabButtons.length;
+      } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+        e.preventDefault();
+        newIndex = (index - 1 + tabButtons.length) % tabButtons.length;
+      } else if (e.key === 'Home') {
+        e.preventDefault();
+        newIndex = 0;
+      } else if (e.key === 'End') {
+        e.preventDefault();
+        newIndex = tabButtons.length - 1;
+      }
 
-      // Scroll the selected tab into view inside the tab bar container
-      btn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+      if (newIndex >= 0) {
+        activateSettingsTab(tabButtons[newIndex], true);
+      }
     });
   });
 
@@ -5684,8 +5860,7 @@ function openEditModal(todo) {
   document.getElementById('edit-task-id').value = todo.id;
   document.getElementById('edit-task-text').value = todo.text;
   document.getElementById('edit-task-date').value = todo.dueDate || '';
-  document.getElementById('edit-task-priority').value = todo.priority;
-  document.getElementById('edit-task-modal').showModal();
+  openModalAccessible(document.getElementById('edit-task-modal'), document.getElementById('edit-task-text'));
 }
 
 // -------------------------------------------------------------

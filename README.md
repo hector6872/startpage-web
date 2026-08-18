@@ -179,19 +179,38 @@ To solve this completely without requiring browser extensions, this project incl
 
 ---
 
-## ⚡ Quick Actions & Keyboard Shortcuts
+## ⚡ Quick Actions & Keyboard Navigation
 
-The dashboard includes one-click creation buttons in section headers and instant global keyboard shortcuts:
+The dashboard is built with first-class accessibility and full keyboard navigation support across the entire app:
+
+### ⌨️ Global Shortcuts
 
 | Shortcut | Action | Destination |
 |:---:|---|---|
 | <kbd>E</kbd> | ✉️ **Compose Email** | Opens Gmail compose window directly |
 | <kbd>C</kbd> | 📅 **Create Event** | Opens Google Calendar event creation |
 | <kbd>T</kbd> | ✅ **New Task** | Opens the Quick Task creation modal |
-| <kbd>N</kbd> | 📝 **Quick Notes** | Opens the Quick Notes drawer / modal |
+| <kbd>N</kbd> | 📝 **Quick Notes** | Opens the Quick Notes modal |
 | <kbd>Esc</kbd> | ❌ **Close Modal** | Closes any open dialog or modal |
 
-> **Note**: Keyboard shortcuts are automatically disabled while typing in text inputs, textareas, notes, or when dialogs are open. You can also click the subtle `+` button in the header of Events, Gmail, and Tasks sections.
+> **Note**: Global single-key shortcuts are automatically disabled while typing in text fields, textareas, notes, or when dialogs are active.
+
+### 🧭 Full Keyboard Navigation
+
+- **Sequential Tab Order**: Navigate seamlessly through all widgets, header buttons, task items, and modals using <kbd>Tab</kbd> and <kbd>Shift + Tab</kbd>.
+- **Visible Focus Indicator**: Accessible `:focus-visible` outline rings highlight the active element with clean contrast across dark and light themes.
+- **Settings Tabs (WAI-ARIA Pattern)**:
+  - <kbd>→</kbd> / <kbd>↓</kbd>: Move to next settings tab.
+  - <kbd>←</kbd> / <kbd>↑</kbd>: Move to previous settings tab.
+  - <kbd>Home</kbd> / <kbd>End</kbd>: Jump directly to the first or last tab.
+- **Accessible Modal Trapping & Restoration**:
+  - Tabbing is trapped within open modals to prevent accidental background interaction.
+  - When closing a modal, focus automatically returns to the button that opened it.
+- **Interactive Widgets Activation**:
+  - Activate the World Clock, Weather widget, Upcoming Events banner, or Out of Office badges using <kbd>Enter</kbd> or <kbd>Space</kbd>.
+- **Quick Notes Undo / Redo**:
+  - <kbd>Ctrl</kbd>/<kbd>Cmd</kbd> + <kbd>Z</kbd>: Undo note changes.
+  - <kbd>Ctrl</kbd>/<kbd>Cmd</kbd> + <kbd>Shift</kbd> + <kbd>Z</kbd> (or <kbd>Ctrl</kbd> + <kbd>Y</kbd>): Redo note changes.
 
 ---
 

@@ -3,7 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dashboard</title>
+  <title>My Startpage</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="apple-touch-icon" href="/favicon.svg">
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -28,8 +30,8 @@
       } catch (e) {}
     }
   </script>
-  <script type="module" crossorigin src="/assets/index-CfiL6aUT.js"></script>
-  <link rel="stylesheet" crossorigin href="/assets/index-BRhadkrJ.css">
+  <script type="module" crossorigin src="/assets/index-C0fvtio-.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/index-Do8WRlR5.css">
 </head>
 <body>
   <!-- Background Decorative Elements -->
@@ -43,7 +45,7 @@
         <div class="header-left">
           <h1 id="greeting" class="greeting">Hello</h1>
           <p id="current-date" class="date-subtitle">Monday, 20 July</p>
-          <div id="events-banner-container" class="events-banner-container"></div>
+          <div id="events-banner-container" class="events-banner-container" tabindex="0" role="button" aria-label="Events countdown banner"></div>
         </div>
         <div class="header-right">
           <!-- Shortcut Buttons Stack -->
@@ -82,7 +84,7 @@
             </button>
           </div>
           <!-- World Clock Widget -->
-          <div id="world-clock-widget" class="world-clock-widget hidden">
+          <div id="world-clock-widget" class="world-clock-widget hidden" tabindex="0" role="button" aria-label="World clock widget">
             <div class="clock-info">
               <span class="clock-label">--</span>
               <div class="clock-time">--:--</div>
@@ -91,7 +93,7 @@
             </div>
           </div>
           <!-- Weather Widget -->
-          <div id="weather-widget" class="weather-widget loading">
+          <div id="weather-widget" class="weather-widget loading" tabindex="0" role="button" aria-label="Weather widget">
             <div class="weather-info">
               <span class="weather-loc">--</span>
               <div class="weather-details-grid">
@@ -131,7 +133,7 @@
       <section class="grid-col" id="col-today">
         <h2 class="col-title">
           <span data-i18n="col-today">Today</span>
-          <span class="ooo-badge hidden" id="ooo-badge-today" title="Out of Office mode active. Click to open settings.">out of office</span>
+          <span class="ooo-badge hidden" id="ooo-badge-today" tabindex="0" role="button" title="Out of Office mode active. Click to open settings." aria-label="Out of Office mode active. Click to open settings.">out of office</span>
         </h2>
         <div class="col-content">
           <!-- Calendar and tasks summaries will go here -->
@@ -180,7 +182,7 @@
       <section class="grid-col" id="col-week">
         <h2 class="col-title">
           <span data-i18n="col-week">This Week</span>
-          <span class="ooo-badge hidden" id="ooo-badge-week" title="Out of Office mode active. Click to open settings.">out of office</span>
+          <span class="ooo-badge hidden" id="ooo-badge-week" tabindex="0" role="button" title="Out of Office mode active. Click to open settings." aria-label="Out of Office mode active. Click to open settings.">out of office</span>
         </h2>
         <div class="col-content">
           <div class="section-card">
@@ -209,7 +211,7 @@
       <section class="grid-col" id="col-tasks">
         <h2 class="col-title" id="work-section-title">
           <span data-i18n="col-work">Work</span>
-          <span class="ooo-badge hidden" id="ooo-badge-work" title="Out of Office mode active. Click to open settings.">out of office</span>
+          <span class="ooo-badge hidden" id="ooo-badge-work" tabindex="0" role="button" title="Out of Office mode active. Click to open settings." aria-label="Out of Office mode active. Click to open settings.">out of office</span>
         </h2>
         <div class="col-content" id="work-section-content">
           <div class="section-card" id="prs-card">
@@ -299,24 +301,24 @@
   </div>
 
   <!-- Settings Modal -->
-  <dialog id="settings-modal" class="modal-dialog">
+  <dialog id="settings-modal" class="modal-dialog" aria-labelledby="settings-modal-title">
     <div class="modal-content">
       <header class="modal-header">
-        <h2 data-i18n="settings-title">Dashboard Settings</h2>
-        <button id="close-settings" class="btn-close" type="button">&times;</button>
+        <h2 id="settings-modal-title" data-i18n="settings-title">Dashboard Settings</h2>
+        <button id="close-settings" class="btn-close" type="button" aria-label="Close settings">&times;</button>
       </header>
       <form id="settings-form" style="display: flex; flex-direction: column; flex: 1; min-height: 0; overflow: hidden;">
-        <nav class="settings-tabs">
-          <button type="button" class="tab-btn active" data-tab="tab-general" data-i18n="tab-general">General</button>
-          <button type="button" class="tab-btn" data-tab="tab-shortcuts" data-i18n="tab-shortcuts">Shortcuts</button>
-          <button type="button" class="tab-btn" data-tab="tab-google" data-i18n="tab-google">Google</button>
-          <button type="button" class="tab-btn" data-tab="tab-git" data-i18n="tab-git">GitHub & Bitbucket</button>
-          <button type="button" class="tab-btn" data-tab="tab-jira" data-i18n="tab-jira">Jira</button>
-          <button type="button" class="tab-btn" data-tab="tab-storage" data-i18n="tab-storage">Storage</button>
+        <nav class="settings-tabs" role="tablist" aria-label="Settings categories">
+          <button type="button" class="tab-btn active" role="tab" id="tab-btn-general" aria-selected="true" aria-controls="tab-general" tabindex="0" data-tab="tab-general" data-i18n="tab-general">General</button>
+          <button type="button" class="tab-btn" role="tab" id="tab-btn-shortcuts" aria-selected="false" aria-controls="tab-shortcuts" tabindex="-1" data-tab="tab-shortcuts" data-i18n="tab-shortcuts">Shortcuts</button>
+          <button type="button" class="tab-btn" role="tab" id="tab-btn-google" aria-selected="false" aria-controls="tab-google" tabindex="-1" data-tab="tab-google" data-i18n="tab-google">Google</button>
+          <button type="button" class="tab-btn" role="tab" id="tab-btn-git" aria-selected="false" aria-controls="tab-git" tabindex="-1" data-tab="tab-git" data-i18n="tab-git">GitHub & Bitbucket</button>
+          <button type="button" class="tab-btn" role="tab" id="tab-btn-jira" aria-selected="false" aria-controls="tab-jira" tabindex="-1" data-tab="tab-jira" data-i18n="tab-jira">Jira</button>
+          <button type="button" class="tab-btn" role="tab" id="tab-btn-storage" aria-selected="false" aria-controls="tab-storage" tabindex="-1" data-tab="tab-storage" data-i18n="tab-storage">Storage</button>
         </nav>
         <div class="modal-body">
           <!-- Tab: General -->
-          <div id="tab-general" class="tab-pane active">
+          <div id="tab-general" class="tab-pane active" role="tabpanel" aria-labelledby="tab-btn-general" tabindex="0">
             <!-- Language and Theme Group -->
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.25rem;">
               <div class="form-group">
@@ -493,7 +495,7 @@
           </div>
 
           <!-- Tab: Shortcuts -->
-          <div id="tab-shortcuts" class="tab-pane">
+          <div id="tab-shortcuts" class="tab-pane" role="tabpanel" aria-labelledby="tab-btn-shortcuts" tabindex="0">
             <div class="settings-section-card">
               <div class="card-toggle-header">
                 <span class="card-toggle-title">
@@ -521,7 +523,7 @@
           </div>
 
           <!-- Tab: Google -->
-          <div id="tab-google" class="tab-pane">
+          <div id="tab-google" class="tab-pane" role="tabpanel" aria-labelledby="tab-btn-google" tabindex="0">
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem; align-items: start;">
               <div class="settings-section-card" style="margin-bottom: 0;">
                 <div class="card-toggle-header">
@@ -663,7 +665,7 @@
           </div>
 
           <!-- Tab: Git -->
-          <div id="tab-git" class="tab-pane">
+          <div id="tab-git" class="tab-pane" role="tabpanel" aria-labelledby="tab-btn-git" tabindex="0">
             <div class="settings-section-card" style="margin-bottom: 1.5rem;">
               <div class="card-toggle-header">
                 <span class="card-toggle-title">
@@ -675,6 +677,7 @@
                 </label>
               </div>
             </div>
+            
             <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; margin-top: 1rem; margin-bottom: 0.5rem;">
               <h3 style="display: flex; align-items: center; gap: 0.35rem; margin: 0;">
                 <span class="status-dot disconnected" id="settings-git-dot-github"></span>
@@ -754,7 +757,7 @@
           </div>
 
           <!-- Tab: Jira -->
-          <div id="tab-jira" class="tab-pane">
+          <div id="tab-jira" class="tab-pane" role="tabpanel" aria-labelledby="tab-btn-jira" tabindex="0">
             <div class="settings-section-card" style="margin-bottom: 1.5rem;">
               <div class="card-toggle-header">
                 <span class="card-toggle-title">
@@ -794,7 +797,7 @@
            </div>
 
           <!-- Tab: Storage -->
-          <div id="tab-storage" class="tab-pane">
+          <div id="tab-storage" class="tab-pane" role="tabpanel" aria-labelledby="tab-btn-storage" tabindex="0">
             <p class="tab-desc" data-i18n="storage-desc">Configure where your data is stored. You can select a JSON file in your Google Drive or local sync folder to share tasks across devices.</p>
             <div class="form-group">
               <label for="settings-storage-mode" data-i18n="label-storage-mode">Storage Mode</label>
@@ -832,11 +835,11 @@
   </dialog>
 
   <!-- Notes Modal -->
-  <dialog id="notes-modal" class="modal-dialog">
+  <dialog id="notes-modal" class="modal-dialog" aria-labelledby="notes-modal-title">
     <div class="modal-content" style="max-width: 550px;">
       <header class="modal-header">
-        <h2 data-i18n="notes-modal-title">Notas Rápidas</h2>
-        <button id="close-notes-modal" class="btn-close">&times;</button>
+        <h2 id="notes-modal-title" data-i18n="notes-modal-title">Notas Rápidas</h2>
+        <button id="close-notes-modal" class="btn-close" type="button" aria-label="Close notes">&times;</button>
       </header>
       <div class="modal-body" style="display: flex; flex-direction: column;">
         <textarea id="notes-textarea" class="notes-textarea" rows="12" placeholder="Escribe tus notas aquí..." data-i18n-placeholder="notes-placeholder"></textarea>
@@ -849,11 +852,11 @@
   </dialog>
 
   <!-- Add Countdown Modal -->
-  <dialog id="add-countdown-modal" class="modal-dialog">
+  <dialog id="add-countdown-modal" class="modal-dialog" aria-labelledby="add-countdown-title">
     <div class="modal-content" style="max-width: 450px;">
       <header class="modal-header">
-        <h2 data-i18n="add-countdown-title">Add New Countdown</h2>
-        <button id="close-add-countdown-modal" class="btn-close">&times;</button>
+        <h2 id="add-countdown-title" data-i18n="add-countdown-title">Add New Countdown</h2>
+        <button id="close-add-countdown-modal" class="btn-close" type="button" aria-label="Close dialog">&times;</button>
       </header>
       <div class="modal-body" style="padding-bottom: 1rem;">
         <form id="countdown-form" class="todo-form" style="gap: 1.25rem; margin-bottom: 0;">
@@ -875,11 +878,11 @@
   </dialog>
 
   <!-- Edit Event Modal -->
-  <dialog id="edit-event-modal" class="modal-dialog">
+  <dialog id="edit-event-modal" class="modal-dialog" aria-labelledby="edit-event-title-modal">
     <div class="modal-content" style="max-width: 450px;">
       <header class="modal-header">
-        <h2 data-i18n="edit-event-title-modal">Edit Event</h2>
-        <button id="close-edit-event-modal" class="btn-close">&times;</button>
+        <h2 id="edit-event-title-modal" data-i18n="edit-event-title-modal">Edit Event</h2>
+        <button id="close-edit-event-modal" class="btn-close" type="button" aria-label="Close dialog">&times;</button>
       </header>
       <div class="modal-body" style="padding-bottom: 1rem;">
         <form id="edit-event-form" class="todo-form" style="gap: 1.25rem; margin-bottom: 0;">
@@ -902,11 +905,11 @@
   </dialog>
 
   <!-- Add Task Modal -->
-  <dialog id="add-task-modal" class="modal-dialog">
+  <dialog id="add-task-modal" class="modal-dialog" aria-labelledby="add-task-title-modal">
     <div class="modal-content" style="max-width: 450px;">
       <header class="modal-header">
-        <h2 data-i18n="add-task-title-modal">Add New Task</h2>
-        <button id="close-add-task-modal" class="btn-close">&times;</button>
+        <h2 id="add-task-title-modal" data-i18n="add-task-title-modal">Add New Task</h2>
+        <button id="close-add-task-modal" class="btn-close" type="button" aria-label="Close dialog">&times;</button>
       </header>
       <div class="modal-body" style="padding-bottom: 1rem;">
         <form id="todo-form" class="todo-form" style="gap: 1.25rem; margin-bottom: 0;">
@@ -936,11 +939,11 @@
   </dialog>
 
   <!-- Edit Task Modal -->
-  <dialog id="edit-task-modal" class="modal-dialog">
+  <dialog id="edit-task-modal" class="modal-dialog" aria-labelledby="edit-task-title">
     <div class="modal-content">
       <header class="modal-header">
-        <h2 data-i18n="edit-task-title">Edit Task</h2>
-        <button id="close-edit-modal" class="btn-close">&times;</button>
+        <h2 id="edit-task-title" data-i18n="edit-task-title">Edit Task</h2>
+        <button id="close-edit-modal" class="btn-close" type="button" aria-label="Close dialog">&times;</button>
       </header>
       <div class="modal-body">
         <form id="edit-task-form">
@@ -971,18 +974,18 @@
   </dialog>
 
   <!-- Confirm Delete Modal -->
-  <dialog id="confirm-delete-modal" class="modal-dialog">
+  <dialog id="confirm-delete-modal" class="modal-dialog" aria-labelledby="confirm-delete-title">
     <div class="modal-content" style="max-width: 400px;">
       <header class="modal-header">
-        <h2 data-i18n="confirm-delete-title">Confirm Deletion</h2>
-        <button id="close-delete-modal" class="btn-close">&times;</button>
+        <h2 id="confirm-delete-title" data-i18n="confirm-delete-title">Confirm Deletion</h2>
+        <button id="close-delete-modal" class="btn-close" type="button" aria-label="Close dialog">&times;</button>
       </header>
       <div class="modal-body" style="padding-top: 0.5rem; padding-bottom: 1.5rem;">
         <p data-i18n="confirm-delete-desc">Are you sure you want to delete this task?</p>
       </div>
       <div class="modal-footer" style="display: flex; gap: 0.5rem; justify-content: flex-end;">
-        <button id="btn-cancel-delete" class="btn-secondary" data-i18n="cancel-btn">Cancel</button>
-        <button id="btn-confirm-delete" class="btn-danger" style="background: var(--danger); color: white;" data-i18n="delete-btn">Delete</button>
+        <button type="button" id="btn-cancel-delete" class="btn-secondary" data-i18n="cancel-btn">Cancel</button>
+        <button type="button" id="btn-confirm-delete" class="btn-danger" style="background: var(--danger); color: white;" data-i18n="delete-btn">Delete</button>
       </div>
     </div>
   </dialog>
@@ -999,14 +1002,12 @@
     </svg>
   </button>
 
-
-
   <!-- Out of Office Date Modal -->
-  <dialog id="ooo-date-modal" class="modal-dialog">
+  <dialog id="ooo-date-modal" class="modal-dialog" aria-labelledby="ooo-title">
     <div class="modal-content" style="max-width: 400px;">
       <header class="modal-header">
-        <h2 data-i18n="ooo-title">Return Date</h2>
-        <button id="close-ooo-modal" class="btn-close">&times;</button>
+        <h2 id="ooo-title" data-i18n="ooo-title">Return Date</h2>
+        <button id="close-ooo-modal" class="btn-close" type="button" aria-label="Close dialog">&times;</button>
       </header>
       <div class="modal-body" style="padding-bottom: 1rem;">
         <form id="ooo-form" style="display: flex; flex-direction: column; gap: 1rem; margin-bottom: 0;">
