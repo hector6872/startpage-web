@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <!-- Flat Background Container -->
+  <rect x="4" y="4" width="56" height="56" rx="12" fill="#4f46e5" />
+
+  <!-- Flat Browser Top Bar -->
+  <path d="M4 16 C4 9.37 9.37 4 16 4 H48 C54.63 4 60 9.37 60 16 V18 H4 Z" fill="#4338ca" />
+  <circle cx="12" cy="11" r="2.5" fill="#ef4444" />
+  <circle cx="19" cy="11" r="2.5" fill="#eab308" />
+  <circle cx="26" cy="11" r="2.5" fill="#22c55e" />
+  <rect x="33" y="8" width="21" height="6" rx="3" fill="#3730a3" />
+
+  <!-- Flat Home / Start Icon in Body -->
+  <path d="M32 25 L18 36 H24 V49 H40 V36 H46 Z" fill="#ffffff" />
+  <!-- Flat Door Cutout -->
+  <rect x="29" y="39" width="6" height="10" rx="1" fill="#4f46e5" />
+</svg>
