@@ -52,7 +52,7 @@ const translations = {
     "label-show-countdowns": "Show Events",
     "label-show-tasks": "Show Tasks",
     "label-show-wikipedia": "Wikipedia",
-    "label-wikipedia-type": "Which one do you want to see?",
+    "label-wikipedia-type": "Content",
     "wiki-type-quote": "Quote",
     "wiki-type-topread": "Top read",
     "wiki-type-news": "News",
@@ -233,7 +233,7 @@ const translations = {
     "label-show-countdowns": "Mostrar Eventos",
     "label-show-tasks": "Mostrar Tareas",
     "label-show-wikipedia": "Wikipedia",
-    "label-wikipedia-type": "¿Cuál quieres ver?",
+    "label-wikipedia-type": "Contenido",
     "wiki-type-quote": "Quote",
     "wiki-type-topread": "Top read",
     "wiki-type-news": "News",
@@ -423,7 +423,7 @@ let state = {
     showWeather: true,
     showWorldClock: true,
     showWikipedia: true,
-    wikipediaType: 'quote',
+    wikipediaType: 'news',
     storageMode: 'local', // local or file
     googleClientId: '',
     githubToken: '',
@@ -1307,7 +1307,7 @@ async function loadWikipediaContent() {
   }
   quoteWidget.classList.remove('hidden');
 
-  const type = state.settings.wikipediaType || 'quote';
+  const type = state.settings.wikipediaType || 'news';
   const lang = state.lang === 'es' ? 'es' : 'en';
   const dict = translations[state.lang] || translations.en;
   const container = quoteWidget.querySelector('.quote-container');
@@ -4761,7 +4761,7 @@ function setupEventListeners() {
     const showWikiModalInput = document.getElementById('settings-show-wikipedia');
     if (showWikiModalInput) showWikiModalInput.checked = state.settings.showWikipedia !== false;
     const wikiTypeModalInput = document.getElementById('settings-wikipedia-type');
-    if (wikiTypeModalInput) wikiTypeModalInput.value = state.settings.wikipediaType || 'quote';
+    if (wikiTypeModalInput) wikiTypeModalInput.value = state.settings.wikipediaType || 'news';
 
     toggleWeatherInputs();
     toggleClockInputs();
@@ -4845,9 +4845,26 @@ function setupEventListeners() {
     });
   }
 
-  // Close Settings Modal
+  // Close Settings Modal on X button or clicking outside (backdrop)
   document.getElementById('close-settings').addEventListener('click', () => {
     settingsModal.close();
+  });
+
+  settingsModal.addEventListener('click', (e) => {
+    if (e.target === settingsModal) {
+      settingsModal.close();
+    }
+  });
+
+  // Allow closing any modal by clicking outside on its backdrop
+  document.querySelectorAll('.modal-dialog').forEach(modal => {
+    if (modal !== settingsModal) {
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+          modal.close();
+        }
+      });
+    }
   });
 
   settingsModal.addEventListener('close', () => {
@@ -5109,7 +5126,7 @@ function setupEventListeners() {
     const showWikiSave = document.getElementById('settings-show-wikipedia');
     if (showWikiSave) state.settings.showWikipedia = showWikiSave.checked;
     const wikiTypeSave = document.getElementById('settings-wikipedia-type');
-    if (wikiTypeSave) state.settings.wikipediaType = wikiTypeSave.value || 'quote';
+    if (wikiTypeSave) state.settings.wikipediaType = wikiTypeSave.value || 'news';
 
     const prevLang = state.lang;
     state.lang = state.settings.lang;
