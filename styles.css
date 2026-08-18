@@ -1003,8 +1003,127 @@ html.dark .pr-source-badge.github {
 }
 
 html.dark .pr-source-badge.bitbucket {
-  background: rgba(38, 132, 255, 0.15);
-  color: #2684ff;
+  background: rgba(76, 154, 255, 0.15);
+  color: #4c9aff;
+}
+
+/* Jira Badges & Items */
+.jira-key-badge {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+}
+
+.jira-status-badge {
+  font-size: 0.62rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  padding: 0.08rem 0.4rem;
+  border-radius: 4px;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.jira-status-badge.todo {
+  background: rgba(100, 116, 139, 0.12);
+  color: #475569;
+  border: 1px solid rgba(100, 116, 139, 0.2);
+}
+
+.jira-status-badge.progress {
+  background: rgba(14, 165, 233, 0.12);
+  color: #0284c7;
+  border: 1px solid rgba(14, 165, 233, 0.25);
+}
+
+.jira-status-badge.blocked {
+  background: rgba(239, 68, 68, 0.12);
+  color: #dc2626;
+  border: 1px solid rgba(239, 68, 68, 0.25);
+}
+
+.jira-status-badge.done {
+  background: rgba(16, 185, 129, 0.12);
+  color: #059669;
+  border: 1px solid rgba(16, 185, 129, 0.25);
+}
+
+html.dark .jira-status-badge.todo {
+  background: rgba(148, 163, 184, 0.15);
+  color: #cbd5e1;
+  border-color: rgba(148, 163, 184, 0.3);
+}
+
+html.dark .jira-status-badge.progress {
+  background: rgba(56, 189, 248, 0.15);
+  color: #38bdf8;
+  border-color: rgba(56, 189, 248, 0.3);
+}
+
+html.dark .jira-status-badge.blocked {
+  background: rgba(248, 113, 113, 0.15);
+  color: #f87171;
+  border-color: rgba(248, 113, 113, 0.3);
+}
+
+html.dark .jira-status-badge.done {
+  background: rgba(52, 211, 153, 0.15);
+  color: #34d399;
+  border-color: rgba(52, 211, 153, 0.3);
+}
+
+.jira-priority-badge {
+  font-size: 0.62rem;
+  font-weight: 600;
+  padding: 0.08rem 0.35rem;
+  border-radius: 4px;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.jira-priority-badge.highest {
+  background: rgba(225, 29, 72, 0.12);
+  color: #e11d48;
+  font-weight: 700;
+}
+
+.jira-priority-badge.high {
+  background: rgba(249, 115, 22, 0.12);
+  color: #ea580c;
+  font-weight: 700;
+}
+
+.jira-priority-badge.medium {
+  background: rgba(234, 179, 8, 0.12);
+  color: #a16207;
+}
+
+.jira-priority-badge.low {
+  background: rgba(148, 163, 184, 0.12);
+  color: #64748b;
+}
+
+html.dark .jira-priority-badge.highest {
+  background: rgba(251, 113, 133, 0.15);
+  color: #fb7185;
+}
+
+html.dark .jira-priority-badge.high {
+  background: rgba(251, 146, 60, 0.15);
+  color: #fb923c;
+}
+
+html.dark .jira-priority-badge.medium {
+  background: rgba(250, 204, 21, 0.15);
+  color: #fde047;
+}
+
+html.dark .jira-priority-badge.low {
+  background: rgba(148, 163, 184, 0.15);
+  color: #94a3b8;
 }
 
 .pr-source-badge.gitlab {

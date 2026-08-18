@@ -2447,7 +2447,36 @@ function syncDashboardColumns() {
 
 // -------------------------------------------------------------
 // EXTERNAL SERVICES INTEGRATIONS
-// -------------------------------------------------------------
+// Universal Fetch Helper (with transparent CORS proxy for Jira & Gmail)
+async function safeFetch(url, options = {}) {
+  const isJira = url.includes('/rest/api/3/') || url.includes('/rest/api/2/');
+  const isGmail = url.includes('gmail.googleapis.com');
+  
+  if (isJira || isGmail) {
+    const proxyUrl = `/api/proxy?url=${encodeURIComponent(url)}`;
+    try {
+      const res = await fetch(proxyUrl, options);
+      return res;
+    } catch (e) {
+      return fetch(url, options);
+    }
+  }
+
+  try {
+    const res = await fetch(url, options);
+    return res;
+  } catch (err) {
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      try {
+        const proxyUrl = `/api/proxy?url=${encodeURIComponent(url)}`;
+        return await fetch(proxyUrl, options);
+      } catch (proxyErr) {
+        throw err;
+      }
+    }
+    throw err;
+  }
+}
 
 // General helper to encode Jira Basic Auth
 function getJiraAuthHeader() {
@@ -2463,27 +2492,78 @@ async function fetchJira() {
     jiraBadge.classList.add('hidden');
   }
 
-  if (!state.settings.jiraHost || !state.settings.jiraEmail || !state.settings.jiraToken) {
+  let host = (state.settings.jiraHost || '').trim().replace(/\/$/, "");
+  if (host && !host.startsWith('http://') && !host.startsWith('https://')) {
+    host = 'https://' + host;
+  }
+
+  if (!host || !state.settings.jiraEmail || !state.settings.jiraToken) {
     container.innerHTML = `<p class="empty-msg">${translations[state.lang]['status-unconfigured']}</p>`;
     return;
   }
 
   try {
-    const domain = state.settings.jiraHost.replace(/\/$/, "");
-    const jql = encodeURIComponent("assignee = currentUser() AND statusCategory != Done");
-    const response = await fetch(`${domain}/rest/api/3/search?jql=${jql}&maxResults=5`, {
-      headers: {
-        'Authorization': getJiraAuthHeader(),
-        'Accept': 'application/json'
-      }
+    const jql = 'assignee = currentUser() AND statusCategory != Done ORDER BY updated DESC';
+    const authHeaders = {
+      'Authorization': getJiraAuthHeader(),
+      'Accept': 'application/json'
+    };
+    const fieldsParam = encodeURIComponent('summary,status,priority,updated');
+
+    // 1. Try new Jira Cloud GET /rest/api/3/search/jql
+    let response = await safeFetch(`${host}/rest/api/3/search/jql?jql=${encodeURIComponent(jql)}&maxResults=10&fields=${fieldsParam}`, {
+      headers: authHeaders
     });
 
-    if (!response.ok) throw new Error();
+    // 2. If GET /rest/api/3/search/jql is not OK, try POST /rest/api/3/search/jql
+    if (!response.ok) {
+      response = await safeFetch(`${host}/rest/api/3/search/jql`, {
+        method: 'POST',
+        headers: {
+          ...authHeaders,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          jql: jql,
+          maxResults: 10,
+          fields: ['summary', 'status', 'priority', 'updated']
+        })
+      });
+    }
+
+    // 3. If v3 fails, fallback to v2 search endpoint
+    if (!response.ok) {
+      response = await safeFetch(`${host}/rest/api/2/search?jql=${encodeURIComponent(jql)}&maxResults=10&fields=${fieldsParam}`, {
+        headers: authHeaders
+      });
+    }
+
+    // 4. Try simplified query if statusCategory is unsupported
+    if (!response.ok) {
+      const simpleJql = 'assignee = currentUser() ORDER BY updated DESC';
+      response = await safeFetch(`${host}/rest/api/3/search/jql?jql=${encodeURIComponent(simpleJql)}&maxResults=10&fields=${fieldsParam}`, {
+        headers: authHeaders
+      });
+      if (!response.ok) {
+        response = await safeFetch(`${host}/rest/api/2/search?jql=${encodeURIComponent(simpleJql)}&maxResults=10&fields=${fieldsParam}`, {
+          headers: authHeaders
+        });
+      }
+    }
+
+    if (!response.ok) {
+      const errBody = await response.text().catch(() => '');
+      console.error("Jira API Error Response:", response.status, errBody);
+      throw new Error(`HTTP ${response.status}`);
+    }
+
     const data = await response.json();
+    const totalCount = typeof data.total === 'number' ? data.total : (data.issues ? data.issues.length : 0);
 
     if (jiraBadge) {
       if (data.issues && data.issues.length > 0) {
-        jiraBadge.textContent = data.issues.length;
+        jiraBadge.textContent = totalCount > 10 ? '10+' : totalCount;
+        jiraBadge.setAttribute('data-tooltip', state.lang === 'es' ? `${totalCount} tareas asignadas en Jira` : `${totalCount} assigned tasks in Jira`);
         jiraBadge.classList.remove('hidden');
       } else {
         jiraBadge.classList.add('hidden');
@@ -2495,26 +2575,67 @@ async function fetchJira() {
       return;
     }
 
-    container.innerHTML = data.issues.map(issue => {
-      const summary = issue.fields.summary;
-      const key = issue.key;
-      const url = `${domain}/browse/${key}`;
-      const priority = issue.fields.priority ? issue.fields.priority.name : 'medium';
+    // Helper to calculate status category rank: 1: IN PROGRESS, 2: BLOCKED, 3: TO DO, 4: DONE
+    const getStatusRank = (statusName) => {
+      if (!statusName) return 3;
+      const s = statusName.toLowerCase();
+      if (s.includes('progress') || s.includes('review') || s.includes('pr') || s.includes('pull') || s.includes('develop') || s.includes('testing') || s.includes('qa') || s.includes('active')) return 1;
+      if (s.includes('block') || s.includes('hold') || s.includes('wait') || s.includes('imped') || s.includes('paus')) return 2;
+      if (s.includes('done') || s.includes('closed') || s.includes('resolved') || s.includes('complet')) return 4;
+      return 3; // To Do / Open / Backlog
+    };
+
+    // Sort issues by Status Rank (In Progress -> Blocked -> To Do -> Done), then by updated timestamp DESC
+    const sortedIssues = [...data.issues].sort((a, b) => {
+      const rankA = getStatusRank(a.fields?.status?.name);
+      const rankB = getStatusRank(b.fields?.status?.name);
+      if (rankA !== rankB) {
+        return rankA - rankB;
+      }
+      const timeA = a.fields?.updated ? new Date(a.fields.updated).getTime() : 0;
+      const timeB = b.fields?.updated ? new Date(b.fields.updated).getTime() : 0;
+      return timeB - timeA;
+    });
+
+    container.innerHTML = sortedIssues.map(issue => {
+      const fields = issue.fields || {};
+      const summary = fields.summary || issue.summary || '';
+      const key = issue.key || '';
+      const url = `${host}/browse/${key}`;
+      const priorityName = (fields.priority && fields.priority.name) ? fields.priority.name : 'Medium';
+      const statusName = (fields.status && fields.status.name) ? fields.status.name : '';
+
+      const pLower = priorityName.toLowerCase();
+      let priorityClass = 'medium';
+      if (pLower.includes('highest') || pLower.includes('blocker') || pLower.includes('critical') || pLower.includes('urgent') || pLower.includes('p1')) priorityClass = 'highest';
+      else if (pLower.includes('high') || pLower.includes('major') || pLower.includes('p2')) priorityClass = 'high';
+      else if (pLower.includes('low') || pLower.includes('minor') || pLower.includes('trivial') || pLower.includes('lowest') || pLower.includes('p4') || pLower.includes('p5')) priorityClass = 'low';
+
+      const sLower = statusName.toLowerCase();
+      let statusClass = 'todo';
+      if (sLower.includes('done') || sLower.includes('closed') || sLower.includes('resolved') || sLower.includes('complet')) statusClass = 'done';
+      else if (sLower.includes('progress') || sLower.includes('review') || sLower.includes('pr') || sLower.includes('pull') || sLower.includes('develop') || sLower.includes('testing') || sLower.includes('qa')) statusClass = 'progress';
+      else if (sLower.includes('block') || sLower.includes('hold') || sLower.includes('wait') || sLower.includes('imped')) statusClass = 'blocked';
+
       const titleText = `[${key}] ${summary}`;
-      const statusText = issue.fields.status.name;
+
       return `
-        <a href="${url}" target="_blank" class="integration-item" data-tooltip="${escapeHtml(titleText)}\nStatus: ${escapeHtml(statusText)}\nPriority: ${escapeHtml(priority)}">
-          <span class="item-title">[${key}] ${escapeHtml(summary)}</span>
+        <a href="${url}" target="_blank" class="integration-item" data-tooltip="${escapeHtml(titleText)}\nStatus: ${escapeHtml(statusName)}\nPriority: ${escapeHtml(priorityName)}">
+          <span class="item-title">${escapeHtml(summary)}</span>
           <div class="item-meta">
-            <span>${escapeHtml(statusText)}</span>
-            <span class="item-badge">${escapeHtml(priority)}</span>
+            <span style="display: flex; align-items: center; gap: 0.35rem; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+              <span class="jira-key-badge">${escapeHtml(key)}</span>
+              <span class="jira-priority-badge ${priorityClass}">${escapeHtml(priorityName)}</span>
+            </span>
+            <span class="jira-status-badge ${statusClass}">${escapeHtml(statusName)}</span>
           </div>
         </a>
       `;
     }).join('');
 
   } catch (error) {
-    container.innerHTML = `<p class="empty-msg" style="color:var(--danger)">API Error / CORS Blocked</p>`;
+    console.error("Jira fetch error:", error);
+    container.innerHTML = `<p class="empty-msg" style="color:var(--danger)">API Error (${error.message || 'Error'})</p>`;
   }
 }
 
@@ -2705,8 +2826,10 @@ async function testGitConnection(provider, button) {
         throw new Error(`${res.status} ${res.statusText}`);
       }
     } else if (provider === 'jira') {
-      let host = document.getElementById('jira-host').value.trim();
-      host = host.replace(/\/$/, "");
+      let host = document.getElementById('jira-host').value.trim().replace(/\/$/, "");
+      if (host && !host.startsWith('http://') && !host.startsWith('https://')) {
+        host = 'https://' + host;
+      }
       const email = document.getElementById('jira-email').value.trim();
       const token = document.getElementById('jira-token').value.trim();
       if (!host || !email || !token) {
@@ -2714,7 +2837,7 @@ async function testGitConnection(provider, button) {
       }
 
       const auth = btoa(`${email}:${token}`);
-      const res = await fetch(`${host}/rest/api/3/myself`, {
+      const res = await safeFetch(`${host}/rest/api/3/myself`, {
         headers: {
           'Authorization': `Basic ${auth}`,
           'Accept': 'application/json'
@@ -2722,6 +2845,10 @@ async function testGitConnection(provider, button) {
       });
       if (res.ok) {
         success = true;
+        state.settings.jiraHost = host;
+        state.settings.jiraEmail = email;
+        state.settings.jiraToken = token;
+        await saveSettings();
       } else {
         throw new Error(`${res.status} ${res.statusText}`);
       }
@@ -3495,7 +3622,7 @@ async function fetchGmail() {
   async function fetchEmailsForAccount(token, type, email) {
     if (!token) return [];
     try {
-      const res = await fetch('https://www.googleapis.com/gmail/v1/users/me/messages?q=is:unread%20in:inbox&maxResults=5', {
+      const res = await safeFetch('https://www.googleapis.com/gmail/v1/users/me/messages?q=is:unread%20in:inbox&maxResults=5', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (!res.ok) {
@@ -3508,7 +3635,7 @@ async function fetchGmail() {
       if (!data.messages || data.messages.length === 0) return [];
 
       const detailsPromises = data.messages.map(msg =>
-        fetch(`https://www.googleapis.com/gmail/v1/users/me/messages/${msg.id}`, {
+        safeFetch(`https://www.googleapis.com/gmail/v1/users/me/messages/${msg.id}`, {
           headers: { 'Authorization': `Bearer ${token}` }
         }).then(r => {
           if (!r.ok) throw new Error(`HTTP ${r.status}`);

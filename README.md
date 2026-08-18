@@ -85,6 +85,42 @@ For each active provider, the dashboard:
 - **Bitbucket**: Requires your Workspace ID (the slug/identifier of your workspace found in the URL after `bitbucket.org/`), your Atlassian Account Email, and your [Personal API Token](https://bitbucket.org/account/settings/api-tokens/) (ensure you select both `Repositories: Read` and `Pull requests: Read` scopes).
 - **GitLab**: Requires your GitLab Username, a [Personal Access Token (PAT)](https://gitlab.com/-/profile/personal_access_tokens?name=Personal%20Startpage&scopes=api) with the `api` scope, and the GitLab Host URL (defaults to `https://gitlab.com` but supports self-hosted GitLab instances).
 
+## Jira Cloud Setup Guide
+
+This dashboard integrates with Jira Cloud to display your assigned open issues in real-time.
+
+### 1. Generate an Atlassian API Token
+1. Go directly to [Atlassian Account Security: API Tokens](https://id.atlassian.com/manage-profile/security/api-tokens).
+2. Log in with your Atlassian account.
+3. Click **Create API token**.
+4. In the dialog, provide a label (e.g., `Personal Dashboard`) and click **Create**.
+5. Click **Copy** to save the generated API token (you won't be able to view it again).
+
+### 2. Identify your Jira Host URL
+Your Jira Host URL is the root domain of your Jira Cloud workspace:
+- Example: `https://yourcompany.atlassian.net` (without any trailing slash or `/jira` suffix).
+
+### 3. Configure the Dashboard
+1. Open your dashboard in the browser.
+2. Click the settings gear icon (`⚙️`) in the bottom corner.
+3. Navigate to the **Jira Cloud** tab.
+4. Fill in the required fields:
+   - **Jira Host URL**: e.g., `https://yourcompany.atlassian.net`
+   - **Atlassian Account Email**: The email address of your Atlassian account (e.g., `you@yourcompany.com`).
+   - **Jira API Token**: The API token generated in step 1.
+5. Click **Test Connection** to verify credentials. When successful, the button will show **Connected!** and the status dot will turn green.
+
+### 4. What the Jira Widget Displays
+- Queries assigned open issues using JQL: `assignee = currentUser() AND statusCategory != Done`.
+- Displays up to 5 assigned tasks with:
+  - Issue key & summary (e.g., `[PROJ-123] Fix authentication bug`).
+  - Current status (e.g., `In Progress`, `To Do`).
+  - Priority badge (e.g., `High`, `Medium`, `Highest`).
+  - Hover tooltips with complete details.
+  - Direct links to open each issue in Jira Cloud (`/browse/{KEY}`).
+- Includes a live counter badge in the **Work** column header.
+- Respects **Out of Office (OOO)** settings with the option to hide Jira tasks while on leave.
+
 ## Out of Office (OOO) Mode
 
 Under Settings -> Google APIs, you can toggle **Out of Office (OOO) Mode**:
@@ -95,15 +131,35 @@ Under Settings -> Google APIs, you can toggle **Out of Office (OOO) Mode**:
    - OOO status is indicated by a red "OOO" badge in the Today and This Week column headers. Clicking this badge takes you directly to the Google Settings tab.
 3. OOO mode automatically disables itself on or after the specified return date.
 
-## Known Limitations & Troubleshooting (CORS)
+## CORS Handling & Multi-Platform Deployment (Jira & Gmail APIs)
 
-### Gmail & Jira APIs CORS Issue
-Because this dashboard is a client-side application running directly in the browser, direct calls to certain Google endpoints (like `gmail.googleapis.com` for fetching emails) and Jira APIs will trigger browser CORS (Cross-Origin Resource Sharing) restrictions. Google Calendar and People APIs allow CORS requests natively, but the Gmail API does not consistently support raw `fetch` requests with custom authorization headers from arbitrary web origins.
+Direct browser-to-API calls for **Jira Cloud** (`*.atlassian.net`) and **Gmail** (`gmail.googleapis.com`) typically face CORS restrictions because their endpoints do not return permissive `Access-Control-Allow-Origin` headers for raw browser clients.
 
-To resolve this during local development, you must bypass the browser's CORS checks:
+To solve this completely without requiring browser extensions, this project includes built-in transparent proxy handlers for all major deployment platforms:
 
-1. Install a CORS-bypassing browser extension. We recommend:
-   - **"Allow CORS: Access-Control-Allow-Origin"** by developer **Muyor** (available on Chrome Web Store and Firefox Add-ons).
-2. Enable the extension when testing the dashboard locally.
-3. Ensure it is configured to allow headers on `https://gmail.googleapis.com` and your Jira server domain.
-4. *Remember to turn the extension off when browsing other sites to maintain standard browser security.*
+### 1. Local Development (`npm run dev`)
+- Powered by a custom Vite middleware in [`vite.config.js`](file:///Users/hector.de.isidro/Developer/startpage-web/vite.config.js) under the endpoint `/api/proxy`.
+- Requests from `safeFetch()` are proxied on-the-fly to Jira and Gmail with all authentication headers forwarded securely.
+- **No browser extensions required.**
+
+### 2. Cloudflare Pages
+- Powered by Cloudflare Pages Functions in [`functions/api/proxy.js`](file:///Users/hector.de.isidro/Developer/startpage-web/functions/api/proxy.js).
+- When deployed to Cloudflare Pages, requests to `/api/proxy` are automatically executed as a lightweight Edge Function that attaches CORS headers and relays HTTPS requests securely.
+- Fully serverless, zero maintenance, and works automatically.
+
+### 3. Vercel
+- Powered by Vercel Serverless Functions in [`api/proxy.js`](file:///Users/hector.de.isidro/Developer/startpage-web/api/proxy.js).
+- Deploying to Vercel automatically exposes the `/api/proxy` serverless endpoint with zero configuration.
+
+### 4. Netlify
+- Powered by Netlify Functions in [`netlify/functions/proxy.js`](file:///Users/hector.de.isidro/Developer/startpage-web/netlify/functions/proxy.js) with routing configured via [`netlify.toml`](file:///Users/hector.de.isidro/Developer/startpage-web/netlify.toml).
+- Transparently proxies requests in Netlify without requiring extra setup.
+
+### 5. Pure Static Hosting (GitHub Pages, Firebase Hosting, AWS S3)
+- Pure static web hosts do not execute serverless functions.
+- If deploying to a pure static host, you can either:
+  - Deploy a free standalone Cloudflare Worker proxy endpoint.
+  - Or use a browser extension (such as *Allow CORS*).
+
+### 6. Self-Hosted Server / Docker (Node.js, Nginx)
+- Run `npm run preview` or configure a reverse proxy in Nginx forwarding `/api/proxy` to target services.
