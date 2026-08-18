@@ -2173,6 +2173,9 @@ html.dark .notes-textarea {
   .weather-col-2 {
     padding-left: 0.35rem;
   }
+  .container {
+    padding-bottom: 3.25rem;
+  }
 }
 
 /* Mobile adjustments (< 600px) */
@@ -2181,7 +2184,7 @@ html.dark .notes-textarea {
     font-size: 2.1rem;
   }
   .container {
-    padding: 1.25rem 1rem;
+    padding: 1.25rem 1rem 3.25rem 1rem;
     max-width: 100%;
     overflow-x: hidden;
     box-sizing: border-box;
