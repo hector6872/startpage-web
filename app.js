@@ -1494,6 +1494,102 @@ async function loadWikipediaContent() {
     });
   }
 
+  function formatNewsHtml(cur, feedLang) {
+    let rawHtml = cur.story || '';
+    const linksMap = new Map();
+
+    if (Array.isArray(cur.links)) {
+      cur.links.forEach(item => {
+        const title = item.title ? item.title.replace(/_/g, ' ') : '';
+        const url = item.content_urls?.desktop?.page || `https://${feedLang}.wikipedia.org/wiki/${encodeURIComponent(item.title || title)}`;
+        if (title) {
+          linksMap.set(title.toLowerCase(), { title, url, extract: item.extract || '' });
+        }
+        if (item.displaytitle) {
+          const cleanDisplay = item.displaytitle.replace(/<[^>]+>/g, '');
+          linksMap.set(cleanDisplay.toLowerCase(), { title: cleanDisplay, url, extract: item.extract || '' });
+        }
+      });
+    }
+
+    const temp = document.createElement('div');
+    temp.innerHTML = rawHtml;
+
+    // Convert existing <a> tags into working Wikipedia / Google search links
+    const aTags = temp.querySelectorAll('a');
+    if (aTags.length > 0) {
+      aTags.forEach(a => {
+        a.className = 'wiki-link';
+        a.target = '_blank';
+        a.rel = 'noopener noreferrer';
+        const text = a.textContent.trim();
+        let href = a.getAttribute('href') || '';
+        const matched = linksMap.get(text.toLowerCase());
+
+        if (matched) {
+          a.href = matched.url;
+          if (matched.extract) a.title = matched.extract;
+        } else if (href.startsWith('/wiki/') || href.startsWith('./')) {
+          const rawTitle = href.replace(/^(\/wiki\/|\.\/)/, '');
+          a.href = `https://${feedLang}.wikipedia.org/wiki/${rawTitle}`;
+        } else if (href.startsWith('http')) {
+          a.href = href;
+        } else if (text) {
+          a.href = `https://${feedLang}.wikipedia.org/wiki/Special:Search?search=${encodeURIComponent(text)}`;
+        } else {
+          a.href = `https://www.google.com/search?q=${encodeURIComponent(cur.story?.replace(/<[^>]+>/g, '') || '')}`;
+        }
+      });
+    }
+
+    // Convert bold <b> / <strong> tags to clickable links if they correspond to articles
+    const bTags = temp.querySelectorAll('b, strong');
+    bTags.forEach(b => {
+      if (b.closest('a')) return;
+      const text = b.textContent.trim();
+      const matched = linksMap.get(text.toLowerCase());
+      const a = document.createElement('a');
+      a.className = 'wiki-link';
+      a.target = '_blank';
+      a.rel = 'noopener noreferrer';
+      a.innerHTML = b.innerHTML;
+
+      if (matched) {
+        a.href = matched.url;
+        if (matched.extract) a.title = matched.extract;
+      } else if (text) {
+        a.href = `https://${feedLang}.wikipedia.org/wiki/Special:Search?search=${encodeURIComponent(text)}`;
+      } else {
+        a.href = `https://www.google.com/search?q=${encodeURIComponent(text)}`;
+      }
+      b.replaceWith(a);
+    });
+
+    let resultHtml = temp.innerHTML;
+
+    // Check if there are any clickable links in the rendered output
+    if (!resultHtml.includes('<a class="wiki-link"')) {
+      const cleanStory = cur.story ? cur.story.replace(/<[^>]+>/g, '').trim() : '';
+      if (cleanStory) {
+        const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(cleanStory)}`;
+        resultHtml = `<a class="wiki-link" href="${searchUrl}" target="_blank" rel="noopener noreferrer" title="Buscar en Google">${resultHtml}</a>`;
+      }
+    }
+
+    // Append extra article links from cur.links if they were not already mentioned in the text
+    if (Array.isArray(cur.links)) {
+      cur.links.forEach(item => {
+        const title = item.displaytitle ? item.displaytitle.replace(/<[^>]+>/g, '') : (item.title ? item.title.replace(/_/g, ' ') : '');
+        const url = item.content_urls?.desktop?.page || `https://${feedLang}.wikipedia.org/wiki/${encodeURIComponent(item.title || title)}`;
+        if (title && !resultHtml.includes(url) && !resultHtml.toLowerCase().includes(title.toLowerCase())) {
+          resultHtml += ` <a class="wiki-link" href="${url}" target="_blank" rel="noopener noreferrer" title="${item.extract || title}">↗ ${title}</a>`;
+        }
+      });
+    }
+
+    return resultHtml;
+  }
+
   async function renderNewsMode() {
     container.innerHTML = `<span class="quote-text">${dict['wiki-loading']}</span>`;
     let data = await fetchFeaturedFeed(lang);
@@ -1513,9 +1609,7 @@ async function loadWikipediaContent() {
     if (wikiNewsIndex < 0) wikiNewsIndex = newsItems.length - 1;
 
     const cur = newsItems[wikiNewsIndex];
-    let storyHtml = cur.story || '';
-    storyHtml = storyHtml.replace(/<a /gi, '<a class="wiki-link" target="_blank" rel="noopener noreferrer" ');
-    storyHtml = storyHtml.replace(/href="\/wiki\//gi, `href="https://${lang}.wikipedia.org/wiki/`);
+    const storyHtml = formatNewsHtml(cur, lang);
     const badgeTooltip = state.lang === 'es' ? 'Cambiar contenido en Configuración' : 'Change content in Settings';
 
     container.innerHTML = `
@@ -1588,11 +1682,16 @@ async function loadWikipediaContent() {
     const cur = events[wikiOnThisDayIndex];
     let pageLinkHtml = '';
     if (cur.pages && cur.pages.length > 0) {
-      const p = cur.pages[0];
-      const pageUrl = p.content_urls?.desktop?.page || `https://${lang}.wikipedia.org/wiki/${encodeURIComponent(p.title)}`;
-      const pageTitle = p.titles?.normalized || p.title.replace(/_/g, ' ');
-      pageLinkHtml = ` <a class="wiki-link" href="${pageUrl}" target="_blank" rel="noopener noreferrer" title="${p.extract || pageTitle}">↗ ${pageTitle}</a>`;
+      cur.pages.slice(0, 3).forEach(p => {
+        const pageUrl = p.content_urls?.desktop?.page || `https://${lang}.wikipedia.org/wiki/${encodeURIComponent(p.title)}`;
+        const pageTitle = p.titles?.normalized || p.title.replace(/_/g, ' ');
+        pageLinkHtml += ` <a class="wiki-link" href="${pageUrl}" target="_blank" rel="noopener noreferrer" title="${p.extract || pageTitle}">↗ ${pageTitle}</a>`;
+      });
+    } else if (cur.text) {
+      const searchUrl = `https://www.google.com/search?q=${encodeURIComponent((cur.year ? cur.year + ' ' : '') + cur.text)}`;
+      pageLinkHtml = ` <a class="wiki-link" href="${searchUrl}" target="_blank" rel="noopener noreferrer" title="Buscar en Google">↗ Google</a>`;
     }
+
     const badgeTooltip = state.lang === 'es' ? 'Cambiar contenido en Configuración' : 'Change content in Settings';
 
     container.innerHTML = `
