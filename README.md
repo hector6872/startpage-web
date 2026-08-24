@@ -3,7 +3,21 @@
 [![Build Check](https://github.com/hector6872/startpage-web/actions/workflows/build-check.yml/badge.svg)](https://github.com/hector6872/startpage-web/actions/workflows/build-check.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE)
 
-A beautiful, minimalist landing page featuring task management, calendar schedules, weather forecasts, world clocks, quote widgets, and integrations with Git, Jira, and Google APIs. ✨
+A beautiful, minimalist productivity dashboard featuring task management, calendar schedules, weather forecasts, world clocks, quote & Wikipedia widgets, and integrations with Git (GitHub, Bitbucket, GitLab), Jira, and Google Workspace. ✨
+
+---
+
+## ✨ Features & Highlights
+
+- 🌍 **Full Internationalization (10 Languages)**: English (`en`), Español (`es`), Català (`ca`), Français (`fr`), Deutsch (`de`), Italiano (`it`), Português (`pt`), Nederlands (`nl`), 日本語 (`ja`), and 简体中文 (`zh`) with localized date & time formatting.
+- 🐙 **Git Pull Requests Aggregator**: Real-time PR/MR tracking across GitHub, Bitbucket, and GitLab with provider indicator dots, automatic reviewer identity detection, and status badges (`Needs Review`, `Changes Requested`, `Conflicts`, `Tasks Open`, `In Review`).
+- 📅 **Google Workspace Integration**: Dual account support (Personal & Work) with calendar agenda, priority Gmail inbox, and Google Tasks.
+- ✅ **Intelligent Task Scheduling**: Google Tasks sorted chronologically by deadline first (overdue on top), then by most recently updated timestamp.
+- 🎯 **Jira Integration**: Displays assigned open issues in real-time with priority badges, issue keys, and direct links.
+- 🏖️ **Out of Office (OOO) Mode**: Auto-hides work commitments, tasks, and notification feeds until your return date.
+- 🌓 **Themes & Customization**: Light, Dark, and System modes with 10 accent color options.
+- 💾 **Flexible Storage**: Private browser local storage or live synchronization with a local/Google Drive JSON file via File System Access API.
+- ⚡ **Full Keyboard Accessibility**: Comprehensive WAI-ARIA compliance, modal focus trapping, and single-key shortcuts (`E`, `C`, `T`, `N`).
 
 ---
 
@@ -125,8 +139,8 @@ Your Jira Host URL is the root domain of your Jira Cloud workspace:
 
 ### 3. ⚙️ Configure the Dashboard
 1. Open your dashboard in the browser.
-2. Click the settings gear icon (`⚙️`) in the bottom corner.
-3. Navigate to the **Jira Cloud** tab.
+2. Click the preferences gear icon (`⚙️`) in the bottom corner.
+3. Navigate to the **Jira** tab.
 4. Fill in the required fields:
    - **Jira Host URL**: e.g., `https://yourcompany.atlassian.net`
    - **Atlassian Account Email**: The email address of your Atlassian account (e.g., `you@yourcompany.com`).
@@ -148,12 +162,12 @@ Your Jira Host URL is the root domain of your Jira Cloud workspace:
 
 ## 🏖️ Out of Office (OOO) Mode
 
-Under Settings (`⚙️`) -> Google APIs, you can toggle **Out of Office (OOO) Mode**:
+Under Preferences (`⚙️`) -> Google Workspace, you can toggle **Out of Office (OOO) Mode**:
 1. When enabling OOO, the dashboard will prompt you to select a return date.
 2. While OOO is active:
    - 🛑 **Work** events (Gmail, Tasks, Google Calendar) will be hidden from the Today/This Week panels.
    - 🔒 You can choose to hide **Jira**, **GitHub**, **Bitbucket**, and **GitLab** integrations individually if OOO is active.
-   - 🔴 OOO status is indicated by a red "OOO" badge in the Today and This Week column headers. Clicking this badge takes you directly to the Google Settings tab.
+   - 🔴 OOO status is indicated by a red "OOO" badge in the Today and This Week column headers. Clicking this badge takes you directly to the Google Workspace Preferences tab.
 3. OOO mode automatically disables itself on or after the specified return date.
 
 ---
