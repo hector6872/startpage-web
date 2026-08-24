@@ -4208,13 +4208,34 @@ async function fetchGoogleTasks() {
       }
     });
 
-    todayGTasks.sort((a, b) => {
-      const aOverdue = a.due && new Date(a.due).getTime() < todayTime;
-      const bOverdue = b.due && new Date(b.due).getTime() < todayTime;
-      if (aOverdue && !bOverdue) return -1;
-      if (!aOverdue && bOverdue) return 1;
-      return 0;
-    });
+    const sortGoogleTasksList = (taskList) => {
+      taskList.sort((a, b) => {
+        const aOverdue = a.due && new Date(a.due).getTime() < todayTime;
+        const bOverdue = b.due && new Date(b.due).getTime() < todayTime;
+        if (aOverdue && !bOverdue) return -1;
+        if (!aOverdue && bOverdue) return 1;
+
+        const hasDueA = !!a.due;
+        const hasDueB = !!b.due;
+        if (hasDueA && !hasDueB) return -1;
+        if (!hasDueA && hasDueB) return 1;
+
+        if (hasDueA && hasDueB) {
+          const dueA = new Date(a.due).getTime();
+          const dueB = new Date(b.due).getTime();
+          if (dueA !== dueB) {
+            return dueA - dueB;
+          }
+        }
+
+        const updatedA = a.updated ? new Date(a.updated).getTime() : 0;
+        const updatedB = b.updated ? new Date(b.updated).getTime() : 0;
+        return updatedB - updatedA;
+      });
+    };
+
+    sortGoogleTasksList(todayGTasks);
+    sortGoogleTasksList(weekGTasks);
 
     function getTaskTimeText(task) {
       if (!task.due) return '';
