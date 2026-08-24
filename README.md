@@ -1,9 +1,9 @@
 # 🚀 startpage-web
 
 [![Build Check](https://github.com/hector6872/startpage-web/actions/workflows/build-check.yml/badge.svg)](https://github.com/hector6872/startpage-web/actions/workflows/build-check.yml)
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://github.com/hector6872/startpage-web/blob/main/LICENSE)
 
-A beautiful, minimalist productivity dashboard featuring task management, calendar schedules, weather forecasts, world clocks, quote & Wikipedia widgets, and integrations with Git (GitHub, Bitbucket, GitLab), Jira, and Google Workspace. ✨
+A beautiful, modern, and minimalist productivity dashboard featuring task management, calendar schedules, weather forecasts, world clocks, quote & Wikipedia widgets, and seamless integrations with Git (GitHub, Bitbucket, GitLab), Jira, and Google Workspace. ✨
 
 ---
 
@@ -15,9 +15,9 @@ A beautiful, minimalist productivity dashboard featuring task management, calend
 - ✅ **Intelligent Task Scheduling**: Google Tasks sorted chronologically by deadline first (overdue on top), then by most recently updated timestamp.
 - 🎯 **Jira Integration**: Displays assigned open issues in real-time with priority badges, issue keys, and direct links.
 - 🏖️ **Out of Office (OOO) Mode**: Auto-hides work commitments, tasks, and notification feeds until your return date.
-- 🌓 **Themes & Customization**: Light, Dark, and System modes with 10 accent color options.
-- 💾 **Flexible Storage**: Private browser local storage or live synchronization with a local/Google Drive JSON file via File System Access API.
-- ⚡ **Full Keyboard Accessibility**: Comprehensive WAI-ARIA compliance, modal focus trapping, and single-key shortcuts (`E`, `C`, `T`, `N`).
+- 🌓 **Themes & Customization**: Light, Dark, and System modes with 10 vibrant accent colors.
+- 💾 **Flexible Data & Sync**: Private browser local storage or live synchronization with a local/Google Drive JSON file via File System Access API.
+- ⚡ **Full Keyboard Accessibility**: Comprehensive WAI-ARIA compliance, modal focus trapping, and single-key shortcuts (<kbd>E</kbd>, <kbd>C</kbd>, <kbd>T</kbd>, <kbd>N</kbd>).
 
 ---
 
@@ -244,10 +244,11 @@ The dashboard is built with first-class accessibility and full keyboard navigati
 
 ## 🤝 Contributing
 
-Contributions are welcome! Please check out the [Contributing Guidelines](./CONTRIBUTING.md) for details on how to submit issues and pull requests.
+Contributions are always welcome! Please check out our [Contributing Guidelines](./CONTRIBUTING.md) for details on submitting bug reports, suggesting features, and creating pull requests.
 
 ---
 
 ## 📄 License
 
-This project is licensed under the [MIT License](./LICENSE).
+This project is licensed under the [MIT License](https://github.com/hector6872/startpage-web/blob/main/LICENSE).
+
