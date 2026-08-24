@@ -1035,6 +1035,71 @@ html.dark .integration-item {
   gap: 0.2rem;
 }
 
+.pr-status-badge {
+  font-size: 0.62rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  padding: 0.08rem 0.4rem;
+  border-radius: 4px;
+  letter-spacing: 0.03em;
+  display: inline-flex;
+  align-items: center;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.pr-status-badge.review {
+  color: #0284c7;
+  background: rgba(14, 165, 233, 0.12);
+  border: 1px solid rgba(14, 165, 233, 0.25);
+}
+html.dark .pr-status-badge.review {
+  color: #38bdf8;
+  background: rgba(56, 189, 248, 0.15);
+  border-color: rgba(56, 189, 248, 0.3);
+}
+
+.pr-status-badge.changes_requested,
+.pr-status-badge.conflicts,
+.pr-status-badge.conflicts_changes_requested,
+.pr-status-badge.changes_requested_tasks {
+  color: #dc2626;
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.25);
+}
+html.dark .pr-status-badge.changes_requested,
+html.dark .pr-status-badge.conflicts,
+html.dark .pr-status-badge.conflicts_changes_requested,
+html.dark .pr-status-badge.changes_requested_tasks {
+  color: #f87171;
+  background: rgba(248, 113, 113, 0.15);
+  border-color: rgba(248, 113, 113, 0.3);
+}
+
+.pr-status-badge.tasks_open,
+.pr-status-badge.discussions_open,
+.pr-status-badge.conflicts_discussions {
+  color: #d97706;
+  background: rgba(245, 158, 11, 0.12);
+  border: 1px solid rgba(245, 158, 11, 0.25);
+}
+html.dark .pr-status-badge.tasks_open,
+html.dark .pr-status-badge.discussions_open,
+html.dark .pr-status-badge.conflicts_discussions {
+  color: #fbbf24;
+  background: rgba(251, 191, 36, 0.15);
+  border-color: rgba(251, 191, 36, 0.3);
+}
+
+.pr-status-badge.my_pr {
+  color: var(--text-secondary);
+  background: var(--border-color);
+}
+html.dark .pr-status-badge.my_pr {
+  color: var(--text-secondary);
+  background: rgba(255, 255, 255, 0.08);
+}
+
 .pr-source-badge {
   font-size: 0.62rem;
   font-weight: 700;

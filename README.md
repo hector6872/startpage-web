@@ -86,11 +86,25 @@ For each active provider, the dashboard:
 * 🔄 Automatically fetches open Pull/Merge Requests from your **5 most recently updated** repositories/projects.
 * 🔍 Filters to show teammate PRs/MRs where you are a **requested reviewer** (and have not approved yet), and your own open PRs/MRs that have **merge conflicts, requested changes, or unresolved discussion threads**.
 
-### ⚙️ Configuration Requirements:
+### ⚙️ Configuration Requirements & Scopes:
 
-- 🐙 **GitHub**: Requires your Username and a [Personal Access Token (PAT)](https://github.com/settings/tokens/new?scopes=repo&description=Personal%20Startpage) with `repo` scope.
-- 🪣 **Bitbucket**: Requires your Workspace ID (the slug/identifier of your workspace found in the URL after `bitbucket.org/`), your Atlassian Account Email, and your [Personal API Token](https://bitbucket.org/account/settings/api-tokens/) (ensure you select both `Repositories: Read` and `Pull requests: Read` scopes).
-- 🦊 **GitLab**: Requires your GitLab Username, a [Personal Access Token (PAT)](https://gitlab.com/-/profile/personal_access_tokens?name=Personal%20Startpage&scopes=api) with the `api` scope, and the GitLab Host URL (defaults to `https://gitlab.com` but supports self-hosted GitLab instances).
+- 🐙 **GitHub**:
+  - **Inputs**: Only your [Personal Access Token (PAT)](https://github.com/settings/tokens/new?scopes=repo&description=Personal%20Startpage). *(Your username is automatically resolved from `/user`)*.
+  - **Required Token Scopes**:
+    - `repo` (Full control of private repositories to read PRs and reviews) or a Fine-grained PAT with `Pull requests: Read-only` and `Metadata: Read-only`.
+
+- 🪣 **Bitbucket**:
+  - **Inputs**: **Workspace ID** (the slug in the URL `bitbucket.org/<workspace-id>`), **Atlassian Account Email**, and a [Personal API Token](https://bitbucket.org/account/settings/api-tokens/). *(Your user identity is automatically resolved from `/2.0/user`)*.
+  - **Required Token Scopes**:
+    - `Account: Read` (`read:user:bitbucket`) — required to resolve your user identity (`nickname`, `account_id`) for PR filtering.
+    - `Repositories: Read` (`read:repository:bitbucket`) — required to list workspace repositories.
+    - `Pull requests: Read` (`read:pullrequest:bitbucket`) — required to read pull requests, reviewers, and approval states.
+
+- 🦊 **GitLab**:
+  - **Inputs**: [Personal Access Token (PAT)](https://gitlab.com/-/profile/personal_access_tokens?name=Personal%20Startpage&scopes=read_user,read_api) and optionally your **GitLab Host URL** (defaults to `https://gitlab.com` if left empty, supports self-hosted instances). *(Your username is automatically resolved from `/api/v4/user`)*.
+  - **Required Token Scopes**:
+    - `read_user` — required to automatically retrieve your authenticated username.
+    - `read_api` (or `api`) — required to list active projects and merge requests.
 
 ---
 
