@@ -1920,11 +1920,11 @@ let state = {
   theme: 'system',
   todos: [],
   countdowns: [],
-  googleClientToken: sessionStorage.getItem('google_access_token') || null,
-  googlePersonalToken: sessionStorage.getItem('google_personal_token') || null,
-  googleWorkToken: sessionStorage.getItem('google_work_token') || null,
-  googlePersonalEmail: sessionStorage.getItem('google_personal_email') || null,
-  googleWorkEmail: sessionStorage.getItem('google_work_email') || null,
+  googleClientToken: localStorage.getItem('google_access_token') || sessionStorage.getItem('google_access_token') || null,
+  googlePersonalToken: localStorage.getItem('google_personal_token') || sessionStorage.getItem('google_personal_token') || null,
+  googleWorkToken: localStorage.getItem('google_work_token') || sessionStorage.getItem('google_work_token') || null,
+  googlePersonalEmail: localStorage.getItem('google_personal_email') || sessionStorage.getItem('google_personal_email') || null,
+  googleWorkEmail: localStorage.getItem('google_work_email') || sessionStorage.getItem('google_work_email') || null,
   githubStatus: 'disconnected',
   githubError: '',
   bitbucketStatus: 'disconnected',
@@ -2044,6 +2044,32 @@ async function verifyPermission(handle, readWrite) {
   return false;
 }
 
+const SENSITIVE_SETTING_KEYS = [
+  'githubToken',
+  'bitbucketToken',
+  'gitlabToken',
+  'jiraToken'
+];
+
+function sanitizeSettingsForSync(settings) {
+  const sanitized = { ...settings };
+  for (const key of SENSITIVE_SETTING_KEYS) {
+    delete sanitized[key];
+  }
+  return sanitized;
+}
+
+function mergeSettingsWithLocalSecrets(fileSettings, currentSettings) {
+  const merged = { ...currentSettings, ...fileSettings, storageMode: 'file' };
+  // Preserve local secrets if the file does not contain them
+  for (const key of SENSITIVE_SETTING_KEYS) {
+    if (currentSettings[key] && !fileSettings[key]) {
+      merged[key] = currentSettings[key];
+    }
+  }
+  return merged;
+}
+
 async function writeDataToFile() {
   if (state.settings.storageMode !== 'file' || !fileHandle) return;
   try {
@@ -2052,7 +2078,7 @@ async function writeDataToFile() {
     const writable = await fileHandle.createWritable();
     const dataToSave = {
       todos: state.todos,
-      settings: state.settings
+      settings: sanitizeSettingsForSync(state.settings)
     };
     await writable.write(JSON.stringify(dataToSave, null, 2));
     await writable.close();
@@ -2097,7 +2123,7 @@ async function initializeFileSync() {
       if (fileData) {
         if (fileData.todos) state.todos = fileData.todos;
         if (fileData.settings) {
-          state.settings = { ...state.settings, ...fileData.settings, storageMode: 'file' };
+          state.settings = mergeSettingsWithLocalSecrets(fileData.settings, state.settings);
         }
         if (state.settings.lang) state.lang = state.settings.lang;
         if (state.settings.theme) state.theme = state.settings.theme;
@@ -2111,16 +2137,19 @@ async function initializeFileSync() {
         // Refresh views
         applyTheme();
         renderTodos();
+        renderCountdowns();
+        updateUpcomingEventBanner();
+        updateNotesBadge();
+        updateOrganizerVisibility();
         translatePage();
         updateTimeAndGreeting();
         loadWeather();
-        fetchGitHub();
-        fetchBitbucket();
+        fetchAllPRs();
         fetchJira();
       }
     } else {
       const nameEl = document.getElementById('sync-file-name');
-      if (nameEl) nameEl.textContent = translations[state.lang]['no-file-selected'];
+      if (nameEl) nameEl.textContent = (translations[state.lang] || translations.en)['no-file-selected'];
     }
   } catch (err) {
     console.error("Failed to restore file sync:", err);
@@ -2129,11 +2158,11 @@ async function initializeFileSync() {
   }
 }
 
-// Export state to a JSON file
+// Export state to a JSON file (sanitized)
 function exportStateToFile() {
   const dataToSave = {
     todos: state.todos,
-    settings: state.settings
+    settings: sanitizeSettingsForSync(state.settings)
   };
   const blob = new Blob([JSON.stringify(dataToSave, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
@@ -2153,17 +2182,22 @@ function importStateFromFile(file) {
     try {
       const data = JSON.parse(e.target.result);
       if (data.todos) state.todos = data.todos;
-      if (data.settings) state.settings = { ...state.settings, ...data.settings };
+      if (data.settings) {
+        state.settings = mergeSettingsWithLocalSecrets(data.settings, state.settings);
+      }
       if (state.settings.primaryColor) applyPrimaryColor(state.settings.primaryColor);
       
       await saveSettings();
       renderTodos();
+      renderCountdowns();
+      updateUpcomingEventBanner();
+      updateNotesBadge();
+      updateOrganizerVisibility();
       translatePage();
       updateTimeAndGreeting();
       loadWeather();
       
-      fetchGitHub();
-      fetchBitbucket();
+      fetchAllPRs();
       fetchJira();
       
       alert(state.lang === 'es' ? 'Datos importados con éxito.' : 'Data imported successfully.');
@@ -5218,32 +5252,50 @@ function initGoogleOAuth() {
     scope: 'https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/gmail.readonly https://www.googleapis.com/auth/tasks.readonly https://www.googleapis.com/auth/calendar.readonly',
     callback: async (response) => {
       if (response.error) {
-        console.error(response.error);
+        console.error("Google Auth error:", response.error);
+        isRefreshingToken[googleLoginTarget] = false;
         return;
       }
       
       const token = response.access_token;
+      const expiresInSec = response.expires_in || 3600;
+      const expiryTimestamp = Date.now() + (expiresInSec * 1000) - 60000;
       
       if (googleLoginTarget === 'personal') {
         state.googlePersonalToken = token;
+        localStorage.setItem('google_personal_token', token);
+        localStorage.setItem('google_personal_expiry', String(expiryTimestamp));
         sessionStorage.setItem('google_personal_token', token);
-        const email = await fetchGoogleUserEmail(token);
-        if (email) {
-          state.googlePersonalEmail = email;
-          sessionStorage.setItem('google_personal_email', email);
+        
+        let email = state.googlePersonalEmail;
+        if (!email) {
+          email = await fetchGoogleUserEmail(token);
+          if (email) {
+            state.googlePersonalEmail = email;
+            localStorage.setItem('google_personal_email', email);
+            sessionStorage.setItem('google_personal_email', email);
+          }
         }
       } else {
         state.googleWorkToken = token;
+        localStorage.setItem('google_work_token', token);
+        localStorage.setItem('google_work_expiry', String(expiryTimestamp));
         sessionStorage.setItem('google_work_token', token);
-        const email = await fetchGoogleUserEmail(token);
-        if (email) {
-          state.googleWorkEmail = email;
-          sessionStorage.setItem('google_work_email', email);
+        
+        let email = state.googleWorkEmail;
+        if (!email) {
+          email = await fetchGoogleUserEmail(token);
+          if (email) {
+            state.googleWorkEmail = email;
+            localStorage.setItem('google_work_email', email);
+            sessionStorage.setItem('google_work_email', email);
+          }
         }
       }
       
       // Keep googleClientToken for backward compatibility
       state.googleClientToken = state.googlePersonalToken || state.googleWorkToken;
+      localStorage.setItem('google_access_token', state.googleClientToken || '');
       sessionStorage.setItem('google_access_token', state.googleClientToken || '');
       
       isRefreshingToken[googleLoginTarget] = false;
@@ -5254,6 +5306,19 @@ function initGoogleOAuth() {
 
   checkAndFetchGoogleEmails();
   
+  // Check if tokens need a silent refresh on initialization
+  const now = Date.now();
+  const personalExpiry = Number(localStorage.getItem('google_personal_expiry') || 0);
+  const workExpiry = Number(localStorage.getItem('google_work_expiry') || 0);
+
+  if (state.googlePersonalEmail && (!state.googlePersonalToken || now >= personalExpiry)) {
+    refreshGoogleToken('personal');
+  }
+
+  if (state.googleWorkEmail && (!state.googleWorkToken || now >= workExpiry)) {
+    refreshGoogleToken('work');
+  }
+
   updateGoogleAuthStatus();
   if (state.googlePersonalToken || state.googleWorkToken) {
     fetchGoogleData();
@@ -5273,15 +5338,17 @@ function refreshGoogleToken(accountType) {
     return;
   }
   
-  console.log(`Attempting silent token refresh for ${accountType}...`);
+  const emailHint = accountType === 'personal' ? state.googlePersonalEmail : state.googleWorkEmail;
+  if (!emailHint) return;
+
+  console.log(`Attempting silent token refresh for ${accountType} (${emailHint})...`);
   isRefreshingToken[accountType] = true;
   googleLoginTarget = accountType;
-  const emailHint = accountType === 'personal' ? state.googlePersonalEmail : state.googleWorkEmail;
   
   try {
     googleTokenClient.requestAccessToken({
-      hint: emailHint || '',
-      prompt: 'none'
+      hint: emailHint,
+      prompt: ''
     });
     setTimeout(() => { isRefreshingToken[accountType] = false; }, 8000);
   } catch (e) {
@@ -5291,20 +5358,30 @@ function refreshGoogleToken(accountType) {
 }
 
 function handleInvalidToken(accountType) {
-  console.warn(`Token expired (401) for ${accountType} account. Clearing token.`);
-  state.googleErrors = state.googleErrors || {};
-  state.googleErrors[accountType] = 'Token expired (401)';
-  if (accountType === 'personal') {
-    state.googlePersonalToken = null;
-    sessionStorage.removeItem('google_personal_token');
+  console.warn(`Token expired (401) for ${accountType} account. Attempting silent renewal.`);
+  const emailHint = accountType === 'personal' ? state.googlePersonalEmail : state.googleWorkEmail;
+  if (emailHint && typeof googleTokenClient !== 'undefined' && googleTokenClient) {
+    refreshGoogleToken(accountType);
   } else {
-    state.googleWorkToken = null;
-    sessionStorage.removeItem('google_work_token');
+    state.googleErrors = state.googleErrors || {};
+    state.googleErrors[accountType] = 'Token expired (401)';
+    if (accountType === 'personal') {
+      state.googlePersonalToken = null;
+      localStorage.removeItem('google_personal_token');
+      localStorage.removeItem('google_personal_expiry');
+      sessionStorage.removeItem('google_personal_token');
+    } else {
+      state.googleWorkToken = null;
+      localStorage.removeItem('google_work_token');
+      localStorage.removeItem('google_work_expiry');
+      sessionStorage.removeItem('google_work_token');
+    }
+    state.googleClientToken = state.googlePersonalToken || state.googleWorkToken;
+    localStorage.setItem('google_access_token', state.googleClientToken || '');
+    sessionStorage.setItem('google_access_token', state.googleClientToken || '');
+    
+    updateGoogleAuthStatus();
   }
-  state.googleClientToken = state.googlePersonalToken || state.googleWorkToken;
-  sessionStorage.setItem('google_access_token', state.googleClientToken || '');
-  
-  updateGoogleAuthStatus();
 }
 
 async function checkAndFetchGoogleEmails() {
@@ -5313,6 +5390,7 @@ async function checkAndFetchGoogleEmails() {
     const email = await fetchGoogleUserEmail(state.googlePersonalToken);
     if (email) {
       state.googlePersonalEmail = email;
+      localStorage.setItem('google_personal_email', email);
       sessionStorage.setItem('google_personal_email', email);
       changed = true;
     }
@@ -5321,6 +5399,7 @@ async function checkAndFetchGoogleEmails() {
     const email = await fetchGoogleUserEmail(state.googleWorkToken);
     if (email) {
       state.googleWorkEmail = email;
+      localStorage.setItem('google_work_email', email);
       sessionStorage.setItem('google_work_email', email);
       changed = true;
     }
@@ -7067,15 +7146,23 @@ function setupEventListeners() {
           if (confirmLoad) {
             if (fileData.todos) state.todos = fileData.todos;
             if (fileData.settings) {
-              state.settings = { ...state.settings, ...fileData.settings, storageMode: 'file' };
+              state.settings = mergeSettingsWithLocalSecrets(fileData.settings, state.settings);
             }
+            if (state.settings.lang) state.lang = state.settings.lang;
+            if (state.settings.theme) state.theme = state.settings.theme;
             if (state.settings.primaryColor) applyPrimaryColor(state.settings.primaryColor);
+            
+            await saveSettings();
+            applyTheme();
             renderTodos();
+            renderCountdowns();
+            updateUpcomingEventBanner();
+            updateNotesBadge();
+            updateOrganizerVisibility();
             translatePage();
             updateTimeAndGreeting();
             loadWeather();
-            fetchGitHub();
-            fetchBitbucket();
+            fetchAllPRs();
             fetchJira();
           } else {
             // Overwrite file with current state
@@ -7378,11 +7465,15 @@ function setupEventListeners() {
     }
     state.googlePersonalToken = null;
     state.googlePersonalEmail = null;
+    localStorage.removeItem('google_personal_token');
+    localStorage.removeItem('google_personal_email');
+    localStorage.removeItem('google_personal_expiry');
     sessionStorage.removeItem('google_personal_token');
     sessionStorage.removeItem('google_personal_email');
     
     // Sync legacy/compatibility tokens
     state.googleClientToken = state.googleWorkToken;
+    localStorage.setItem('google_access_token', state.googleClientToken || '');
     sessionStorage.setItem('google_access_token', state.googleClientToken || '');
     
     updateGoogleAuthStatus();
@@ -7404,11 +7495,15 @@ function setupEventListeners() {
     }
     state.googleWorkToken = null;
     state.googleWorkEmail = null;
+    localStorage.removeItem('google_work_token');
+    localStorage.removeItem('google_work_email');
+    localStorage.removeItem('google_work_expiry');
     sessionStorage.removeItem('google_work_token');
     sessionStorage.removeItem('google_work_email');
     
     // Sync legacy/compatibility tokens
     state.googleClientToken = state.googlePersonalToken;
+    localStorage.setItem('google_access_token', state.googleClientToken || '');
     sessionStorage.setItem('google_access_token', state.googleClientToken || '');
     
     updateGoogleAuthStatus();
