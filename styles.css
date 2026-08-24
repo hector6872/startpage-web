@@ -156,7 +156,7 @@ html.dark {
 }
 
 html {
-  overflow-x: hidden;
+  overflow-x: clip;
   max-width: 100%;
   width: 100%;
 }
@@ -167,7 +167,7 @@ body {
   color: var(--text-primary);
   min-height: 100vh;
   position: relative;
-  overflow-x: hidden;
+  overflow-x: clip;
   max-width: 100%;
   width: 100%;
   display: flex;
@@ -178,7 +178,7 @@ body {
 
 /* Decorative background glowing spots */
 .bg-glow {
-  position: absolute;
+  position: fixed;
   border-radius: 50%;
   filter: blur(100px);
   z-index: -1;
@@ -664,6 +664,11 @@ html:not(.dark) .moon-icon { display: block; }
     grid-template-columns: 1fr;
     gap: 3rem;
   }
+  .integration-list,
+  .todo-list {
+    max-height: none;
+    overflow-y: visible;
+  }
 }
 
 .grid-col {
@@ -893,6 +898,7 @@ html.dark .status-dot.gitlab {
   gap: 0.5rem;
   max-height: 350px;
   overflow-y: auto;
+  overscroll-behavior-y: contain;
   scrollbar-width: thin;
   padding: 0.75rem 0.15rem 1.25rem 0.15rem;
 }
@@ -1027,6 +1033,71 @@ html.dark .integration-item {
   display: inline-flex;
   align-items: center;
   gap: 0.2rem;
+}
+
+.pr-status-badge {
+  font-size: 0.62rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  padding: 0.08rem 0.4rem;
+  border-radius: 4px;
+  letter-spacing: 0.03em;
+  display: inline-flex;
+  align-items: center;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.pr-status-badge.review {
+  color: #0284c7;
+  background: rgba(14, 165, 233, 0.12);
+  border: 1px solid rgba(14, 165, 233, 0.25);
+}
+html.dark .pr-status-badge.review {
+  color: #38bdf8;
+  background: rgba(56, 189, 248, 0.15);
+  border-color: rgba(56, 189, 248, 0.3);
+}
+
+.pr-status-badge.changes_requested,
+.pr-status-badge.conflicts,
+.pr-status-badge.conflicts_changes_requested,
+.pr-status-badge.changes_requested_tasks {
+  color: #dc2626;
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.25);
+}
+html.dark .pr-status-badge.changes_requested,
+html.dark .pr-status-badge.conflicts,
+html.dark .pr-status-badge.conflicts_changes_requested,
+html.dark .pr-status-badge.changes_requested_tasks {
+  color: #f87171;
+  background: rgba(248, 113, 113, 0.15);
+  border-color: rgba(248, 113, 113, 0.3);
+}
+
+.pr-status-badge.tasks_open,
+.pr-status-badge.discussions_open,
+.pr-status-badge.conflicts_discussions {
+  color: #d97706;
+  background: rgba(245, 158, 11, 0.12);
+  border: 1px solid rgba(245, 158, 11, 0.25);
+}
+html.dark .pr-status-badge.tasks_open,
+html.dark .pr-status-badge.discussions_open,
+html.dark .pr-status-badge.conflicts_discussions {
+  color: #fbbf24;
+  background: rgba(251, 191, 36, 0.15);
+  border-color: rgba(251, 191, 36, 0.3);
+}
+
+.pr-status-badge.my_pr {
+  color: var(--text-secondary);
+  background: var(--border-color);
+}
+html.dark .pr-status-badge.my_pr {
+  color: var(--text-secondary);
+  background: rgba(255, 255, 255, 0.08);
 }
 
 .pr-source-badge {
@@ -1429,6 +1500,7 @@ html.dark .btn-secondary:hover {
   gap: 0.5rem;
   max-height: 380px;
   overflow-y: auto;
+  overscroll-behavior-y: contain;
   padding: 1rem 0.15rem 1.5rem 0.15rem;
 }
 
@@ -1896,6 +1968,7 @@ html.dark .modal-content {
 .modal-body {
   padding: 1.25rem 1.5rem;
   overflow-y: auto;
+  overscroll-behavior-y: contain;
   flex: 1;
   background: var(--bg-card);
 }
@@ -2174,7 +2247,15 @@ html.dark .notes-textarea {
     padding-left: 0.35rem;
   }
   .container {
-    padding-bottom: 3.25rem;
+    padding-bottom: 4.75rem;
+  }
+  .settings-btn-floating {
+    bottom: 1.25rem;
+    left: 1.25rem;
+  }
+  .scroll-to-top-btn {
+    bottom: 1.25rem;
+    right: 1.25rem;
   }
 }
 
@@ -2184,10 +2265,18 @@ html.dark .notes-textarea {
     font-size: 2.1rem;
   }
   .container {
-    padding: 1.25rem 1rem 3.25rem 1rem;
+    padding: 1.25rem 1rem 4.75rem 1rem;
     max-width: 100%;
-    overflow-x: hidden;
+    overflow-x: clip;
     box-sizing: border-box;
+  }
+  .settings-btn-floating {
+    bottom: 1rem;
+    left: 1rem;
+  }
+  .scroll-to-top-btn {
+    bottom: 1rem;
+    right: 1rem;
   }
   .modal-dialog {
     width: 100%;
@@ -2982,7 +3071,7 @@ html.dark[data-accent="black"] {
 }
 
 /* ==========================================================================
-   Clean Focus State Overrides (Removes Awkward White Focus Rings)
+   Accessible Keyboard Navigation & Focus Ring System
    ========================================================================== */
 button,
 .btn-icon,
@@ -2991,35 +3080,96 @@ button,
 .filter-btn,
 .color-swatch-btn,
 .btn-primary,
-.btn-secondary {
+.btn-secondary,
+.card-action-btn,
+.btn-item-action {
   -webkit-tap-highlight-color: transparent;
 }
 
-button:focus,
-button:focus-visible,
-.btn-icon:focus,
-.btn-icon:focus-visible,
-.btn-close:focus,
-.btn-close:focus-visible,
-.tab-btn:focus,
-.tab-btn:focus-visible,
-.filter-btn:focus,
-.filter-btn:focus-visible,
-.color-swatch-btn:focus,
-.color-swatch-btn:focus-visible,
-.btn-primary:focus,
-.btn-primary:focus-visible,
-.btn-secondary:focus,
-.btn-secondary:focus-visible {
+/* Suppress default browser outline on mouse/touch clicks only */
+:focus:not(:focus-visible) {
   outline: none !important;
 }
 
+/* Universal high-contrast, accessible focus ring on keyboard navigation */
+:focus-visible {
+  outline: 2px solid var(--accent, #4f46e5) !important;
+  outline-offset: 2px !important;
+  box-shadow: 0 0 0 4px var(--accent-bg-hover, rgba(79, 70, 229, 0.2)) !important;
+}
+
+/* Dedicated focus refinements for specific component types */
 .btn-icon:focus-visible,
-.btn-primary:focus-visible,
-.btn-secondary:focus-visible,
-.filter-btn:focus-visible,
-.tab-btn:focus-visible {
-  box-shadow: 0 0 0 3px var(--accent-bg-hover) !important;
+.settings-btn-floating:focus-visible,
+.scroll-to-top-btn:focus-visible,
+.add-section-btn:focus-visible,
+.card-action-btn:focus-visible,
+.btn-close:focus-visible,
+.btn-item-action:focus-visible,
+.copy-quote-btn:focus-visible,
+.wiki-nav-btn:focus-visible {
+  outline: 2px solid var(--accent, #4f46e5) !important;
+  outline-offset: 2px !important;
+  box-shadow: 0 0 0 3px var(--accent-bg-hover, rgba(79, 70, 229, 0.2)) !important;
+}
+
+.tab-btn:focus-visible,
+.filter-btn:focus-visible {
+  outline: 2px solid var(--accent, #4f46e5) !important;
+  outline-offset: 2px !important;
+  box-shadow: 0 0 0 3px var(--accent-bg-hover, rgba(79, 70, 229, 0.2)) !important;
+  position: relative;
+  z-index: 2;
+}
+
+.color-swatch-btn:focus-visible {
+  outline: 2px solid var(--accent, #4f46e5) !important;
+  outline-offset: 3px !important;
+  transform: scale(1.1);
+  box-shadow: 0 0 0 3px var(--accent-bg-hover, rgba(79, 70, 229, 0.2)) !important;
+}
+
+.todo-checkbox:focus-visible {
+  outline: 2px solid var(--accent, #4f46e5) !important;
+  outline-offset: 2px !important;
+  border-radius: 4px;
+}
+
+.toggle-switch input:focus-visible + .slider {
+  outline: 2px solid var(--accent, #4f46e5) !important;
+  outline-offset: 3px !important;
+  box-shadow: 0 0 0 3px var(--accent-bg-hover, rgba(79, 70, 229, 0.2)) !important;
+}
+
+.custom-checkbox input:focus-visible + .checkbox-box {
+  outline: 2px solid var(--accent, #4f46e5) !important;
+  outline-offset: 2px !important;
+  box-shadow: 0 0 0 3px var(--accent-bg-hover, rgba(79, 70, 229, 0.2)) !important;
+}
+
+.weather-widget:focus-visible,
+.world-clock-widget:focus-visible,
+.events-banner-container:focus-visible,
+.ooo-badge:focus-visible,
+.wiki-badge:focus-visible {
+  outline: 2px solid var(--accent, #4f46e5) !important;
+  outline-offset: 2px !important;
+  box-shadow: 0 0 0 3px var(--accent-bg-hover, rgba(79, 70, 229, 0.2)) !important;
+  cursor: pointer;
+}
+
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  border-color: var(--accent, #4f46e5) !important;
+  outline: 2px solid var(--accent, #4f46e5) !important;
+  outline-offset: 0 !important;
+  box-shadow: 0 0 0 3px var(--accent-bg-hover, rgba(79, 70, 229, 0.2)) !important;
+}
+
+.modal-dialog:focus,
+.modal-dialog:focus-visible {
+  outline: none !important;
 }
 
 /* Button error feedback */
