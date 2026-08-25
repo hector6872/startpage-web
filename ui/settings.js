@@ -1004,6 +1004,7 @@ export function setupEventListeners() {
   });
 
   settingsModal.addEventListener('close', () => {
+    applyDashboardLayoutOrder(state);
     updateOrganizerVisibility();
     renderTodos();
     renderCountdowns();
@@ -1346,6 +1347,7 @@ export function setupEventListeners() {
     await saveSettings(state);
 
     applyTheme(state);
+    applyDashboardLayoutOrder(state);
     toggleWeatherInputs();
     toggleClockInputs();
     toggleShortcutsInputs();
@@ -1743,19 +1745,6 @@ export function applyDashboardLayoutOrder(st = state) {
   });
 }
 
-function getDragAfterElement(container, y) {
-  const draggableElements = [...container.querySelectorAll('.layout-order-item:not(.dragging)')];
-  return draggableElements.reduce((closest, child) => {
-    const box = child.getBoundingClientRect();
-    const offset = y - box.top - box.height / 2;
-    if (offset < 0 && offset > closest.offset) {
-      return { offset: offset, element: child };
-    } else {
-      return closest;
-    }
-  }, { offset: Number.NEGATIVE_INFINITY }).element;
-}
-
 export function renderLayoutSettings(st = state) {
   if (!st || !st.settings) return;
 
@@ -1778,17 +1767,29 @@ export function renderLayoutSettings(st = state) {
 
     container.innerHTML = "";
 
-    // Container dragover handler
+    // Container dragover & drop handlers
     container.ondragover = (e) => {
       e.preventDefault();
       e.dataTransfer.dropEffect = "move";
-      const draggingEl = container.querySelector(".dragging");
-      if (!draggingEl) return;
-      const afterElement = getDragAfterElement(container, e.clientY);
-      if (afterElement == null) {
-        container.appendChild(draggingEl);
-      } else {
-        container.insertBefore(draggingEl, afterElement);
+    };
+
+    container.ondrop = async (e) => {
+      e.preventDefault();
+      const sourceId = e.dataTransfer.getData("text/plain");
+      if (!sourceId) return;
+
+      // Drop on container's empty space: move to end
+      if (e.target === container) {
+        let list = [...st.settings[group.stateKey]];
+        const fromIdx = list.indexOf(sourceId);
+        if (fromIdx !== -1) {
+          list.splice(fromIdx, 1);
+          list.push(sourceId);
+          st.settings[group.stateKey] = list;
+          applyDashboardLayoutOrder(st);
+          renderLayoutSettings(st);
+          await saveSettings(st);
+        }
       }
     };
 
@@ -1821,24 +1822,71 @@ export function renderLayoutSettings(st = state) {
         </span>
       `;
 
-      // HTML5 Drag & Drop handlers
+      // HTML5 Drag & Drop handlers on itemEl
       itemEl.addEventListener("dragstart", (e) => {
         itemEl.classList.add("dragging");
         e.dataTransfer.effectAllowed = "move";
         e.dataTransfer.setData("text/plain", itemId);
       });
 
-      itemEl.addEventListener("dragend", async () => {
-        itemEl.classList.remove("dragging");
-        const newOrder = Array.from(container.querySelectorAll(".layout-order-item")).map(el => el.getAttribute("data-id"));
-        st.settings[group.stateKey] = newOrder;
+      itemEl.addEventListener("dragover", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        e.dataTransfer.dropEffect = "move";
+        const rect = itemEl.getBoundingClientRect();
+        const midY = rect.top + rect.height / 2;
+        container.querySelectorAll(".layout-order-item").forEach(el => {
+          if (el !== itemEl) el.classList.remove("drag-over-top", "drag-over-bottom");
+        });
+        if (e.clientY < midY) {
+          itemEl.classList.add("drag-over-top");
+          itemEl.classList.remove("drag-over-bottom");
+        } else {
+          itemEl.classList.add("drag-over-bottom");
+          itemEl.classList.remove("drag-over-top");
+        }
+      });
+
+      itemEl.addEventListener("dragleave", (e) => {
+        if (!itemEl.contains(e.relatedTarget)) {
+          itemEl.classList.remove("drag-over-top", "drag-over-bottom");
+        }
+      });
+
+      itemEl.addEventListener("drop", async (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const isTop = itemEl.classList.contains("drag-over-top");
+        itemEl.classList.remove("drag-over-top", "drag-over-bottom");
+
+        const sourceId = e.dataTransfer.getData("text/plain");
+        if (!sourceId || sourceId === itemId) return;
+
+        let list = [...st.settings[group.stateKey]];
+        const fromIdx = list.indexOf(sourceId);
+        if (fromIdx === -1) return;
+        list.splice(fromIdx, 1);
+
+        let toIdx = list.indexOf(itemId);
+        if (!isTop) toIdx++;
+        list.splice(toIdx, 0, sourceId);
+
+        st.settings[group.stateKey] = list;
         applyDashboardLayoutOrder(st);
         renderLayoutSettings(st);
         await saveSettings(st);
       });
 
+      itemEl.addEventListener("dragend", () => {
+        container.querySelectorAll(".layout-order-item").forEach(el => {
+          el.classList.remove("dragging", "drag-over-top", "drag-over-bottom");
+        });
+      });
+
       // Touch Drag & Drop for Mobile
-      itemEl.addEventListener("touchstart", (e) => {
+      let touchTargetEl = null;
+
+      itemEl.addEventListener("touchstart", () => {
         itemEl.classList.add("dragging");
       }, { passive: true });
 
@@ -1846,22 +1894,56 @@ export function renderLayoutSettings(st = state) {
         if (!itemEl.classList.contains("dragging")) return;
         const touch = e.touches[0];
         if (!touch) return;
-        const afterElement = getDragAfterElement(container, touch.clientY);
-        if (afterElement == null) {
-          container.appendChild(itemEl);
+        const elementUnderTouch = document.elementFromPoint(touch.clientX, touch.clientY);
+        const target = elementUnderTouch ? elementUnderTouch.closest(".layout-order-item") : null;
+
+        container.querySelectorAll(".layout-order-item").forEach(el => {
+          if (el !== target) el.classList.remove("drag-over-top", "drag-over-bottom");
+        });
+
+        if (target && target !== itemEl && container.contains(target)) {
+          touchTargetEl = target;
+          const rect = target.getBoundingClientRect();
+          const midY = rect.top + rect.height / 2;
+          if (touch.clientY < midY) {
+            target.classList.add("drag-over-top");
+            target.classList.remove("drag-over-bottom");
+          } else {
+            target.classList.add("drag-over-bottom");
+            target.classList.remove("drag-over-top");
+          }
         } else {
-          container.insertBefore(itemEl, afterElement);
+          touchTargetEl = null;
         }
       }, { passive: true });
 
       itemEl.addEventListener("touchend", async () => {
         if (!itemEl.classList.contains("dragging")) return;
         itemEl.classList.remove("dragging");
-        const newOrder = Array.from(container.querySelectorAll(".layout-order-item")).map(el => el.getAttribute("data-id"));
-        st.settings[group.stateKey] = newOrder;
-        applyDashboardLayoutOrder(st);
-        renderLayoutSettings(st);
-        await saveSettings(st);
+
+        if (touchTargetEl && touchTargetEl !== itemEl) {
+          const targetId = touchTargetEl.getAttribute("data-id");
+          const isTop = touchTargetEl.classList.contains("drag-over-top");
+          touchTargetEl.classList.remove("drag-over-top", "drag-over-bottom");
+
+          let list = [...st.settings[group.stateKey]];
+          const fromIdx = list.indexOf(itemId);
+          if (fromIdx !== -1) {
+            list.splice(fromIdx, 1);
+            let toIdx = list.indexOf(targetId);
+            if (!isTop) toIdx++;
+            list.splice(toIdx, 0, itemId);
+
+            st.settings[group.stateKey] = list;
+            applyDashboardLayoutOrder(st);
+            renderLayoutSettings(st);
+            await saveSettings(st);
+          }
+        }
+        touchTargetEl = null;
+        container.querySelectorAll(".layout-order-item").forEach(el => {
+          el.classList.remove("drag-over-top", "drag-over-bottom", "dragging");
+        });
       });
 
       container.appendChild(itemEl);

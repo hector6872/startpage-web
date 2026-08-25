@@ -3350,10 +3350,14 @@ html.dark .layout-order-item {
   cursor: grabbing;
 }
 
-.layout-order-item.drag-over {
-  border-color: var(--accent);
-  transform: scale(1.01);
-  box-shadow: var(--shadow-sm);
+.layout-order-item.drag-over-top {
+  border-top: 2.5px solid var(--accent) !important;
+  transform: translateY(-2px);
+}
+
+.layout-order-item.drag-over-bottom {
+  border-bottom: 2.5px solid var(--accent) !important;
+  transform: translateY(2px);
 }
 
 .layout-item-info {
