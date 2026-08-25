@@ -1936,10 +1936,10 @@ let state = {
     theme: 'system',
     primaryColor: 'blue',
     city: '',
-    weatherUrl: '',
+    weatherUrl: 'https://weather.com',
     worldClockTz: 'Europe/London',
     worldClockLabel: '',
-    worldClockUrl: '',
+    worldClockUrl: 'https://time.is',
     notes: '',
     financeUrl: 'https://www.google.com/finance/beta/quote/.INX:INDEXSP?window=1M',
     timerUrl: 'https://www.google.com/search?q=countdown+timer',
@@ -2216,6 +2216,8 @@ async function loadState() {
   }
   state.settings.customEvents = state.settings.customEvents || [];
   state.settings.primaryColor = state.settings.primaryColor || 'blue';
+  state.settings.weatherUrl = state.settings.weatherUrl || 'https://weather.com';
+  state.settings.worldClockUrl = state.settings.worldClockUrl || 'https://time.is';
   state.lang = state.settings.lang || 'en';
   state.theme = state.settings.theme || localStorage.getItem('theme') || 'system';
 
@@ -6932,11 +6934,11 @@ function setupEventListeners() {
 
     document.getElementById('settings-city').value = state.settings.city;
     const weatherUrlInput = document.getElementById('settings-weather-url');
-    if (weatherUrlInput) weatherUrlInput.value = state.settings.weatherUrl || '';
+    if (weatherUrlInput) weatherUrlInput.value = state.settings.weatherUrl !== undefined ? state.settings.weatherUrl : 'https://weather.com';
     document.getElementById('settings-world-clock-tz').value = state.settings.worldClockTz !== undefined ? state.settings.worldClockTz : '';
     document.getElementById('settings-world-clock-label').value = state.settings.worldClockLabel || '';
     const clockUrlInput = document.getElementById('settings-world-clock-url');
-    if (clockUrlInput) clockUrlInput.value = state.settings.worldClockUrl || '';
+    if (clockUrlInput) clockUrlInput.value = state.settings.worldClockUrl !== undefined ? state.settings.worldClockUrl : 'https://time.is';
     
     const financeUrlInput = document.getElementById('settings-finance-url');
     if (financeUrlInput) financeUrlInput.value = state.settings.financeUrl !== undefined ? state.settings.financeUrl : 'https://www.google.com/finance/beta/quote/.INX:INDEXSP?window=1M';
