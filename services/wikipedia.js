@@ -224,33 +224,27 @@ export async function loadWikipediaContent() {
     quoteWidget.classList.add('hidden');
     return;
   }
-  const container = document.getElementById('wiki-content');
+  quoteWidget.classList.remove('hidden');
+
+  const container = quoteWidget.querySelector('.quote-container');
   if (!container) return;
 
-  const showQuote = wikiContext.state.settings.showQuote !== false;
-  const quoteCard = document.getElementById('quote-widget');
-  if (!showQuote) {
-    if (quoteCard) quoteCard.classList.add('hidden');
+  const type = wikiContext.state.settings.wikipediaType || 'news';
+  const lang = wikiContext.state.lang === 'es' ? 'es' : (wikiContext.state.lang || 'en');
+
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+
+  if (type === 'quote') {
     stopAutoAdvance();
-    return;
-  }
-  if (quoteCard) quoteCard.classList.remove('hidden');
-
-  stopAutoAdvance();
-
-  const mode = wikiContext.state.settings.wikiMode || 'quote';
-  const lang = wikiContext.state.lang || 'en';
-  const { mm, dd } = getFeaturedFeedDate();
-  const month = mm;
-  const day = dd;
-
-  if (mode === 'quote') {
     await renderQuoteMode();
-  } else if (mode === 'topread') {
+  } else if (type === 'topread') {
     await renderTopReadMode();
-  } else if (mode === 'news') {
+  } else if (type === 'news') {
     await renderNewsMode();
-  } else if (mode === 'onthisday') {
+  } else if (type === 'onthisday') {
     await renderOnThisDayMode();
   }
 
@@ -345,10 +339,16 @@ export async function loadWikipediaContent() {
   }
 
   async function fetchFeaturedFeed(feedLang) {
-    const { yyyy, mm, dd } = getFeaturedFeedDate();
+    const key = `${feedLang}-${year}-${month}-${day}`;
+    if (wikiFeaturedCache[key]) return wikiFeaturedCache[key];
+
     try {
-      const res = await fetch(`https://${feedLang}.wikipedia.org/api/rest_v1/feed/featured/${yyyy}/${mm}/${dd}`);
-      if (res.ok) return await res.json();
+      const res = await fetch(`https://${feedLang}.wikipedia.org/api/rest_v1/feed/featured/${year}/${month}/${day}`);
+      if (res.ok) {
+        const data = await res.json();
+        wikiFeaturedCache[key] = data;
+        return data;
+      }
     } catch (e) {
       console.warn('Failed to fetch Wikipedia featured feed for', feedLang, e);
     }
