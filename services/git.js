@@ -1,13 +1,16 @@
-import { state as globalState } from "../utils/state.js";
+import { state } from "../utils/state.js";
 import { translations } from "../locales/index.js";
-import { safeFetch as globalSafeFetch, escapeHtml as globalEscapeHtml } from "../utils/helpers.js";
+import { safeFetch, escapeHtml } from "../utils/helpers.js";
+import { saveSettings } from "./storage.js";
+import { fetchJira } from "./jira.js";
+import { translatePage } from "../ui/settings.js";
 
 // Update Git status indicators (dots)
-export function updateGitStatusIndicators(state = globalState, escapeHtml = globalEscapeHtml) {
-  const ghStatus = state.githubStatus || 'disconnected';
-  const bbStatus = state.bitbucketStatus || 'disconnected';
-  const glStatus = state.gitlabStatus || 'disconnected';
-  const dict = translations[state.lang] || translations.en;
+export function updateGitStatusIndicators(appState = state, escapeHtmlFn = escapeHtml) {
+  const ghStatus = appState.githubStatus || 'disconnected';
+  const bbStatus = appState.bitbucketStatus || 'disconnected';
+  const glStatus = appState.gitlabStatus || 'disconnected';
+  const dict = translations[appState.lang] || translations.en;
 
   let ghTooltip = 'GitHub: ';
   if (ghStatus === 'disconnected') {
@@ -15,7 +18,7 @@ export function updateGitStatusIndicators(state = globalState, escapeHtml = glob
   } else if (ghStatus === 'connected') {
     ghTooltip += dict['git-connected'] || 'Connected';
   } else {
-    ghTooltip += (dict['git-error-prefix'] || 'Error: ') + (state.githubError || '');
+    ghTooltip += (dict['git-error-prefix'] || 'Error: ') + (appState.githubError || '');
   }
 
   let bbTooltip = 'Bitbucket: ';
@@ -24,7 +27,7 @@ export function updateGitStatusIndicators(state = globalState, escapeHtml = glob
   } else if (bbStatus === 'connected') {
     bbTooltip += dict['git-connected'] || 'Connected';
   } else {
-    bbTooltip += (dict['git-error-prefix'] || 'Error: ') + (state.bitbucketError || '');
+    bbTooltip += (dict['git-error-prefix'] || 'Error: ') + (appState.bitbucketError || '');
   }
 
   let glTooltip = 'GitLab: ';
@@ -33,7 +36,7 @@ export function updateGitStatusIndicators(state = globalState, escapeHtml = glob
   } else if (glStatus === 'connected') {
     glTooltip += dict['git-connected'] || 'Connected';
   } else {
-    glTooltip += (dict['git-error-prefix'] || 'Error: ') + (state.gitlabError || '');
+    glTooltip += (dict['git-error-prefix'] || 'Error: ') + (appState.gitlabError || '');
   }
 
   const ghClass = ghStatus === 'connected' ? 'github' : ghStatus;
@@ -43,13 +46,13 @@ export function updateGitStatusIndicators(state = globalState, escapeHtml = glob
   const hasGitError = ghStatus === 'error' || bbStatus === 'error' || glStatus === 'error';
   const gitWarningTooltip = dict['status-error-connecting'] || 'Failed to connect to some services';
 
-  const gitWarningIconHTML = `<span class="status-warning-icon" data-tooltip="${escapeHtml(gitWarningTooltip)}" onclick="event.stopPropagation(); window.openSettingsGitTab();">⚠️</span>`;
+  const gitWarningIconHTML = `<span class="status-warning-icon" data-tooltip="${escapeHtmlFn(gitWarningTooltip)}" onclick="event.stopPropagation(); window.openSettingsGitTab();">⚠️</span>`;
 
   const html = `
     ${hasGitError ? gitWarningIconHTML : ''}
-    <span class="status-dot ${ghClass}" title="${escapeHtml(ghTooltip)}"></span>
-    <span class="status-dot ${bbClass}" title="${escapeHtml(bbTooltip)}"></span>
-    <span class="status-dot ${glClass}" title="${escapeHtml(glTooltip)}"></span>
+    <span class="status-dot ${ghClass}" title="${escapeHtmlFn(ghTooltip)}"></span>
+    <span class="status-dot ${bbClass}" title="${escapeHtmlFn(bbTooltip)}"></span>
+    <span class="status-dot ${glClass}" title="${escapeHtmlFn(glTooltip)}"></span>
   `;
 
   const ind1 = document.getElementById('git-status-indicators');
@@ -77,14 +80,14 @@ export function updateGitStatusIndicators(state = globalState, escapeHtml = glob
     setDotGl.title = glTooltip;
   }
 
-  const jiraStatus = state.jiraStatus || (state.jiraToken ? 'connected' : 'disconnected');
+  const jiraStatus = appState.jiraStatus || (appState.jiraToken ? 'connected' : 'disconnected');
   const jiraSettingsClass = jiraStatus === 'connected' ? 'connected' : (jiraStatus === 'error' ? 'error' : 'disconnected');
   const setDotJira = document.getElementById('settings-jira-dot');
   if (setDotJira) {
     setDotJira.className = `status-dot ${jiraSettingsClass}`;
     setDotJira.title = jiraStatus === 'connected' 
       ? `Jira: ${dict['git-connected'] || 'Connected'}` 
-      : (jiraStatus === 'error' ? (state.jiraError || 'Error') : `Jira: ${dict['git-disconnected'] || 'Disconnected'}`);
+      : (jiraStatus === 'error' ? (appState.jiraError || 'Error') : `Jira: ${dict['git-disconnected'] || 'Disconnected'}`);
   }
 }
 
@@ -105,7 +108,7 @@ function startTestCooldown(provider, button) {
       clearInterval(interval);
       button.disabled = false;
       button.textContent = originalText;
-      button.setAttribute('data-i18n', 'connect-btn');
+      button.setAttribute('data-i18n', 'btn-connect');
       if (typeof translatePage === 'function') translatePage();
     } else {
       button.textContent = `${originalText} (${remaining}s)`;
@@ -139,6 +142,8 @@ export async function testGitConnection(provider, button) {
       const res = await fetch(`https://api.github.com/user`, { headers });
       if (res.ok) {
         success = true;
+        state.settings.githubToken = token;
+        await saveSettings(state);
       } else {
         throw new Error(`${res.status} ${res.statusText}`);
       }
@@ -175,6 +180,10 @@ export async function testGitConnection(provider, button) {
         throw new Error(`${reposRes.status} ${reposRes.statusText}`);
       }
       success = true;
+      state.settings.bitbucketWorkspace = workspace;
+      state.settings.bitbucketUsername = email;
+      state.settings.bitbucketToken = token;
+      await saveSettings(state);
     } else if (provider === 'gitlab') {
       let host = document.getElementById('gitlab-host').value.trim() || 'https://gitlab.com';
       host = host.replace(/\/$/, "");
@@ -187,6 +196,9 @@ export async function testGitConnection(provider, button) {
       const res = await fetch(`${host}/api/v4/user`, { headers });
       if (res.ok) {
         success = true;
+        state.settings.gitlabHost = host;
+        state.settings.gitlabToken = token;
+        await saveSettings(state);
       } else {
         throw new Error(`${res.status} ${res.statusText}`);
       }
@@ -222,7 +234,7 @@ export async function testGitConnection(provider, button) {
         state.settings.jiraHost = host;
         state.settings.jiraEmail = email;
         state.settings.jiraToken = token;
-        await saveSettings();
+        await saveSettings(state);
       } else {
         throw new Error(`${res.status} ${res.statusText}`);
       }
@@ -256,8 +268,12 @@ export async function testGitConnection(provider, button) {
     // Start 1 minute cooldown
     startTestCooldown(provider, button);
     
-    // Refresh main PRs list
-    fetchAllPRs();
+    // Refresh main list
+    if (provider === 'jira') {
+      fetchJira(state, safeFetch, escapeHtml);
+    } else {
+      fetchAllPRs(state, safeFetch, escapeHtml);
+    }
   } else {
     button.textContent = dict['btn-failed'] || 'Failed';
     button.style.backgroundColor = 'rgba(235, 87, 87, 0.1)';
@@ -274,17 +290,22 @@ export async function testGitConnection(provider, button) {
       if (originalTexti18n) button.setAttribute('data-i18n', originalTexti18n);
     }, 3000);
     
-    fetchAllPRs();
+    if (provider === 'jira') {
+      fetchJira(state, safeFetch, escapeHtml);
+    } else {
+      fetchAllPRs(state, safeFetch, escapeHtml);
+    }
   }
 }
 
 // Fetch GitHub, Bitbucket & GitLab PRs
-export async function fetchAllPRs(state = globalState, safeFetch = globalSafeFetch, escapeHtml = globalEscapeHtml) {
+export async function fetchAllPRs(appState = state, safeFetchFn = safeFetch, escapeHtmlFn = escapeHtml) {
+  const dict = translations[appState.lang] || translations.en;
   const container = document.getElementById('prs-container');
   const prsBadge = document.getElementById('prs-count-badge');
   if (prsBadge) prsBadge.classList.add('hidden');
   
-  if (state.settings.showGit === false) {
+  if (appState.settings.showGit === false) {
     return;
   }
 
@@ -490,18 +511,41 @@ export async function fetchAllPRs(state = globalState, safeFetch = globalSafeFet
                (bitbucketUsername && (uNick === bitbucketUsername || uUser === bitbucketUsername || uDisplay === bitbucketUsername));
       }
 
-      // 2. Fetch open PRs across the workspace
-      const prsRes = await fetch(`https://api.bitbucket.org/2.0/pullrequests/${workspace}?state=OPEN&pagelen=30`, { headers });
-      if (!prsRes.ok) {
+      // 2. Get the 10 most recently updated repositories in the workspace
+      const reposRes = await fetch(`https://api.bitbucket.org/2.0/repositories/${workspace}?sort=-updated_on&pagelen=10`, { headers });
+      if (!reposRes.ok) {
         state.bitbucketStatus = 'error';
-        state.bitbucketError = `${prsRes.status} ${prsRes.statusText}`;
+        state.bitbucketError = `${reposRes.status} ${reposRes.statusText}`;
       } else {
-        const data = await prsRes.json();
-        const prs = data.values || [];
+        const reposData = await reposRes.json();
+        const repos = reposData.values || [];
+
+        // 3. Fetch open pull requests for each repository in parallel
+        const prPromises = repos.map(async (repo) => {
+          try {
+            const repoSlug = repo.slug || repo.name;
+            const prsRes = await fetch(`https://api.bitbucket.org/2.0/repositories/${workspace}/${encodeURIComponent(repoSlug)}/pullrequests?state=OPEN&pagelen=20`, { headers });
+            if (prsRes.ok) {
+              const data = await prsRes.json();
+              return (data.values || []).map(pr => ({
+                ...pr,
+                _repoName: repo.name || repoSlug
+              }));
+            }
+            return [];
+          } catch (e) {
+            console.error(`Error fetching Bitbucket PRs for ${repo.name}:`, e);
+            return [];
+          }
+        });
+
+        const allRepoPRs = await Promise.all(prPromises);
+        const prs = allRepoPRs.flat();
 
         prs.forEach(pr => {
           const isAuthor = isMatchingUser(pr.author);
           const isReviewer = pr.reviewers && pr.reviewers.some(r => isMatchingUser(r));
+          const repoName = pr._repoName || (pr.source && pr.source.repository && pr.source.repository.name) || '';
 
           if (isReviewer) {
             // Teammate's PR: check if I already approved it
@@ -511,8 +555,8 @@ export async function fetchAllPRs(state = globalState, safeFetch = globalSafeFet
                 title: pr.title,
                 status: 'review',
                 statusLabel: dict['pr-needs-review'] || 'Needs Review',
-                url: pr.links.html.href,
-                repo: pr.source.repository.name,
+                url: pr.links && pr.links.html ? pr.links.html.href : '#',
+                repo: repoName,
                 number: pr.id,
                 source: 'Bitbucket',
                 sortTime: new Date(pr.updated_on).getTime()
@@ -540,8 +584,8 @@ export async function fetchAllPRs(state = globalState, safeFetch = globalSafeFet
               title: pr.title,
               status: status,
               statusLabel: statusLabel,
-              url: pr.links.html.href,
-              repo: pr.source.repository.name,
+              url: pr.links && pr.links.html ? pr.links.html.href : '#',
+              repo: repoName,
               number: pr.id,
               source: 'Bitbucket',
               sortTime: new Date(pr.updated_on).getTime()

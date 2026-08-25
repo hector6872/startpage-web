@@ -1,13 +1,15 @@
+import { state as defaultState } from "../utils/state.js";
+import { safeFetch as defaultSafeFetch, escapeHtml as defaultEscapeHtml } from "../utils/helpers.js";
 import { translations } from "../locales/index.js";
 
 // General helper to encode Jira Basic Auth
 export function getJiraAuthHeader(settings) {
-  if (!settings.jiraEmail || !settings.jiraToken) return null;
+  if (!settings || !settings.jiraEmail || !settings.jiraToken) return null;
   return "Basic " + btoa(`${settings.jiraEmail}:${settings.jiraToken}`);
 }
 
 // Fetch Jira Tasks
-export async function fetchJira(state, safeFetch, escapeHtml) {
+export async function fetchJira(state = defaultState, safeFetch = defaultSafeFetch, escapeHtml = defaultEscapeHtml) {
   const container = document.getElementById("jira-container");
   if (!container) return;
   
