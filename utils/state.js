@@ -30,6 +30,7 @@ export let state = {
     stopwatchUrl: "",
     showWeather: true,
     showWorldClock: true,
+    showShortcuts: true,
     showWikipedia: true,
     wikipediaType: "news",
     storageMode: "local",

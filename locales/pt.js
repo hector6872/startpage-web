@@ -47,6 +47,7 @@ export default {
   "world-clock-sub": "Relógio Mundial",
   "label-show-weather": "Widget do Tempo",
   "label-show-world-clock": "Relógio Secundário",
+  "label-show-shortcuts": "Mostrar Atalhos",
   "label-show-countdowns": "Banner de Eventos",
   "label-show-tasks": "Tarefas do Espaço",
   "label-show-wikipedia": "Wikipédia",

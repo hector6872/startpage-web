@@ -47,6 +47,7 @@ export default {
   "world-clock-sub": "Hora Mundial",
   "label-show-weather": "Mostrar Clima",
   "label-show-world-clock": "Mostrar Reloj Mundial",
+  "label-show-shortcuts": "Mostrar Atajos",
   "label-show-countdowns": "Mostrar Eventos",
   "label-show-tasks": "Mostrar Tareas",
   "label-show-wikipedia": "Wikipedia",

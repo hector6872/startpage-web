@@ -181,6 +181,22 @@ export function setupEventListeners() {
   };
   document.getElementById('settings-show-world-clock').addEventListener('change', toggleClockInputs);
 
+  const toggleShortcutsInputs = () => {
+    const showEl = document.getElementById('settings-show-shortcuts');
+    const show = showEl ? showEl.checked : true;
+    const group = document.getElementById('shortcuts-settings-group');
+    if (group) group.classList.toggle('collapsed', !show);
+  };
+  const showShortcutsEl = document.getElementById('settings-show-shortcuts');
+  if (showShortcutsEl) {
+    showShortcutsEl.addEventListener('change', () => {
+      toggleShortcutsInputs();
+      state.settings.showShortcuts = showShortcutsEl.checked;
+      updateOrganizerVisibility();
+      autoSaveSettingsForm();
+    });
+  }
+
   const toggleWikipediaInputs = () => {
     const showEl = document.getElementById('settings-show-wikipedia');
     const show = showEl ? showEl.checked : true;
@@ -851,6 +867,8 @@ export function setupEventListeners() {
     document.getElementById('settings-show-world-clock').checked = state.settings.showWorldClock !== false;
     document.getElementById('settings-show-countdowns').checked = state.settings.showCountdowns !== false;
     document.getElementById('settings-show-tasks').checked = state.settings.showTasks !== false;
+    const showShortcutsModalInput = document.getElementById('settings-show-shortcuts');
+    if (showShortcutsModalInput) showShortcutsModalInput.checked = state.settings.showShortcuts !== false;
     document.getElementById('settings-show-google-emails').checked = state.settings.showGoogleEmails !== false;
     const gTasksTodayEl = document.getElementById('settings-show-google-tasks-today');
     if (gTasksTodayEl) gTasksTodayEl.checked = state.settings.showGoogleTasksToday !== false;
@@ -868,6 +886,7 @@ export function setupEventListeners() {
 
     toggleWeatherInputs();
     toggleClockInputs();
+    toggleShortcutsInputs();
     toggleWikipediaInputs();
     
     document.getElementById('settings-storage-mode').value = state.settings.storageMode || 'local';
@@ -1307,6 +1326,8 @@ export function setupEventListeners() {
     if (showCountdownsEl) state.settings.showCountdowns = showCountdownsEl.checked;
     const showTasksEl = document.getElementById('settings-show-tasks');
     if (showTasksEl) state.settings.showTasks = showTasksEl.checked;
+    const showShortcutsEl = document.getElementById('settings-show-shortcuts');
+    if (showShortcutsEl) state.settings.showShortcuts = showShortcutsEl.checked;
     const showEmailsEl = document.getElementById('settings-show-google-emails');
     if (showEmailsEl) state.settings.showGoogleEmails = showEmailsEl.checked;
     const gTasksTodayElSave = document.getElementById('settings-show-google-tasks-today');
@@ -1333,6 +1354,7 @@ export function setupEventListeners() {
     applyTheme(state);
     toggleWeatherInputs();
     toggleClockInputs();
+    toggleShortcutsInputs();
     toggleWikipediaInputs();
     updateWorldClock();
     updateOrganizerVisibility();

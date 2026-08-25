@@ -47,6 +47,7 @@ export default {
   "world-clock-sub": "Rellotge Mundial",
   "label-show-weather": "Giny del Temps",
   "label-show-world-clock": "Rellotge Secundari",
+  "label-show-shortcuts": "Mostrar Dreceres",
   "label-show-countdowns": "Bàner d'Esdeveniments",
   "label-show-tasks": "Tasques de l'Espai",
   "label-show-wikipedia": "Viquipèdia",

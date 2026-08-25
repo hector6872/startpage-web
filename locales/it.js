@@ -47,6 +47,7 @@ export default {
   "world-clock-sub": "Orologio Mondiale",
   "label-show-weather": "Widget Meteo",
   "label-show-world-clock": "Orologio Secondario",
+  "label-show-shortcuts": "Mostra Scorciatoie",
   "label-show-countdowns": "Banner Eventi",
   "label-show-tasks": "Attività dello Spazio",
   "label-show-wikipedia": "Wikipedia",

@@ -47,6 +47,7 @@ export default {
   "world-clock-sub": "Wereldklok",
   "label-show-weather": "Weer-widget",
   "label-show-world-clock": "Tweede Klok",
+  "label-show-shortcuts": "Snelkoppelingen tonen",
   "label-show-countdowns": "Evenementenbanner",
   "label-show-tasks": "Werkruimtetaken",
   "label-show-wikipedia": "Wikipedia",

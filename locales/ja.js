@@ -47,6 +47,7 @@ export default {
   "world-clock-sub": "世界時計",
   "label-show-weather": "天気ウィジェット",
   "label-show-world-clock": "世界時計ウィジェット",
+  "label-show-shortcuts": "ショートカットを表示",
   "label-show-countdowns": "イベントバナー",
   "label-show-tasks": "ワークスペースタスク",
   "label-show-wikipedia": "Wikipedia",

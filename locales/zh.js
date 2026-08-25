@@ -47,6 +47,7 @@ export default {
   "world-clock-sub": "世界时钟",
   "label-show-weather": "天气小组件",
   "label-show-world-clock": "第二时钟",
+  "label-show-shortcuts": "显示快捷方式",
   "label-show-countdowns": "事件横幅",
   "label-show-tasks": "工作区任务",
   "label-show-wikipedia": "维基百科",

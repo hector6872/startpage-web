@@ -47,6 +47,7 @@ export default {
   "world-clock-sub": "Weltzeit",
   "label-show-weather": "Wetter-Widget",
   "label-show-world-clock": "Zweite Uhr",
+  "label-show-shortcuts": "Kurzbefehle anzeigen",
   "label-show-countdowns": "Ereignis-Banner",
   "label-show-tasks": "Bereichsaufgaben",
   "label-show-wikipedia": "Wikipedia",

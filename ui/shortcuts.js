@@ -295,6 +295,10 @@ export function updateOrganizerVisibility() {
   if (gmailCard) {
     gmailCard.classList.toggle('hidden', state.settings.showGoogleEmails === false);
   }
+  const shortcutButtonsColumn = document.getElementById('shortcut-buttons-column') || document.querySelector('.shortcut-buttons-column');
+  if (shortcutButtonsColumn) {
+    shortcutButtonsColumn.classList.toggle('hidden', state.settings.showShortcuts === false);
+  }
 }
 
 export function syncDashboardColumns() {
