@@ -344,7 +344,7 @@ export function syncDashboardColumns() {
       card.id = "local-week-events";
       card.className = "section-card";
       card.innerHTML = `
-        <h3 class="card-subtitle">${dict["tasks-week-title"] || "This Week's Tasks"}</h3>
+        <h3 class="card-subtitle">${dict["tasks-week-title"] || "Upcoming Tasks"}</h3>
         <div class="integration-list">
           ${weekTasks.map(t => `
             <div class="integration-item">

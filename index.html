@@ -389,7 +389,7 @@
               <div id="weather-city-group" class="card-collapsible-content">
                 <div class="form-group">
                   <label for="settings-city" data-i18n="label-city">Weather Location (City)</label>
-                  <input type="text" id="settings-city" placeholder="e.g. Madrid">
+                  <input type="text" id="settings-city" data-i18n-placeholder="city-placeholder" placeholder="e.g. Madrid">
                 </div>
                 <div class="form-group" style="margin-top: 0.75rem;">
                   <label for="settings-weather-url" data-i18n="label-weather-url">Weather Web URL</label>
@@ -445,7 +445,7 @@
                 </div>
                 <div class="form-group">
                   <label for="settings-world-clock-label" data-i18n="label-world-clock-label">World Clock Label</label>
-                  <input type="text" id="settings-world-clock-label" placeholder="e.g. London">
+                  <input type="text" id="settings-world-clock-label" data-i18n-placeholder="clock-label-placeholder" placeholder="e.g. London">
                 </div>
                 <div class="form-group" style="margin-top: 0.75rem;">
                   <label for="settings-world-clock-url" data-i18n="label-world-clock-url">World Clock Web URL</label>
@@ -530,11 +530,11 @@
               <div id="shortcuts-settings-group" class="card-collapsible-content">
                 <div class="form-group" style="margin-bottom: 0.85rem;">
                   <label for="settings-finance-url" data-i18n="label-finance-url">Finance Web URL</label>
-                  <input type="url" id="settings-finance-url" data-i18n-placeholder="finance-url-placeholder" placeholder="e.g. https://www.google.com/finance/beta/quote/.INX:INDEXSP?window=1M">
+                  <input type="url" id="settings-finance-url" data-i18n-placeholder="finance-url-placeholder" placeholder="e.g. https://www.google.com/finance">
                 </div>
                 <div class="form-group" style="margin-bottom: 0.85rem;">
                   <label for="settings-timer-url" data-i18n="label-timer-url">Timer Web URL</label>
-                  <input type="url" id="settings-timer-url" data-i18n-placeholder="timer-url-placeholder" placeholder="e.g. https://www.google.com/search?q=countdown+timer">
+                  <input type="url" id="settings-timer-url" data-i18n-placeholder="timer-url-placeholder" placeholder="e.g. https://www.google.com/search?q=timer">
                 </div>
                 <div class="form-group">
                   <label for="settings-stopwatch-url" data-i18n="label-stopwatch-url">Stopwatch Web URL</label>
@@ -875,8 +875,8 @@
       <div class="modal-body" style="padding-bottom: 1rem;">
         <form id="countdown-form" class="todo-form" style="gap: 1.25rem; margin-bottom: 0;">
           <div class="form-group">
-            <label for="countdown-title-input" data-i18n="countdown-placeholder">Countdown Title</label>
-            <input type="text" id="countdown-title-input" placeholder="e.g. Vacation!" required>
+            <label for="countdown-title-input" data-i18n="label-event-name">Event Title</label>
+            <input type="text" id="countdown-title-input" data-i18n-placeholder="countdown-placeholder" placeholder="Event title..." required>
           </div>
           <div class="form-group">
             <label for="countdown-date-input">Target Date</label>
@@ -902,8 +902,8 @@
         <form id="edit-event-form" class="todo-form" style="gap: 1.25rem; margin-bottom: 0;">
           <input type="hidden" id="edit-event-id">
           <div class="form-group">
-            <label for="edit-event-name-input" data-i18n="countdown-placeholder">Event Title</label>
-            <input type="text" id="edit-event-name-input" placeholder="e.g. Vacation!" required>
+            <label for="edit-event-name-input" data-i18n="label-event-name">Event Title</label>
+            <input type="text" id="edit-event-name-input" data-i18n-placeholder="countdown-placeholder" placeholder="Event title..." required>
           </div>
           <div class="form-group">
             <label for="edit-event-date-input">Target Date</label>
@@ -929,7 +929,7 @@
         <form id="todo-form" class="todo-form" style="gap: 1.25rem; margin-bottom: 0;">
           <div class="form-group">
             <label for="todo-input" data-i18n="label-task-text">Task Name</label>
-            <input type="text" id="todo-input" placeholder="Task text..." required>
+            <input type="text" id="todo-input" data-i18n-placeholder="todo-placeholder" placeholder="Add a new task..." required>
           </div>
           <div class="form-group">
             <label for="todo-date" data-i18n="label-due-date">Due Date</label>
@@ -964,7 +964,7 @@
           <input type="hidden" id="edit-task-id">
           <div class="form-group">
             <label for="edit-task-text" data-i18n="label-task-text">Task Name</label>
-            <input type="text" id="edit-task-text" placeholder="Task text..." required>
+            <input type="text" id="edit-task-text" data-i18n-placeholder="todo-placeholder" placeholder="Add a new task..." required>
           </div>
           <div class="form-group">
             <label for="edit-task-date" data-i18n="label-due-date">Due Date</label>

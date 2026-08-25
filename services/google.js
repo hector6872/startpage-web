@@ -495,7 +495,7 @@ export async function fetchGoogleTasks() {
       gWeekCard.innerHTML = `
         <h3 class="card-subtitle">
           <span style="display: inline-flex; align-items: center; gap: 0.4rem;">
-            <span>${dict['google-tasks-week'] || 'Tasks · This Week'}</span>
+            <span>${dict['google-tasks-week'] || 'Tasks · Upcoming'}</span>
             <button type="button" class="card-action-btn btn-open-gtasks" data-tooltip="${dict['google-open-tasks'] || 'Open Google Tasks'}" aria-label="Open Google Tasks">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                 <line x1="12" y1="5" x2="12" y2="19"></line>
@@ -735,7 +735,7 @@ export async function fetchGoogleTasks() {
       gWeekCard.innerHTML = `
         <h3 class="card-subtitle">
           <span style="display: inline-flex; align-items: center; gap: 0.4rem;">
-            <span>${dict['google-tasks-week'] || 'Tasks · This Week'}</span>
+            <span>${dict['google-tasks-week'] || 'Tasks · Upcoming'}</span>
             <button type="button" class="card-action-btn btn-open-gtasks" data-tooltip="${dict['google-open-tasks'] || 'Open Google Tasks'}" aria-label="Open Google Tasks">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                 <line x1="12" y1="5" x2="12" y2="19"></line>
