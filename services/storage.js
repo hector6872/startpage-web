@@ -167,8 +167,22 @@ export async function loadState(state = defaultState) {
   if (storedSettings) {
     st.settings = { ...st.settings, ...JSON.parse(storedSettings) };
   }
+  function sanitizeOrderList(currentList, defaultList) {
+    if (!Array.isArray(currentList) || !currentList.length) return [...defaultList];
+    const validItems = currentList.filter(item => defaultList.includes(item));
+    defaultList.forEach(item => {
+      if (!validItems.includes(item)) validItems.push(item);
+    });
+    return validItems;
+  }
+
   st.settings.customEvents = st.settings.customEvents || [];
   st.settings.primaryColor = st.settings.primaryColor || "blue";
+  st.settings.columnOrder = sanitizeOrderList(st.settings.columnOrder, ["col-today", "col-week", "col-tasks"]);
+  st.settings.todayCardOrder = sanitizeOrderList(st.settings.todayCardOrder, ["today-events-card", "gmail-card", "gtasks-today"]);
+  st.settings.weekCardOrder = sanitizeOrderList(st.settings.weekCardOrder, ["weekly-events-card", "gtasks-week"]);
+  st.settings.workCardOrder = sanitizeOrderList(st.settings.workCardOrder, ["work-section", "countdown-section", "tasks-section"]);
+  st.settings.workSubCardOrder = sanitizeOrderList(st.settings.workSubCardOrder, ["prs-card", "jira-card"]);
   st.lang = st.settings.lang || "en";
   st.theme = st.settings.theme || localStorage.getItem("theme") || "system";
 

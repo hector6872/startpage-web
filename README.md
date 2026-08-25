@@ -15,6 +15,7 @@ A beautiful, modern, and minimalist productivity dashboard featuring task manage
 - ✅ **Intelligent Task Scheduling**: Google Tasks sorted chronologically by deadline first (overdue on top), then by most recently updated timestamp.
 - 🎯 **Jira Integration**: Displays assigned open issues in real-time with priority badges, issue keys, and direct links.
 - 🏖️ **Out of Office (OOO) Mode**: Auto-hides work commitments, tasks, and notification feeds until your return date.
+- 🎛️ **Customizable Dashboard Layout (Drag & Drop)**: Reorder columns and cards via intuitive drag-and-drop handles directly in Preferences (supports desktop mouse and mobile touch).
 - 🌓 **Themes & Customization**: Light, Dark, and System modes with 10 vibrant accent colors.
 - 💾 **Flexible Data & Sync**: Private browser local storage or live synchronization with a local/Google Drive JSON file via File System Access API.
 - ⚡ **Full Keyboard Accessibility**: Comprehensive WAI-ARIA compliance, modal focus trapping, and single-key shortcuts (<kbd>E</kbd>, <kbd>C</kbd>, <kbd>T</kbd>, <kbd>N</kbd>).
@@ -169,6 +170,21 @@ Under Preferences (`⚙️`) -> Google Workspace, you can toggle **Out of Office
    - 🔒 You can choose to hide **Jira**, **GitHub**, **Bitbucket**, and **GitLab** integrations individually if OOO is active.
    - 🔴 OOO status is indicated by a red "OOO" badge in the Today and This Week column headers. Clicking this badge takes you directly to the Google Workspace Preferences tab.
 3. OOO mode automatically disables itself on or after the specified return date.
+
+---
+
+## 🎛️ Customizable Dashboard Layout (Drag & Drop)
+
+You can customize the layout and order of columns and cards on your dashboard directly from **Preferences (`⚙️`) -> Layout**:
+
+- ↔️ **Column Order**: Rearrange the sequence of columns (*Today*, *This Week*, *Workplace*). Columns flow left-to-right on desktop displays and stack top-to-bottom on mobile devices.
+- 📅 **Today Order**: Reorder cards inside the *Today* column (*Schedule & Meetings*, *Inbox*, *Tasks · Today*).
+- 🗓️ **This Week Order**: Reorder cards inside the *This Week* column (*Weekly Schedule*, *Tasks · Upcoming*).
+- 💼 **Workplace Order**: Reorder subsections in the *Workplace* column (*Work*, *Events & Milestones*, *My Tasks*).
+- 🐙 **Work Integrations Order**: Reorder integration cards (*Pull Requests* vs *Jira Issues*).
+- 🖐️ **Fluid Drag & Drop**: Native drag handles (`⋮⋮`) with seamless mouse and touch support.
+- 💾 **Instant Sync & Persistence**: Changes apply immediately to the dashboard without reloading and persist across sessions via `localStorage` and JSON export backups.
+- 🔄 **One-Click Reset**: Easily restore the default dashboard layout at any time using the *Reset to Default Layout* button.
 
 ---
 
