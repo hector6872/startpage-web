@@ -21,6 +21,24 @@ let wikiTopReadIndex = 0;
 let wikiNewsIndex = 0;
 let wikiOnThisDayIndex = 0;
 let currentQuoteData = null;
+let wikiAutoAdvanceTimer = null;
+let isHoveringQuoteWidget = false;
+
+function startAutoAdvance(advanceFn) {
+  stopAutoAdvance();
+  wikiAutoAdvanceTimer = setInterval(() => {
+    if (!isHoveringQuoteWidget) {
+      advanceFn();
+    }
+  }, 8000);
+}
+
+function stopAutoAdvance() {
+  if (wikiAutoAdvanceTimer) {
+    clearInterval(wikiAutoAdvanceTimer);
+    wikiAutoAdvanceTimer = null;
+  }
+}
 
 export function formatViewsCount(num) {
   if (!num) return '';
@@ -33,7 +51,18 @@ export async function loadWikipediaContent() {
   const quoteWidget = document.getElementById('quote-widget');
   if (!quoteWidget) return;
 
+  if (!quoteWidget.dataset.hoverBound) {
+    quoteWidget.dataset.hoverBound = 'true';
+    quoteWidget.addEventListener('mouseenter', () => {
+      isHoveringQuoteWidget = true;
+    });
+    quoteWidget.addEventListener('mouseleave', () => {
+      isHoveringQuoteWidget = false;
+    });
+  }
+
   if (wikiContext.state.settings.showWikipedia === false) {
+    stopAutoAdvance();
     quoteWidget.classList.add('hidden');
     return;
   }
@@ -51,6 +80,7 @@ export async function loadWikipediaContent() {
   const day = String(now.getDate()).padStart(2, '0');
 
   if (type === 'quote') {
+    stopAutoAdvance();
     renderQuoteMode();
   } else if (type === 'topread') {
     await renderTopReadMode();
@@ -224,6 +254,11 @@ export async function loadWikipediaContent() {
       wikiTopReadIndex++;
       renderTopReadMode();
     });
+
+    startAutoAdvance(() => {
+      wikiTopReadIndex++;
+      renderTopReadMode();
+    });
   }
 
   function formatNewsHtml(cur, feedLang) {
@@ -368,6 +403,11 @@ export async function loadWikipediaContent() {
       wikiNewsIndex++;
       renderNewsMode();
     });
+
+    startAutoAdvance(() => {
+      wikiNewsIndex++;
+      renderNewsMode();
+    });
   }
 
   async function renderOnThisDayMode() {
@@ -449,6 +489,11 @@ export async function loadWikipediaContent() {
       renderOnThisDayMode();
     });
     container.querySelector('#wiki-next-btn')?.addEventListener('click', () => {
+      wikiOnThisDayIndex++;
+      renderOnThisDayMode();
+    });
+
+    startAutoAdvance(() => {
       wikiOnThisDayIndex++;
       renderOnThisDayMode();
     });
