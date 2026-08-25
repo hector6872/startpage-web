@@ -27,26 +27,21 @@ function proxyMiddleware(req, res, next) {
     return;
   }
 
-  (async () => {
-    try {
-      const forwardHeaders = {};
-      for (const [headerKey, headerVal] of Object.entries(req.headers)) {
-        const keyLower = headerKey.toLowerCase();
-        if (!['host', 'origin', 'referer', 'sec-fetch-mode', 'sec-fetch-site', 'sec-fetch-dest', 'connection'].includes(keyLower)) {
-          forwardHeaders[headerKey] = headerVal;
-        }
-      }
+  const forwardHeaders = {};
+  for (const [headerKey, headerVal] of Object.entries(req.headers)) {
+    const keyLower = headerKey.toLowerCase();
+    if (!['host', 'origin', 'referer', 'sec-fetch-mode', 'sec-fetch-site', 'sec-fetch-dest', 'connection'].includes(keyLower)) {
+      forwardHeaders[headerKey] = headerVal;
+    }
+  }
 
-      let bodyData = undefined;
-      if (req.method !== 'GET' && req.method !== 'HEAD') {
-        const chunks = [];
-        for await (const chunk of req) {
-          chunks.push(chunk);
-        }
-        if (chunks.length > 0) {
-          bodyData = Buffer.concat(chunks);
-        }
-      }
+  const chunks = [];
+  req.on('data', chunk => chunks.push(chunk));
+  req.on('end', async () => {
+    try {
+      const bodyData = (req.method !== 'GET' && req.method !== 'HEAD' && chunks.length > 0)
+        ? Buffer.concat(chunks)
+        : undefined;
 
       const apiResponse = await fetch(targetUrl, {
         method: req.method,
@@ -70,7 +65,7 @@ function proxyMiddleware(req, res, next) {
       res.setHeader('Content-Type', 'application/json');
       res.end(JSON.stringify({ error: err.message }));
     }
-  })();
+  });
 }
 
 export default defineConfig({

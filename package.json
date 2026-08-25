@@ -2,6 +2,7 @@
   "name": "my-startpage",
   "version": "1.0.0",
   "description": "Minimalist landing page with tasks, calendar, weather, quotes and external integrations.",
+  "type": "module",
   "main": "index.html",
   "scripts": {
     "dev": "vite",
