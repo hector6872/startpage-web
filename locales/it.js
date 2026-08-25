@@ -160,6 +160,7 @@ export default {
   "confirm-delete-desc": "Sei sicuro di voler eliminare questa attività?",
   "completed-tasks-note": "Mostra le attività completate negli ultimi 7 giorni.",
   "quote-loading": "Caricamento citazione...",
+  "quote-error": "Impossibile caricare la citazione di oggi, andrà meglio domani!",
   "status-unconfigured": "Non Configurato",
   "storage-desc": "Scegli come salvare i tuoi dati. Sincronizza un file JSON su Google Drive o mantienili in memoria locale.",
   "label-storage-mode": "Modalità di Archiviazione",

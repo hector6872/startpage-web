@@ -160,6 +160,7 @@ export default {
   "confirm-delete-desc": "このタスクを完全に削除してもよろしいですか？",
   "completed-tasks-note": "過去7日間に完了したタスクを表示しています。",
   "quote-loading": "名言を読み込み中...",
+  "quote-error": "今日の名言を読み込めませんでした。明日に期待しましょう！",
   "status-unconfigured": "未設定",
   "storage-desc": "データの保存方法を選択します。Google Drive 経由の JSON ファイル同期またはローカル保存が利用可能です。",
   "label-storage-mode": "保存モード",

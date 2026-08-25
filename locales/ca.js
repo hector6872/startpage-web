@@ -160,6 +160,7 @@ export default {
   "confirm-delete-desc": "Segur que vols eliminar aquesta tasca?",
   "completed-tasks-note": "Es mostren les tasques completades en els darrers 7 dies.",
   "quote-loading": "Carregant cita...",
+  "quote-error": "No s'ha pogut carregar la frase d'avui, demà hi haurà més sort!",
   "status-unconfigured": "No Configurat",
   "storage-desc": "Tria com es guarden les teves dades. Sincronitza amb un fitxer JSON a Google Drive o guarda-les en local.",
   "label-storage-mode": "Proveïdor d'Emmagatzematge",

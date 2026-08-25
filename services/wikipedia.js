@@ -1,4 +1,4 @@
-import { translations, quotesDb } from "../locales/index.js";
+import { translations } from "../locales/index.js";
 
 export const wikiContext = {
   state: null
@@ -14,6 +14,131 @@ export function toSentenceCase(str) {
   return lower.replace(/(^\s*|[.!?]\s+)([a-z])/g, (match, separator, char) => separator + char.toUpperCase());
 }
 
+function decodeHtml(html) {
+  if (!html) return '';
+  const txt = document.createElement('textarea');
+  txt.innerHTML = html;
+  return txt.value;
+}
+
+export async function fetchWikiquoteOfTheDay(lang) {
+  const now = new Date();
+  const d = now.getDate();
+  const mm = String(now.getMonth() + 1).padStart(2, "0");
+  const dd = String(d).padStart(2, "0");
+  const yyyy = now.getFullYear();
+
+  const monthsEn = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+  const monthsFr = ["janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre", "décembre"];
+  const monthsIt = ["gennaio", "febbraio", "marzo", "aprile", "maggio", "giugno", "luglio", "agosto", "settembre", "ottobre", "novembre", "dicembre"];
+  const monthsPt = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"];
+  const monthsCa = ["de gener", "de febrer", "de març", "d\x27abril", "de maig", "de juny", "de juliol", "d\x27agost", "de setembre", "d\x27octubre", "de novembre", "de desembre"];
+
+  let page = "";
+  if (lang === "es") page = `Plantilla:${mm}${dd}`;
+  else if (lang === "en") page = `Wikiquote:Quote_of_the_day/${monthsEn[now.getMonth()]}_${d},_${yyyy}`;
+  else if (lang === "fr") page = `Modèle:Citation_du_jour/${d}_${monthsFr[now.getMonth()]}_${yyyy}`;
+  else if (lang === "it") page = `Template:Qotd/${d}${monthsIt[now.getMonth()]}`;
+  else if (lang === "pt") page = `Predefinição:Frase_do_dia/${d}_de_${monthsPt[now.getMonth()]}`;
+  else if (lang === "ca") page = `Plantilla:${d}_${monthsCa[now.getMonth()]}`;
+  else if (lang === "zh") page = `Wikiquote:每日名言/${now.getMonth() + 1}月${d}日`;
+  else if (lang === "ja") page = "テンプレート:Today";
+  else if (lang === "nl") page = "Sjabloon:Quotevdmaand";
+  else if (lang === "de") page = "Hauptseite";
+  else page = "Main Page";
+
+  try {
+    const res = await fetch(`https://${lang}.wikiquote.org/w/api.php?action=parse&page=${encodeURIComponent(page)}&redirects=1&format=json&prop=text&origin=*`, {
+      headers: { "Api-User-Agent": "StartpageDashboard/1.0" }
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    if (data.error || !data.parse?.text?.["*"]) return null;
+    
+    const doc = data.parse.text["*"]
+      .replace(/<style[\s\S]*?<\/style>/gi, "")
+      .replace(/<script[\s\S]*?<\/script>/gi, "");
+
+    let text = null;
+    let author = null;
+
+    if (lang === "es") {
+      const qMatch = doc.match(/<td width="100%"[^>]*>([\s\S]*?)<\/td>/i);
+      const aMatch = doc.match(/<div style="text-align:right"[^>]*>[\s\S]*?<a [^>]*>([^<]+)<\/a>/i);
+      if (qMatch) text = qMatch[1].replace(/<[^>]+>/g, "").replace(/^«\s*/, "").replace(/\s*»$/, "").trim();
+      if (aMatch) author = aMatch[1].trim();
+    } else if (lang === "en") {
+      const qMatch = doc.match(/class="cquote"[^>]*>[\s\S]*?<td valign="top"[^>]*>([\s\S]*?)<\/td>/i);
+      const aMatch = doc.match(/<cite[^>]*>[\s\S]*?<a [^>]*>([^<]+)<\/a>/i) || doc.match(/<cite[^>]*>([\s\S]*?)<\/cite>/i);
+      if (qMatch) text = qMatch[1].replace(/<[^>]+>/g, "").trim();
+      if (aMatch) author = aMatch[1].replace(/<[^>]+>/g, "").replace(/^—\s*/, "").trim();
+    } else if (lang === "fr") {
+      const qMatch = doc.match(/<blockquote[^>]*>([\s\S]*?)<\/blockquote>/i) || doc.match(/class="citation"[^>]*>([\s\S]*?)<\/(?:p|div|span)>/i) || doc.match(/«([\s\S]*?)»/i);
+      const aMatch = doc.match(/class="auteur"[^>]*>([\s\S]*?)<\/(?:p|div|span)>/i) || doc.match(/<a [^>]*title="([^"]+)"/i);
+      if (qMatch) text = qMatch[1].replace(/<[^>]+>/g, "").replace(/^«\s*/, "").replace(/\s*»$/, "").trim();
+      if (aMatch) author = aMatch[1].replace(/<[^>]+>/g, "").replace(/^—\s*/, "").trim();
+    } else if (lang === "it") {
+      const qMatch = doc.match(/«([\s\S]*?)»/i) || doc.match(/<i>([\s\S]*?)<\/i>/i);
+      const aMatch = doc.match(/<a [^>]*title="([^"]+)"/i);
+      if (qMatch) text = qMatch[1].replace(/<[^>]+>/g, "").trim();
+      if (aMatch) author = aMatch[1].trim();
+    } else if (lang === "ca") {
+      const qMatch = doc.match(/<td style="font-size: 1\.2em;[^>]*>([\s\S]*?)<\/td>/i) || doc.match(/«([\s\S]*?)»/i);
+      const aMatch = doc.match(/<div style="text-align: right;[^>]*>[\s\S]*?<a [^>]*>([^<]+)<\/a>/i) || doc.match(/<a [^>]*title="([^"]+)"/i);
+      if (qMatch) text = qMatch[1].replace(/<[^>]+>/g, "").replace(/^«\s*/, "").replace(/\s*»$/, "").trim();
+      if (aMatch) author = aMatch[1].trim();
+    } else if (lang === "de") {
+      const qMatch = doc.match(/<td style="padding: \.5em 1em; text-align: center;">([\s\S]*?)<\/td>/i);
+      const aMatch = doc.match(/<td colspan="3"[^>]*>[\s\S]*?<a [^>]*>([^<]+)<\/a>/i);
+      if (qMatch) text = qMatch[1].replace(/<[^>]+>/g, "").trim();
+      if (aMatch) author = aMatch[1].trim();
+    } else if (lang === "pt") {
+      const qMatch = doc.match(/<p><b>([\s\S]*?)<\/b>/i) || doc.match(/<b>([\s\S]*?)<\/b>/i);
+      const aMatch = doc.match(/<\/b>\s*-\s*<a [^>]*title="([^"]+)"/i) || doc.match(/<a [^>]*title="([^"]+)"/i);
+      if (qMatch) text = qMatch[1].replace(/<[^>]+>/g, "").replace(/^["“«]\s*/, "").replace(/\s*["”»]$/, "").trim();
+      if (aMatch) author = aMatch[1].trim();
+    } else if (lang === "nl") {
+      const qMatch = doc.match(/„([\s\S]*?)”/i) || doc.match(/“([\s\S]*?)”/i);
+      const aMatch = doc.match(/<a [^>]*title="([^"]+)"/i);
+      if (qMatch) text = qMatch[1].replace(/<[^>]+>/g, "").trim();
+      if (aMatch) author = aMatch[1].trim();
+    } else if (lang === "zh") {
+      const clean = doc.replace(/<[^>]+>/g, "");
+      const parts = clean.split("——");
+      if (parts.length >= 2) {
+        text = parts[0].trim();
+        author = parts[1].trim();
+      }
+    } else if (lang === "ja") {
+      const clean = doc.replace(/<[^>]+>/g, "");
+      const parts = clean.split("--");
+      if (parts.length >= 2) {
+        text = parts[0].trim();
+        author = parts[1].trim();
+      }
+    }
+
+    if (!text) {
+      const qMatch = doc.match(/«([\s\S]*?)»/i) || doc.match(/“([\s\S]*?)”/i) || doc.match(/„([\s\S]*?)”/i) || doc.match(/<blockquote[^>]*>([\s\S]*?)<\/blockquote>/i);
+      if (qMatch) text = qMatch[1].replace(/<[^>]+>/g, "").trim();
+    }
+    if (!author) {
+      const aMatch = doc.match(/<cite[^>]*>([\s\S]*?)<\/cite>/i) || doc.match(/<a [^>]*title="([^"]+)"/i);
+      if (aMatch) author = aMatch[1].replace(/<[^>]+>/g, "").replace(/^—\s*/, "").trim();
+    }
+
+    if (text) {
+      return {
+        text: decodeHtml(text).replace(/^["“«\s]+|["”»\s]+$/g, '').trim(),
+        author: author ? decodeHtml(author).trim() : ''
+      };
+    }
+  } catch (err) {
+    console.warn("Failed to fetch quote from Wikiquote:", err);
+  }
+  return null;
+}
+
 // Wikipedia & Dynamic Content System
 let wikiFeaturedCache = {};
 let wikiOnThisDayCache = {};
@@ -23,6 +148,39 @@ let wikiOnThisDayIndex = 0;
 let currentQuoteData = null;
 let wikiAutoAdvanceTimer = null;
 let isHoveringQuoteWidget = false;
+
+function getTodayDateKey() {
+  const now = new Date();
+  const yyyy = now.getFullYear();
+  const mm = String(now.getMonth() + 1).padStart(2, '0');
+  const dd = String(now.getDate()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}`;
+}
+
+function getCachedQuote(lang) {
+  try {
+    const today = getTodayDateKey();
+    const raw = localStorage.getItem(`wikiquote_cache_${lang}`);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed && parsed.date === today && parsed.quote && parsed.quote.text && parsed.quote.text !== 'undefined' && parsed.quote.text.trim() !== '') {
+        return parsed.quote;
+      }
+    }
+  } catch (e) {}
+  return null;
+}
+
+function setCachedQuote(lang, quote) {
+  try {
+    if (!quote || !quote.text || quote.text === 'undefined' || quote.text.trim() === '') return;
+    const today = getTodayDateKey();
+    localStorage.setItem(`wikiquote_cache_${lang}`, JSON.stringify({
+      date: today,
+      quote
+    }));
+  } catch (e) {}
+}
 
 function startAutoAdvance(advanceFn) {
   stopAutoAdvance();
@@ -81,7 +239,7 @@ export async function loadWikipediaContent() {
 
   if (type === 'quote') {
     stopAutoAdvance();
-    renderQuoteMode();
+    await renderQuoteMode();
   } else if (type === 'topread') {
     await renderTopReadMode();
   } else if (type === 'news') {
@@ -90,40 +248,57 @@ export async function loadWikipediaContent() {
     await renderOnThisDayMode();
   }
 
-  function renderQuoteMode() {
-    if (currentQuoteData) {
+  async function renderQuoteMode() {
+    const currentLang = wikiContext.state.lang || 'en';
+
+    // 1. Check in-memory quote
+    if (currentQuoteData && currentQuoteData.text && currentQuoteData.text !== 'undefined' && currentQuoteData.lang === currentLang) {
       displayQuote(currentQuoteData.text, currentQuoteData.author);
       return;
     }
-    container.innerHTML = `<span class="quote-text">${dict['quote-loading']}</span>`;
-    fetch('https://dummyjson.com/quotes/random')
-      .then(res => {
-        if (!res.ok) throw new Error();
-        return res.json();
-      })
-      .then(data => {
-        if (wikiContext.state.lang === 'es') {
-          useLocalQuote();
-        } else {
-          currentQuoteData = { text: data.quote, author: data.author };
-          displayQuote(currentQuoteData.text, currentQuoteData.author);
-        }
-      })
-      .catch(() => {
-        useLocalQuote();
-      });
 
-    function useLocalQuote() {
-      const list = quotesDb[wikiContext.state.lang] || quotesDb['en'];
-      const item = list[Math.floor(Math.random() * list.length)];
-      currentQuoteData = { text: item.text, author: item.author };
-      displayQuote(item.text, item.author);
+    // 2. Check localStorage daily cache
+    const cached = getCachedQuote(currentLang);
+    if (cached && cached.text && cached.text !== 'undefined') {
+      currentQuoteData = { ...cached, lang: currentLang };
+      displayQuote(currentQuoteData.text, currentQuoteData.author);
+      return;
+    }
+
+    container.innerHTML = `<span class="quote-text">${dict['quote-loading']}</span>`;
+    
+    // 3. Fetch from Wikiquote API
+    const quote = await fetchWikiquoteOfTheDay(currentLang);
+    if (quote && quote.text && quote.text !== 'undefined' && quote.text.trim() !== '') {
+      currentQuoteData = { ...quote, lang: currentLang };
+      setCachedQuote(currentLang, quote);
+      displayQuote(currentQuoteData.text, currentQuoteData.author);
+    } else {
+      displayQuoteError();
     }
   }
 
+  function displayQuoteError() {
+    const badgeTooltip = wikiContext.state.lang === 'es' ? 'Cambiar contenido en Configuración' : 'Change content in Settings';
+    const errorMsg = dict['quote-error'] || 'No se pudo cargar la frase para hoy, ¡mañana habrá más suerte!';
+    
+    container.innerHTML = `
+      <span class="wiki-badge" data-tooltip="${badgeTooltip}" onclick="window.openSettingsWikipediaTab()" title="${badgeTooltip}">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14h2v2h-2zm0-10h2v8h-2z"/></svg>
+        ${dict['wiki-badge-quote'] || 'Quote'}
+      </span>
+      <span class="quote-text">${errorMsg}</span>
+    `;
+  }
+
   function displayQuote(text, author) {
-    const cleanAuthor = author ? author.replace(/^[\s–—-]+/, '').trim() : '';
-    const wikiLang = wikiContext.state.lang === 'es' ? 'es' : 'en';
+    if (!text || text === 'undefined' || typeof text !== 'string' || text.trim() === '') {
+      displayQuoteError();
+      return;
+    }
+
+    const cleanAuthor = author && author !== 'undefined' ? author.replace(/^[\s–—-]+/, '').trim() : '';
+    const wikiLang = wikiContext.state.lang || 'en';
     const authorUrl = cleanAuthor ? `https://${wikiLang}.wikipedia.org/wiki/Special:Search?search=${encodeURIComponent(cleanAuthor)}` : '';
     const authorTitle = wikiContext.state.lang === 'es' ? `Ver ${cleanAuthor} en Wikipedia` : `View ${cleanAuthor} on Wikipedia`;
     const badgeTooltip = wikiContext.state.lang === 'es' ? 'Cambiar contenido en Configuración' : 'Change content in Settings';
@@ -138,13 +313,6 @@ export async function loadWikipediaContent() {
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
             <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-          </svg>
-        </button>
-        <button id="refresh-quote-btn" class="wiki-nav-btn" title="${dict['wiki-refresh'] || 'Shuffle'}" aria-label="Shuffle quote">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="23 4 23 10 17 10"></polyline>
-            <polyline points="1 20 1 14 7 14"></polyline>
-            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
           </svg>
         </button>
       </div>
@@ -165,14 +333,6 @@ export async function loadWikipediaContent() {
             copyBtn.classList.remove('copied');
           }, 2000);
         });
-      });
-    }
-
-    const refreshBtn = container.querySelector('#refresh-quote-btn');
-    if (refreshBtn) {
-      refreshBtn.addEventListener('click', () => {
-        currentQuoteData = null;
-        renderQuoteMode();
       });
     }
   }

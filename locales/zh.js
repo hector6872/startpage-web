@@ -160,6 +160,7 @@ export default {
   "confirm-delete-desc": "确定要永久删除此任务吗？",
   "completed-tasks-note": "仅显示过去 7 天内完成的任务。",
   "quote-loading": "正在加载名言...",
+  "quote-error": "未能加载今日名言，明天运气会更好！",
   "status-unconfigured": "未配置",
   "storage-desc": "选择数据存储方式。可通过 Google Drive 同步本地 JSON 文件，或保存在浏览器本地。",
   "label-storage-mode": "存储模式",

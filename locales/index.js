@@ -8,8 +8,6 @@ import pt from './pt.js';
 import nl from './nl.js';
 import ja from './ja.js';
 import zh from './zh.js';
-import quotesDb from './quotes.js';
-
 export const translations = {
   en,
   es,
@@ -22,8 +20,6 @@ export const translations = {
   ja,
   zh
 };
-
-export { quotesDb };
 
 export function getLocale(lang) {
   const localeMap = {

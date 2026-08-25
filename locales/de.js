@@ -160,6 +160,7 @@ export default {
   "confirm-delete-desc": "Möchten Sie diese Aufgabe wirklich löschen?",
   "completed-tasks-note": "Zeigt Aufgaben, die in den letzten 7 Tagen abgeschlossen wurden.",
   "quote-loading": "Lade Zitat...",
+  "quote-error": "Das Zitat des Tages konnte nicht geladen werden, morgen gibt es mehr Glück!",
   "status-unconfigured": "Nicht konfiguriert",
   "storage-desc": "Wählen Sie Ihren Speicherort. Synchronisieren Sie eine JSON-Datei über Google Drive oder speichern Sie nur lokal.",
   "label-storage-mode": "Speicherort",

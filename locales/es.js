@@ -160,6 +160,7 @@ export default {
   "confirm-delete-desc": "¿Estás seguro de que quieres eliminar esta tarea?",
   "completed-tasks-note": "Solo se mostrarán las completadas en los últimos 7 días.",
   "quote-loading": "Cargando frase...",
+  "quote-error": "No se pudo cargar la frase para hoy, ¡mañana habrá más suerte!",
   "status-unconfigured": "Sin configurar",
   "storage-desc": "Configura dónde se guardan tus datos. Puedes seleccionar un archivo JSON en tu Google Drive o carpeta local sincronizada para compartir tareas entre dispositivos.",
   "label-storage-mode": "Modo de Almacenamiento",

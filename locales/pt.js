@@ -160,6 +160,7 @@ export default {
   "confirm-delete-desc": "Tem certeza que deseja excluir esta tarefa?",
   "completed-tasks-note": "Exibindo tarefas concluídas nos últimos 7 dias.",
   "quote-loading": "Carregando citação...",
+  "quote-error": "Não foi possível carregar a frase de hoje, amanhã haverá mais sorte!",
   "status-unconfigured": "Não Configurado",
   "storage-desc": "Escolha como seus dados são salvos. Sincronize com um arquivo JSON no Google Drive ou mantenha no armazenamento local.",
   "label-storage-mode": "Provedor de Armazenamento",

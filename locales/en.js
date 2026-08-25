@@ -160,6 +160,7 @@ export default {
   "confirm-delete-desc": "Are you sure you want to permanently delete this task?",
   "completed-tasks-note": "Showing tasks completed within the last 7 days.",
   "quote-loading": "Loading inspiration...",
+  "quote-error": "Could not load today's quote, better luck tomorrow!",
   "status-unconfigured": "Not Configured",
   "storage-desc": "Choose how your data is stored across devices. Select a JSON file in Google Drive or local sync folder, or keep it private in local storage.",
   "label-storage-mode": "Storage Provider",

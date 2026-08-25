@@ -160,6 +160,7 @@ export default {
   "confirm-delete-desc": "Weet je zeker dat je deze taak wilt verwijderen?",
   "completed-tasks-note": "Toont taken voltooid in de afgelopen 7 dagen.",
   "quote-loading": "Citaat laden...",
+  "quote-error": "Kon het citaat van vandaag niet laden, morgen meer geluk!",
   "status-unconfigured": "Niet Ingesteld",
   "storage-desc": "Kies hoe gegevens worden opgeslagen. Synchroniseer met een JSON-bestand via Google Drive of bewaar lokaal.",
   "label-storage-mode": "Opslagprovider",
