@@ -91,7 +91,6 @@ export default {
   "stopwatch-btn-title": "Cronómetro",
   "tab-shortcuts": "Atajos",
   "shortcuts-card-title": "Atajos de Acción Rápida",
-  "city-desc": "Déjalo vacío para usar la geolocalización automática del navegador",
   "google-desc": "Requires a Google Cloud Console project with OAuth credentials. Remember to add your local origin under Authorized JavaScript Origins",
   "google-config-title": "Configuración de Google",
   "jira-config-title": "Configuración de Jira",

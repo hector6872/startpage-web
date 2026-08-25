@@ -91,7 +91,6 @@ export default {
   "stopwatch-btn-title": "秒表",
   "tab-shortcuts": "快捷方式",
   "shortcuts-card-title": "快捷操作",
-  "city-desc": "留空则使用浏览器自动地理定位。",
   "google-desc": "连接 Google Cloud 凭据以同步日历、Tasks 和重要 Gmail 邮件。",
   "google-config-title": "Google 配置",
   "jira-config-title": "Jira Cloud 配置",

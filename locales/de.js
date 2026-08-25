@@ -91,7 +91,6 @@ export default {
   "stopwatch-btn-title": "Stoppuhr",
   "tab-shortcuts": "Kurzbefehle",
   "shortcuts-card-title": "Schnellaktionen",
-  "city-desc": "Leer lassen für automatische Browser-Standortermittlung.",
   "google-desc": "Verbinden Sie Ihre Google Cloud-Zugangsdaten zur Synchronisierung von Kalender, Tasks und Gmail.",
   "google-config-title": "Google Konfiguration",
   "jira-config-title": "Jira Cloud Konfiguration",

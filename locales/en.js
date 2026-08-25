@@ -91,7 +91,6 @@ export default {
   "stopwatch-btn-title": "Stopwatch",
   "tab-shortcuts": "Shortcuts",
   "shortcuts-card-title": "Quick Action Shortcuts",
-  "city-desc": "Leave empty for automatic browser geolocation",
   "google-desc": "Connect your Google Cloud OAuth credentials to sync Google Calendar, Tasks, and Priority Gmail",
   "google-config-title": "Google Configuration",
   "jira-config-title": "Jira Configuration",

@@ -91,7 +91,6 @@ export default {
   "stopwatch-btn-title": "Cronômetro",
   "tab-shortcuts": "Atalhos",
   "shortcuts-card-title": "Atalhos de Ação Rápida",
-  "city-desc": "Deixe vazio para usar a geolocalização do navegador.",
   "google-desc": "Conecte suas credenciais Google Cloud para sincronizar Calendário, Tarefas e Gmail Prioritário.",
   "google-config-title": "Configuração Google",
   "jira-config-title": "Configuração Jira Cloud",

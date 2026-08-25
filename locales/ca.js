@@ -91,7 +91,6 @@ export default {
   "stopwatch-btn-title": "Cronòmetre",
   "tab-shortcuts": "Dreceres",
   "shortcuts-card-title": "Dreceres d'Acció Ràpida",
-  "city-desc": "Deixa-ho buit per utilitzar la geolocalització del navegador.",
   "google-desc": "Connecta les teves credencials de Google Cloud per sincronitzar Calendar, Tasks i Gmail Prioritari.",
   "google-config-title": "Credencials de Google",
   "jira-config-title": "Credencials de Jira Cloud",

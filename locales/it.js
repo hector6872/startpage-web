@@ -91,7 +91,6 @@ export default {
   "stopwatch-btn-title": "Cronometro",
   "tab-shortcuts": "Scorciatoie",
   "shortcuts-card-title": "Scorciatoie Rapide",
-  "city-desc": "Lascia vuoto per la geolocalizzazione automatica.",
   "google-desc": "Collega le tue credenziali Google Cloud per sincronizzare Calendario, Tasks e Gmail Prioritaria.",
   "google-config-title": "Configurazione Google",
   "jira-config-title": "Configurazione Jira Cloud",
