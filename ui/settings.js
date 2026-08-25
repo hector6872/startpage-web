@@ -36,6 +36,9 @@ export function translatePage() {
   if (langToggle) {
     langToggle.textContent = state.lang.toUpperCase();
   }
+
+  // Update layout settings list if initialized
+  renderLayoutSettings();
 }
 
 // DateTime / Greeting System
@@ -935,6 +938,7 @@ export function setupEventListeners() {
     }
 
     renderSettingsEventsList();
+    renderLayoutSettings();
     updateGitStatusIndicators(state);
     updateJiraStatusIndicators(state);
     openModalAccessible(settingsModal, document.querySelector('.settings-tabs .tab-btn.active'));
@@ -1522,6 +1526,21 @@ export function setupEventListeners() {
     updateTodo(id, text, date, priority);
     editModal.close();
   });
+
+  // Reset Layout Order Button Handler
+  const resetLayoutBtn = document.getElementById('btn-reset-layout');
+  if (resetLayoutBtn) {
+    resetLayoutBtn.addEventListener('click', async () => {
+      state.settings.columnOrder = ["col-today", "col-week", "col-tasks"];
+      state.settings.todayCardOrder = ["today-events-card", "gmail-card", "gtasks-today"];
+      state.settings.weekCardOrder = ["weekly-events-card", "gtasks-week"];
+      state.settings.workCardOrder = ["work-section", "countdown-section", "tasks-section"];
+      state.settings.workSubCardOrder = ["prs-card", "jira-card"];
+      applyDashboardLayoutOrder(state);
+      renderLayoutSettings(state);
+      await saveSettings(state);
+    });
+  }
 }
 
 export function openSettingsGoogleTab() {
@@ -1583,3 +1602,270 @@ export function openSettingsWikipediaTab() {
   }
 }
 window.openSettingsWikipediaTab = openSettingsWikipediaTab;
+
+export const LAYOUT_DEFINITIONS = {
+  columns: {
+    containerId: "layout-columns-list",
+    stateKey: "columnOrder",
+    defaultList: ["col-today", "col-week", "col-tasks"],
+    items: {
+      "col-today": {
+        titleKey: "col-today",
+        icon: `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>`
+      },
+      "col-week": {
+        titleKey: "col-week",
+        icon: `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line><path d="M8 14h.01"></path><path d="M12 14h.01"></path><path d="M16 14h.01"></path><path d="M8 18h.01"></path><path d="M12 18h.01"></path><path d="M16 18h.01"></path></svg>`
+      },
+      "col-tasks": {
+        titleKey: "col-tasks",
+        icon: `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect></svg>`
+      }
+    }
+  },
+  todayCards: {
+    containerId: "layout-today-cards-list",
+    stateKey: "todayCardOrder",
+    defaultList: ["today-events-card", "gmail-card", "gtasks-today"],
+    items: {
+      "today-events-card": {
+        titleKey: "calendar-events",
+        icon: `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>`
+      },
+      "gmail-card": {
+        titleKey: "urgent-emails",
+        icon: `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>`
+      },
+      "gtasks-today": {
+        titleKey: "layout-card-gtasks-today",
+        icon: `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"></path><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>`
+      }
+    }
+  },
+  weekCards: {
+    containerId: "layout-week-cards-list",
+    stateKey: "weekCardOrder",
+    defaultList: ["weekly-events-card", "gtasks-week"],
+    items: {
+      "weekly-events-card": {
+        titleKey: "layout-card-events-week",
+        icon: `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line><path d="M8 14h.01"></path><path d="M12 14h.01"></path><path d="M16 14h.01"></path><path d="M8 18h.01"></path><path d="M12 18h.01"></path><path d="M16 18h.01"></path></svg>`
+      },
+      "gtasks-week": {
+        titleKey: "layout-card-gtasks-week",
+        icon: `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"></path><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>`
+      }
+    }
+  },
+  workSections: {
+    containerId: "layout-work-cards-list",
+    stateKey: "workCardOrder",
+    defaultList: ["work-section", "countdown-section", "tasks-section"],
+    items: {
+      "work-section": {
+        titleKey: "col-work",
+        icon: `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>`
+      },
+      "countdown-section": {
+        titleKey: "col-countdowns",
+        icon: `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>`
+      },
+      "tasks-section": {
+        titleKey: "tasks-card-title",
+        icon: `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"></path><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>`
+      }
+    }
+  },
+  workSubCards: {
+    containerId: "layout-work-subcards-list",
+    stateKey: "workSubCardOrder",
+    defaultList: ["prs-card", "jira-card"],
+    items: {
+      "prs-card": {
+        titleKey: "pending-prs",
+        icon: `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="18" r="3"></circle><circle cx="6" cy="6" r="3"></circle><path d="M13 6h3a2 2 0 0 1 2 2v7"></path><line x1="6" y1="9" x2="6" y2="21"></line></svg>`
+      },
+      "jira-card": {
+        titleKey: "jira-tasks",
+        icon: `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><line x1="9" y1="9" x2="9" y2="15"></line><line x1="15" y1="9" x2="15" y2="15"></line></svg>`
+      }
+    }
+  }
+};
+
+export function applyDashboardLayoutOrder(st = state) {
+  if (!st || !st.settings) return;
+  const settings = st.settings;
+
+  // 1. Column Order
+  const colOrder = Array.isArray(settings.columnOrder) && settings.columnOrder.length
+    ? settings.columnOrder
+    : ["col-today", "col-week", "col-tasks"];
+  colOrder.forEach((id, idx) => {
+    const el = document.getElementById(id);
+    if (el) el.style.order = idx;
+  });
+
+  // 2. Today Cards Order
+  const todayOrder = Array.isArray(settings.todayCardOrder) && settings.todayCardOrder.length
+    ? settings.todayCardOrder
+    : ["today-events-card", "gmail-card", "gtasks-today"];
+  todayOrder.forEach((id, idx) => {
+    const el = document.getElementById(id);
+    if (el) el.style.order = idx;
+  });
+
+  // 3. This Week Cards Order
+  const weekOrder = Array.isArray(settings.weekCardOrder) && settings.weekCardOrder.length
+    ? settings.weekCardOrder
+    : ["weekly-events-card", "gtasks-week"];
+  weekOrder.forEach((id, idx) => {
+    const el = document.getElementById(id);
+    if (el) el.style.order = idx;
+  });
+
+  // 4. Work & Tasks Sections Order
+  const workOrder = Array.isArray(settings.workCardOrder) && settings.workCardOrder.length
+    ? settings.workCardOrder
+    : ["work-section", "countdown-section", "tasks-section"];
+  workOrder.forEach((id, idx) => {
+    const el = document.getElementById(id);
+    if (el) el.style.order = idx;
+  });
+
+  // 5. Work Sub-cards (PRs & Jira)
+  const workSubOrder = Array.isArray(settings.workSubCardOrder) && settings.workSubCardOrder.length
+    ? settings.workSubCardOrder
+    : ["prs-card", "jira-card"];
+  workSubOrder.forEach((id, idx) => {
+    const el = document.getElementById(id);
+    if (el) el.style.order = idx;
+  });
+}
+
+function getDragAfterElement(container, y) {
+  const draggableElements = [...container.querySelectorAll('.layout-order-item:not(.dragging)')];
+  return draggableElements.reduce((closest, child) => {
+    const box = child.getBoundingClientRect();
+    const offset = y - box.top - box.height / 2;
+    if (offset < 0 && offset > closest.offset) {
+      return { offset: offset, element: child };
+    } else {
+      return closest;
+    }
+  }, { offset: Number.NEGATIVE_INFINITY }).element;
+}
+
+export function renderLayoutSettings(st = state) {
+  if (!st || !st.settings) return;
+
+  Object.keys(LAYOUT_DEFINITIONS).forEach(groupKey => {
+    const group = LAYOUT_DEFINITIONS[groupKey];
+    const container = document.getElementById(group.containerId);
+    if (!container) return;
+
+    let currentList = st.settings[group.stateKey];
+    if (!Array.isArray(currentList) || !currentList.length) {
+      currentList = [...group.defaultList];
+      st.settings[group.stateKey] = currentList;
+    } else {
+      // Ensure any new default cards are included
+      group.defaultList.forEach(itemId => {
+        if (!currentList.includes(itemId)) currentList.push(itemId);
+      });
+      st.settings[group.stateKey] = currentList;
+    }
+
+    container.innerHTML = "";
+
+    // Container dragover handler
+    container.ondragover = (e) => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = "move";
+      const draggingEl = container.querySelector(".dragging");
+      if (!draggingEl) return;
+      const afterElement = getDragAfterElement(container, e.clientY);
+      if (afterElement == null) {
+        container.appendChild(draggingEl);
+      } else {
+        container.insertBefore(draggingEl, afterElement);
+      }
+    };
+
+    currentList.forEach((itemId, index) => {
+      const itemMeta = group.items[itemId];
+      if (!itemMeta) return;
+
+      const itemEl = document.createElement("div");
+      itemEl.className = "layout-order-item";
+      itemEl.setAttribute("data-id", itemId);
+      itemEl.setAttribute("draggable", "true");
+
+      const title = t(itemMeta.titleKey);
+
+      itemEl.innerHTML = `
+        <div class="layout-item-info">
+          <span class="layout-item-icon">${itemMeta.icon}</span>
+          <span class="layout-item-title">${title}</span>
+          <span class="layout-item-badge">#${index + 1}</span>
+        </div>
+        <span class="layout-drag-handle" title="Arrastrar para ordenar" aria-label="Drag to reorder">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="9" cy="5" r="1.2" fill="currentColor"></circle>
+            <circle cx="15" cy="5" r="1.2" fill="currentColor"></circle>
+            <circle cx="9" cy="12" r="1.2" fill="currentColor"></circle>
+            <circle cx="15" cy="12" r="1.2" fill="currentColor"></circle>
+            <circle cx="9" cy="19" r="1.2" fill="currentColor"></circle>
+            <circle cx="15" cy="19" r="1.2" fill="currentColor"></circle>
+          </svg>
+        </span>
+      `;
+
+      // HTML5 Drag & Drop handlers
+      itemEl.addEventListener("dragstart", (e) => {
+        itemEl.classList.add("dragging");
+        e.dataTransfer.effectAllowed = "move";
+        e.dataTransfer.setData("text/plain", itemId);
+      });
+
+      itemEl.addEventListener("dragend", async () => {
+        itemEl.classList.remove("dragging");
+        const newOrder = Array.from(container.querySelectorAll(".layout-order-item")).map(el => el.getAttribute("data-id"));
+        st.settings[group.stateKey] = newOrder;
+        applyDashboardLayoutOrder(st);
+        renderLayoutSettings(st);
+        await saveSettings(st);
+      });
+
+      // Touch Drag & Drop for Mobile
+      itemEl.addEventListener("touchstart", (e) => {
+        itemEl.classList.add("dragging");
+      }, { passive: true });
+
+      itemEl.addEventListener("touchmove", (e) => {
+        if (!itemEl.classList.contains("dragging")) return;
+        const touch = e.touches[0];
+        if (!touch) return;
+        const afterElement = getDragAfterElement(container, touch.clientY);
+        if (afterElement == null) {
+          container.appendChild(itemEl);
+        } else {
+          container.insertBefore(itemEl, afterElement);
+        }
+      }, { passive: true });
+
+      itemEl.addEventListener("touchend", async () => {
+        if (!itemEl.classList.contains("dragging")) return;
+        itemEl.classList.remove("dragging");
+        const newOrder = Array.from(container.querySelectorAll(".layout-order-item")).map(el => el.getAttribute("data-id"));
+        st.settings[group.stateKey] = newOrder;
+        applyDashboardLayoutOrder(st);
+        renderLayoutSettings(st);
+        await saveSettings(st);
+      });
+
+      container.appendChild(itemEl);
+    });
+  });
+}
+

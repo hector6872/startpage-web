@@ -228,23 +228,29 @@ export function updateOrganizerVisibility() {
   const jiraCard = document.getElementById('jira-card');
   const workTitle = document.getElementById('work-section-title');
   const workContent = document.getElementById('work-section-content');
+  const workSection = document.getElementById('work-section');
 
   if (prsCard) prsCard.classList.toggle('hidden', !showGit);
   if (jiraCard) jiraCard.classList.toggle('hidden', !showJira);
   if (workTitle) workTitle.classList.toggle('hidden', !showWork);
   if (workContent) workContent.classList.toggle('hidden', !showWork);
+  if (workSection) workSection.classList.toggle('hidden', !showWork);
 
   const countdownHeader = document.getElementById('countdown-section-header');
   const countdownCard = document.querySelector('.countdown-wrapper');
+  const countdownSection = document.getElementById('countdown-section');
   if (countdownHeader) countdownHeader.classList.toggle('hidden', !showCountdowns);
   if (countdownCard) countdownCard.classList.toggle('hidden', !showCountdowns);
+  if (countdownSection) countdownSection.classList.toggle('hidden', !showCountdowns);
 
   const tasksHeader = document.getElementById('tasks-section-header');
   const mainTasksCard = document.getElementById('main-tasks-card');
   const focusCard = document.getElementById('todo-focus-card');
+  const tasksSection = document.getElementById('tasks-section');
   
   if (tasksHeader) tasksHeader.classList.toggle('hidden', !showTasks);
   if (mainTasksCard) mainTasksCard.classList.toggle('hidden', !showTasks);
+  if (tasksSection) tasksSection.classList.toggle('hidden', !showTasks);
   if (focusCard) {
     if (!showTasks) {
       focusCard.classList.add('hidden');
@@ -259,14 +265,6 @@ export function updateOrganizerVisibility() {
   const colTasksHidden = !showCountdowns && !showTasks && !showWork;
   if (colTasks) {
     colTasks.classList.toggle('hidden', colTasksHidden);
-
-    const allSectionHeaders = colTasks.querySelectorAll('.section-header');
-    allSectionHeaders.forEach(sh => sh.style.marginTop = '');
-
-    const firstVisibleHeader = colTasks.querySelector('.col-title:not(.hidden), .section-header:not(.hidden)');
-    if (firstVisibleHeader && firstVisibleHeader.classList.contains('section-header')) {
-      firstVisibleHeader.style.marginTop = '0';
-    }
   }
   if (dashboardGrid) {
     dashboardGrid.classList.toggle('two-cols', colTasksHidden);

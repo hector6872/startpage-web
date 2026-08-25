@@ -2804,9 +2804,9 @@ html.dark .countdown-badge-past {
 .section-header {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
+  align-items: center;
   width: 100%;
-  margin-top: 1.4rem;
+  margin-top: 0;
 }
 
 .section-header .col-title {
@@ -3282,4 +3282,123 @@ html.dark .integration-item.recurring {
 .countdown-item.far-future:hover {
   opacity: 1;
 }
+
+/* ==========================================================================
+   Layout Order Customization (Settings & Dashboard)
+   ========================================================================== */
+#col-tasks {
+  gap: 2rem;
+}
+
+.task-col-section {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.layout-section-header {
+  margin-bottom: 0.75rem;
+}
+
+.layout-section-title {
+  font-family: var(--font-title);
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 0.2rem;
+}
+
+.layout-section-desc {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  line-height: 1.35;
+}
+
+.layout-order-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.layout-order-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: rgba(0, 0, 0, 0.02);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  padding: 0.7rem 0.9rem;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, background-color 0.2s ease, opacity 0.15s ease;
+  user-select: none;
+  cursor: grab;
+  touch-action: none;
+}
+
+html.dark .layout-order-item {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.layout-order-item:hover {
+  border-color: var(--accent);
+  background: var(--accent-bg);
+}
+
+.layout-order-item.dragging {
+  opacity: 0.35;
+  border: 1.5px dashed var(--accent);
+  background: var(--accent-bg);
+  cursor: grabbing;
+}
+
+.layout-order-item.drag-over {
+  border-color: var(--accent);
+  transform: scale(1.01);
+  box-shadow: var(--shadow-sm);
+}
+
+.layout-item-info {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  font-size: 0.88rem;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.layout-item-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent);
+}
+
+.layout-item-badge {
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 0.15rem 0.45rem;
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.05);
+  color: var(--text-secondary);
+}
+
+html.dark .layout-item-badge {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.layout-drag-handle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-tertiary);
+  cursor: grab;
+  padding: 0.2rem;
+  border-radius: 4px;
+  transition: color 0.15s ease;
+}
+
+.layout-order-item:hover .layout-drag-handle {
+  color: var(--accent);
+}
+
+
 

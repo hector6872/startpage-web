@@ -672,6 +672,10 @@ export async function fetchGoogleTasks() {
         const colContent = document.querySelector('#col-today .col-content');
         if (colContent) colContent.appendChild(gTodayCard);
       }
+      if (googleContext.state?.settings?.todayCardOrder) {
+        const idx = googleContext.state.settings.todayCardOrder.indexOf('gtasks-today');
+        if (idx !== -1) gTodayCard.style.order = idx;
+      }
       gTodayCard.innerHTML = `
         <h3 class="card-subtitle">
           <span style="display: inline-flex; align-items: center; gap: 0.4rem;">
@@ -727,6 +731,10 @@ export async function fetchGoogleTasks() {
         gWeekCard.className = 'section-card';
         const colContent = document.querySelector('#col-week .col-content');
         if (colContent) colContent.appendChild(gWeekCard);
+      }
+      if (googleContext.state?.settings?.weekCardOrder) {
+        const idx = googleContext.state.settings.weekCardOrder.indexOf('gtasks-week');
+        if (idx !== -1) gWeekCard.style.order = idx;
       }
       gWeekCard.innerHTML = `
         <h3 class="card-subtitle">

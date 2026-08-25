@@ -55,6 +55,11 @@ export let state = {
     hideGitlabOoo: false,
     gitlabHost: "https://gitlab.com",
     gitlabToken: "",
-    gitlabUsername: ""
+    gitlabUsername: "",
+    columnOrder: ["col-today", "col-week", "col-tasks"],
+    todayCardOrder: ["today-events-card", "gmail-card", "gtasks-today"],
+    weekCardOrder: ["weekly-events-card", "gtasks-week"],
+    workCardOrder: ["work-section", "countdown-section", "tasks-section"],
+    workSubCardOrder: ["prs-card", "jira-card"]
   }
 };

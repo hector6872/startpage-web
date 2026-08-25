@@ -10,7 +10,7 @@ import { applyTheme } from "./ui/theme.js";
 import { renderTodos } from "./ui/todos.js";
 import { renderCountdowns } from "./ui/events.js";
 import { updateTimeAndGreeting, updateNotesBadge, updateOrganizerVisibility, updateOooBadges } from "./ui/shortcuts.js";
-import { translatePage, setupEventListeners } from "./ui/settings.js";
+import { translatePage, setupEventListeners, applyDashboardLayoutOrder } from "./ui/settings.js";
 
 // -------------------------------------------------------------
 // APP INITIALIZATION
@@ -31,6 +31,7 @@ async function init() {
   // Load state and apply visual theme & language
   await loadState(state);
   applyTheme(state);
+  applyDashboardLayoutOrder(state);
   translatePage();
   updateTimeAndGreeting();
   updateOooBadges();
