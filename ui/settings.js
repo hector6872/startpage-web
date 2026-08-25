@@ -518,7 +518,8 @@ export function setupEventListeners() {
   if (weatherWidgetEl) {
     weatherWidgetEl.addEventListener('click', (e) => {
       e.stopPropagation();
-      if (!state.settings.city && !state.settings.weatherUrl) {
+      const city = state.settings.city ? state.settings.city.trim() : '';
+      if (!city) {
         document.getElementById('settings-toggle').click();
         const generalTab = document.querySelector('.tab-btn[data-tab="tab-general"]');
         if (generalTab) generalTab.click();
@@ -531,11 +532,8 @@ export function setupEventListeners() {
       if (state.settings.weatherUrl && state.settings.weatherUrl.trim()) {
         targetUrl = ensureHttpUrl(state.settings.weatherUrl);
       } else {
-        const city = state.settings.city ? state.settings.city.trim() : '';
         const langQuery = state.lang === 'es' ? 'tiempo' : 'weather';
-        if (city) {
-          targetUrl = `https://www.google.com/search?q=${encodeURIComponent(langQuery + ' ' + city)}`;
-        }
+        targetUrl = `https://www.google.com/search?q=${encodeURIComponent(langQuery + ' ' + city)}`;
       }
       if (targetUrl) {
         window.open(targetUrl, '_blank', 'noopener,noreferrer');
