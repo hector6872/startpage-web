@@ -15,6 +15,8 @@ export let state = {
   bitbucketError: "",
   gitlabStatus: "disconnected",
   gitlabError: "",
+  jiraStatus: "disconnected",
+  jiraError: "",
   settings: {
     lang: "en",
     theme: "system",
@@ -24,6 +26,9 @@ export let state = {
     worldClockTz: "",
     worldClockLabel: "",
     worldClockUrl: "",
+    jiraHost: "",
+    jiraEmail: "",
+    jiraToken: "",
     notes: "",
     financeUrl: "",
     timerUrl: "",

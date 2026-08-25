@@ -2,7 +2,6 @@ import { state } from "../utils/state.js";
 import { translations } from "../locales/index.js";
 import { safeFetch, escapeHtml } from "../utils/helpers.js";
 import { saveSettings } from "./storage.js";
-import { fetchJira } from "./jira.js";
 import { translatePage } from "../ui/settings.js";
 
 // Update Git status indicators (dots)
@@ -78,16 +77,6 @@ export function updateGitStatusIndicators(appState = state, escapeHtmlFn = escap
   if (setDotGl) {
     setDotGl.className = `status-dot ${glSettingsClass}`;
     setDotGl.title = glTooltip;
-  }
-
-  const jiraStatus = appState.jiraStatus || (appState.jiraToken ? 'connected' : 'disconnected');
-  const jiraSettingsClass = jiraStatus === 'connected' ? 'connected' : (jiraStatus === 'error' ? 'error' : 'disconnected');
-  const setDotJira = document.getElementById('settings-jira-dot');
-  if (setDotJira) {
-    setDotJira.className = `status-dot ${jiraSettingsClass}`;
-    setDotJira.title = jiraStatus === 'connected' 
-      ? `Jira: ${dict['git-connected'] || 'Connected'}` 
-      : (jiraStatus === 'error' ? (appState.jiraError || 'Error') : `Jira: ${dict['git-disconnected'] || 'Disconnected'}`);
   }
 }
 
@@ -202,42 +191,6 @@ export async function testGitConnection(provider, button) {
       } else {
         throw new Error(`${res.status} ${res.statusText}`);
       }
-    } else if (provider === 'jira') {
-      let host = document.getElementById('jira-host').value.trim().replace(/\/$/, "");
-      if (host && !host.startsWith('http://') && !host.startsWith('https://')) {
-        host = 'https://' + host;
-      }
-      host = host.replace(/\/jira\/?$/, '').replace(/\/secure.*$/, '');
-      const email = document.getElementById('jira-email').value.trim();
-      const token = document.getElementById('jira-token').value.trim();
-      if (!host || !email || !token) {
-        throw new Error(dict['git-fill-fields'] || 'Fill all fields');
-      }
-
-      const auth = btoa(`${email}:${token}`);
-      let res = await safeFetch(`${host}/rest/api/3/myself`, {
-        headers: {
-          'Authorization': `Basic ${auth}`,
-          'Accept': 'application/json'
-        }
-      });
-      if (!res.ok) {
-        res = await safeFetch(`${host}/rest/api/2/myself`, {
-          headers: {
-            'Authorization': `Basic ${auth}`,
-            'Accept': 'application/json'
-          }
-        });
-      }
-      if (res.ok) {
-        success = true;
-        state.settings.jiraHost = host;
-        state.settings.jiraEmail = email;
-        state.settings.jiraToken = token;
-        await saveSettings(state);
-      } else {
-        throw new Error(`${res.status} ${res.statusText}`);
-      }
     }
   } catch (e) {
     errorMsg = e.message || String(e);
@@ -248,12 +201,10 @@ export async function testGitConnection(provider, button) {
     if (provider === 'github') { state.githubStatus = 'connected'; state.githubError = ''; }
     if (provider === 'bitbucket') { state.bitbucketStatus = 'connected'; state.bitbucketError = ''; }
     if (provider === 'gitlab') { state.gitlabStatus = 'connected'; state.gitlabError = ''; }
-    if (provider === 'jira') { state.jiraStatus = 'connected'; state.jiraError = ''; }
   } else {
     if (provider === 'github') { state.githubStatus = 'error'; state.githubError = errorMsg; }
     if (provider === 'bitbucket') { state.bitbucketStatus = 'error'; state.bitbucketError = errorMsg; }
     if (provider === 'gitlab') { state.gitlabStatus = 'error'; state.gitlabError = errorMsg; }
-    if (provider === 'jira') { state.jiraStatus = 'error'; state.jiraError = errorMsg; }
   }
 
   // Update Settings dot status and tooltips reactively
@@ -269,11 +220,7 @@ export async function testGitConnection(provider, button) {
     startTestCooldown(provider, button);
     
     // Refresh main list
-    if (provider === 'jira') {
-      fetchJira(state, safeFetch, escapeHtml);
-    } else {
-      fetchAllPRs(state, safeFetch, escapeHtml);
-    }
+    fetchAllPRs(state, safeFetch, escapeHtml);
   } else {
     button.textContent = dict['btn-failed'] || 'Failed';
     button.style.backgroundColor = 'rgba(235, 87, 87, 0.1)';
@@ -290,11 +237,7 @@ export async function testGitConnection(provider, button) {
       if (originalTexti18n) button.setAttribute('data-i18n', originalTexti18n);
     }, 3000);
     
-    if (provider === 'jira') {
-      fetchJira(state, safeFetch, escapeHtml);
-    } else {
-      fetchAllPRs(state, safeFetch, escapeHtml);
-    }
+    fetchAllPRs(state, safeFetch, escapeHtml);
   }
 }
 

@@ -825,10 +825,16 @@ html.dark .card-action-btn:hover {
   box-shadow: 0 0 6px var(--work-color);
 }
 
-.status-dot.disconnected, .status-dot.error {
+.status-dot.disconnected {
   background: var(--text-tertiary);
   opacity: 0.35;
   box-shadow: none;
+}
+
+.status-dot.error {
+  background: #eb5757;
+  box-shadow: 0 0 6px rgba(235, 87, 87, 0.6);
+  opacity: 1;
 }
 
 .status-dot.github {

@@ -6,8 +6,8 @@ import { renderTodos, addTodo, updateTodo, showClearCompletedConfirmation, confi
 import { renderCountdowns, updateUpcomingEventBanner, addCountdown, renderSettingsEventsList } from "./events.js";
 import { loadWeather } from "../services/weather.js";
 import { loadWikipediaContent } from "../services/wikipedia.js";
-import { fetchAllPRs, testGitConnection } from "../services/git.js";
-import { fetchJira } from "../services/jira.js";
+import { fetchAllPRs, testGitConnection, updateGitStatusIndicators } from "../services/git.js";
+import { fetchJira, testJiraConnection, updateJiraStatusIndicators } from "../services/jira.js";
 import { initGoogleOAuth, updateGoogleAuthStatus, getGoogleTokenClient, setGoogleLoginTarget, fetchGoogleData, fetchGoogleCalendar, fetchGmail, fetchGoogleTasks } from "../services/google.js";
 import { saveSettings, saveTodos, writeDataToFile, readDataFromFile, exportStateToFile, saveFileHandle, setFileHandle, fileHandle, mergeSettingsWithLocalSecrets, clearFileHandle } from "../services/storage.js";
 import { openModalAccessible, trapFocusInDialog, showInputErrorFeedback, ensureHttpUrl } from "../utils/helpers.js";
@@ -261,7 +261,11 @@ export function setupEventListeners() {
   testConnButtons.forEach(btn => {
     btn.addEventListener('click', async () => {
       const provider = btn.getAttribute('data-provider');
-      await testGitConnection(provider, btn);
+      if (provider === 'jira') {
+        await testJiraConnection(btn);
+      } else {
+        await testGitConnection(provider, btn);
+      }
     });
   });
 
@@ -940,6 +944,8 @@ export function setupEventListeners() {
     }
 
     renderSettingsEventsList();
+    updateGitStatusIndicators(state);
+    updateJiraStatusIndicators(state);
     openModalAccessible(settingsModal, document.querySelector('.settings-tabs .tab-btn.active'));
   });
 
@@ -1557,6 +1563,18 @@ export function openSettingsGitTab() {
   }
 }
 window.openSettingsGitTab = openSettingsGitTab;
+
+export function openSettingsJiraTab() {
+  const toggle = document.getElementById("settings-toggle");
+  if (toggle) {
+    toggle.click();
+    setTimeout(() => {
+      const jiraBtn = document.querySelector('.tab-btn[data-tab="tab-jira"]');
+      if (jiraBtn) jiraBtn.click();
+    }, 50);
+  }
+}
+window.openSettingsJiraTab = openSettingsJiraTab;
 
 export function openSettingsWikipediaTab() {
   const toggle = document.getElementById("settings-toggle");

@@ -68,13 +68,18 @@ export async function safeFetch(url, options = {}) {
     const proxyUrl = `/api/proxy?url=${encodeURIComponent(url)}`;
     try {
       const res = await fetch(proxyUrl, options);
-      const contentType = res.headers.get("content-type") || "";
-      if (res.status !== 404 || contentType.includes("application/json")) {
+      const contentType = (res.headers.get("content-type") || "").toLowerCase();
+      // If Cloudflare proxy is active, it returns the real status and content-type from Jira/Google
+      if (contentType.includes("application/json") || contentType.includes("application/problem+json")) {
         return res;
       }
-      return await fetch(url, options);
+      // If local dev server returned an HTML fallback for /api/proxy (404 or SPA rewrite 200), try direct fetch
+      if (res.status === 404 || contentType.includes("text/html")) {
+        return await fetch(url, options);
+      }
+      return res;
     } catch (e) {
-      return fetch(url, options);
+      return await fetch(url, options);
     }
   }
 

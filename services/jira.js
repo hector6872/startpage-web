@@ -1,11 +1,187 @@
-import { state as defaultState } from "../utils/state.js";
-import { safeFetch as defaultSafeFetch, escapeHtml as defaultEscapeHtml } from "../utils/helpers.js";
+import { state as defaultState, state } from "../utils/state.js";
+import { safeFetch as defaultSafeFetch, escapeHtml as defaultEscapeHtml, safeFetch, escapeHtml } from "../utils/helpers.js";
 import { translations } from "../locales/index.js";
+import { saveSettings } from "./storage.js";
+import { translatePage } from "../ui/settings.js";
 
 // General helper to encode Jira Basic Auth
 export function getJiraAuthHeader(settings) {
   if (!settings || !settings.jiraEmail || !settings.jiraToken) return null;
   return "Basic " + btoa(`${settings.jiraEmail}:${settings.jiraToken}`);
+}
+
+// Cooldown tracker for successful Jira connection tests (60 seconds)
+function startJiraTestCooldown(button) {
+  let remaining = 60;
+  button.disabled = true;
+
+  const dict = translations[state.lang] || translations.en;
+  const originalText = dict['btn-connect'] || 'Connect';
+  
+  const interval = setInterval(() => {
+    remaining--;
+    if (remaining <= 0) {
+      clearInterval(interval);
+      button.disabled = false;
+      button.textContent = originalText;
+      button.setAttribute('data-i18n', 'btn-connect');
+      if (typeof translatePage === 'function') translatePage();
+    } else {
+      button.textContent = `${originalText} (${remaining}s)`;
+    }
+  }, 1000);
+  
+  button.dataset.cooldownInterval = interval;
+}
+
+// Test Jira connection validator
+export async function testJiraConnection(button) {
+  const dict = translations[state.lang] || translations.en;
+  const originalText = dict['btn-connect'] || 'Connect';
+  button.textContent = dict['btn-connecting'] || 'Connecting...';
+  button.disabled = true;
+
+  let success = false;
+  let errorMsg = '';
+
+  try {
+    let host = document.getElementById('jira-host').value.trim().replace(/\/$/, "");
+    if (host && !host.startsWith('http://') && !host.startsWith('https://')) {
+      host = 'https://' + host;
+    }
+    host = host.replace(/\/jira\/?$/, '').replace(/\/secure.*$/, '');
+    const email = document.getElementById('jira-email').value.trim();
+    const token = document.getElementById('jira-token').value.trim();
+    if (!host || !email || !token) {
+      throw new Error(dict['git-fill-fields'] || 'Fill all fields');
+    }
+
+    const auth = btoa(`${email}:${token}`);
+    let res = await safeFetch(`${host}/rest/api/3/myself`, {
+      headers: {
+        'Authorization': `Basic ${auth}`,
+        'Accept': 'application/json'
+      }
+    });
+
+    if (res.status === 401 || res.status === 403) {
+      throw new Error(`Authentication failed (${res.status} ${res.status === 403 ? 'Forbidden' : 'Unauthorized'})`);
+    }
+
+    // Fallback to /rest/api/2/ only if 404 (Jira Server/Data Center)
+    if (!res.ok && res.status === 404) {
+      res = await safeFetch(`${host}/rest/api/2/myself`, {
+        headers: {
+          'Authorization': `Basic ${auth}`,
+          'Accept': 'application/json'
+        }
+      });
+      if (res.status === 401 || res.status === 403) {
+        throw new Error(`Authentication failed (${res.status} ${res.status === 403 ? 'Forbidden' : 'Unauthorized'})`);
+      }
+    }
+
+    if (!res.ok) {
+      throw new Error(`HTTP ${res.status} ${res.statusText || 'Error'}`);
+    }
+
+    const contentType = (res.headers.get("content-type") || "").toLowerCase();
+    if (contentType.includes("text/html")) {
+      throw new Error("Received HTML login page instead of Jira API response");
+    }
+
+    let userData;
+    try {
+      userData = await res.json();
+    } catch (e) {
+      throw new Error("Invalid JSON response from Jira");
+    }
+
+    if (userData && (userData.accountId || userData.name || userData.emailAddress || userData.displayName || userData.key)) {
+      success = true;
+      state.settings.jiraHost = host;
+      state.settings.jiraEmail = email;
+      state.settings.jiraToken = token;
+      state.jiraStatus = 'connected';
+      state.jiraError = '';
+      await saveSettings(state);
+    } else {
+      throw new Error((userData && userData.errorMessages && userData.errorMessages.join(', ')) || "Invalid Jira credentials or response");
+    }
+  } catch (e) {
+    errorMsg = e.message || String(e);
+    state.jiraStatus = 'error';
+    state.jiraError = errorMsg;
+  }
+
+  // Update Settings dot status and warning icon reactively
+  updateJiraStatusIndicators(state, escapeHtml);
+
+  if (success) {
+    button.textContent = dict['btn-connected'] || 'Connected!';
+    button.style.backgroundColor = 'rgba(39, 174, 96, 0.1)';
+    button.style.color = '#27ae60';
+    button.style.borderColor = '#27ae60';
+    
+    startJiraTestCooldown(button);
+    fetchJira(state, safeFetch, escapeHtml);
+  } else {
+    button.textContent = dict['btn-failed'] || 'Failed';
+    button.style.backgroundColor = 'rgba(235, 87, 87, 0.1)';
+    button.style.color = '#eb5757';
+    button.style.borderColor = '#eb5757';
+    
+    const originalTexti18n = button.getAttribute('data-i18n');
+    setTimeout(() => {
+      button.disabled = false;
+      button.textContent = originalText;
+      button.style.backgroundColor = '';
+      button.style.color = '';
+      button.style.borderColor = '';
+      if (originalTexti18n) button.setAttribute('data-i18n', originalTexti18n);
+    }, 3000);
+    
+    fetchJira(state, safeFetch, escapeHtml);
+  }
+}
+
+// Update Jira status indicators (dots and warning icon)
+export function updateJiraStatusIndicators(state = defaultState, escapeHtml = defaultEscapeHtml) {
+  const dict = translations[state.lang] || translations.en;
+  const isConfigured = !!(state.settings.jiraHost && state.settings.jiraEmail && state.settings.jiraToken);
+  const status = state.jiraStatus || (isConfigured ? 'connected' : 'disconnected');
+  const errorMsg = state.jiraError || '';
+
+  const jiraWarningTooltip = errorMsg ? `Jira Error: ${errorMsg}` : (dict['status-error-connecting'] || 'Failed to connect to some services');
+  const jiraWarningIconHTML = `<span class="status-warning-icon" data-tooltip="${escapeHtml(jiraWarningTooltip)}" onclick="event.stopPropagation(); window.openSettingsJiraTab();">⚠️</span>`;
+
+  let tooltip = 'Jira: ';
+  if (status === 'disconnected') {
+    tooltip += dict['git-disconnected'] || 'Disconnected';
+  } else if (status === 'connected') {
+    tooltip += dict['git-connected'] || 'Connected';
+  } else {
+    tooltip += (dict['git-error-prefix'] || 'Error: ') + errorMsg;
+  }
+
+  const dotClass = status === 'connected' ? 'connected' : (status === 'error' ? 'error' : 'disconnected');
+
+  // Header status indicator in dashboard
+  const ind = document.getElementById('jira-status-indicators');
+  if (ind) {
+    if (status === 'error' || errorMsg) {
+      ind.innerHTML = jiraWarningIconHTML;
+    } else {
+      ind.innerHTML = '';
+    }
+  }
+
+  // Dot indicator in Settings modal
+  const setDot = document.getElementById('settings-jira-dot');
+  if (setDot) {
+    setDot.className = `status-dot ${dotClass}`;
+    setDot.title = tooltip;
+  }
 }
 
 // Fetch Jira Tasks
@@ -26,6 +202,9 @@ export async function fetchJira(state = defaultState, safeFetch = defaultSafeFet
   host = host.replace(/\/jira\/?$/, "").replace(/\/secure.*$/, "");
 
   if (!host || !state.settings.jiraEmail || !state.settings.jiraToken) {
+    state.jiraStatus = 'disconnected';
+    state.jiraError = '';
+    updateJiraStatusIndicators(state, escapeHtml);
     container.innerHTML = `<p class="empty-msg">${translations[state.lang]["status-unconfigured"]}</p>`;
     return;
   }
@@ -43,8 +222,13 @@ export async function fetchJira(state = defaultState, safeFetch = defaultSafeFet
       headers: authHeaders
     });
 
+    // If authentication error, abort immediately - do not loop retry
+    if (response.status === 401 || response.status === 403) {
+      throw new Error(`Authentication failed (${response.status} ${response.status === 403 ? 'Forbidden' : 'Unauthorized'})`);
+    }
+
     // 2. Standard Jira Cloud POST /rest/api/3/search
-    if (!response.ok) {
+    if (!response.ok && response.status !== 401 && response.status !== 403) {
       response = await safeFetch(`${host}/rest/api/3/search`, {
         method: "POST",
         headers: {
@@ -57,59 +241,52 @@ export async function fetchJira(state = defaultState, safeFetch = defaultSafeFet
           fields: ["summary", "status", "priority", "updated"]
         })
       });
+      if (response.status === 401 || response.status === 403) {
+        throw new Error(`Authentication failed (${response.status} ${response.status === 403 ? 'Forbidden' : 'Unauthorized'})`);
+      }
     }
 
-    // 3. Jira Server / DC GET /rest/api/2/search
-    if (!response.ok) {
+    // 3. Jira Server / DC GET /rest/api/2/search (only if 404)
+    if (!response.ok && response.status === 404) {
       response = await safeFetch(`${host}/rest/api/2/search?jql=${encodeURIComponent(jql)}&maxResults=50&fields=${fieldsParam}`, {
         headers: authHeaders
       });
-    }
-
-    // 4. Jira Server / DC POST /rest/api/2/search
-    if (!response.ok) {
-      response = await safeFetch(`${host}/rest/api/2/search`, {
-        method: "POST",
-        headers: {
-          ...authHeaders,
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          jql: jql,
-          maxResults: 50,
-          fields: ["summary", "status", "priority", "updated"]
-        })
-      });
-    }
-
-    // 5. Alternate Jira Cloud /rest/api/3/search/jql
-    if (!response.ok) {
-      response = await safeFetch(`${host}/rest/api/3/search/jql?jql=${encodeURIComponent(jql)}&maxResults=50&fields=${fieldsParam}`, {
-        headers: authHeaders
-      });
-    }
-
-    // 6. Simplified JQL fallback if statusCategory is not supported
-    if (!response.ok) {
-      const simpleJql = "assignee = currentUser() ORDER BY updated DESC";
-      response = await safeFetch(`${host}/rest/api/3/search?jql=${encodeURIComponent(simpleJql)}&maxResults=50&fields=${fieldsParam}`, {
-        headers: authHeaders
-      });
-      if (!response.ok) {
-        response = await safeFetch(`${host}/rest/api/2/search?jql=${encodeURIComponent(simpleJql)}&maxResults=50&fields=${fieldsParam}`, {
-          headers: authHeaders
-        });
+      if (response.status === 401 || response.status === 403) {
+        throw new Error(`Authentication failed (${response.status} ${response.status === 403 ? 'Forbidden' : 'Unauthorized'})`);
       }
     }
 
     if (!response.ok) {
-      const errBody = await response.text().catch(() => "");
-      console.error("Jira API Error Response:", response.status, errBody);
-      throw new Error(`HTTP ${response.status}`);
+      throw new Error(`HTTP ${response.status} ${response.statusText || 'Error'}`);
     }
 
-    const data = await response.json();
-    const totalCount = typeof data.total === "number" ? data.total : (data.issues ? data.issues.length : 0);
+    const contentType = (response.headers.get("content-type") || "").toLowerCase();
+    if (contentType.includes("text/html")) {
+      throw new Error("Received HTML login page instead of Jira API response");
+    }
+
+    let data;
+    try {
+      data = await response.json();
+    } catch (e) {
+      throw new Error("Invalid JSON response from Jira");
+    }
+
+    if (data.errorMessages && data.errorMessages.length > 0) {
+      throw new Error(data.errorMessages.join(", "));
+    }
+    if (data.errors && Object.keys(data.errors).length > 0) {
+      throw new Error(Object.values(data.errors).join(", "));
+    }
+    if (!Array.isArray(data.issues)) {
+      throw new Error("Invalid Jira response (no issues list)");
+    }
+
+    const totalCount = typeof data.total === "number" ? data.total : data.issues.length;
+
+    state.jiraStatus = 'connected';
+    state.jiraError = '';
+    updateJiraStatusIndicators(state, escapeHtml);
 
     if (jiraBadge) {
       if (data.issues && data.issues.length > 0) {
@@ -187,6 +364,9 @@ export async function fetchJira(state = defaultState, safeFetch = defaultSafeFet
 
   } catch (error) {
     console.error("Jira fetch error:", error);
-    container.innerHTML = `<p class="empty-msg" style="color:var(--danger)">API Error (${error.message || "Error"})` + `</p>`;
+    state.jiraStatus = 'error';
+    state.jiraError = error.message || "Error";
+    updateJiraStatusIndicators(state, escapeHtml);
+    container.innerHTML = `<p class="empty-msg">${translations[state.lang]["no-jira-tasks"] || "No active Jira issues assigned."}</p>`;
   }
 }
