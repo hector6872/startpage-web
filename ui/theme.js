@@ -25,13 +25,66 @@ export const ACCOUNT_COLORS = {
   orange: "#f97316"
 };
 
-export function applyTheme(state) {
+export function applyPrimaryColor(colorName = "blue") {
+  const validColors = ["blue", "indigo", "purple", "pink", "red", "orange", "green", "teal", "slate", "black"];
+  const color = validColors.includes(colorName) ? colorName : "blue";
+  document.documentElement.setAttribute("data-accent", color);
+}
+
+export function applyAccountColors(state = defaultState) {
+  const isDark = document.documentElement.classList.contains("dark");
+  const colorMap = {
+    blue: isDark ? "#60a5fa" : "#1e70e0",
+    indigo: "#6366f1",
+    purple: isDark ? "#a78bfa" : "#7c3aed",
+    pink: "#ec4899",
+    red: "#ef4444",
+    orange: "#f97316",
+    green: "#10b981",
+    teal: "#06b6d4",
+    slate: "#64748b",
+    black: isDark ? "#e4e4e7" : "#18181b"
+  };
+
+  const st = state || defaultState;
+  const personal = st.settings?.personalColor || "blue";
+  const work = st.settings?.workColor || "black";
+
+  document.documentElement.style.setProperty("--personal-color", colorMap[personal] || colorMap.blue);
+  document.documentElement.style.setProperty("--work-color", colorMap[work] || colorMap.black);
+}
+
+export function updateSwatchActiveState(selectedColor) {
+  const swatches = document.querySelectorAll("#color-picker-swatches .color-swatch-btn");
+  swatches.forEach(btn => {
+    if (btn.getAttribute("data-color") === selectedColor) {
+      btn.classList.add("active");
+    } else {
+      btn.classList.remove("active");
+    }
+  });
+}
+
+export function updateAccountSwatchActiveState(containerId, selectedColor) {
+  const swatches = document.querySelectorAll(`#${containerId} .color-swatch-btn`);
+  swatches.forEach(btn => {
+    if (btn.getAttribute("data-color") === selectedColor) {
+      btn.classList.add("active");
+    } else {
+      btn.classList.remove("active");
+    }
+  });
+}
+
+export function applyTheme(state = defaultState) {
+  const st = state || defaultState;
   const html = document.documentElement;
   html.classList.remove("dark", "light");
   
-  if (state.theme === "dark") {
+  const theme = st.theme || st.settings?.theme || "system";
+  if (theme === "dark") {
     html.classList.add("dark");
-  } else if (state.theme === "light") {
+  } else if (theme === "light") {
     html.classList.add("light");
   } else {
     const isSystemDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
@@ -40,34 +93,5 @@ export function applyTheme(state) {
     }
   }
   
-  applyAccountColors(state);
-}
-
-export function applyPrimaryColor(color) {
-  const root = document.documentElement;
-  const hex = ACCENT_COLORS[color] || ACCENT_COLORS.blue;
-  root.style.setProperty("--accent", hex);
-}
-
-export function applyAccountColors(state) {
-  const personal = state.settings.personalColor || "blue";
-  const work = state.settings.workColor || "black";
-  const root = document.documentElement;
-  
-  root.style.setProperty("--google-personal", ACCOUNT_COLORS[personal] || ACCOUNT_COLORS.blue);
-  root.style.setProperty("--google-work", ACCOUNT_COLORS[work] || ACCOUNT_COLORS.black);
-}
-
-export function updateSwatchActiveState(currentColor) {
-  document.querySelectorAll(".color-swatch").forEach(swatch => {
-    swatch.classList.toggle("active", swatch.dataset.color === currentColor);
-  });
-}
-
-export function updateAccountSwatchActiveState(containerId, selectedColor) {
-  const container = document.getElementById(containerId);
-  if (!container) return;
-  container.querySelectorAll(".account-swatch").forEach(swatch => {
-    swatch.classList.toggle("active", swatch.dataset.color === selectedColor);
-  });
+  applyAccountColors(st);
 }

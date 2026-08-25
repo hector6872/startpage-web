@@ -1,5 +1,6 @@
 import { translations } from "../locales/index.js";
 import { applyPrimaryColor, applyTheme } from "../ui/theme.js";
+import { state as defaultState } from "../utils/state.js";
 
 const DB_NAME = "dashboard-db";
 const STORE_NAME = "file-handles";
@@ -99,15 +100,16 @@ export function setFileHandle(handle) {
   fileHandle = handle;
 }
 
-export async function writeDataToFile(state) {
-  if (state.settings.storageMode !== "file" || !fileHandle) return;
+export async function writeDataToFile(state = defaultState) {
+  const st = state || defaultState;
+  if (st.settings.storageMode !== "file" || !fileHandle) return;
   try {
     const hasPermission = await verifyPermission(fileHandle, true);
     if (!hasPermission) return;
     const writable = await fileHandle.createWritable();
     const dataToSave = {
-      todos: state.todos,
-      settings: sanitizeSettingsForSync(state.settings)
+      todos: st.todos,
+      settings: sanitizeSettingsForSync(st.settings)
     };
     await writable.write(JSON.stringify(dataToSave, null, 2));
     await writable.close();
@@ -131,21 +133,24 @@ export async function readDataFromFile() {
   }
 }
 
-export async function saveSettings(state) {
-  localStorage.setItem("dashboard_settings", JSON.stringify(state.settings));
-  localStorage.setItem("theme", state.theme);
-  await writeDataToFile(state);
+export async function saveSettings(state = defaultState) {
+  const st = state || defaultState;
+  localStorage.setItem("dashboard_settings", JSON.stringify(st.settings));
+  localStorage.setItem("theme", st.theme || st.settings?.theme || "system");
+  await writeDataToFile(st);
 }
 
-export async function saveTodos(state) {
-  localStorage.setItem("todos", JSON.stringify(state.todos));
-  await writeDataToFile(state);
+export async function saveTodos(state = defaultState) {
+  const st = state || defaultState;
+  localStorage.setItem("todos", JSON.stringify(st.todos));
+  await writeDataToFile(st);
 }
 
-export function exportStateToFile(state) {
+export function exportStateToFile(state = defaultState) {
+  const st = state || defaultState;
   const dataToSave = {
-    todos: state.todos,
-    settings: sanitizeSettingsForSync(state.settings)
+    todos: st.todos,
+    settings: sanitizeSettingsForSync(st.settings)
   };
   const blob = new Blob([JSON.stringify(dataToSave, null, 2)], { type: "application/json" });
   const url = URL.createObjectURL(blob);
@@ -158,49 +163,51 @@ export function exportStateToFile(state) {
   URL.revokeObjectURL(url);
 }
 
-export async function loadState(state) {
+export async function loadState(state = defaultState) {
+  const st = state || defaultState;
   const storedSettings = localStorage.getItem("dashboard_settings");
   if (storedSettings) {
-    state.settings = { ...state.settings, ...JSON.parse(storedSettings) };
+    st.settings = { ...st.settings, ...JSON.parse(storedSettings) };
   }
-  state.settings.customEvents = state.settings.customEvents || [];
-  state.settings.primaryColor = state.settings.primaryColor || "blue";
-  state.lang = state.settings.lang || "en";
-  state.theme = state.settings.theme || localStorage.getItem("theme") || "system";
+  st.settings.customEvents = st.settings.customEvents || [];
+  st.settings.primaryColor = st.settings.primaryColor || "blue";
+  st.lang = st.settings.lang || "en";
+  st.theme = st.settings.theme || localStorage.getItem("theme") || "system";
 
   // Check OOO expiration
-  if (state.settings.oooActive && state.settings.oooUntil) {
-    const returnTime = new Date(state.settings.oooUntil).getTime();
+  if (st.settings.oooActive && st.settings.oooUntil) {
+    const returnTime = new Date(st.settings.oooUntil).getTime();
     if (Date.now() >= returnTime) {
-      state.settings.oooActive = false;
-      state.settings.oooUntil = null;
-      state.settings.oooReturnDate = "";
-      state.settings.oooReturnTime = "09:00";
-      localStorage.setItem("dashboard_settings", JSON.stringify(state.settings));
+      st.settings.oooActive = false;
+      st.settings.oooUntil = null;
+      st.settings.oooReturnDate = "";
+      st.settings.oooReturnTime = "09:00";
+      localStorage.setItem("dashboard_settings", JSON.stringify(st.settings));
     }
   }
 
   const storedTodos = localStorage.getItem("todos");
   if (storedTodos) {
     try {
-      state.todos = JSON.parse(storedTodos);
-      cleanupOldCompletedTodos(state);
+      st.todos = JSON.parse(storedTodos);
+      cleanupOldCompletedTodos(st);
     } catch (e) {
-      state.todos = [];
+      st.todos = [];
     }
   }
 }
 
-export async function cleanupOldCompletedTodos(state) {
-  if (!state.todos || !Array.isArray(state.todos)) return;
+export async function cleanupOldCompletedTodos(state = defaultState) {
+  const st = state || defaultState;
+  if (!st.todos || !Array.isArray(st.todos)) return;
   const thirtyDaysAgo = Date.now() - (30 * 24 * 60 * 60 * 1000);
-  const originalLength = state.todos.length;
-  state.todos = state.todos.filter(todo => {
+  const originalLength = st.todos.length;
+  st.todos = st.todos.filter(todo => {
     if (!todo.completed) return true;
     if (!todo.completedAt) return true;
     return new Date(todo.completedAt).getTime() >= thirtyDaysAgo;
   });
-  if (state.todos.length !== originalLength) {
-    await saveTodos(state);
+  if (st.todos.length !== originalLength) {
+    await saveTodos(st);
   }
 }

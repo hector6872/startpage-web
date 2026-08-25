@@ -228,22 +228,73 @@ export function updateOrganizerVisibility() {
   if (state.settings.oooActive && state.settings.hideJiraOoo) {
     showJira = false;
   }
-  
+
   let showGit = state.settings.showGit !== false;
-  const hideAllGitOoo = state.settings.hideGithubOoo && state.settings.hideBitbucketOoo && state.settings.hideGitlabOoo;
-  if (state.settings.oooActive && hideAllGitOoo) {
-    showGit = false;
+
+  const showWork = showGit || showJira;
+
+  const prsCard = document.getElementById('prs-card');
+  const jiraCard = document.getElementById('jira-card');
+  const workTitle = document.getElementById('work-section-title');
+  const workContent = document.getElementById('work-section-content');
+
+  if (prsCard) prsCard.classList.toggle('hidden', !showGit);
+  if (jiraCard) jiraCard.classList.toggle('hidden', !showJira);
+  if (workTitle) workTitle.classList.toggle('hidden', !showWork);
+  if (workContent) workContent.classList.toggle('hidden', !showWork);
+
+  const countdownHeader = document.getElementById('countdown-section-header');
+  const countdownCard = document.querySelector('.countdown-wrapper');
+  if (countdownHeader) countdownHeader.classList.toggle('hidden', !showCountdowns);
+  if (countdownCard) countdownCard.classList.toggle('hidden', !showCountdowns);
+
+  const tasksHeader = document.getElementById('tasks-section-header');
+  const mainTasksCard = document.getElementById('main-tasks-card');
+  const focusCard = document.getElementById('todo-focus-card');
+  
+  if (tasksHeader) tasksHeader.classList.toggle('hidden', !showTasks);
+  if (mainTasksCard) mainTasksCard.classList.toggle('hidden', !showTasks);
+  if (focusCard) {
+    if (!showTasks) {
+      focusCard.classList.add('hidden');
+    } else {
+      const focusedTodo = state.todos.find(todo => todo.isFocused && !todo.completed);
+      focusCard.classList.toggle('hidden', !focusedTodo);
+    }
   }
 
-  const tasksSection = document.getElementById("section-tasks");
-  const countdownsSection = document.getElementById("section-countdowns");
-  const jiraSection = document.getElementById("jira-widget");
-  const gitSection = document.getElementById("git-prs-widget");
+  const colTasks = document.getElementById('col-tasks');
+  const dashboardGrid = document.querySelector('.dashboard-grid');
+  const colTasksHidden = !showCountdowns && !showTasks && !showWork;
+  if (colTasks) {
+    colTasks.classList.toggle('hidden', colTasksHidden);
 
-  if (tasksSection) tasksSection.classList.toggle("hidden", !showTasks);
-  if (countdownsSection) countdownsSection.classList.toggle("hidden", !showCountdowns);
-  if (jiraSection) jiraSection.classList.toggle("hidden", !showJira);
-  if (gitSection) gitSection.classList.toggle("hidden", !showGit);
+    const allSectionHeaders = colTasks.querySelectorAll('.section-header');
+    allSectionHeaders.forEach(sh => sh.style.marginTop = '');
+
+    const firstVisibleHeader = colTasks.querySelector('.col-title:not(.hidden), .section-header:not(.hidden)');
+    if (firstVisibleHeader && firstVisibleHeader.classList.contains('section-header')) {
+      firstVisibleHeader.style.marginTop = '0';
+    }
+  }
+  if (dashboardGrid) {
+    dashboardGrid.classList.toggle('two-cols', colTasksHidden);
+  }
+
+  // Update World Clock, Weather, Wikipedia and Gmail widgets visibility
+  updateWorldClock();
+  const weatherWidget = document.getElementById('weather-widget');
+  if (weatherWidget) {
+    weatherWidget.classList.toggle('hidden', state.settings.showWeather === false);
+  }
+  const wikiWidget = document.getElementById('quote-widget');
+  if (wikiWidget) {
+    wikiWidget.classList.toggle('hidden', state.settings.showWikipedia === false);
+  }
+  const gmailCard = document.getElementById('gmail-card');
+  if (gmailCard) {
+    gmailCard.classList.toggle('hidden', state.settings.showGoogleEmails === false);
+  }
 }
 
 export function syncDashboardColumns() {

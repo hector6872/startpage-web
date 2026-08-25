@@ -944,7 +944,8 @@ export function setupEventListeners() {
   if (settingsThemeSelect) {
     settingsThemeSelect.addEventListener('change', (e) => {
       state.theme = e.target.value;
-      applyTheme();
+      state.settings.theme = e.target.value;
+      applyTheme(state);
     });
   }
 
@@ -1212,54 +1213,83 @@ export function setupEventListeners() {
   let autoSaveTimeout = null;
 
   async function autoSaveSettingsForm() {
-    state.settings.lang = document.getElementById('settings-lang').value;
-    state.settings.city = document.getElementById('settings-city').value.trim();
-    state.settings.theme = document.getElementById('settings-theme').value;
+    const langEl = document.getElementById('settings-lang');
+    if (langEl) state.settings.lang = langEl.value;
+    const cityEl = document.getElementById('settings-city');
+    if (cityEl) state.settings.city = cityEl.value.trim();
+    const themeEl = document.getElementById('settings-theme');
+    if (themeEl) {
+      state.settings.theme = themeEl.value;
+      state.theme = state.settings.theme;
+    }
     const colorInput = document.getElementById('settings-primary-color');
     if (colorInput) {
       state.settings.primaryColor = colorInput.value;
       applyPrimaryColor(state.settings.primaryColor);
     }
     
-    state.theme = state.settings.theme;
-    
-    const newStorageMode = document.getElementById('settings-storage-mode').value;
-    if (newStorageMode !== 'file' && state.settings.storageMode === 'file') {
-      setFileHandle(null);
-      await clearFileHandle();
+    const storageModeEl = document.getElementById('settings-storage-mode');
+    if (storageModeEl) {
+      const newStorageMode = storageModeEl.value;
+      if (newStorageMode !== 'file' && state.settings.storageMode === 'file') {
+        setFileHandle(null);
+        await clearFileHandle();
+      }
+      state.settings.storageMode = newStorageMode;
     }
-    state.settings.storageMode = newStorageMode;
     
-    state.settings.googleClientId = document.getElementById('google-client-id').value.trim();
-    state.settings.personalColor = document.getElementById('google-color-personal').value;
-    state.settings.workColor = document.getElementById('google-color-work').value;
-    applyAccountColors();
-    state.settings.githubToken = document.getElementById('github-token').value.trim();
-    state.settings.hideGithubOoo = document.getElementById('settings-github-ooo-hide').checked;
+    const gClientIdEl = document.getElementById('google-client-id');
+    if (gClientIdEl) state.settings.googleClientId = gClientIdEl.value.trim();
+    const gPersColEl = document.getElementById('google-color-personal');
+    if (gPersColEl) state.settings.personalColor = gPersColEl.value;
+    const gWorkColEl = document.getElementById('google-color-work');
+    if (gWorkColEl) state.settings.workColor = gWorkColEl.value;
+    applyAccountColors(state);
 
-    state.settings.bitbucketWorkspace = document.getElementById('bitbucket-workspace').value.trim();
-    state.settings.bitbucketUsername = document.getElementById('bitbucket-username').value.trim();
-    state.settings.bitbucketToken = document.getElementById('bitbucket-token').value.trim();
-    state.settings.hideBitbucketOoo = document.getElementById('settings-bitbucket-ooo-hide').checked;
+    const ghTokEl = document.getElementById('github-token');
+    if (ghTokEl) state.settings.githubToken = ghTokEl.value.trim();
+    const ghOooEl = document.getElementById('settings-github-ooo-hide');
+    if (ghOooEl) state.settings.hideGithubOoo = ghOooEl.checked;
 
-    state.settings.gitlabHost = document.getElementById('gitlab-host').value.trim();
-    state.settings.gitlabToken = document.getElementById('gitlab-token').value.trim();
-    state.settings.hideGitlabOoo = document.getElementById('settings-gitlab-ooo-hide').checked;
+    const bbWsEl = document.getElementById('bitbucket-workspace');
+    if (bbWsEl) state.settings.bitbucketWorkspace = bbWsEl.value.trim();
+    const bbUserEl = document.getElementById('bitbucket-username');
+    if (bbUserEl) state.settings.bitbucketUsername = bbUserEl.value.trim();
+    const bbTokEl = document.getElementById('bitbucket-token');
+    if (bbTokEl) state.settings.bitbucketToken = bbTokEl.value.trim();
+    const bbOooEl = document.getElementById('settings-bitbucket-ooo-hide');
+    if (bbOooEl) state.settings.hideBitbucketOoo = bbOooEl.checked;
 
-    state.settings.jiraHost = document.getElementById('jira-host').value.trim();
-    state.settings.jiraEmail = document.getElementById('jira-email').value.trim();
-    state.settings.jiraToken = document.getElementById('jira-token').value.trim();
-    state.settings.hideJiraOoo = document.getElementById('settings-jira-ooo-hide').checked;
+    const glHostEl = document.getElementById('gitlab-host');
+    if (glHostEl) state.settings.gitlabHost = glHostEl.value.trim();
+    const glTokEl = document.getElementById('gitlab-token');
+    if (glTokEl) state.settings.gitlabToken = glTokEl.value.trim();
+    const glOooEl = document.getElementById('settings-gitlab-ooo-hide');
+    if (glOooEl) state.settings.hideGitlabOoo = glOooEl.checked;
 
-    const oooActive = document.getElementById('settings-ooo-active').checked;
-    const oooUntil = document.getElementById('settings-ooo-active').getAttribute('data-until') || state.settings.oooUntil;
-    state.settings.oooActive = oooActive;
-    state.settings.oooUntil = oooActive ? oooUntil : null;
+    const jiraHostEl = document.getElementById('jira-host');
+    if (jiraHostEl) state.settings.jiraHost = jiraHostEl.value.trim();
+    const jiraEmailEl = document.getElementById('jira-email');
+    if (jiraEmailEl) state.settings.jiraEmail = jiraEmailEl.value.trim();
+    const jiraTokEl = document.getElementById('jira-token');
+    if (jiraTokEl) state.settings.jiraToken = jiraTokEl.value.trim();
+    const jiraOooEl = document.getElementById('settings-jira-ooo-hide');
+    if (jiraOooEl) state.settings.hideJiraOoo = jiraOooEl.checked;
+
+    const oooActiveEl = document.getElementById('settings-ooo-active');
+    if (oooActiveEl) {
+      const oooActive = oooActiveEl.checked;
+      const oooUntil = oooActiveEl.getAttribute('data-until') || state.settings.oooUntil;
+      state.settings.oooActive = oooActive;
+      state.settings.oooUntil = oooActive ? oooUntil : null;
+    }
 
     updateOooBadges();
 
-    state.settings.worldClockTz = document.getElementById('settings-world-clock-tz').value;
-    state.settings.worldClockLabel = document.getElementById('settings-world-clock-label').value.trim();
+    const clockTzEl = document.getElementById('settings-world-clock-tz');
+    if (clockTzEl) state.settings.worldClockTz = clockTzEl.value;
+    const clockLabelEl = document.getElementById('settings-world-clock-label');
+    if (clockLabelEl) state.settings.worldClockLabel = clockLabelEl.value.trim();
     const wUrlEl = document.getElementById('settings-weather-url');
     if (wUrlEl) state.settings.weatherUrl = wUrlEl.value.trim();
     const cUrlEl = document.getElementById('settings-world-clock-url');
@@ -1270,19 +1300,27 @@ export function setupEventListeners() {
     if (tUrlEl) state.settings.timerUrl = tUrlEl.value.trim();
     const swUrlEl = document.getElementById('settings-stopwatch-url');
     if (swUrlEl) state.settings.stopwatchUrl = swUrlEl.value.trim();
-    state.settings.showWeather = document.getElementById('settings-show-weather').checked;
-    state.settings.showWorldClock = document.getElementById('settings-show-world-clock').checked;
-    state.settings.showCountdowns = document.getElementById('settings-show-countdowns').checked;
-    state.settings.showTasks = document.getElementById('settings-show-tasks').checked;
-    state.settings.showGoogleEmails = document.getElementById('settings-show-google-emails').checked;
+
+    const showWeatherEl = document.getElementById('settings-show-weather');
+    if (showWeatherEl) state.settings.showWeather = showWeatherEl.checked;
+    const showClockEl = document.getElementById('settings-show-world-clock');
+    if (showClockEl) state.settings.showWorldClock = showClockEl.checked;
+    const showCountdownsEl = document.getElementById('settings-show-countdowns');
+    if (showCountdownsEl) state.settings.showCountdowns = showCountdownsEl.checked;
+    const showTasksEl = document.getElementById('settings-show-tasks');
+    if (showTasksEl) state.settings.showTasks = showTasksEl.checked;
+    const showEmailsEl = document.getElementById('settings-show-google-emails');
+    if (showEmailsEl) state.settings.showGoogleEmails = showEmailsEl.checked;
     const gTasksTodayElSave = document.getElementById('settings-show-google-tasks-today');
     if (gTasksTodayElSave) state.settings.showGoogleTasksToday = gTasksTodayElSave.checked;
     const gTasksWeekElSave = document.getElementById('settings-show-google-tasks-week');
     if (gTasksWeekElSave) state.settings.showGoogleTasksWeek = gTasksWeekElSave.checked;
     const gTasksOverdueElSave = document.getElementById('settings-show-google-tasks-overdue');
     if (gTasksOverdueElSave) state.settings.showGoogleTasksOverdue = gTasksOverdueElSave.checked;
-    state.settings.showGit = document.getElementById('settings-show-git').checked;
-    state.settings.showJira = document.getElementById('settings-show-jira').checked;
+    const showGitEl = document.getElementById('settings-show-git');
+    if (showGitEl) state.settings.showGit = showGitEl.checked;
+    const showJiraEl = document.getElementById('settings-show-jira');
+    if (showJiraEl) state.settings.showJira = showJiraEl.checked;
 
     const showWikiSave = document.getElementById('settings-show-wikipedia');
     if (showWikiSave) state.settings.showWikipedia = showWikiSave.checked;
@@ -1295,9 +1333,15 @@ export function setupEventListeners() {
     await saveSettings(state);
 
     applyTheme(state);
+    toggleWeatherInputs();
+    toggleClockInputs();
+    toggleWikipediaInputs();
     updateWorldClock();
     updateOrganizerVisibility();
+    updateUpcomingEventBanner();
     updateOooBadges();
+    loadWeather();
+    fetchGoogleTasks();
 
     if (prevLang !== state.lang) {
       translatePage();

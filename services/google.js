@@ -447,8 +447,8 @@ export async function fetchGoogleTasks() {
   const oldWeek = document.getElementById('gtasks-week');
   if (oldWeek) oldWeek.remove();
 
-  const showToday = googleContext.state.settings.showGoogleTasksToday !== false && googleContext.state.settings.showGoogleTasks !== false;
-  const showWeek = googleContext.state.settings.showGoogleTasksWeek !== false && googleContext.state.settings.showGoogleTasks !== false;
+  const showToday = googleContext.state.settings.showGoogleTasksToday !== false;
+  const showWeek = googleContext.state.settings.showGoogleTasksWeek !== false;
 
   if (!showToday && !showWeek) {
     return;
