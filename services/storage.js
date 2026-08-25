@@ -1,6 +1,6 @@
-// -------------------------------------------------------------
-// INDEXEDDB FILE HANDLE PERSISTENCE & FILE SYSTEM SYNC
-// -------------------------------------------------------------
+import { translations } from "../locales/index.js";
+import { applyPrimaryColor, applyTheme } from "../ui/theme.js";
+
 const DB_NAME = "dashboard-db";
 const STORE_NAME = "file-handles";
 
@@ -86,11 +86,123 @@ export function sanitizeSettingsForSync(settings) {
 
 export function mergeSettingsWithLocalSecrets(fileSettings, currentSettings) {
   const merged = { ...currentSettings, ...fileSettings, storageMode: "file" };
-  // Preserve local secrets if the file does not contain them
   for (const key of SENSITIVE_SETTING_KEYS) {
     if (currentSettings[key] && !fileSettings[key]) {
       merged[key] = currentSettings[key];
     }
   }
   return merged;
+}
+
+export let fileHandle = null;
+export function setFileHandle(handle) {
+  fileHandle = handle;
+}
+
+export async function writeDataToFile(state) {
+  if (state.settings.storageMode !== "file" || !fileHandle) return;
+  try {
+    const hasPermission = await verifyPermission(fileHandle, true);
+    if (!hasPermission) return;
+    const writable = await fileHandle.createWritable();
+    const dataToSave = {
+      todos: state.todos,
+      settings: sanitizeSettingsForSync(state.settings)
+    };
+    await writable.write(JSON.stringify(dataToSave, null, 2));
+    await writable.close();
+  } catch (err) {
+    console.error("Error writing file:", err);
+  }
+}
+
+export async function readDataFromFile() {
+  if (!fileHandle) return null;
+  try {
+    const hasPermission = await verifyPermission(fileHandle, false);
+    if (!hasPermission) return null;
+    const file = await fileHandle.getFile();
+    const contents = await file.text();
+    if (!contents.trim()) return null;
+    return JSON.parse(contents);
+  } catch (err) {
+    console.error("Error reading file:", err);
+    return null;
+  }
+}
+
+export async function saveSettings(state) {
+  localStorage.setItem("dashboard_settings", JSON.stringify(state.settings));
+  localStorage.setItem("theme", state.theme);
+  await writeDataToFile(state);
+}
+
+export async function saveTodos(state) {
+  localStorage.setItem("todos", JSON.stringify(state.todos));
+  await writeDataToFile(state);
+}
+
+export function exportStateToFile(state) {
+  const dataToSave = {
+    todos: state.todos,
+    settings: sanitizeSettingsForSync(state.settings)
+  };
+  const blob = new Blob([JSON.stringify(dataToSave, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `dashboard-data-${new Date().toISOString().split("T")[0]}.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+export async function loadState(state) {
+  const storedSettings = localStorage.getItem("dashboard_settings");
+  if (storedSettings) {
+    state.settings = { ...state.settings, ...JSON.parse(storedSettings) };
+  }
+  state.settings.customEvents = state.settings.customEvents || [];
+  state.settings.primaryColor = state.settings.primaryColor || "blue";
+  state.settings.weatherUrl = state.settings.weatherUrl || "https://weather.com";
+  state.settings.worldClockUrl = state.settings.worldClockUrl || "https://time.is";
+  state.lang = state.settings.lang || "en";
+  state.theme = state.settings.theme || localStorage.getItem("theme") || "system";
+
+  // Check OOO expiration
+  if (state.settings.oooActive && state.settings.oooUntil) {
+    const returnTime = new Date(state.settings.oooUntil).getTime();
+    if (Date.now() >= returnTime) {
+      state.settings.oooActive = false;
+      state.settings.oooUntil = null;
+      state.settings.oooReturnDate = "";
+      state.settings.oooReturnTime = "09:00";
+      localStorage.setItem("dashboard_settings", JSON.stringify(state.settings));
+    }
+  }
+
+  const storedTodos = localStorage.getItem("todos");
+  if (storedTodos) {
+    try {
+      state.todos = JSON.parse(storedTodos);
+      cleanupOldCompletedTodos(state);
+    } catch (e) {
+      state.todos = [];
+    }
+  }
+}
+
+export async function cleanupOldCompletedTodos(state) {
+  if (!state.todos || !Array.isArray(state.todos)) return;
+  const thirtyDaysAgo = Date.now() - (30 * 24 * 60 * 60 * 1000);
+  const originalLength = state.todos.length;
+  state.todos = state.todos.filter(todo => {
+    if (!todo.completed) return true;
+    if (!todo.completedAt) return true;
+    return new Date(todo.completedAt).getTime() >= thirtyDaysAgo;
+  });
+  if (state.todos.length !== originalLength) {
+    await saveTodos(state);
+  }
 }
