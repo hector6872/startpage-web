@@ -91,7 +91,6 @@ export default {
   "stopwatch-btn-title": "ストップウォッチ",
   "tab-shortcuts": "ショートカット",
   "shortcuts-card-title": "クイックアクション",
-  "google-desc": "Google Cloud 認証情報を設定してカレンダー、Tasks、Gmail を同期します。",
   "google-config-title": "Google 設定",
   "jira-config-title": "Jira Cloud 設定",
   "label-client-id": "Google OAuth クライアント ID",

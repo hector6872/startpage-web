@@ -91,7 +91,6 @@ export default {
   "stopwatch-btn-title": "Stopwatch",
   "tab-shortcuts": "Snelkoppelingen",
   "shortcuts-card-title": "Snelle Acties",
-  "google-desc": "Koppel je Google Cloud-inloggegevens om Agenda, Taken en Prioritaire Gmail te synchroniseren.",
   "google-config-title": "Google Configuratie",
   "jira-config-title": "Jira Cloud Configuratie",
   "label-client-id": "Google OAuth Client-ID",
