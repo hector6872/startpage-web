@@ -1,4 +1,15 @@
 import { translations, quotesDb, getLocale } from './locales/index.js';
+import {
+  getDB,
+  saveFileHandle,
+  getFileHandle,
+  clearFileHandle,
+  verifyPermission,
+  SENSITIVE_SETTING_KEYS,
+  sanitizeSettingsForSync,
+  mergeSettingsWithLocalSecrets
+} from './services/storage.js';
+import { fetchJira as fetchJiraService } from './services/jira.js';
 
 // Application State
 let state = {
@@ -56,105 +67,8 @@ let state = {
   }
 };
 
-// -------------------------------------------------------------
-// INDEXEDDB FILE HANDLE PERSISTENCE
-// -------------------------------------------------------------
-const DB_NAME = 'dashboard-db';
-const STORE_NAME = 'file-handles';
-
-function getDB() {
-  return new Promise((resolve, reject) => {
-    const request = indexedDB.open(DB_NAME, 1);
-    request.onupgradeneeded = (e) => {
-      const db = e.target.result;
-      if (!db.objectStoreNames.contains(STORE_NAME)) {
-        db.createObjectStore(STORE_NAME);
-      }
-    };
-    request.onsuccess = (e) => resolve(e.target.result);
-    request.onerror = (e) => reject(e.target.error);
-  });
-}
-
-async function saveFileHandle(handle) {
-  const db = await getDB();
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction(STORE_NAME, 'readwrite');
-    const store = tx.objectStore(STORE_NAME);
-    const request = store.put(handle, 'sync-file');
-    request.onsuccess = () => resolve();
-    request.onerror = () => reject(request.error);
-  });
-}
-
-async function getFileHandle() {
-  const db = await getDB();
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction(STORE_NAME, 'readonly');
-    const store = tx.objectStore(STORE_NAME);
-    const request = store.get('sync-file');
-    request.onsuccess = (e) => resolve(e.target.result);
-    request.onerror = () => reject(request.error);
-  });
-}
-
-async function clearFileHandle() {
-  const db = await getDB();
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction(STORE_NAME, 'readwrite');
-    const store = tx.objectStore(STORE_NAME);
-    const request = store.delete('sync-file');
-    request.onsuccess = () => resolve();
-    request.onerror = () => reject(request.error);
-  });
-}
-
 // File Sync state variables
 let fileHandle = null;
-
-async function verifyPermission(handle, readWrite) {
-  const options = {};
-  if (readWrite) {
-    options.mode = 'readwrite';
-  }
-  try {
-    if ((await handle.queryPermission(options)) === 'granted') {
-      return true;
-    }
-    if ((await handle.requestPermission(options)) === 'granted') {
-      return true;
-    }
-  } catch (e) {
-    console.error("Error requesting file permission", e);
-  }
-  return false;
-}
-
-const SENSITIVE_SETTING_KEYS = [
-  'githubToken',
-  'bitbucketToken',
-  'gitlabToken',
-  'jiraToken'
-];
-
-function sanitizeSettingsForSync(settings) {
-  const sanitized = { ...settings };
-  for (const key of SENSITIVE_SETTING_KEYS) {
-    delete sanitized[key];
-  }
-  return sanitized;
-}
-
-function mergeSettingsWithLocalSecrets(fileSettings, currentSettings) {
-  const merged = { ...currentSettings, ...fileSettings, storageMode: 'file' };
-  // Preserve local secrets if the file does not contain them
-  for (const key of SENSITIVE_SETTING_KEYS) {
-    if (currentSettings[key] && !fileSettings[key]) {
-      merged[key] = currentSettings[key];
-    }
-  }
-  return merged;
-}
 
 async function writeDataToFile() {
   if (state.settings.storageMode !== 'file' || !fileHandle) return;
@@ -2301,190 +2215,9 @@ async function safeFetch(url, options = {}) {
   }
 }
 
-// General helper to encode Jira Basic Auth
-function getJiraAuthHeader() {
-  if (!state.settings.jiraEmail || !state.settings.jiraToken) return null;
-  return 'Basic ' + btoa(`${state.settings.jiraEmail}:${state.settings.jiraToken}`);
-}
-
-// Fetch Jira Tasks
+// Fetch Jira Tasks (delegated to services/jira.js)
 async function fetchJira() {
-  const container = document.getElementById('jira-container');
-  const jiraBadge = document.getElementById('jira-count-badge');
-  if (jiraBadge) {
-    jiraBadge.classList.add('hidden');
-  }
-
-  let host = (state.settings.jiraHost || '').trim().replace(/\/$/, "");
-  if (host && !host.startsWith('http://') && !host.startsWith('https://')) {
-    host = 'https://' + host;
-  }
-  // Sanitize host in case user entered a specific subpath like /jira or /secure
-  host = host.replace(/\/jira\/?$/, '').replace(/\/secure.*$/, '');
-
-  if (!host || !state.settings.jiraEmail || !state.settings.jiraToken) {
-    container.innerHTML = `<p class="empty-msg">${translations[state.lang]['status-unconfigured']}</p>`;
-    return;
-  }
-
-  try {
-    const jql = 'assignee = currentUser() AND statusCategory != Done ORDER BY updated DESC';
-    const authHeaders = {
-      'Authorization': getJiraAuthHeader(),
-      'Accept': 'application/json'
-    };
-    const fieldsParam = encodeURIComponent('summary,status,priority,updated');
-
-    // 1. Standard Jira Cloud GET /rest/api/3/search
-    let response = await safeFetch(`${host}/rest/api/3/search?jql=${encodeURIComponent(jql)}&maxResults=50&fields=${fieldsParam}`, {
-      headers: authHeaders
-    });
-
-    // 2. Standard Jira Cloud POST /rest/api/3/search
-    if (!response.ok) {
-      response = await safeFetch(`${host}/rest/api/3/search`, {
-        method: 'POST',
-        headers: {
-          ...authHeaders,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          jql: jql,
-          maxResults: 50,
-          fields: ['summary', 'status', 'priority', 'updated']
-        })
-      });
-    }
-
-    // 3. Jira Server / DC GET /rest/api/2/search
-    if (!response.ok) {
-      response = await safeFetch(`${host}/rest/api/2/search?jql=${encodeURIComponent(jql)}&maxResults=50&fields=${fieldsParam}`, {
-        headers: authHeaders
-      });
-    }
-
-    // 4. Jira Server / DC POST /rest/api/2/search
-    if (!response.ok) {
-      response = await safeFetch(`${host}/rest/api/2/search`, {
-        method: 'POST',
-        headers: {
-          ...authHeaders,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          jql: jql,
-          maxResults: 50,
-          fields: ['summary', 'status', 'priority', 'updated']
-        })
-      });
-    }
-
-    // 5. Alternate Jira Cloud /rest/api/3/search/jql
-    if (!response.ok) {
-      response = await safeFetch(`${host}/rest/api/3/search/jql?jql=${encodeURIComponent(jql)}&maxResults=50&fields=${fieldsParam}`, {
-        headers: authHeaders
-      });
-    }
-
-    // 6. Simplified JQL fallback if statusCategory is not supported
-    if (!response.ok) {
-      const simpleJql = 'assignee = currentUser() ORDER BY updated DESC';
-      response = await safeFetch(`${host}/rest/api/3/search?jql=${encodeURIComponent(simpleJql)}&maxResults=50&fields=${fieldsParam}`, {
-        headers: authHeaders
-      });
-      if (!response.ok) {
-        response = await safeFetch(`${host}/rest/api/2/search?jql=${encodeURIComponent(simpleJql)}&maxResults=50&fields=${fieldsParam}`, {
-          headers: authHeaders
-        });
-      }
-    }
-
-    if (!response.ok) {
-      const errBody = await response.text().catch(() => '');
-      console.error("Jira API Error Response:", response.status, errBody);
-      throw new Error(`HTTP ${response.status}`);
-    }
-
-    const data = await response.json();
-    const totalCount = typeof data.total === 'number' ? data.total : (data.issues ? data.issues.length : 0);
-
-    if (jiraBadge) {
-      if (data.issues && data.issues.length > 0) {
-        jiraBadge.textContent = totalCount > 5 ? '5+' : totalCount;
-        jiraBadge.setAttribute('data-tooltip', state.lang === 'es' ? `${totalCount} tareas asignadas en Jira` : `${totalCount} assigned tasks in Jira`);
-        jiraBadge.classList.remove('hidden');
-      } else {
-        jiraBadge.classList.add('hidden');
-      }
-    }
-
-    if (!data.issues || data.issues.length === 0) {
-      container.innerHTML = `<p class="empty-msg">${translations[state.lang]['no-jira-tasks']}</p>`;
-      return;
-    }
-
-    // Helper to calculate status category rank: 1: IN PROGRESS, 2: BLOCKED, 3: TO DO, 4: DONE
-    const getStatusRank = (statusName) => {
-      if (!statusName) return 3;
-      const s = statusName.toLowerCase();
-      if (s.includes('progress') || s.includes('review') || s.includes('pr') || s.includes('pull') || s.includes('develop') || s.includes('testing') || s.includes('qa') || s.includes('active')) return 1;
-      if (s.includes('block') || s.includes('hold') || s.includes('wait') || s.includes('imped') || s.includes('paus')) return 2;
-      if (s.includes('done') || s.includes('closed') || s.includes('resolved') || s.includes('complet')) return 4;
-      return 3; // To Do / Open / Backlog
-    };
-
-    // Sort issues by Status Rank (In Progress -> Blocked -> To Do -> Done), then by updated timestamp DESC
-    const sortedIssues = [...data.issues].sort((a, b) => {
-      const rankA = getStatusRank(a.fields?.status?.name);
-      const rankB = getStatusRank(b.fields?.status?.name);
-      if (rankA !== rankB) {
-        return rankA - rankB;
-      }
-      const timeA = a.fields?.updated ? new Date(a.fields.updated).getTime() : 0;
-      const timeB = b.fields?.updated ? new Date(b.fields.updated).getTime() : 0;
-      return timeB - timeA;
-    });
-
-    container.innerHTML = sortedIssues.slice(0, 5).map(issue => {
-      const fields = issue.fields || {};
-      const summary = fields.summary || issue.summary || '';
-      const key = issue.key || '';
-      const url = `${host}/browse/${key}`;
-      const priorityName = (fields.priority && fields.priority.name) ? fields.priority.name : 'Medium';
-      const statusName = (fields.status && fields.status.name) ? fields.status.name : '';
-
-      const pLower = priorityName.toLowerCase();
-      let priorityClass = 'medium';
-      if (pLower.includes('highest') || pLower.includes('blocker') || pLower.includes('critical') || pLower.includes('urgent') || pLower.includes('p1')) priorityClass = 'highest';
-      else if (pLower.includes('high') || pLower.includes('major') || pLower.includes('p2')) priorityClass = 'high';
-      else if (pLower.includes('low') || pLower.includes('minor') || pLower.includes('trivial') || pLower.includes('lowest') || pLower.includes('p4') || pLower.includes('p5')) priorityClass = 'low';
-
-      const sLower = statusName.toLowerCase();
-      let statusClass = 'todo';
-      if (sLower.includes('done') || sLower.includes('closed') || sLower.includes('resolved') || sLower.includes('complet')) statusClass = 'done';
-      else if (sLower.includes('progress') || sLower.includes('review') || sLower.includes('pr') || sLower.includes('pull') || sLower.includes('develop') || sLower.includes('testing') || sLower.includes('qa')) statusClass = 'progress';
-      else if (sLower.includes('block') || sLower.includes('hold') || sLower.includes('wait') || sLower.includes('imped')) statusClass = 'blocked';
-
-      const titleText = `[${key}] ${summary}`;
-
-      return `
-        <a href="${url}" target="_blank" class="integration-item" data-tooltip="${escapeHtml(titleText)}\nStatus: ${escapeHtml(statusName)}\nPriority: ${escapeHtml(priorityName)}">
-          <span class="item-title">${escapeHtml(summary)}</span>
-          <div class="item-meta">
-            <span style="display: flex; align-items: center; gap: 0.35rem; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-              <span class="jira-key-badge">${escapeHtml(key)}</span>
-              <span class="jira-priority-badge ${priorityClass}">${escapeHtml(priorityName)}</span>
-            </span>
-            <span class="jira-status-badge ${statusClass}">${escapeHtml(statusName)}</span>
-          </div>
-        </a>
-      `;
-    }).join('');
-
-  } catch (error) {
-    console.error("Jira fetch error:", error);
-    container.innerHTML = `<p class="empty-msg" style="color:var(--danger)">API Error (${error.message || 'Error'})</p>`;
-  }
+  return fetchJiraService(state, safeFetch, escapeHtml);
 }
 
 // Update Git status indicators (dots)
