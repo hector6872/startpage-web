@@ -134,7 +134,7 @@ export default {
   "clear-completed-btn": "Nettoyer Terminées",
   "save-btn": "Enregistrer",
   "no-events": "Aucun événement prévu aujourd'hui.",
-  "no-emails": "Boîte vide. Aucun email urgent.",
+  "no-emails": "Boîte vide",
   "no-prs": "Aucune pull request en attente.",
   "no-weekly-events": "Aucun événement prévu cette semaine.",
   "no-jira-tasks": "Aucun ticket Jira assigné.",

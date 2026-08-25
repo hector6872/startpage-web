@@ -134,7 +134,7 @@ export default {
   "clear-completed-btn": "完了済みをクリア",
   "save-btn": "保存",
   "no-events": "今日の予定はありません。",
-  "no-emails": "未読の重要メールはありません。",
+  "no-emails": "未読メールはありません",
   "no-prs": "確認待ちの Pull Request はありません。",
   "no-weekly-events": "今週の予定はありません。",
   "no-jira-tasks": "担当チケットはありません。",

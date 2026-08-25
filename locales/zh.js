@@ -134,7 +134,7 @@ export default {
   "clear-completed-btn": "清除已完成",
   "save-btn": "保存更改",
   "no-events": "今日无计划日程。",
-  "no-emails": "收件箱已清空，无紧急邮件。",
+  "no-emails": "收件箱已清空",
   "no-prs": "暂无等待审核的 Pull Request。",
   "no-weekly-events": "本周无计划日程。",
   "no-jira-tasks": "暂无指派给您的 Jira 问题。",

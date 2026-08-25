@@ -134,7 +134,7 @@ export default {
   "clear-completed-btn": "Erledigte leeren",
   "save-btn": "Speichern",
   "no-events": "Keine Termine für heute geplant.",
-  "no-emails": "Postfach leer. Keine dringenden Mails.",
+  "no-emails": "Postfach leer",
   "no-prs": "Keine offenen Pull Requests.",
   "no-weekly-events": "Keine Ereignisse diese Woche.",
   "no-jira-tasks": "Keine offenen Jira-Tickets.",

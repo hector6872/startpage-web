@@ -134,7 +134,7 @@ export default {
   "clear-completed-btn": "Cancella Completate",
   "save-btn": "Salva",
   "no-events": "Nessun evento in programma per oggi.",
-  "no-emails": "Casella vuota. Nessuna email urgente.",
+  "no-emails": "Casella vuota",
   "no-prs": "Nessuna pull request in sospeso.",
   "no-weekly-events": "Nessun evento questa settimana.",
   "no-jira-tasks": "Nessun ticket Jira assegnato.",

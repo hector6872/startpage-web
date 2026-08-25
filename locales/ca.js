@@ -134,7 +134,7 @@ export default {
   "clear-completed-btn": "Neteja Completades",
   "save-btn": "Desar Canvis",
   "no-events": "Cap esdeveniment programat per avui.",
-  "no-emails": "Safata buida. Cap correu urgent.",
+  "no-emails": "Safata buida",
   "no-prs": "Cap pull request pendent de revisió.",
   "no-weekly-events": "Cap esdeveniment programat aquesta setmana.",
   "no-jira-tasks": "Cap tasca de Jira assignada.",

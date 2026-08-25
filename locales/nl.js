@@ -134,7 +134,7 @@ export default {
   "clear-completed-btn": "Voltooide Wissen",
   "save-btn": "Opslaan",
   "no-events": "Geen afspraken gepland voor vandaag.",
-  "no-emails": "Inbox leeg. Geen dringende e-mails.",
+  "no-emails": "Inbox leeg",
   "no-prs": "Geen openstaande pull requests.",
   "no-weekly-events": "Geen evenementen deze week.",
   "no-jira-tasks": "Geen Jira-taken toegewezen.",

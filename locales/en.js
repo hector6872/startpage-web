@@ -134,7 +134,7 @@ export default {
   "clear-completed-btn": "Clear Completed",
   "save-btn": "Save Changes",
   "no-events": "No events scheduled for today",
-  "no-emails": "Inbox zero. No urgent emails",
+  "no-emails": "Inbox zero",
   "no-prs": "No pull requests awaiting review",
   "no-weekly-events": "No upcoming events scheduled",
   "no-jira-tasks": "No active Jira issues assigned",
