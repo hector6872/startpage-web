@@ -249,5 +249,6 @@ export default {
   "label-show-git": "Git-integratie tonen (PRs)",
   "label-hide-ooo": "Verbergen als Afwezig actief is",
   "label-show-jira": "Jira-integratie tonen",
-  "ooo-title": "Terugkeerdatum"
+  "ooo-title": "Terugkeerdatum",
+  "jira-config-link": "Jira-integratie configureren"
 };

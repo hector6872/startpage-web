@@ -1,7 +1,7 @@
 import { state } from "./utils/state.js";
 import { safeFetch, escapeHtml, formatDateShort, formatEventTime, getLocalDateString } from "./utils/helpers.js";
 import { loadState } from "./services/storage.js";
-import { setupGoogleContext, initGoogleOAuth } from "./services/google.js";
+import { setupGoogleContext, initGoogleOAuth, fetchGmail, fetchGoogleTasks, fetchGoogleCalendar } from "./services/google.js";
 import { setupWikiContext, loadWikipediaContent } from "./services/wikipedia.js";
 import { setupWeatherContext, loadWeather } from "./services/weather.js";
 import { fetchAllPRs } from "./services/git.js";
@@ -54,8 +54,11 @@ async function init() {
   // Fetch API data for configured integrations
   fetchAllPRs();
   fetchJira(state, safeFetch, escapeHtml);
+  fetchGmail();
+  fetchGoogleTasks();
+  fetchGoogleCalendar();
 
-  // Load Google Auth and render setup links
+  // Load Google Auth
   setTimeout(() => initGoogleOAuth(state, safeFetch, escapeHtml, formatDateShort, formatEventTime, getLocalDateString), 1000);
 }
 

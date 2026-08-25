@@ -202,7 +202,7 @@ export async function fetchJira(state = defaultState, safeFetch = defaultSafeFet
     state.jiraStatus = 'disconnected';
     state.jiraError = '';
     updateJiraStatusIndicators(state, escapeHtml);
-    container.innerHTML = `<p class="empty-msg">${t('status-unconfigured')}</p>`;
+    container.innerHTML = `<p class="empty-msg" style="margin: 0.5rem 0;"><a href="#" onclick="event.preventDefault(); window.openSettingsJiraTab();" style="color: var(--accent); text-decoration: underline; font-weight: 500;">${t('jira-config-link')}</a></p>`;
     return;
   }
 

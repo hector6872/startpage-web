@@ -249,5 +249,6 @@ export default {
   "label-show-git": "显示 Git 集成 (PR)",
   "label-hide-ooo": "休假模式激活时隐藏",
   "label-show-jira": "显示 Jira 集成",
-  "ooo-title": "返回日期"
+  "ooo-title": "返回日期",
+  "jira-config-link": "配置 Jira 集成"
 };

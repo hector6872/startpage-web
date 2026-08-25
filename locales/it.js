@@ -249,5 +249,6 @@ export default {
   "label-show-git": "Mostra integrazione Git (PR)",
   "label-hide-ooo": "Nascondi se Fuori ufficio è attivo",
   "label-show-jira": "Mostra integrazione Jira",
-  "ooo-title": "Data di rientro"
+  "ooo-title": "Data di rientro",
+  "jira-config-link": "Configura integrazione Jira"
 };

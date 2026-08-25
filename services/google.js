@@ -325,6 +325,9 @@ export async function fetchGmail() {
   }
   if (gmailCard) gmailCard.classList.remove('hidden');
 
+  const container = document.getElementById('gmail-container');
+  if (!container) return;
+
   const emailsBadge = document.getElementById('emails-count-badge');
   if (emailsBadge) {
     emailsBadge.classList.add('hidden');

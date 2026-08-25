@@ -249,5 +249,6 @@ export default {
   "label-show-git": "Git 統合を表示 (PR)",
   "label-hide-ooo": "不在モードが有効な場合は非表示",
   "label-show-jira": "Jira 統合を表示",
-  "ooo-title": "復帰予定日"
+  "ooo-title": "復帰予定日",
+  "jira-config-link": "Jira 統合を設定"
 };

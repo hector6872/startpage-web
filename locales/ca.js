@@ -249,5 +249,6 @@ export default {
   "label-show-git": "Mostrar Integració de Git (PRs)",
   "label-hide-ooo": "Amagar si Out of Office està actiu",
   "label-show-jira": "Mostrar Integració de Jira",
-  "ooo-title": "Data de retorn"
+  "ooo-title": "Data de retorn",
+  "jira-config-link": "Configurar integració de Jira"
 };

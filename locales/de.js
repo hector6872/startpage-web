@@ -249,5 +249,6 @@ export default {
   "label-show-git": "Git-Integration anzeigen (PRs)",
   "label-hide-ooo": "Ausblenden, wenn Abwesenheit aktiv ist",
   "label-show-jira": "Jira-Integration anzeigen",
-  "ooo-title": "Rückkehrdatum"
+  "ooo-title": "Rückkehrdatum",
+  "jira-config-link": "Jira-Integration konfigurieren"
 };
