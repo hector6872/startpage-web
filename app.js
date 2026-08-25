@@ -23,7 +23,7 @@ let state = {
     primaryColor: 'blue',
     city: '',
     weatherUrl: 'https://weather.com',
-    worldClockTz: 'Europe/London',
+    worldClockTz: '',
     worldClockLabel: '',
     worldClockUrl: 'https://time.is',
     notes: '',
