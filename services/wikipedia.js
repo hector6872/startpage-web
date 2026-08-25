@@ -279,7 +279,7 @@ export async function loadWikipediaContent() {
   }
 
   function displayQuoteError() {
-    const badgeTooltip = wikiContext.state.lang === 'es' ? 'Cambiar contenido en Configuración' : 'Change content in Settings';
+    const badgeTooltip = dict['wiki-badge-tooltip'] || 'Change content in Settings';
     const errorMsg = dict['quote-error'] || 'No se pudo cargar la frase para hoy, ¡mañana habrá más suerte!';
     
     container.innerHTML = `
@@ -300,8 +300,8 @@ export async function loadWikipediaContent() {
     const cleanAuthor = author && author !== 'undefined' ? author.replace(/^[\s–—-]+/, '').trim() : '';
     const wikiLang = wikiContext.state.lang || 'en';
     const authorUrl = cleanAuthor ? `https://${wikiLang}.wikipedia.org/wiki/Special:Search?search=${encodeURIComponent(cleanAuthor)}` : '';
-    const authorTitle = wikiContext.state.lang === 'es' ? `Ver ${cleanAuthor} en Wikipedia` : `View ${cleanAuthor} on Wikipedia`;
-    const badgeTooltip = wikiContext.state.lang === 'es' ? 'Cambiar contenido en Configuración' : 'Change content in Settings';
+    const authorTitle = (dict['wiki-view-author'] || 'View {author} on Wikipedia').replace('{author}', cleanAuthor);
+    const badgeTooltip = dict['wiki-badge-tooltip'] || 'Change content in Settings';
     
     container.innerHTML = `
       <span class="wiki-badge" data-tooltip="${badgeTooltip}" onclick="window.openSettingsWikipediaTab()" title="${badgeTooltip}">
@@ -387,7 +387,7 @@ export async function loadWikipediaContent() {
     const pageUrl = cur.content_urls?.desktop?.page || `https://${lang}.wikipedia.org/wiki/${encodeURIComponent(cur.title)}`;
     const displayTitle = cur.displaytitle ? cur.displaytitle.replace(/<[^>]+>/g, '') : cur.title.replace(/_/g, ' ');
     const viewsStr = formatViewsCount(cur.views);
-    const badgeTooltip = wikiContext.state.lang === 'es' ? 'Cambiar contenido en Configuración' : 'Change content in Settings';
+    const badgeTooltip = dict['wiki-badge-tooltip'] || 'Change content in Settings';
 
     container.innerHTML = `
       <span class="wiki-badge" data-tooltip="${badgeTooltip}" onclick="window.openSettingsWikipediaTab()" title="${badgeTooltip}">
@@ -535,9 +535,8 @@ export async function loadWikipediaContent() {
     if (wikiNewsIndex >= newsItems.length) wikiNewsIndex = 0;
     if (wikiNewsIndex < 0) wikiNewsIndex = newsItems.length - 1;
 
-    const cur = newsItems[wikiNewsIndex];
     const storyHtml = formatNewsHtml(cur, lang);
-    const badgeTooltip = wikiContext.state.lang === 'es' ? 'Cambiar contenido en Configuración' : 'Change content in Settings';
+    const badgeTooltip = dict['wiki-badge-tooltip'] || 'Change content in Settings';
 
     container.innerHTML = `
       <span class="wiki-badge" data-tooltip="${badgeTooltip}" onclick="window.openSettingsWikipediaTab()" title="${badgeTooltip}">
@@ -624,7 +623,7 @@ export async function loadWikipediaContent() {
       pageLinkHtml = ` <a class="wiki-link" href="${searchUrl}" target="_blank" rel="noopener noreferrer" title="Buscar en Google">↗ Google</a>`;
     }
 
-    const badgeTooltip = wikiContext.state.lang === 'es' ? 'Cambiar contenido en Configuración' : 'Change content in Settings';
+    const badgeTooltip = dict['wiki-badge-tooltip'] || 'Change content in Settings';
 
     container.innerHTML = `
       <span class="wiki-badge" data-tooltip="${badgeTooltip}" onclick="window.openSettingsWikipediaTab()" title="${badgeTooltip}">
@@ -658,8 +657,4 @@ export async function loadWikipediaContent() {
       renderOnThisDayMode();
     });
   }
-}
-
-export function loadQuote() {
-  loadWikipediaContent();
 }

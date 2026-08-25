@@ -40,12 +40,13 @@ export function formatDateShort(dateStr, lang = "en") {
   const diffTime = d.getTime() - today.getTime();
   const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
 
+  const dict = translations[lang] || translations.en;
   if (diffDays === 0) {
-    return (translations[lang] || translations.en)["task-today"] || (lang === "es" ? "Hoy" : "Today");
+    return dict["task-today"] || "Today";
   } else if (diffDays === 1) {
-    return (translations[lang] || translations.en)["task-tomorrow"] || (lang === "es" ? "Mañana" : "Tomorrow");
+    return dict["task-tomorrow"] || "Tomorrow";
   } else if (diffDays === -1) {
-    return lang === "es" ? "Ayer" : "Yesterday";
+    return dict["time-yesterday"] || "Yesterday";
   }
 
   const locale = getLocale(lang);
@@ -57,34 +58,6 @@ export function formatEventTime(evt) {
   if (!evt.start) return "";
   const d = new Date(evt.start);
   return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: false });
-}
-
-export function getTzDifference(targetTz) {
-  try {
-    const now = new Date();
-    const localIso = now.toLocaleString("en-US", { timeZoneName: "shortOffset" });
-    const targetIso = now.toLocaleString("en-US", { timeZone: targetTz, timeZoneName: "shortOffset" });
-    
-    const localDate = new Date(now.toLocaleString("en-US"));
-    const targetDate = new Date(now.toLocaleString("en-US", { timeZone: targetTz }));
-    
-    const diffMs = targetDate.getTime() - localDate.getTime();
-    const diffHours = Math.round(diffMs / (1000 * 60 * 60));
-    
-    let diffText = "";
-    if (diffHours === 0) diffText = "Misma hora";
-    else if (diffHours > 0) diffText = `+${diffHours}h`;
-    else diffText = `${diffHours}h`;
-    
-    const dayDiff = targetDate.getDate() - localDate.getDate();
-    let dayText = "Hoy";
-    if (dayDiff === 1 || dayDiff < -20) dayText = "Mañana";
-    else if (dayDiff === -1 || dayDiff > 20) dayText = "Ayer";
-    
-    return { diffText, dayText, diffHours };
-  } catch (e) {
-    return { diffText: "", dayText: "", diffHours: 0 };
-  }
 }
 
 export async function safeFetch(url, options = {}) {
@@ -133,15 +106,6 @@ export function openModalAccessible(dialogElement, focusTargetElement) {
   }
 }
 
-export function closeModalAccessible(dialogElement) {
-  if (!dialogElement) return;
-  if (typeof dialogElement.close === "function") {
-    dialogElement.close();
-  } else {
-    dialogElement.removeAttribute("open");
-  }
-}
-
 export function trapFocusInDialog(e, dialogElement) {
   if (e.key !== "Tab" || !dialogElement.open) return;
   const focusables = dialogElement.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
@@ -179,15 +143,4 @@ export function showInputErrorFeedback(inputEl, errorMessage) {
     inputEl.classList.remove("invalid-field");
     errorEl.remove();
   }, 2500);
-}
-
-export function showActionFeedback(buttonEl, feedbackText) {
-  if (!buttonEl) return;
-  const originalText = buttonEl.textContent;
-  buttonEl.textContent = feedbackText;
-  buttonEl.classList.add("feedback-success");
-  setTimeout(() => {
-    buttonEl.textContent = originalText;
-    buttonEl.classList.remove("feedback-success");
-  }, 1500);
 }

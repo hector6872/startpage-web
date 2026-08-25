@@ -166,24 +166,16 @@ export function updateWorldClock() {
       const dayNightIcon = isDaytime ? sunSvg : moonSvg;
 
       if (diffInfo.diffHours === 0 && diffInfo.dayDiffDays === 0) {
-        const sameTimeStr = dict['world-clock-same-time'] || (state.lang === 'es' ? 'Misma hora' : 'Same time');
+        const sameTimeStr = dict['world-clock-same-time'] || 'Same time';
         diffEl.innerHTML = `${sameTimeStr} ${dayNightIcon}`;
       } else {
-        let diffStr = '';
-        const absDiff = Math.abs(diffInfo.diffHours);
-        if (state.lang === 'es') {
-          const hLabel = absDiff === 1 ? 'hora' : 'horas';
-          diffStr = diffInfo.diffHours > 0 ? `+${diffInfo.diffHours} ${hLabel}` : `${diffInfo.diffHours} ${hLabel}`;
-        } else {
-          const hLabel = absDiff === 1 ? 'hour' : 'hours';
-          diffStr = diffInfo.diffHours > 0 ? `+${diffInfo.diffHours} ${hLabel}` : `${diffInfo.diffHours} ${hLabel}`;
-        }
+        const diffStr = diffInfo.diffHours > 0 ? `+${diffInfo.diffHours}h` : `${diffInfo.diffHours}h`;
 
         let dayStr = '';
         if (diffInfo.dayDiffDays === 1) {
-          dayStr = state.lang === 'es' ? ' (mañana)' : ' (tomorrow)';
+          dayStr = dict['time-tomorrow-suffix'] || ' (tomorrow)';
         } else if (diffInfo.dayDiffDays === -1) {
-          dayStr = state.lang === 'es' ? ' (ayer)' : ' (yesterday)';
+          dayStr = dict['time-yesterday-suffix'] || ' (yesterday)';
         } else if (diffInfo.dayDiffDays > 1) {
           dayStr = ` (+${diffInfo.dayDiffDays}d)`;
         } else if (diffInfo.dayDiffDays < -1) {
@@ -320,6 +312,8 @@ export function syncDashboardColumns() {
   }
   const weekTasks = state.todos.filter(todo => !todo.completed && next7Days.includes(todo.dueDate));
 
+  const dict = translations[state.lang] || translations.en;
+
   if (todayTasks.length > 0) {
     const container = document.querySelector("#col-today .col-content");
     if (container) {
@@ -327,13 +321,13 @@ export function syncDashboardColumns() {
       card.id = "local-today-events";
       card.className = "section-card";
       card.innerHTML = `
-        <h3 class="card-subtitle">${state.lang === "es" ? "Tareas de Hoy" : "Today's Tasks"}</h3>
+        <h3 class="card-subtitle">${dict["tasks-today-title"] || "Today's Tasks"}</h3>
         <div class="integration-list">
           ${todayTasks.map(t => `
             <div class="integration-item urgent">
               <span class="item-title">${escapeHtml(t.text)}</span>
               <div class="item-meta">
-                <span class="item-badge priority-${t.priority}">${translations[state.lang]["priority-" + t.priority]}</span>
+                <span class="item-badge priority-${t.priority}">${dict["priority-" + t.priority]}</span>
               </div>
             </div>
           `).join("")}
@@ -350,14 +344,14 @@ export function syncDashboardColumns() {
       card.id = "local-week-events";
       card.className = "section-card";
       card.innerHTML = `
-        <h3 class="card-subtitle">${state.lang === "es" ? "Tareas de esta Semana" : "This Week's Tasks"}</h3>
+        <h3 class="card-subtitle">${dict["tasks-week-title"] || "This Week's Tasks"}</h3>
         <div class="integration-list">
           ${weekTasks.map(t => `
             <div class="integration-item">
               <span class="item-title">${escapeHtml(t.text)}</span>
               <div class="item-meta">
                 <span>${formatDateShort(t.dueDate, state.lang)}</span>
-                <span class="item-badge priority-${t.priority}">${translations[state.lang]["priority-" + t.priority]}</span>
+                <span class="item-badge priority-${t.priority}">${dict["priority-" + t.priority]}</span>
               </div>
             </div>
           `).join("")}

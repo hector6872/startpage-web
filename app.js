@@ -2,7 +2,7 @@ import { state } from "./utils/state.js";
 import { safeFetch, escapeHtml, formatDateShort, formatEventTime, getLocalDateString } from "./utils/helpers.js";
 import { loadState } from "./services/storage.js";
 import { setupGoogleContext, initGoogleOAuth } from "./services/google.js";
-import { setupWikiContext, loadQuote } from "./services/wikipedia.js";
+import { setupWikiContext, loadWikipediaContent } from "./services/wikipedia.js";
 import { setupWeatherContext, loadWeather } from "./services/weather.js";
 import { fetchAllPRs } from "./services/git.js";
 import { fetchJira } from "./services/jira.js";
@@ -44,7 +44,7 @@ async function init() {
 
   // Load weather and dynamic content (quotes/wikipedia)
   loadWeather();
-  loadQuote();
+  loadWikipediaContent();
 
   // Render initial tasks and countdowns
   renderTodos();
@@ -52,7 +52,7 @@ async function init() {
   updateNotesBadge();
 
   // Fetch API data for configured integrations
-  fetchAllPRs(state, safeFetch, escapeHtml, formatDateShort, (lang) => lang);
+  fetchAllPRs();
   fetchJira(state, safeFetch, escapeHtml);
 
   // Load Google Auth and render setup links

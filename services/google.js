@@ -263,18 +263,16 @@ export function updateGoogleAuthStatus() {
   // Update header status indicators (dots) for Events, Emails, and Weekly Schedule
   const personalClass = googleContext.state.googlePersonalToken ? 'personal' : 'disconnected';
   const personalTooltip = googleContext.state.googlePersonalToken 
-    ? `${googleContext.state.lang === 'es' ? 'Personal: Conectado' : 'Personal: Connected'} (${googleContext.state.googlePersonalEmail || 'Google'})`
-    : (googleContext.state.lang === 'es' ? 'Personal: Desconectado' : 'Personal: Disconnected');
+    ? `${dict['google-personal'] || 'Personal'}: ${dict['git-connected'] || 'Connected'} (${googleContext.state.googlePersonalEmail || 'Google'})`
+    : `${dict['google-personal'] || 'Personal'}: ${dict['git-disconnected'] || 'Disconnected'}`;
     
   const workClass = googleContext.state.googleWorkToken ? 'work' : 'disconnected';
   const workTooltip = googleContext.state.googleWorkToken 
-    ? `${googleContext.state.lang === 'es' ? 'Trabajo: Conectado' : 'Work: Connected'} (${googleContext.state.googleWorkEmail || 'Google'})`
-    : (googleContext.state.lang === 'es' ? 'Trabajo: Desconectado' : 'Work: Disconnected');
+    ? `${dict['google-work'] || 'Work'}: ${dict['git-connected'] || 'Connected'} (${googleContext.state.googleWorkEmail || 'Google'})`
+    : `${dict['google-work'] || 'Work'}: ${dict['git-disconnected'] || 'Disconnected'}`;
 
   const hasGoogleError = !!(googleContext.state.googleErrors && (googleContext.state.googleErrors.personal || googleContext.state.googleErrors.work || googleContext.state.googleErrors.tasks));
-  const googleWarningTooltip = googleContext.state.lang === 'es'
-    ? 'Error al conectar con algunos servicios'
-    : 'Failed to connect to some services';
+  const googleWarningTooltip = dict['status-error-connecting'] || 'Failed to connect to some services';
 
   const googleWarningIconHTML = `<span class="status-warning-icon" data-tooltip="${googleContext.escapeHtml(googleWarningTooltip)}" onclick="event.stopPropagation(); window.openSettingsGoogleTab();">⚠️</span>`;
 
@@ -336,7 +334,8 @@ export async function fetchGmail() {
   }
 
   if (!googleContext.state.googlePersonalToken && !googleContext.state.googleWorkToken) {
-    const configLinkText = googleContext.state.lang === 'es' ? 'Configurar Gmail' : 'Configure Gmail';
+    const dict = translations[googleContext.state.lang] || translations.en;
+    const configLinkText = dict['google-config-gmail'] || 'Configure Gmail';
     container.innerHTML = `<p class="empty-msg" style="margin: 0.5rem 0;"><a href="#" onclick="event.preventDefault(); window.openSettingsGoogleTab();" style="color: var(--accent); text-decoration: underline; font-weight: 500;">${configLinkText}</a></p>`;
     return;
   }
@@ -455,6 +454,7 @@ export async function fetchGoogleTasks() {
   }
 
   function showPlaceholder(messageHTML) {
+    const dict = translations[googleContext.state.lang] || translations.en;
     if (showToday) {
       let gTodayCard = document.getElementById('gtasks-today');
       if (!gTodayCard) {
@@ -467,8 +467,8 @@ export async function fetchGoogleTasks() {
       gTodayCard.innerHTML = `
         <h3 class="card-subtitle">
           <span style="display: inline-flex; align-items: center; gap: 0.4rem;">
-            <span>${googleContext.state.lang === 'es' ? 'Tareas · Hoy' : 'Tasks · Today'}</span>
-            <button type="button" class="card-action-btn btn-open-gtasks" data-tooltip="${googleContext.state.lang === 'es' ? 'Abrir Google Tasks' : 'Open Google Tasks'}" aria-label="Open Google Tasks">
+            <span>${dict['google-tasks-today'] || 'Tasks · Today'}</span>
+            <button type="button" class="card-action-btn btn-open-gtasks" data-tooltip="${dict['google-open-tasks'] || 'Open Google Tasks'}" aria-label="Open Google Tasks">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                 <line x1="12" y1="5" x2="12" y2="19"></line>
                 <line x1="5" y1="12" x2="19" y2="12"></line>
@@ -495,8 +495,8 @@ export async function fetchGoogleTasks() {
       gWeekCard.innerHTML = `
         <h3 class="card-subtitle">
           <span style="display: inline-flex; align-items: center; gap: 0.4rem;">
-            <span>${googleContext.state.lang === 'es' ? 'Tareas · Esta semana' : 'Tasks · This Week'}</span>
-            <button type="button" class="card-action-btn btn-open-gtasks" data-tooltip="${googleContext.state.lang === 'es' ? 'Abrir Google Tasks' : 'Open Google Tasks'}" aria-label="Open Google Tasks">
+            <span>${dict['google-tasks-week'] || 'Tasks · This Week'}</span>
+            <button type="button" class="card-action-btn btn-open-gtasks" data-tooltip="${dict['google-open-tasks'] || 'Open Google Tasks'}" aria-label="Open Google Tasks">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                 <line x1="12" y1="5" x2="12" y2="19"></line>
                 <line x1="5" y1="12" x2="19" y2="12"></line>
@@ -514,7 +514,8 @@ export async function fetchGoogleTasks() {
   }
 
   if (!googleContext.state.googlePersonalToken && !googleContext.state.googleWorkToken) {
-    const configLinkText = googleContext.state.lang === 'es' ? 'Configurar Google Tasks' : 'Configure Google Tasks';
+    const dict = translations[googleContext.state.lang] || translations.en;
+    const configLinkText = dict['google-config-tasks'] || 'Configure Google Tasks';
     const msgHTML = `<p class="empty-msg" style="margin: 0.5rem 0;"><a href="#" onclick="event.preventDefault(); window.openSettingsGoogleTab();" style="color: var(--accent); text-decoration: underline; font-weight: 500;">${configLinkText}</a></p>`;
     showPlaceholder(msgHTML);
     return;
@@ -665,6 +666,7 @@ export async function fetchGoogleTasks() {
       return !!(task.recurrence || task.recurring);
     }
 
+    const dict = translations[googleContext.state.lang] || translations.en;
     if (showToday && todayGTasks.length > 0) {
       let gTodayCard = document.getElementById('gtasks-today');
       if (!gTodayCard) {
@@ -677,8 +679,8 @@ export async function fetchGoogleTasks() {
       gTodayCard.innerHTML = `
         <h3 class="card-subtitle">
           <span style="display: inline-flex; align-items: center; gap: 0.4rem;">
-            <span>${googleContext.state.lang === 'es' ? 'Tareas · Hoy' : 'Tasks · Today'}</span>
-            <button type="button" class="card-action-btn btn-open-gtasks" data-tooltip="${googleContext.state.lang === 'es' ? 'Abrir Google Tasks' : 'Open Google Tasks'}" aria-label="Open Google Tasks">
+            <span>${dict['google-tasks-today'] || 'Tasks · Today'}</span>
+            <button type="button" class="card-action-btn btn-open-gtasks" data-tooltip="${dict['google-open-tasks'] || 'Open Google Tasks'}" aria-label="Open Google Tasks">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                 <line x1="12" y1="5" x2="12" y2="19"></line>
                 <line x1="5" y1="12" x2="19" y2="12"></line>
@@ -690,16 +692,16 @@ export async function fetchGoogleTasks() {
         <div class="integration-list">
           ${todayGTasks.map(t => {
             const badgeClass = t.accountType === 'personal' ? 'personal' : 'work';
-            const badgeLabel = translations[googleContext.state.lang][`badge-${t.accountType}`] || t.accountType;
+            const badgeLabel = (translations[googleContext.state.lang] || translations.en)[`badge-${t.accountType}`] || t.accountType;
             const isOverdue = t.due && new Date(t.due).getTime() < todayTime;
-            const dueLabel = isOverdue ? (googleContext.state.lang === 'es' ? 'Vencido' : 'Overdue') : '';
+            const dueLabel = isOverdue ? (dict['badge-overdue'] || 'Overdue') : '';
             const timeText = getTaskTimeText(t);
             const isRecurring = checkTaskRecurring(t);
             const recurringClass = isRecurring ? 'recurring' : '';
             const repeatIcon = isRecurring 
               ? `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="opacity: 0.65; display: inline-block; vertical-align: middle; margin-right: 0.25rem; flex-shrink: 0;"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>` 
               : '';
-            const tooltipText = t.title + (isOverdue ? ` (${dueLabel})` : '') + (timeText ? `\n${timeText}` : '') + (isRecurring ? (googleContext.state.lang === 'es' ? ' (Recurrente)' : ' (Recurring)') : '');
+            const tooltipText = t.title + (isOverdue ? ` (${dueLabel})` : '') + (timeText ? `\n${timeText}` : '') + (isRecurring ? (dict['google-recurring-suffix'] || ' (Recurring)') : '');
             
             const email = t.accountType === 'personal' ? googleContext.state.googlePersonalEmail : googleContext.state.googleWorkEmail;
             const tasksLink = email 
@@ -733,8 +735,8 @@ export async function fetchGoogleTasks() {
       gWeekCard.innerHTML = `
         <h3 class="card-subtitle">
           <span style="display: inline-flex; align-items: center; gap: 0.4rem;">
-            <span>${googleContext.state.lang === 'es' ? 'Tareas · Esta semana' : 'Tasks · This Week'}</span>
-            <button type="button" class="card-action-btn btn-open-gtasks" data-tooltip="${googleContext.state.lang === 'es' ? 'Abrir Google Tasks' : 'Open Google Tasks'}" aria-label="Open Google Tasks">
+            <span>${dict['google-tasks-week'] || 'Tasks · This Week'}</span>
+            <button type="button" class="card-action-btn btn-open-gtasks" data-tooltip="${dict['google-open-tasks'] || 'Open Google Tasks'}" aria-label="Open Google Tasks">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                 <line x1="12" y1="5" x2="12" y2="19"></line>
                 <line x1="5" y1="12" x2="19" y2="12"></line>
@@ -746,7 +748,7 @@ export async function fetchGoogleTasks() {
         <div class="integration-list">
           ${weekGTasks.map(t => {
             const badgeClass = t.accountType === 'personal' ? 'personal' : 'work';
-            const badgeLabel = translations[googleContext.state.lang][`badge-${t.accountType}`] || t.accountType;
+            const badgeLabel = (translations[googleContext.state.lang] || translations.en)[`badge-${t.accountType}`] || t.accountType;
             const timeText = getTaskTimeText(t);
             const dateText = t.due ? googleContext.formatDateShort(t.due.split('T')[0]) : '';
             const isRecurring = checkTaskRecurring(t);
@@ -754,7 +756,7 @@ export async function fetchGoogleTasks() {
             const repeatIcon = isRecurring 
               ? `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="opacity: 0.65; display: inline-block; vertical-align: middle; margin-right: 0.25rem; flex-shrink: 0;"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>` 
               : '';
-            const tooltipText = t.title + (t.due ? `\n${dateText}` : '') + (isRecurring ? (googleContext.state.lang === 'es' ? ' (Recurrente)' : ' (Recurring)') : '');
+            const tooltipText = t.title + (t.due ? `\n${dateText}` : '') + (isRecurring ? (dict['google-recurring-suffix'] || ' (Recurring)') : '');
             
             const email = t.accountType === 'personal' ? googleContext.state.googlePersonalEmail : googleContext.state.googleWorkEmail;
             const tasksLink = email 
@@ -795,8 +797,10 @@ export async function fetchGoogleCalendar() {
     weeklyBadge.classList.add('hidden');
   }
 
+  const dict = translations[googleContext.state.lang] || translations.en;
+
   if (!googleContext.state.googlePersonalToken && !googleContext.state.googleWorkToken) {
-    const configLinkText = googleContext.state.lang === 'es' ? 'Configurar Google Calendar' : 'Configure Google Calendar';
+    const configLinkText = dict['google-config-calendar'] || 'Configure Google Calendar';
     const msgHTML = `<p class="empty-msg" style="margin: 0.5rem 0;"><a href="#" onclick="event.preventDefault(); window.openSettingsGoogleTab();" style="color: var(--accent); text-decoration: underline; font-weight: 500;">${configLinkText}</a></p>`;
     todayEventsContainer.innerHTML = msgHTML;
     weeklyEventsContainer.innerHTML = msgHTML;
@@ -893,7 +897,7 @@ export async function fetchGoogleCalendar() {
 
       const evtDateObj = new Date(startStr.split('T')[0] + 'T00:00:00');
       const dateText = evtDateObj.toLocaleDateString(getLocale(googleContext.state.lang), { day: 'numeric', month: 'long' });
-      const tooltipText = evt.summary + `\n${dateText}\nTime: ${timeStr}` + (isRecurring ? (googleContext.state.lang === 'es' ? ' (Recurrente)' : ' (Recurring)') : '');
+      const tooltipText = evt.summary + `\n${dateText}\nTime: ${timeStr}` + (isRecurring ? (dict['google-recurring-suffix'] || ' (Recurring)') : '');
 
       const eventHTML = `
         <a href="${googleContext.escapeHtml(eventLink)}" target="_blank" rel="noopener noreferrer" class="integration-item ${badgeClass} ${recurringClass}" data-tooltip="${googleContext.escapeHtml(tooltipText)}">

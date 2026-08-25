@@ -112,7 +112,8 @@ export async function fetchJira(state, safeFetch, escapeHtml) {
     if (jiraBadge) {
       if (data.issues && data.issues.length > 0) {
         jiraBadge.textContent = totalCount > 5 ? "5+" : totalCount;
-        jiraBadge.setAttribute("data-tooltip", state.lang === "es" ? `${totalCount} tareas asignadas en Jira` : `${totalCount} assigned tasks in Jira`);
+        const dict = translations[state.lang] || translations.en;
+        jiraBadge.setAttribute("data-tooltip", (dict["jira-assigned-tasks"] || "{n} assigned tasks in Jira").replace("{n}", totalCount));
         jiraBadge.classList.remove("hidden");
       } else {
         jiraBadge.classList.add("hidden");

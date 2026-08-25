@@ -1,36 +1,39 @@
-import { translations, getLocale } from "../locales/index.js";
+import { state as globalState } from "../utils/state.js";
+import { translations } from "../locales/index.js";
+import { safeFetch as globalSafeFetch, escapeHtml as globalEscapeHtml } from "../utils/helpers.js";
 
 // Update Git status indicators (dots)
-export function updateGitStatusIndicators(state, escapeHtml) {
+export function updateGitStatusIndicators(state = globalState, escapeHtml = globalEscapeHtml) {
   const ghStatus = state.githubStatus || 'disconnected';
   const bbStatus = state.bitbucketStatus || 'disconnected';
   const glStatus = state.gitlabStatus || 'disconnected';
+  const dict = translations[state.lang] || translations.en;
 
   let ghTooltip = 'GitHub: ';
   if (ghStatus === 'disconnected') {
-    ghTooltip += state.lang === 'es' ? 'Desconectado' : 'Disconnected';
+    ghTooltip += dict['git-disconnected'] || 'Disconnected';
   } else if (ghStatus === 'connected') {
-    ghTooltip += state.lang === 'es' ? 'Conectado' : 'Connected';
+    ghTooltip += dict['git-connected'] || 'Connected';
   } else {
-    ghTooltip += (state.lang === 'es' ? 'Error: ' : 'Error: ') + (state.githubError || '');
+    ghTooltip += (dict['git-error-prefix'] || 'Error: ') + (state.githubError || '');
   }
 
   let bbTooltip = 'Bitbucket: ';
   if (bbStatus === 'disconnected') {
-    bbTooltip += state.lang === 'es' ? 'Desconectado' : 'Disconnected';
+    bbTooltip += dict['git-disconnected'] || 'Disconnected';
   } else if (bbStatus === 'connected') {
-    bbTooltip += state.lang === 'es' ? 'Conectado' : 'Connected';
+    bbTooltip += dict['git-connected'] || 'Connected';
   } else {
-    bbTooltip += (state.lang === 'es' ? 'Error: ' : 'Error: ') + (state.bitbucketError || '');
+    bbTooltip += (dict['git-error-prefix'] || 'Error: ') + (state.bitbucketError || '');
   }
 
   let glTooltip = 'GitLab: ';
   if (glStatus === 'disconnected') {
-    glTooltip += state.lang === 'es' ? 'Desconectado' : 'Disconnected';
+    glTooltip += dict['git-disconnected'] || 'Disconnected';
   } else if (glStatus === 'connected') {
-    glTooltip += state.lang === 'es' ? 'Conectado' : 'Connected';
+    glTooltip += dict['git-connected'] || 'Connected';
   } else {
-    glTooltip += (state.lang === 'es' ? 'Error: ' : 'Error: ') + (state.gitlabError || '');
+    glTooltip += (dict['git-error-prefix'] || 'Error: ') + (state.gitlabError || '');
   }
 
   const ghClass = ghStatus === 'connected' ? 'github' : ghStatus;
@@ -38,9 +41,7 @@ export function updateGitStatusIndicators(state, escapeHtml) {
   const glClass = glStatus === 'connected' ? 'gitlab' : glStatus;
 
   const hasGitError = ghStatus === 'error' || bbStatus === 'error' || glStatus === 'error';
-  const gitWarningTooltip = state.lang === 'es'
-    ? 'Error al conectar con algunos servicios'
-    : 'Failed to connect to some services';
+  const gitWarningTooltip = dict['status-error-connecting'] || 'Failed to connect to some services';
 
   const gitWarningIconHTML = `<span class="status-warning-icon" data-tooltip="${escapeHtml(gitWarningTooltip)}" onclick="event.stopPropagation(); window.openSettingsGitTab();">⚠️</span>`;
 
@@ -82,8 +83,8 @@ export function updateGitStatusIndicators(state, escapeHtml) {
   if (setDotJira) {
     setDotJira.className = `status-dot ${jiraSettingsClass}`;
     setDotJira.title = jiraStatus === 'connected' 
-      ? (state.lang === 'es' ? 'Jira: Conectado' : 'Jira: Connected') 
-      : (jiraStatus === 'error' ? (state.jiraError || 'Error') : (state.lang === 'es' ? 'Jira: Desconectado' : 'Jira: Disconnected'));
+      ? `Jira: ${dict['git-connected'] || 'Connected'}` 
+      : (jiraStatus === 'error' ? (state.jiraError || 'Error') : `Jira: ${dict['git-disconnected'] || 'Disconnected'}`);
   }
 }
 
@@ -95,7 +96,8 @@ function startTestCooldown(provider, button) {
   let remaining = 60;
   button.disabled = true;
 
-  const originalText = state.lang === 'es' ? 'Conectar' : 'Connect';
+  const dict = translations[state.lang] || translations.en;
+  const originalText = dict['btn-connect'] || 'Connect';
   
   const interval = setInterval(() => {
     remaining--;
@@ -114,9 +116,10 @@ function startTestCooldown(provider, button) {
 }
 
 // Test connection endpoint validator using inputs currently in the settings form
-async function testGitConnection(provider, button) {
-  const originalText = state.lang === 'es' ? 'Conectar' : 'Connect';
-  button.textContent = state.lang === 'es' ? 'Conectando...' : 'Connecting...';
+export async function testGitConnection(provider, button) {
+  const dict = translations[state.lang] || translations.en;
+  const originalText = dict['btn-connect'] || 'Connect';
+  button.textContent = dict['btn-connecting'] || 'Connecting...';
   button.disabled = true;
 
   let success = false;
@@ -126,7 +129,7 @@ async function testGitConnection(provider, button) {
     if (provider === 'github') {
       const token = document.getElementById('github-token').value.trim();
       if (!token) {
-        throw new Error(state.lang === 'es' ? 'Introduce el token' : 'Please enter token');
+        throw new Error(dict['git-enter-token'] || 'Please enter token');
       }
 
       const headers = {
@@ -144,7 +147,7 @@ async function testGitConnection(provider, button) {
       const email = document.getElementById('bitbucket-username').value.trim();
       const token = document.getElementById('bitbucket-token').value.trim();
       if (!workspace || !email || !token) {
-        throw new Error(state.lang === 'es' ? 'Rellena todos los campos' : 'Fill all fields');
+        throw new Error(dict['git-fill-fields'] || 'Fill all fields');
       }
 
       const auth = btoa(`${email}:${token}`);
@@ -164,7 +167,7 @@ async function testGitConnection(provider, button) {
       ]);
       if (!userRes.ok) {
         if (userRes.status === 403) {
-          throw new Error(state.lang === 'es' ? 'El token necesita el permiso Account: Read' : 'Token lacks Account: Read scope');
+          throw new Error(dict['git-token-scope'] || 'Token lacks Account: Read scope');
         }
         throw new Error(`${userRes.status} ${userRes.statusText}`);
       }
@@ -177,7 +180,7 @@ async function testGitConnection(provider, button) {
       host = host.replace(/\/$/, "");
       const token = document.getElementById('gitlab-token').value.trim();
       if (!token) {
-        throw new Error(state.lang === 'es' ? 'Introduce el token' : 'Please enter token');
+        throw new Error(dict['git-enter-token'] || 'Please enter token');
       }
 
       const headers = { 'PRIVATE-TOKEN': token };
@@ -196,7 +199,7 @@ async function testGitConnection(provider, button) {
       const email = document.getElementById('jira-email').value.trim();
       const token = document.getElementById('jira-token').value.trim();
       if (!host || !email || !token) {
-        throw new Error(state.lang === 'es' ? 'Rellena todos los campos' : 'Fill all fields');
+        throw new Error(dict['git-fill-fields'] || 'Fill all fields');
       }
 
       const auth = btoa(`${email}:${token}`);
@@ -245,7 +248,7 @@ async function testGitConnection(provider, button) {
   updateGitStatusIndicators(state, escapeHtml);
 
   if (success) {
-    button.textContent = state.lang === 'es' ? '¡Conectado!' : 'Connected!';
+    button.textContent = dict['btn-connected'] || 'Connected!';
     button.style.backgroundColor = 'rgba(39, 174, 96, 0.1)';
     button.style.color = '#27ae60';
     button.style.borderColor = '#27ae60';
@@ -256,7 +259,7 @@ async function testGitConnection(provider, button) {
     // Refresh main PRs list
     fetchAllPRs();
   } else {
-    button.textContent = state.lang === 'es' ? 'Error' : 'Failed';
+    button.textContent = dict['btn-failed'] || 'Failed';
     button.style.backgroundColor = 'rgba(235, 87, 87, 0.1)';
     button.style.color = '#eb5757';
     button.style.borderColor = '#eb5757';
@@ -275,8 +278,8 @@ async function testGitConnection(provider, button) {
   }
 }
 
-// Fetch GitHub PRs
-export async function fetchAllPRs(state, safeFetch, escapeHtml, formatDateShort, getLocale) {
+// Fetch GitHub, Bitbucket & GitLab PRs
+export async function fetchAllPRs(state = globalState, safeFetch = globalSafeFetch, escapeHtml = globalEscapeHtml) {
   const container = document.getElementById('prs-container');
   const prsBadge = document.getElementById('prs-count-badge');
   if (prsBadge) prsBadge.classList.add('hidden');
@@ -309,12 +312,12 @@ export async function fetchAllPRs(state, safeFetch, escapeHtml, formatDateShort,
   }
 
   if (gitHiddenByOoo) {
-    container.innerHTML = `<p class="empty-msg">${state.lang === 'es' ? 'Out of Office Activo' : 'Out of Office Active'}</p>`;
+    container.innerHTML = `<p class="empty-msg">${dict['git-ooo-active'] || 'Out of Office Active'}</p>`;
     return;
   }
 
   if (!hasGithub && !hasBitbucket && !hasGitlab) {
-    const configLinkText = state.lang === 'es' ? 'Configurar integración de Git' : 'Configure Git Integration';
+    const configLinkText = dict['git-config-link'] || 'Configure Git Integration';
     container.innerHTML = `<p class="empty-msg" style="margin: 0.5rem 0;"><a href="#" onclick="event.preventDefault(); window.openSettingsGitTab();" style="color: var(--accent); text-decoration: underline; font-weight: 500;">${configLinkText}</a></p>`;
     return;
   }
@@ -372,7 +375,7 @@ export async function fetchAllPRs(state, safeFetch, escapeHtml, formatDateShort,
                 prList.push({
                   title: pr.title,
                   status: 'review',
-                  statusLabel: state.lang === 'es' ? 'Revisar' : 'Needs Review',
+                  statusLabel: dict['pr-needs-review'] || 'Needs Review',
                   url: pr.html_url,
                   repo: pr.base.repo.name,
                   number: pr.number,
@@ -393,16 +396,16 @@ export async function fetchAllPRs(state, safeFetch, escapeHtml, formatDateShort,
                   const hasRequestedChanges = reviewsRes && reviewsRes.some(rev => rev.state === 'CHANGES_REQUESTED');
 
                   let status = 'my_pr';
-                  let statusLabel = state.lang === 'es' ? 'En revisión' : 'In Review';
+                  let statusLabel = dict['pr-in-review'] || 'In Review';
                   if (hasConflicts && hasRequestedChanges) {
                     status = 'conflicts_changes_requested';
-                    statusLabel = state.lang === 'es' ? 'Conflictos | Cambios solicitados' : 'Conflicts | Changes requested';
+                    statusLabel = dict['pr-conflicts-changes'] || 'Conflicts | Changes requested';
                   } else if (hasConflicts) {
                     status = 'conflicts';
-                    statusLabel = state.lang === 'es' ? 'Conflictos' : 'Conflicts';
+                    statusLabel = dict['pr-conflicts'] || 'Conflicts';
                   } else if (hasRequestedChanges) {
                     status = 'changes_requested';
-                    statusLabel = state.lang === 'es' ? 'Cambios solicitados' : 'Changes requested';
+                    statusLabel = dict['pr-changes-requested'] || 'Changes requested';
                   }
 
                   prList.push({
@@ -420,7 +423,7 @@ export async function fetchAllPRs(state, safeFetch, escapeHtml, formatDateShort,
                   prList.push({
                     title: pr.title,
                     status: 'my_pr',
-                    statusLabel: state.lang === 'es' ? 'En revisión' : 'In Review',
+                    statusLabel: dict['pr-in-review'] || 'In Review',
                     url: pr.html_url,
                     repo: pr.base.repo.name,
                     number: pr.number,
@@ -449,112 +452,65 @@ export async function fetchAllPRs(state, safeFetch, escapeHtml, formatDateShort,
   // Bitbucket Fetch
   if (hasBitbucket && !(state.settings.oooActive && state.settings.hideBitbucketOoo)) {
     try {
-      const token = state.settings.bitbucketToken;
-      const usernameOrEmail = state.settings.bitbucketUsername;
-      const auth = btoa(`${usernameOrEmail}:${token}`);
+      const workspace = state.settings.bitbucketWorkspace;
+      const username = state.settings.bitbucketUsername;
+      const auth = btoa(`${username}:${state.settings.bitbucketToken}`);
+      const headers = {
+        'Authorization': `Basic ${auth}`,
+        'Accept': 'application/json'
+      };
 
-      // 1. Obtain authenticated user profile from Bitbucket
-      const userRes = await fetch(`https://api.bitbucket.org/2.0/user`, {
-        headers: {
-          'Authorization': `Basic ${auth}`,
-          'Accept': 'application/json'
+      // 1. Get authenticated user account_id / uuid
+      let bitbucketUserUUID = '';
+      let bitbucketAccountID = '';
+      let bitbucketUsername = username.toLowerCase();
+
+      try {
+        const userRes = await fetch(`https://api.bitbucket.org/2.0/user`, { headers });
+        if (userRes.ok) {
+          const uData = await userRes.json();
+          bitbucketUserUUID = (uData.uuid || '').toLowerCase();
+          bitbucketAccountID = (uData.account_id || '').toLowerCase();
+          if (uData.username) bitbucketUsername = uData.username.toLowerCase();
+          if (uData.nickname) bitbucketUsername = uData.nickname.toLowerCase();
         }
-      });
-      if (!userRes.ok) {
+      } catch (e) {
+        console.warn("Could not fetch Bitbucket user UUID:", e);
+      }
+
+      function isMatchingUser(u) {
+        if (!u) return false;
+        const uId = (u.account_id || '').toLowerCase();
+        const uUuid = (u.uuid || '').toLowerCase();
+        const uNick = (u.nickname || '').toLowerCase();
+        const uUser = (u.username || '').toLowerCase();
+        const uDisplay = (u.display_name || '').toLowerCase();
+        return (bitbucketAccountID && uId === bitbucketAccountID) ||
+               (bitbucketUserUUID && uUuid === bitbucketUserUUID) ||
+               (bitbucketUsername && (uNick === bitbucketUsername || uUser === bitbucketUsername || uDisplay === bitbucketUsername));
+      }
+
+      // 2. Fetch open PRs across the workspace
+      const prsRes = await fetch(`https://api.bitbucket.org/2.0/pullrequests/${workspace}?state=OPEN&pagelen=30`, { headers });
+      if (!prsRes.ok) {
         state.bitbucketStatus = 'error';
-        state.bitbucketError = userRes.status === 403
-          ? (state.lang === 'es' ? 'Token sin permiso Account: Read' : 'Token lacks Account: Read scope')
-          : `${userRes.status} ${userRes.statusText}`;
+        state.bitbucketError = `${prsRes.status} ${prsRes.statusText}`;
       } else {
-        const userData = await userRes.json();
-        const userIdentifiers = [userData.nickname, userData.username, userData.account_id, userData.uuid, userData.display_name, usernameOrEmail]
-          .filter(Boolean)
-          .map(s => String(s).toLowerCase());
+        const data = await prsRes.json();
+        const prs = data.values || [];
 
-        const isMatchingUser = (u) => {
-          if (!u) return false;
-          const ids = [u.nickname, u.username, u.account_id, u.uuid, u.display_name]
-            .filter(Boolean)
-            .map(s => String(s).toLowerCase());
-          return ids.some(id => userIdentifiers.includes(id));
-        };
+        prs.forEach(pr => {
+          const isAuthor = isMatchingUser(pr.author);
+          const isReviewer = pr.reviewers && pr.reviewers.some(r => isMatchingUser(r));
 
-        // 2. Get the 10 most recently updated repositories in the workspace
-        const reposRes = await fetch(`https://api.bitbucket.org/2.0/repositories/${state.settings.bitbucketWorkspace}?pagelen=10&sort=-updated_on`, {
-          headers: {
-            'Authorization': `Basic ${auth}`,
-            'Accept': 'application/json'
-          }
-        });
-        if (reposRes.ok) {
-          const reposData = await reposRes.json();
-          const repos = reposData.values || [];
-
-          // 3. Fetch open pull requests for all repositories in parallel
-          const prPromises = repos.map(async (repo) => {
-            try {
-              const prsRes = await fetch(`https://api.bitbucket.org/2.0/repositories/${state.settings.bitbucketWorkspace}/${repo.slug}/pullrequests?state=OPEN`, {
-                headers: {
-                  'Authorization': `Basic ${auth}`,
-                  'Accept': 'application/json'
-                }
-              });
-              if (prsRes.ok) {
-                const prsData = await prsRes.json();
-                return prsData.values || [];
-              }
-              return [];
-            } catch (e) {
-              console.error(`Error fetching PRs for ${repo.slug}:`, e);
-              return [];
-            }
-          });
-
-          const allRepoPRs = await Promise.all(prPromises);
-          const openPRs = allRepoPRs.flat();
-
-          // 4. Filter and map PRs
-          openPRs.forEach(pr => {
-            const isAuthor = isMatchingUser(pr.author);
-            const isReviewer = pr.reviewers && pr.reviewers.some(r => isMatchingUser(r));
-
-            if (isReviewer) {
-              // Teammate's PR where I am requested to review and I have not approved it yet
-              const hasApproved = pr.participants && pr.participants.some(p => p.approved && isMatchingUser(p.user));
-              if (!hasApproved) {
-                prList.push({
-                  title: pr.title,
-                  status: 'review',
-                  statusLabel: state.lang === 'es' ? 'Revisar' : 'Needs Review',
-                  url: pr.links.html.href,
-                  repo: pr.source.repository.name,
-                  number: pr.id,
-                  source: 'Bitbucket',
-                  sortTime: new Date(pr.updated_on).getTime()
-                });
-              }
-            } else if (isAuthor) {
-              // My own PR: check for needs_work (requested changes) or task_count > 0 (blocked)
-              const hasNeedsWork = pr.participants && pr.participants.some(p => p.state === 'needs_work');
-              const hasTasks = pr.task_count > 0;
-              
-              let status = 'my_pr';
-              let statusLabel = state.lang === 'es' ? 'En revisión' : 'In Review';
-              if (hasNeedsWork && hasTasks) {
-                status = 'changes_requested_tasks';
-                statusLabel = state.lang === 'es' ? 'Cambios solicitados | Tareas' : 'Changes requested | Tasks';
-              } else if (hasNeedsWork) {
-                status = 'changes_requested';
-                statusLabel = state.lang === 'es' ? 'Cambios solicitados' : 'Changes requested';
-              } else if (hasTasks) {
-                status = 'tasks_open';
-                statusLabel = state.lang === 'es' ? 'Tareas pendientes' : 'Tasks open';
-              }
-
+          if (isReviewer) {
+            // Teammate's PR: check if I already approved it
+            const hasApproved = pr.participants && pr.participants.some(p => p.approved && isMatchingUser(p.user));
+            if (!hasApproved) {
               prList.push({
                 title: pr.title,
-                status: status,
-                statusLabel: statusLabel,
+                status: 'review',
+                statusLabel: dict['pr-needs-review'] || 'Needs Review',
                 url: pr.links.html.href,
                 repo: pr.source.repository.name,
                 number: pr.id,
@@ -562,11 +518,36 @@ export async function fetchAllPRs(state, safeFetch, escapeHtml, formatDateShort,
                 sortTime: new Date(pr.updated_on).getTime()
               });
             }
-          });
-        } else {
-          state.bitbucketStatus = 'error';
-          state.bitbucketError = `${reposRes.status} ${reposRes.statusText}`;
-        }
+          } else if (isAuthor) {
+            // My own PR: check for needs_work (requested changes) or task_count > 0 (blocked)
+            const hasNeedsWork = pr.participants && pr.participants.some(p => p.state === 'needs_work');
+            const hasTasks = pr.task_count > 0;
+            
+            let status = 'my_pr';
+            let statusLabel = dict['pr-in-review'] || 'In Review';
+            if (hasNeedsWork && hasTasks) {
+              status = 'changes_requested_tasks';
+              statusLabel = dict['pr-changes-tasks'] || 'Changes requested | Tasks';
+            } else if (hasNeedsWork) {
+              status = 'changes_requested';
+              statusLabel = dict['pr-changes-requested'] || 'Changes requested';
+            } else if (hasTasks) {
+              status = 'tasks_open';
+              statusLabel = dict['pr-tasks-open'] || 'Tasks open';
+            }
+
+            prList.push({
+              title: pr.title,
+              status: status,
+              statusLabel: statusLabel,
+              url: pr.links.html.href,
+              repo: pr.source.repository.name,
+              number: pr.id,
+              source: 'Bitbucket',
+              sortTime: new Date(pr.updated_on).getTime()
+            });
+          }
+        });
       }
     } catch (e) {
       console.error("Error fetching Bitbucket PRs:", e);
@@ -641,7 +622,7 @@ export async function fetchAllPRs(state, safeFetch, escapeHtml, formatDateShort,
                       prList.push({
                         title: mr.title,
                         status: 'review',
-                        statusLabel: state.lang === 'es' ? 'Revisar' : 'Needs Review',
+                        statusLabel: dict['pr-needs-review'] || 'Needs Review',
                         url: mr.web_url,
                         repo: repoName,
                         number: mr.iid,
@@ -661,16 +642,16 @@ export async function fetchAllPRs(state, safeFetch, escapeHtml, formatDateShort,
                 const hasUnresolvedDiscussions = mr.blocking_discussions_resolved === false || mr.detailed_merge_status === 'discussions_not_resolved';
 
                 let status = 'my_pr';
-                let statusLabel = state.lang === 'es' ? 'En revisión' : 'In Review';
+                let statusLabel = dict['pr-in-review'] || 'In Review';
                 if (hasConflicts && hasUnresolvedDiscussions) {
                   status = 'conflicts_discussions';
-                  statusLabel = state.lang === 'es' ? 'Conflictos | Hilos pendientes' : 'Conflicts | Threads open';
+                  statusLabel = dict['pr-conflicts-threads'] || 'Conflicts | Threads open';
                 } else if (hasConflicts) {
                   status = 'conflicts';
-                  statusLabel = state.lang === 'es' ? 'Conflictos' : 'Conflicts';
+                  statusLabel = dict['pr-conflicts'] || 'Conflicts';
                 } else if (hasUnresolvedDiscussions) {
                   status = 'discussions_open';
-                  statusLabel = state.lang === 'es' ? 'Hilos pendientes' : 'Threads open';
+                  statusLabel = dict['pr-threads-open'] || 'Threads open';
                 }
 
                 let repoName = String(mr.project_id);
@@ -741,7 +722,3 @@ export async function fetchAllPRs(state, safeFetch, escapeHtml, formatDateShort,
     prsBadge.classList.remove('hidden');
   }
 }
-
-export const fetchGitHub = fetchAllPRs;
-export const fetchBitbucket = fetchAllPRs;
-export const fetchGitLab = fetchAllPRs;

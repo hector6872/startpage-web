@@ -1,16 +1,16 @@
 import { state } from "../utils/state.js";
 import { translations, getLocale } from "../locales/index.js";
-import { applyPrimaryColor, applyAccountColors, applyTheme, updateSwatchActiveState, updateAccountSwatchActiveState, ACCENT_COLORS } from "./theme.js";
+import { applyPrimaryColor, applyAccountColors, applyTheme, updateSwatchActiveState, updateAccountSwatchActiveState } from "./theme.js";
 import { updateOooBadges, updateOrganizerVisibility, updateNotesBadge, updateWorldClock, updateTimeAndGreeting } from "./shortcuts.js";
-import { renderTodos, addTodo, updateTodo, deleteTodo, showClearCompletedConfirmation, confirmDeleteState, setActiveFilter, toggleTodo, toggleFocusTodo, openEditModal } from "./todos.js";
-import { renderCountdowns, updateUpcomingEventBanner, addCountdown, deleteCountdown, openEditEventModal, renderSettingsEventsList } from "./events.js";
+import { renderTodos, addTodo, updateTodo, showClearCompletedConfirmation, confirmDeleteState, setActiveFilter } from "./todos.js";
+import { renderCountdowns, updateUpcomingEventBanner, addCountdown, renderSettingsEventsList } from "./events.js";
 import { loadWeather } from "../services/weather.js";
-import { loadQuote, loadWikipediaContent } from "../services/wikipedia.js";
-import { fetchAllPRs, updateGitStatusIndicators } from "../services/git.js";
+import { loadWikipediaContent } from "../services/wikipedia.js";
+import { fetchAllPRs, testGitConnection } from "../services/git.js";
 import { fetchJira } from "../services/jira.js";
 import { initGoogleOAuth, updateGoogleAuthStatus, getGoogleTokenClient, setGoogleLoginTarget, fetchGoogleData, fetchGoogleCalendar, fetchGmail, fetchGoogleTasks } from "../services/google.js";
 import { saveSettings, saveTodos, writeDataToFile, readDataFromFile, exportStateToFile, saveFileHandle, setFileHandle, fileHandle, mergeSettingsWithLocalSecrets, clearFileHandle } from "../services/storage.js";
-import { openModalAccessible, closeModalAccessible, trapFocusInDialog, showInputErrorFeedback, showActionFeedback, ensureHttpUrl } from "../utils/helpers.js";
+import { openModalAccessible, trapFocusInDialog, showInputErrorFeedback, ensureHttpUrl } from "../utils/helpers.js";
 
 export function translatePage() {
   const dictionary = translations[state.lang] || translations['en'];
@@ -403,16 +403,14 @@ export function setupEventListeners() {
     showEventsCheckbox.addEventListener('change', () => {
       if (!showEventsCheckbox.checked && (state.settings.customEvents && state.settings.customEvents.length > 0)) {
         confirmDeleteState.actionType = 'hide-events';
-        confirmDeleteModal.querySelector('[data-i18n="confirm-delete-title"]').textContent = state.lang === 'es' ? 'Ocultar Eventos' : 'Hide Events';
+        const dict = translations[state.lang] || translations.en;
+        confirmDeleteModal.querySelector('[data-i18n="confirm-delete-title"]').textContent = dict['hide-events-title'] || 'Hide Events';
         const descEl = confirmDeleteModal.querySelector('[data-i18n="confirm-delete-desc"]');
         if (descEl) {
-          descEl.innerHTML = state.lang === 'es'
-            ? 'Tienes eventos configurados (pendientes o vencidos). ¿Seguro que quieres ocultar la sección de Eventos?'
-            : 'You have configured events (pending or overdue). Are you sure you want to hide the Events section?';
+          descEl.innerHTML = dict['hide-events-desc'] || 'You have configured events (pending or overdue). Are you sure you want to hide the Events section?';
         }
-        const dict = translations[state.lang];
         confirmDeleteModal.querySelector('[data-i18n="cancel-btn"]').textContent = dict['cancel-btn'];
-        confirmDeleteModal.querySelector('[data-i18n="delete-btn"]').textContent = state.lang === 'es' ? 'Confirmar' : 'Confirm';
+        confirmDeleteModal.querySelector('[data-i18n="delete-btn"]').textContent = dict['btn-confirm'] || 'Confirm';
         confirmDeleteModal.showModal();
       }
     });
@@ -1010,8 +1008,7 @@ export function setupEventListeners() {
     renderCountdowns();
     loadWeather();
     loadWikipediaContent();
-    fetchGitHub();
-    fetchBitbucket();
+    fetchAllPRs();
     fetchJira();
     fetchGmail();
     fetchGoogleTasks();
@@ -1060,10 +1057,9 @@ export function setupEventListeners() {
         const fileData = await readDataFromFile();
         if (fileData) {
           // File has data, offer to load it or overwrite it
+          const dict = translations[state.lang] || translations.en;
           const confirmLoad = confirm(
-            state.lang === 'es' 
-              ? 'El archivo seleccionado contiene datos. ¿Deseas cargarlos y reemplazar los datos actuales en el navegador?' 
-              : 'The selected file contains data. Do you want to load it and overwrite current browser data?'
+            dict['confirm-load-file'] || 'The selected file contains data. Do you want to load it and overwrite current browser data?'
           );
           if (confirmLoad) {
             if (fileData.todos) state.todos = fileData.todos;
@@ -1186,9 +1182,11 @@ export function setupEventListeners() {
       nameInput.setCustomValidity('');
       dateInput.setCustomValidity('');
 
+      const dict = translations[state.lang] || translations.en;
+
       if (!nameInput.value.trim()) {
         nameInput.classList.add('invalid-field');
-        nameInput.setCustomValidity(state.lang === 'es' ? 'Por favor, rellene este campo.' : 'Please fill out this field.');
+        nameInput.setCustomValidity(dict['form-required-field'] || 'Please fill out this field.');
         nameInput.reportValidity();
         nameInput.addEventListener('input', () => {
           nameInput.classList.remove('invalid-field');
@@ -1198,7 +1196,7 @@ export function setupEventListeners() {
       }
       if (!dateInput.value) {
         dateInput.classList.add('invalid-field');
-        dateInput.setCustomValidity(state.lang === 'es' ? 'Por favor, rellene este campo.' : 'Please fill out this field.');
+        dateInput.setCustomValidity(dict['form-required-field'] || 'Please fill out this field.');
         dateInput.reportValidity();
         dateInput.addEventListener('input', () => {
           dateInput.classList.remove('invalid-field');
@@ -1393,7 +1391,8 @@ export function setupEventListeners() {
   loginBtnPersonal.addEventListener('click', () => {
     if (!state.settings.googleClientId) {
       const clientIdInput = document.getElementById('google-client-id');
-      const msg = state.lang === 'es' ? 'Por favor, introduce tu Google Client ID.' : 'Please enter your Google Client ID.';
+      const dict = translations[state.lang] || translations.en;
+      const msg = dict['form-enter-google-id'] || 'Please enter your Google Client ID.';
       showInputErrorFeedback(clientIdInput, msg);
       return;
     }
@@ -1411,7 +1410,8 @@ export function setupEventListeners() {
   loginBtnWork.addEventListener('click', () => {
     if (!state.settings.googleClientId) {
       const clientIdInput = document.getElementById('google-client-id');
-      const msg = state.lang === 'es' ? 'Por favor, introduce tu Google Client ID.' : 'Please enter your Google Client ID.';
+      const dict = translations[state.lang] || translations.en;
+      const msg = dict['form-enter-google-id'] || 'Please enter your Google Client ID.';
       showInputErrorFeedback(clientIdInput, msg);
       return;
     }

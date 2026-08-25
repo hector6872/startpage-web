@@ -1,5 +1,3 @@
-import { translations } from "../locales/index.js";
-import { applyPrimaryColor, applyTheme } from "../ui/theme.js";
 import { state as defaultState } from "../utils/state.js";
 
 const DB_NAME = "dashboard-db";

@@ -1,6 +1,6 @@
 import { state } from "../utils/state.js";
-import { translations, getLocale } from "../locales/index.js";
-import { escapeHtml, formatDateShort, getLocalDateString, openModalAccessible, closeModalAccessible } from "../utils/helpers.js";
+import { translations } from "../locales/index.js";
+import { escapeHtml, formatDateShort, getLocalDateString, openModalAccessible } from "../utils/helpers.js";
 import { saveTodos } from "../services/storage.js";
 import { syncDashboardColumns } from "./shortcuts.js";
 
@@ -58,7 +58,8 @@ export function renderTodos() {
   if (filteredTodos.length === 0) {
     const emptyMsg = document.createElement("p");
     emptyMsg.className = "empty-msg";
-    emptyMsg.textContent = state.lang === "es" ? "No hay tareas." : "No tasks.";
+    const dict = translations[state.lang] || translations.en;
+    emptyMsg.textContent = dict["no-tasks"] || "No tasks.";
     todoList.appendChild(emptyMsg);
     renderFocusCard();
     syncDashboardColumns();
@@ -69,6 +70,7 @@ export function renderTodos() {
   filteredTodos.forEach(todo => {
     const li = document.createElement("li");
     li.className = `todo-item ${todo.completed ? "completed" : ""} ${todo.isFocused ? "focused" : ""}`;
+    const dict = translations[state.lang] || translations.en;
     
     let dateBadgeHTML = "";
     if (todo.dueDate) {
@@ -80,7 +82,6 @@ export function renderTodos() {
       
       let badgeClass = "";
       let badgeText = "";
-      const dict = translations[state.lang] || translations.en;
 
       if (todo.completed) {
         badgeText = formatDateShort(todo.dueDate, state.lang);
@@ -111,15 +112,15 @@ export function renderTodos() {
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <polyline points="20 6 9 17 4 12"></polyline>
           </svg>
-          ${state.lang === "es" ? "Completada el" : "Completed on"} ${formattedCompDate}
+          ${dict["task-completed-on"] || "Completed on"} ${formattedCompDate}
         </span>`;
     }
 
     const escapedText = escapeHtml(todo.text);
-    const checkLabel = (state.lang === "es" ? "Marcar tarea como completada: " : "Mark task as complete: ") + todo.text;
-    const focusLabel = (state.lang === "es" ? "Trabajar en esta tarea: " : "Focus on this task: ") + todo.text;
-    const editLabel = (state.lang === "es" ? "Editar tarea: " : "Edit task: ") + todo.text;
-    const deleteLabel = (state.lang === "es" ? "Eliminar tarea: " : "Delete task: ") + todo.text;
+    const checkLabel = (dict["task-mark-complete"] || "Mark task as complete") + ": " + todo.text;
+    const focusLabel = (dict["task-focus-action"] || "Focus on this task") + ": " + todo.text;
+    const editLabel = (dict["btn-edit"] || "Edit") + ": " + todo.text;
+    const deleteLabel = (dict["btn-delete"] || "Delete") + ": " + todo.text;
 
     li.innerHTML = `
       <div class="todo-item-left">
@@ -127,7 +128,7 @@ export function renderTodos() {
         <div class="todo-item-details">
           <span class="todo-text">${escapedText}</span>
           <div class="todo-meta">
-            <span class="todo-priority-badge priority-${todo.priority}">${translations[state.lang]["priority-" + todo.priority]}</span>
+            <span class="todo-priority-badge priority-${todo.priority}">${dict["priority-" + todo.priority]}</span>
             ${dateBadgeHTML}
           </div>
           ${completedBadgeHTML}
@@ -135,17 +136,17 @@ export function renderTodos() {
       </div>
       <div class="todo-actions">
         ${!todo.completed ? `
-        <button class="btn-item-action focus-btn ${todo.isFocused ? "active" : ""}" data-id="${todo.id}" title="${state.lang === "es" ? "Trabajando en esta tarea" : "Focus on this task"}" aria-label="${escapeHtml(focusLabel)}">
+        <button class="btn-item-action focus-btn ${todo.isFocused ? "active" : ""}" data-id="${todo.id}" title="${dict["task-focus-action"] || "Focus on this task"}" aria-label="${escapeHtml(focusLabel)}">
           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <circle cx="12" cy="12" r="10"/>
             <circle cx="12" cy="12" r="3"/>
           </svg>
         </button>
         ` : ""}
-        <button class="btn-item-action edit-btn" data-id="${todo.id}" title="${state.lang === "es" ? "Editar" : "Edit"}" aria-label="${escapeHtml(editLabel)}">
+        <button class="btn-item-action edit-btn" data-id="${todo.id}" title="${dict["btn-edit"] || "Edit"}" aria-label="${escapeHtml(editLabel)}">
           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
         </button>
-        <button class="btn-item-action delete-btn" data-id="${todo.id}" title="${state.lang === "es" ? "Eliminar" : "Delete"}" aria-label="${escapeHtml(deleteLabel)}">
+        <button class="btn-item-action delete-btn" data-id="${todo.id}" title="${dict["btn-delete"] || "Delete"}" aria-label="${escapeHtml(deleteLabel)}">
           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
         </button>
       </div>
@@ -229,7 +230,7 @@ export function renderFocusCard() {
           </div>
         </div>
         <div class="todo-actions">
-          <button class="btn-item-action focus-btn active" data-id="${focusedTodo.id}" title="${state.lang === "es" ? "Dejar de trabajar en esta tarea" : "Stop focusing"}">
+          <button class="btn-item-action focus-btn active" data-id="${focusedTodo.id}" title="${translations[state.lang]["task-stop-focus-action"] || "Stop focusing"}">
             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2">
               <circle cx="12" cy="12" r="10"/>
               <circle cx="12" cy="12" r="3"/>
@@ -293,13 +294,12 @@ export function deleteTodo(id) {
 
   const modal = document.getElementById("confirm-delete-modal");
   if (modal) {
-    const dict = translations[state.lang];
+    const dict = translations[state.lang] || translations.en;
     modal.querySelector('[data-i18n="confirm-delete-title"]').textContent = dict["confirm-delete-title"];
     const descEl = modal.querySelector('[data-i18n="confirm-delete-desc"]');
     if (descEl) {
-      descEl.innerHTML = state.lang === "es"
-        ? `¿Estás seguro de que quieres eliminar la tarea: <strong>"${escapeHtml(todo.text)}"</strong>?`
-        : `Are you sure you want to delete the task: <strong>"${escapeHtml(todo.text)}"</strong>?`;
+      const template = dict["delete-task-desc"] || "¿Estás seguro de que quieres eliminar la tarea: <strong>\"{task}\"</strong>?";
+      descEl.innerHTML = template.replace("{task}", escapeHtml(todo.text));
     }
     modal.querySelector('[data-i18n="cancel-btn"]').textContent = dict["cancel-btn"];
     modal.querySelector('[data-i18n="delete-btn"]').textContent = dict["delete-btn"];
@@ -311,16 +311,14 @@ export function showClearCompletedConfirmation() {
   confirmDeleteState.actionType = "clear-completed";
   const modal = document.getElementById("confirm-delete-modal");
   if (modal) {
-    const dict = translations[state.lang];
-    modal.querySelector('[data-i18n="confirm-delete-title"]').textContent = state.lang === "es" ? "Limpiar Tareas" : "Clear Tasks";
+    const dict = translations[state.lang] || translations.en;
+    modal.querySelector('[data-i18n="confirm-delete-title"]').textContent = dict["clear-tasks-title"] || "Clear Tasks";
     const descEl = modal.querySelector('[data-i18n="confirm-delete-desc"]');
     if (descEl) {
-      descEl.innerHTML = state.lang === "es"
-        ? "¿Estás seguro de que quieres eliminar todas las tareas completadas?"
-        : "Are you sure you want to delete all completed tasks?";
+      descEl.innerHTML = dict["clear-tasks-desc"] || "Are you sure you want to delete all completed tasks?";
     }
     modal.querySelector('[data-i18n="cancel-btn"]').textContent = dict["cancel-btn"];
-    modal.querySelector('[data-i18n="delete-btn"]').textContent = state.lang === "es" ? "Eliminar todas" : "Delete all";
+    modal.querySelector('[data-i18n="delete-btn"]').textContent = dict["btn-delete-all"] || "Delete all";
     openModalAccessible(modal, document.getElementById("btn-cancel-delete"));
   }
 }
