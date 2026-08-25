@@ -513,11 +513,20 @@ export function setupEventListeners() {
     return trimmed;
   }
 
-  // Click weather widget to open web page in new tab
+  // Click weather widget to open web page in new tab or open settings if unconfigured
   const weatherWidgetEl = document.getElementById('weather-widget');
   if (weatherWidgetEl) {
     weatherWidgetEl.addEventListener('click', (e) => {
       e.stopPropagation();
+      if (!state.settings.city && !state.settings.weatherUrl) {
+        document.getElementById('settings-toggle').click();
+        const generalTab = document.querySelector('.tab-btn[data-tab="tab-general"]');
+        if (generalTab) generalTab.click();
+        const cityInput = document.getElementById('settings-city');
+        if (cityInput) setTimeout(() => cityInput.focus(), 150);
+        return;
+      }
+
       let targetUrl = '';
       if (state.settings.weatherUrl && state.settings.weatherUrl.trim()) {
         targetUrl = ensureHttpUrl(state.settings.weatherUrl);
@@ -526,14 +535,10 @@ export function setupEventListeners() {
         const langQuery = state.lang === 'es' ? 'tiempo' : 'weather';
         if (city) {
           targetUrl = `https://www.google.com/search?q=${encodeURIComponent(langQuery + ' ' + city)}`;
-        } else {
-          targetUrl = `https://www.google.com/search?q=${encodeURIComponent(langQuery)}`;
         }
       }
       if (targetUrl) {
         window.open(targetUrl, '_blank', 'noopener,noreferrer');
-      } else {
-        document.getElementById('settings-toggle').click();
       }
     });
   }
@@ -831,18 +836,18 @@ export function setupEventListeners() {
 
     document.getElementById('settings-city').value = state.settings.city;
     const weatherUrlInput = document.getElementById('settings-weather-url');
-    if (weatherUrlInput) weatherUrlInput.value = state.settings.weatherUrl !== undefined ? state.settings.weatherUrl : 'https://weather.com';
+    if (weatherUrlInput) weatherUrlInput.value = state.settings.weatherUrl || '';
     document.getElementById('settings-world-clock-tz').value = state.settings.worldClockTz !== undefined ? state.settings.worldClockTz : '';
     document.getElementById('settings-world-clock-label').value = state.settings.worldClockLabel || '';
     const clockUrlInput = document.getElementById('settings-world-clock-url');
-    if (clockUrlInput) clockUrlInput.value = state.settings.worldClockUrl !== undefined ? state.settings.worldClockUrl : 'https://time.is';
+    if (clockUrlInput) clockUrlInput.value = state.settings.worldClockUrl || '';
     
     const financeUrlInput = document.getElementById('settings-finance-url');
-    if (financeUrlInput) financeUrlInput.value = state.settings.financeUrl !== undefined ? state.settings.financeUrl : 'https://www.google.com/finance/beta/quote/.INX:INDEXSP?window=1M';
+    if (financeUrlInput) financeUrlInput.value = state.settings.financeUrl || '';
     const timerUrlInput = document.getElementById('settings-timer-url');
-    if (timerUrlInput) timerUrlInput.value = state.settings.timerUrl !== undefined ? state.settings.timerUrl : 'https://www.google.com/search?q=countdown+timer';
+    if (timerUrlInput) timerUrlInput.value = state.settings.timerUrl || '';
     const stopwatchUrlInput = document.getElementById('settings-stopwatch-url');
-    if (stopwatchUrlInput) stopwatchUrlInput.value = state.settings.stopwatchUrl !== undefined ? state.settings.stopwatchUrl : 'https://www.google.com/search?q=stopwatch';
+    if (stopwatchUrlInput) stopwatchUrlInput.value = state.settings.stopwatchUrl || '';
 
     document.getElementById('settings-show-weather').checked = state.settings.showWeather !== false;
     document.getElementById('settings-show-world-clock').checked = state.settings.showWorldClock !== false;

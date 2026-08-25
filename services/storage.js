@@ -165,8 +165,6 @@ export async function loadState(state) {
   }
   state.settings.customEvents = state.settings.customEvents || [];
   state.settings.primaryColor = state.settings.primaryColor || "blue";
-  state.settings.weatherUrl = state.settings.weatherUrl || "https://weather.com";
-  state.settings.worldClockUrl = state.settings.worldClockUrl || "https://time.is";
   state.lang = state.settings.lang || "en";
   state.theme = state.settings.theme || localStorage.getItem("theme") || "system";
 
