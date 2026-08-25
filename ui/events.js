@@ -1,5 +1,5 @@
 import { state } from "../utils/state.js";
-import { translations, getLocale } from "../locales/index.js";
+import { getLocale, t } from "../locales/index.js";
 import { escapeHtml, formatDateShort, getLocalDateString, openModalAccessible } from "../utils/helpers.js";
 import { saveSettings } from "../services/storage.js";
 import { confirmDeleteState } from "./todos.js";
@@ -44,42 +44,40 @@ export function renderCountdowns() {
     let relativeText = '';
     let isFarFuture = false;
 
-    const dict = translations[state.lang] || translations.en;
-
     if (isOverdue) {
-      daysLabel = dict["badge-overdue"] || "Overdue";
+      daysLabel = t("badge-overdue");
       badgeHTML = `<span class="event-overdue-badge" style="margin-left: 0;">${daysLabel}</span>`;
       
       const timeDiff = todayMs - eventDateThisYear.getTime();
       const daysAgo = Math.floor(timeDiff / (1000 * 3600 * 24));
       relativeText = daysAgo === 1
-        ? (dict["time-yesterday"] || "yesterday")
-        : (dict["time-days-ago"] || "{n} days ago").replace("{n}", daysAgo);
+        ? t("time-yesterday")
+        : t("time-days-ago", { n: daysAgo });
     } else {
       const diffTime = eventDateThisYear.getTime() - todayMs;
       const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
       
       let badgeClass = '';
       if (diffDays === 0) {
-        daysLabel = dict["task-today"] || "Today";
+        daysLabel = t("task-today");
         badgeClass = 'countdown-badge-amber';
-        relativeText = (dict["task-today"] || "today").toLowerCase();
+        relativeText = t("task-today").toLowerCase();
       } else if (diffDays === 1) {
-        daysLabel = dict["task-tomorrow"] || "Tomorrow";
+        daysLabel = t("task-tomorrow");
         badgeClass = 'countdown-badge-red';
-        relativeText = (dict["task-tomorrow"] || "tomorrow").toLowerCase();
+        relativeText = t("task-tomorrow").toLowerCase();
       } else if (diffDays < 7) {
-        daysLabel = (dict["badge-in-days"] || "In {n} d").replace("{n}", diffDays);
+        daysLabel = t("badge-in-days", { n: diffDays });
         badgeClass = 'countdown-badge-red';
-        relativeText = (dict["time-in-days"] || "in {n} days").replace("{n}", diffDays);
+        relativeText = t("time-in-days", { n: diffDays });
       } else if (diffDays < 31) {
-        daysLabel = (dict["badge-in-days"] || "In {n} d").replace("{n}", diffDays);
+        daysLabel = t("badge-in-days", { n: diffDays });
         badgeClass = 'countdown-badge-amber';
-        relativeText = (dict["time-in-days"] || "in {n} days").replace("{n}", diffDays);
+        relativeText = t("time-in-days", { n: diffDays });
       } else {
-        daysLabel = (dict["badge-in-days"] || "In {n} d").replace("{n}", diffDays);
+        daysLabel = t("badge-in-days", { n: diffDays });
         badgeClass = 'countdown-badge-neutral';
-        relativeText = (dict["time-in-days"] || "in {n} days").replace("{n}", diffDays);
+        relativeText = t("time-in-days", { n: diffDays });
         isFarFuture = true;
       }
       badgeHTML = `<span class="countdown-badge ${badgeClass}">${daysLabel}</span>`;
@@ -90,8 +88,8 @@ export function renderCountdowns() {
     const fullMonthDate = eventDateThisYear.toLocaleDateString(getLocale(state.lang), { day: 'numeric', month: 'long' });
     const tooltipText = evt.name + `\n${fullMonthDate} (${relativeText})`;
 
-    const editCountdownLabel = (dict["edit-event-action"] || "Edit event") + ": " + evt.name;
-    const deleteCountdownLabel = (dict["delete-event-action"] || "Delete event") + ": " + evt.name;
+    const editCountdownLabel = `${t("btn-edit")}: ${evt.name}`;
+    const deleteCountdownLabel = `${t("btn-delete")}: ${evt.name}`;
 
     const li = document.createElement('li');
     li.className = 'countdown-item';
@@ -108,10 +106,10 @@ export function renderCountdowns() {
       </div>
       <div class="todo-actions countdown-actions">
         ${badgeHTML}
-        <button class="btn-item-action edit-countdown-btn" data-id="${evt.id}" title="${dict["btn-edit"] || "Edit"}" aria-label="${escapeHtml(editCountdownLabel)}">
+        <button class="btn-item-action edit-countdown-btn" data-id="${evt.id}" title="${t("btn-edit")}" aria-label="${escapeHtml(editCountdownLabel)}">
           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
         </button>
-        <button class="btn-item-action delete-countdown-btn" data-id="${evt.id}" title="${dict["btn-delete"] || "Delete"}" aria-label="${escapeHtml(deleteCountdownLabel)}">
+        <button class="btn-item-action delete-countdown-btn" data-id="${evt.id}" title="${t("btn-delete")}" aria-label="${escapeHtml(deleteCountdownLabel)}">
           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
         </button>
       </div>
@@ -157,7 +155,7 @@ export function updateUpcomingEventBanner() {
   let upcomingEvents = [];
 
   events.forEach(evt => {
-    const [year, monthStr, dayStr] = evt.date.split('-');
+    const [, monthStr, dayStr] = evt.date.split('-');
     const month = parseInt(monthStr, 10) - 1;
     const day = parseInt(dayStr, 10);
 
@@ -194,30 +192,29 @@ export function updateUpcomingEventBanner() {
   });
 
   let activeChipsHTML = '';
-  const dict = translations[state.lang] || translations.en;
 
   if (todayEvents.length > 0) {
     const names = todayEvents.map(e => e.name).join(', ');
-    const labelText = `🎉 ${dict["task-today"] || "Today"}: ${names}! 🎂`;
+    const labelText = `🎉 ${t("task-today")}: ${names}! 🎂`;
     activeChipsHTML += `<div class="event-banner today">${escapeHtml(labelText)}</div>`;
     
     const remainingCount = events.length - todayEvents.length;
     if (remainingCount > 0) {
-      const moreText = (dict["label-plus-more"] || "+{n} more").replace("{n}", remainingCount);
+      const moreText = t("label-plus-more", { n: remainingCount });
       activeChipsHTML += `<div class="event-banner more-chip">${escapeHtml(moreText)}</div>`;
     }
   } else if (pastEvents.length > 0) {
     pastEvents.sort((a, b) => a.daysAgo - b.daysAgo);
     const closestPast = pastEvents[0];
     const timeAgoText = closestPast.daysAgo === 1
-      ? (dict["time-yesterday"] || "yesterday")
-      : (dict["time-days-ago"] || "{n} days ago").replace("{n}", closestPast.daysAgo);
-    const labelText = `⚠️ ${dict["badge-overdue"] || "Overdue"}: ${closestPast.name} (${timeAgoText})`;
+      ? t("time-yesterday")
+      : t("time-days-ago", { n: closestPast.daysAgo });
+    const labelText = `⚠️ ${t("badge-overdue")}: ${closestPast.name} (${timeAgoText})`;
     activeChipsHTML += `<div class="event-banner past-warning">${escapeHtml(labelText)}</div>`;
     
     const remainingCount = events.length - 1;
     if (remainingCount > 0) {
-      const moreText = (dict["label-plus-more"] || "+{n} more").replace("{n}", remainingCount);
+      const moreText = t("label-plus-more", { n: remainingCount });
       activeChipsHTML += `<div class="event-banner more-chip">${escapeHtml(moreText)}</div>`;
     }
   } else if (upcomingEvents.length > 0) {
@@ -235,16 +232,16 @@ export function updateUpcomingEventBanner() {
     
     let timeText = '';
     if (closest.daysLeft === 1) {
-      timeText = dict["task-tomorrow"] || "tomorrow";
+      timeText = t("task-tomorrow");
     } else {
-      timeText = (dict["time-in-days"] || "in {n} days").replace("{n}", closest.daysLeft);
+      timeText = t("time-in-days", { n: closest.daysLeft });
     }
     const labelText = `${icon} ${closest.name} (${timeText})`;
     activeChipsHTML += `<div class="event-banner ${bannerClass}">${escapeHtml(labelText)}</div>`;
     
     const remainingCount = upcomingEvents.length - 1;
     if (remainingCount > 0) {
-      const moreText = (dict["label-plus-more"] || "+{n} more").replace("{n}", remainingCount);
+      const moreText = t("label-plus-more", { n: remainingCount });
       activeChipsHTML += `<div class="event-banner more-chip">${escapeHtml(moreText)}</div>`;
     }
   }
@@ -275,15 +272,13 @@ export function deleteCountdown(id) {
 
   const modal = document.getElementById("confirm-delete-modal");
   if (modal) {
-    const dict = translations[state.lang] || translations.en;
-    modal.querySelector('[data-i18n="confirm-delete-title"]').textContent = dict["delete-event-title"] || "Delete Event";
+    modal.querySelector('[data-i18n="confirm-delete-title"]').textContent = t("delete-event-title");
     const descEl = modal.querySelector('[data-i18n="confirm-delete-desc"]');
     if (descEl) {
-      const template = dict["delete-event-prompt-desc"] || "¿Estás seguro de que quieres eliminar el evento: <strong>\"{event}\"</strong>?";
-      descEl.innerHTML = template.replace("{event}", escapeHtml(countdown.name));
+      descEl.textContent = t("delete-event-desc");
     }
-    modal.querySelector('[data-i18n="cancel-btn"]').textContent = dict["cancel-btn"];
-    modal.querySelector('[data-i18n="delete-btn"]').textContent = dict["delete-btn"];
+    modal.querySelector('[data-i18n="cancel-btn"]').textContent = t("cancel-btn");
+    modal.querySelector('[data-i18n="delete-btn"]').textContent = t("delete-btn");
     openModalAccessible(modal, document.getElementById("btn-cancel-delete"));
   }
 }
@@ -301,7 +296,6 @@ export function renderSettingsEventsList() {
   const listEl = document.getElementById("settings-events-list");
   if (!listEl) return;
   listEl.innerHTML = "";
-  const dict = translations[state.lang] || translations.en;
 
   const events = state.settings.customEvents || [];
   if (events.length === 0) {
@@ -309,7 +303,7 @@ export function renderSettingsEventsList() {
     emptyMsg.style.color = "var(--text-secondary)";
     emptyMsg.style.fontSize = "0.8rem";
     emptyMsg.style.justifyContent = "center";
-    emptyMsg.textContent = dict["no-events-configured"] || "No events configured.";
+    emptyMsg.textContent = t("countdown-empty");
     listEl.appendChild(emptyMsg);
     return;
   }
@@ -354,7 +348,7 @@ export function renderSettingsEventsList() {
     if (isOverdue) {
       const overdueBadge = document.createElement("span");
       overdueBadge.className = "event-overdue-badge";
-      overdueBadge.textContent = dict["badge-overdue"] || "Overdue";
+      overdueBadge.textContent = t("badge-overdue");
       dateRow.appendChild(overdueBadge);
     }
 
@@ -364,8 +358,8 @@ export function renderSettingsEventsList() {
     const deleteBtn = document.createElement("button");
     deleteBtn.type = "button";
     deleteBtn.className = "btn-delete-event";
-    deleteBtn.title = dict["btn-delete"] || "Delete";
-    deleteBtn.setAttribute("aria-label", (dict["delete-event-action"] || "Delete event") + ": " + evt.name);
+    deleteBtn.title = t("btn-delete");
+    deleteBtn.setAttribute("aria-label", `${t("btn-delete")}: ${evt.name}`);
     deleteBtn.innerHTML = `
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <polyline points="3 6 5 6 21 6"></polyline>
@@ -386,3 +380,4 @@ export function renderSettingsEventsList() {
     listEl.appendChild(li);
   });
 }
+

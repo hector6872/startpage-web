@@ -207,9 +207,6 @@ export default {
   "delete-event-desc": "Sei sicuro di voler eliminare questo evento?",
   "hide-events-title": "Nascondi eventi",
   "hide-events-desc": "Nascondere gli eventi non li eliminerà. Puoi mostrarli di nuovo in qualsiasi momento riattivando l'interruttore.",
-  "edit-event-action": "Modifica evento",
-  "delete-event-action": "Elimina evento",
-  "no-events-configured": "Nessun evento configurato.",
   "git-connected": "Connesso",
   "git-disconnected": "Disconnesso",
   "git-error-prefix": "Errore: ",
@@ -242,10 +239,15 @@ export default {
   "wiki-badge-tooltip": "Modifica contenuto nelle impostazioni",
   "wiki-view-author": "Vedi {author} su Wikipedia",
   "no-tasks": "Nessuna attività.",
-  "delete-task-desc": "Sei sicuro di voler eliminare l'attività: <strong>\"{task}\"</strong>?",
-  "delete-event-prompt-desc": "Sei sicuro di voler eliminare l'evento: <strong>\"{event}\"</strong>?",
   "confirm-load-file": "Il file selezionato contiene dati. Vuoi caricarli e sovrascrivere i dati correnti del browser?",
   "city-placeholder": "es. Roma",
   "clock-label-placeholder": "es. Londra",
-  "label-event-name": "Nome dell'Evento"
+  "label-event-name": "Nome dell'Evento",
+  "label-show-google-emails": "Mostra email (Gmail)",
+  "label-ooo-active": "Fuori ufficio (OOO)",
+  "ooo-until": "Attivo fino a:",
+  "label-show-git": "Mostra integrazione Git (PR)",
+  "label-hide-ooo": "Nascondi se Fuori ufficio è attivo",
+  "label-show-jira": "Mostra integrazione Jira",
+  "ooo-title": "Data di rientro"
 };

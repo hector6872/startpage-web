@@ -1,5 +1,5 @@
 import { state } from "../utils/state.js";
-import { translations, getLocale } from "../locales/index.js";
+import { getLocale, t } from "../locales/index.js";
 import { applyPrimaryColor, applyAccountColors, applyTheme, updateSwatchActiveState, updateAccountSwatchActiveState } from "./theme.js";
 import { updateOooBadges, updateOrganizerVisibility, updateNotesBadge, updateWorldClock, updateTimeAndGreeting } from "./shortcuts.js";
 import { renderTodos, addTodo, updateTodo, showClearCompletedConfirmation, confirmDeleteState, setActiveFilter } from "./todos.js";
@@ -13,30 +13,22 @@ import { saveSettings, saveTodos, writeDataToFile, readDataFromFile, exportState
 import { openModalAccessible, trapFocusInDialog, showInputErrorFeedback, ensureHttpUrl } from "../utils/helpers.js";
 
 export function translatePage() {
-  const dictionary = translations[state.lang] || translations['en'];
-  
   // Translate standard content elements
   document.querySelectorAll('[data-i18n]').forEach(el => {
     const key = el.getAttribute('data-i18n');
-    if (dictionary[key]) {
-      el.textContent = dictionary[key];
-    }
+    el.textContent = t(key);
   });
 
   // Translate input placeholders
   document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
     const key = el.getAttribute('data-i18n-placeholder');
-    if (dictionary[key]) {
-      el.setAttribute('placeholder', dictionary[key]);
-    }
+    el.setAttribute('placeholder', t(key));
   });
 
   // Translate titles
   document.querySelectorAll('[data-i18n-title]').forEach(el => {
     const key = el.getAttribute('data-i18n-title');
-    if (dictionary[key]) {
-      el.setAttribute('title', dictionary[key]);
-    }
+    el.setAttribute('title', t(key));
   });
 
   // Update UI lang toggle button text if exists
@@ -407,14 +399,13 @@ export function setupEventListeners() {
     showEventsCheckbox.addEventListener('change', () => {
       if (!showEventsCheckbox.checked && (state.settings.customEvents && state.settings.customEvents.length > 0)) {
         confirmDeleteState.actionType = 'hide-events';
-        const dict = translations[state.lang] || translations.en;
-        confirmDeleteModal.querySelector('[data-i18n="confirm-delete-title"]').textContent = dict['hide-events-title'] || 'Hide Events';
+        confirmDeleteModal.querySelector('[data-i18n="confirm-delete-title"]').textContent = t('hide-events-title');
         const descEl = confirmDeleteModal.querySelector('[data-i18n="confirm-delete-desc"]');
         if (descEl) {
-          descEl.innerHTML = dict['hide-events-desc'] || 'You have configured events (pending or overdue). Are you sure you want to hide the Events section?';
+          descEl.innerHTML = t('hide-events-desc');
         }
-        confirmDeleteModal.querySelector('[data-i18n="cancel-btn"]').textContent = dict['cancel-btn'];
-        confirmDeleteModal.querySelector('[data-i18n="delete-btn"]').textContent = dict['btn-confirm'] || 'Confirm';
+        confirmDeleteModal.querySelector('[data-i18n="cancel-btn"]').textContent = t('cancel-btn');
+        confirmDeleteModal.querySelector('[data-i18n="delete-btn"]').textContent = t('btn-confirm');
         confirmDeleteModal.showModal();
       }
     });
@@ -937,7 +928,7 @@ export function setupEventListeners() {
       if (fileHandle) {
         document.getElementById('sync-file-name').textContent = fileHandle.name;
       } else {
-        document.getElementById('sync-file-name').textContent = translations[state.lang]['no-file-selected'];
+        document.getElementById('sync-file-name').textContent = t('no-file-selected');
       }
     } else {
       document.getElementById('file-sync-settings').classList.add('hidden');
@@ -1031,7 +1022,7 @@ export function setupEventListeners() {
       if (fileHandle) {
         document.getElementById('sync-file-name').textContent = fileHandle.name;
       } else {
-        document.getElementById('sync-file-name').textContent = translations[state.lang]['no-file-selected'];
+        document.getElementById('sync-file-name').textContent = t('no-file-selected');
       }
     } else {
       document.getElementById('file-sync-settings').classList.add('hidden');
@@ -1041,7 +1032,7 @@ export function setupEventListeners() {
   // Select File Button Handler
   document.getElementById('btn-select-file').addEventListener('click', async () => {
     if (!('showOpenFilePicker' in window)) {
-      alert(translations[state.lang]['file-unsupported']);
+      alert(t('file-unsupported'));
       return;
     }
     try {
@@ -1063,10 +1054,7 @@ export function setupEventListeners() {
         const fileData = await readDataFromFile();
         if (fileData) {
           // File has data, offer to load it or overwrite it
-          const dict = translations[state.lang] || translations.en;
-          const confirmLoad = confirm(
-            dict['confirm-load-file'] || 'The selected file contains data. Do you want to load it and overwrite current browser data?'
-          );
+          const confirmLoad = confirm(t('confirm-load-file'));
           if (confirmLoad) {
             if (fileData.todos) state.todos = fileData.todos;
             if (fileData.settings) {
@@ -1188,11 +1176,9 @@ export function setupEventListeners() {
       nameInput.setCustomValidity('');
       dateInput.setCustomValidity('');
 
-      const dict = translations[state.lang] || translations.en;
-
       if (!nameInput.value.trim()) {
         nameInput.classList.add('invalid-field');
-        nameInput.setCustomValidity(dict['form-required-field'] || 'Please fill out this field.');
+        nameInput.setCustomValidity(t('form-required-field'));
         nameInput.reportValidity();
         nameInput.addEventListener('input', () => {
           nameInput.classList.remove('invalid-field');
@@ -1202,7 +1188,7 @@ export function setupEventListeners() {
       }
       if (!dateInput.value) {
         dateInput.classList.add('invalid-field');
-        dateInput.setCustomValidity(dict['form-required-field'] || 'Please fill out this field.');
+        dateInput.setCustomValidity(t('form-required-field'));
         dateInput.reportValidity();
         dateInput.addEventListener('input', () => {
           dateInput.classList.remove('invalid-field');
@@ -1397,8 +1383,7 @@ export function setupEventListeners() {
   loginBtnPersonal.addEventListener('click', () => {
     if (!state.settings.googleClientId) {
       const clientIdInput = document.getElementById('google-client-id');
-      const dict = translations[state.lang] || translations.en;
-      const msg = dict['form-enter-google-id'] || 'Please enter your Google Client ID.';
+      const msg = t('form-enter-google-id');
       showInputErrorFeedback(clientIdInput, msg);
       return;
     }
@@ -1416,8 +1401,7 @@ export function setupEventListeners() {
   loginBtnWork.addEventListener('click', () => {
     if (!state.settings.googleClientId) {
       const clientIdInput = document.getElementById('google-client-id');
-      const dict = translations[state.lang] || translations.en;
-      const msg = dict['form-enter-google-id'] || 'Please enter your Google Client ID.';
+      const msg = t('form-enter-google-id');
       showInputErrorFeedback(clientIdInput, msg);
       return;
     }

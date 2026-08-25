@@ -21,6 +21,8 @@ export const translations = {
   zh
 };
 
+import { state } from '../utils/state.js';
+
 export function getLocale(lang) {
   const localeMap = {
     en: 'en-US',
@@ -36,3 +38,16 @@ export function getLocale(lang) {
   };
   return localeMap[lang] || 'en-US';
 }
+
+export function t(key, params = {}, lang = (typeof state !== 'undefined' && state ? state.lang : 'en')) {
+  const currentDict = translations[lang] || translations.en;
+  let text = currentDict?.[key] ?? translations.en?.[key] ?? key;
+
+  if (params && typeof params === 'object') {
+    for (const [paramKey, paramVal] of Object.entries(params)) {
+      text = text.replaceAll(`{${paramKey}}`, paramVal);
+    }
+  }
+  return text;
+}
+

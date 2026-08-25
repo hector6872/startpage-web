@@ -207,9 +207,6 @@ export default {
   "delete-event-desc": "Voulez-vous vraiment supprimer cet événement ?",
   "hide-events-title": "Masquer les événements",
   "hide-events-desc": "Masquer les événements ne les supprimera pas. Vous pouvez les réafficher à tout moment en réactivant le bouton.",
-  "edit-event-action": "Modifier l'événement",
-  "delete-event-action": "Supprimer l'événement",
-  "no-events-configured": "Aucun événement configuré.",
   "git-connected": "Connecté",
   "git-disconnected": "Déconnecté",
   "git-error-prefix": "Erreur : ",
@@ -242,10 +239,15 @@ export default {
   "wiki-badge-tooltip": "Changer le contenu dans les paramètres",
   "wiki-view-author": "Voir {author} sur Wikipédia",
   "no-tasks": "Aucune tâche.",
-  "delete-task-desc": "Voulez-vous vraiment supprimer la tâche : <strong>\"{task}\"</strong> ?",
-  "delete-event-prompt-desc": "Voulez-vous vraiment supprimer l'événement : <strong>\"{event}\"</strong> ?",
   "confirm-load-file": "Le fichier sélectionné contient des données. Voulez-vous le charger et écraser les données actuelles du navigateur ?",
   "city-placeholder": "ex. Paris",
   "clock-label-placeholder": "ex. Londres",
-  "label-event-name": "Nom de l'événement"
+  "label-event-name": "Nom de l'événement",
+  "label-show-google-emails": "Afficher les e-mails (Gmail)",
+  "label-ooo-active": "Mode Absent du bureau (OOO)",
+  "ooo-until": "Actif jusqu'au :",
+  "label-show-git": "Afficher l'intégration Git (PRs)",
+  "label-hide-ooo": "Masquer si Absent du bureau est actif",
+  "label-show-jira": "Afficher l'intégration Jira",
+  "ooo-title": "Date de retour"
 };

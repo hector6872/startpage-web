@@ -1,5 +1,5 @@
 import { state } from "../utils/state.js";
-import { translations } from "../locales/index.js";
+import { t } from "../locales/index.js";
 import { escapeHtml, formatDateShort, getLocalDateString, openModalAccessible } from "../utils/helpers.js";
 import { saveTodos } from "../services/storage.js";
 import { syncDashboardColumns } from "./shortcuts.js";
@@ -24,7 +24,7 @@ export function renderTodos() {
   const pendingCount = state.todos.filter(todo => !todo.completed).length;
   const pendingBtn = document.querySelector('.filter-btn[data-filter="pending"]');
   if (pendingBtn) {
-    const baseText = translations[state.lang]["filter-pending"] || "Pending";
+    const baseText = t("filter-pending");
     if (pendingCount > 0) {
       pendingBtn.innerHTML = `${baseText} <span class="filter-badge">${pendingCount}</span>`;
     } else {
@@ -58,8 +58,7 @@ export function renderTodos() {
   if (filteredTodos.length === 0) {
     const emptyMsg = document.createElement("p");
     emptyMsg.className = "empty-msg";
-    const dict = translations[state.lang] || translations.en;
-    emptyMsg.textContent = dict["no-tasks"] || "No tasks.";
+    emptyMsg.textContent = t("no-tasks");
     todoList.appendChild(emptyMsg);
     renderFocusCard();
     syncDashboardColumns();
@@ -70,7 +69,6 @@ export function renderTodos() {
   filteredTodos.forEach(todo => {
     const li = document.createElement("li");
     li.className = `todo-item ${todo.completed ? "completed" : ""} ${todo.isFocused ? "focused" : ""}`;
-    const dict = translations[state.lang] || translations.en;
     
     let dateBadgeHTML = "";
     if (todo.dueDate) {
@@ -87,11 +85,11 @@ export function renderTodos() {
         badgeText = formatDateShort(todo.dueDate, state.lang);
       } else if (diffDays < 0) {
         badgeClass = "overdue";
-        badgeText = `${dict["task-overdue"]} (${formatDateShort(todo.dueDate, state.lang)})`;
+        badgeText = `${t("task-overdue")} (${formatDateShort(todo.dueDate, state.lang)})`;
       } else if (diffDays === 0) {
-        badgeText = dict["task-today"];
+        badgeText = t("task-today");
       } else if (diffDays === 1) {
-        badgeText = dict["task-tomorrow"];
+        badgeText = t("task-tomorrow");
       } else {
         badgeText = formatDateShort(todo.dueDate, state.lang);
       }
@@ -112,15 +110,15 @@ export function renderTodos() {
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <polyline points="20 6 9 17 4 12"></polyline>
           </svg>
-          ${dict["task-completed-on"] || "Completed on"} ${formattedCompDate}
+          ${t("task-completed-on")} ${formattedCompDate}
         </span>`;
     }
 
     const escapedText = escapeHtml(todo.text);
-    const checkLabel = (dict["task-mark-complete"] || "Mark task as complete") + ": " + todo.text;
-    const focusLabel = (dict["task-focus-action"] || "Focus on this task") + ": " + todo.text;
-    const editLabel = (dict["btn-edit"] || "Edit") + ": " + todo.text;
-    const deleteLabel = (dict["btn-delete"] || "Delete") + ": " + todo.text;
+    const checkLabel = t("task-mark-complete") + ": " + todo.text;
+    const focusLabel = t("task-focus-action") + ": " + todo.text;
+    const editLabel = t("btn-edit") + ": " + todo.text;
+    const deleteLabel = t("btn-delete") + ": " + todo.text;
 
     li.innerHTML = `
       <div class="todo-item-left">
@@ -128,7 +126,7 @@ export function renderTodos() {
         <div class="todo-item-details">
           <span class="todo-text">${escapedText}</span>
           <div class="todo-meta">
-            <span class="todo-priority-badge priority-${todo.priority}">${dict["priority-" + todo.priority]}</span>
+            <span class="todo-priority-badge priority-${todo.priority}">${t("priority-" + todo.priority)}</span>
             ${dateBadgeHTML}
           </div>
           ${completedBadgeHTML}
@@ -136,17 +134,17 @@ export function renderTodos() {
       </div>
       <div class="todo-actions">
         ${!todo.completed ? `
-        <button class="btn-item-action focus-btn ${todo.isFocused ? "active" : ""}" data-id="${todo.id}" title="${dict["task-focus-action"] || "Focus on this task"}" aria-label="${escapeHtml(focusLabel)}">
+        <button class="btn-item-action focus-btn ${todo.isFocused ? "active" : ""}" data-id="${todo.id}" title="${t("task-focus-action")}" aria-label="${escapeHtml(focusLabel)}">
           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <circle cx="12" cy="12" r="10"/>
             <circle cx="12" cy="12" r="3"/>
           </svg>
         </button>
         ` : ""}
-        <button class="btn-item-action edit-btn" data-id="${todo.id}" title="${dict["btn-edit"] || "Edit"}" aria-label="${escapeHtml(editLabel)}">
+        <button class="btn-item-action edit-btn" data-id="${todo.id}" title="${t("btn-edit")}" aria-label="${escapeHtml(editLabel)}">
           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
         </button>
-        <button class="btn-item-action delete-btn" data-id="${todo.id}" title="${dict["btn-delete"] || "Delete"}" aria-label="${escapeHtml(deleteLabel)}">
+        <button class="btn-item-action delete-btn" data-id="${todo.id}" title="${t("btn-delete")}" aria-label="${escapeHtml(deleteLabel)}">
           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
         </button>
       </div>
@@ -198,15 +196,14 @@ export function renderFocusCard() {
         
         let badgeClass = "";
         let badgeText = "";
-        const dict = translations[state.lang] || translations.en;
 
         if (diffDays < 0) {
           badgeClass = "overdue";
-          badgeText = `${dict["task-overdue"]} (${formatDateShort(focusedTodo.dueDate, state.lang)})`;
+          badgeText = `${t("task-overdue")} (${formatDateShort(focusedTodo.dueDate, state.lang)})`;
         } else if (diffDays === 0) {
-          badgeText = dict["task-today"];
+          badgeText = t("task-today");
         } else if (diffDays === 1) {
-          badgeText = dict["task-tomorrow"];
+          badgeText = t("task-tomorrow");
         } else {
           badgeText = formatDateShort(focusedTodo.dueDate, state.lang);
         }
@@ -224,13 +221,13 @@ export function renderFocusCard() {
           <div class="todo-item-details">
             <span class="todo-text">${escapeHtml(focusedTodo.text)}</span>
             <div class="todo-meta">
-              <span class="todo-priority-badge priority-${focusedTodo.priority}">${translations[state.lang]["priority-" + focusedTodo.priority]}</span>
+              <span class="todo-priority-badge priority-${focusedTodo.priority}">${t("priority-" + focusedTodo.priority)}</span>
               ${dateBadgeHTML}
             </div>
           </div>
         </div>
         <div class="todo-actions">
-          <button class="btn-item-action focus-btn active" data-id="${focusedTodo.id}" title="${translations[state.lang]["task-stop-focus-action"] || "Stop focusing"}">
+          <button class="btn-item-action focus-btn active" data-id="${focusedTodo.id}" title="${t("task-stop-focus-action")}">
             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2">
               <circle cx="12" cy="12" r="10"/>
               <circle cx="12" cy="12" r="3"/>
@@ -294,15 +291,13 @@ export function deleteTodo(id) {
 
   const modal = document.getElementById("confirm-delete-modal");
   if (modal) {
-    const dict = translations[state.lang] || translations.en;
-    modal.querySelector('[data-i18n="confirm-delete-title"]').textContent = dict["confirm-delete-title"];
+    modal.querySelector('[data-i18n="confirm-delete-title"]').textContent = t("confirm-delete-title");
     const descEl = modal.querySelector('[data-i18n="confirm-delete-desc"]');
     if (descEl) {
-      const template = dict["delete-task-desc"] || "¿Estás seguro de que quieres eliminar la tarea: <strong>\"{task}\"</strong>?";
-      descEl.innerHTML = template.replace("{task}", escapeHtml(todo.text));
+      descEl.textContent = t("confirm-delete-desc");
     }
-    modal.querySelector('[data-i18n="cancel-btn"]').textContent = dict["cancel-btn"];
-    modal.querySelector('[data-i18n="delete-btn"]').textContent = dict["delete-btn"];
+    modal.querySelector('[data-i18n="cancel-btn"]').textContent = t("cancel-btn");
+    modal.querySelector('[data-i18n="delete-btn"]').textContent = t("delete-btn");
     openModalAccessible(modal, document.getElementById("btn-cancel-delete"));
   }
 }
@@ -311,14 +306,13 @@ export function showClearCompletedConfirmation() {
   confirmDeleteState.actionType = "clear-completed";
   const modal = document.getElementById("confirm-delete-modal");
   if (modal) {
-    const dict = translations[state.lang] || translations.en;
-    modal.querySelector('[data-i18n="confirm-delete-title"]').textContent = dict["clear-tasks-title"] || "Clear Tasks";
+    modal.querySelector('[data-i18n="confirm-delete-title"]').textContent = t("clear-tasks-title");
     const descEl = modal.querySelector('[data-i18n="confirm-delete-desc"]');
     if (descEl) {
-      descEl.innerHTML = dict["clear-tasks-desc"] || "Are you sure you want to delete all completed tasks?";
+      descEl.innerHTML = t("clear-tasks-desc");
     }
-    modal.querySelector('[data-i18n="cancel-btn"]').textContent = dict["cancel-btn"];
-    modal.querySelector('[data-i18n="delete-btn"]').textContent = dict["btn-delete-all"] || "Delete all";
+    modal.querySelector('[data-i18n="cancel-btn"]').textContent = t("cancel-btn");
+    modal.querySelector('[data-i18n="delete-btn"]').textContent = t("btn-delete-all");
     openModalAccessible(modal, document.getElementById("btn-cancel-delete"));
   }
 }
@@ -343,3 +337,4 @@ export function openEditModal(todo) {
   document.getElementById("edit-todo-priority").value = todo.priority || "medium";
   openModalAccessible(modal, document.getElementById("edit-todo-input"));
 }
+

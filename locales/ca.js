@@ -207,9 +207,6 @@ export default {
   "delete-event-desc": "Segur que vols eliminar aquest esdeveniment?",
   "hide-events-title": "Amagar Esdeveniments",
   "hide-events-desc": "Amagar els esdeveniments no els eliminarà. Pots tornar-los a mostrar quan vulguis activant l'interruptor.",
-  "edit-event-action": "Editar esdeveniment",
-  "delete-event-action": "Eliminar esdeveniment",
-  "no-events-configured": "No hi ha esdeveniments.",
   "git-connected": "Connectat",
   "git-disconnected": "Desconnectat",
   "git-error-prefix": "Error: ",
@@ -242,10 +239,15 @@ export default {
   "wiki-badge-tooltip": "Canviar contingut a Configuració",
   "wiki-view-author": "Veure {author} a la Viquipèdia",
   "no-tasks": "No hi ha tasques.",
-  "delete-task-desc": "Segur que vols eliminar la tasca: <strong>\"{task}\"</strong>?",
-  "delete-event-prompt-desc": "Segur que vols eliminar l'esdeveniment: <strong>\"{event}\"</strong>?",
   "confirm-load-file": "El fitxer seleccionat conté dades. Voleu carregar-les i sobreescriure les dades actuals del navegador?",
   "city-placeholder": "ex. Barcelona",
   "clock-label-placeholder": "ex. Londres",
-  "label-event-name": "Nom de l'Esdeveniment"
+  "label-event-name": "Nom de l'Esdeveniment",
+  "label-show-google-emails": "Mostrar Correus (Gmail)",
+  "label-ooo-active": "Mode Fora de l'Oficina (OOO)",
+  "ooo-until": "Actiu fins a:",
+  "label-show-git": "Mostrar Integració de Git (PRs)",
+  "label-hide-ooo": "Amagar si Out of Office està actiu",
+  "label-show-jira": "Mostrar Integració de Jira",
+  "ooo-title": "Data de retorn"
 };

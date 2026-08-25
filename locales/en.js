@@ -207,9 +207,6 @@ export default {
   "delete-event-desc": "Are you sure you want to delete this event?",
   "hide-events-title": "Hide Events",
   "hide-events-desc": "Hiding events will not delete them. You can show them again anytime by enabling the toggle",
-  "edit-event-action": "Edit event",
-  "delete-event-action": "Delete event",
-  "no-events-configured": "No events configured",
   "git-connected": "Connected",
   "git-disconnected": "Disconnected",
   "git-error-prefix": "Error: ",
@@ -242,10 +239,15 @@ export default {
   "wiki-badge-tooltip": "Change content in Settings",
   "wiki-view-author": "View {author} on Wikipedia",
   "no-tasks": "No tasks",
-  "delete-task-desc": "Are you sure you want to delete the task: <strong>\"{task}\"</strong>?",
-  "delete-event-prompt-desc": "Are you sure you want to delete the event: <strong>\"{event}\"</strong>?",
   "confirm-load-file": "The selected file contains data. Do you want to load it and overwrite current browser data?",
   "city-placeholder": "e.g. London",
   "clock-label-placeholder": "e.g. London",
-  "label-event-name": "Event Title"
+  "label-event-name": "Event Title",
+  "label-show-google-emails": "Show Emails (Gmail)",
+  "label-ooo-active": "Out of Office (OOO)",
+  "ooo-until": "Active until:",
+  "label-show-git": "Show Git Integration (PRs)",
+  "label-hide-ooo": "Hide if Out of Office is active",
+  "label-show-jira": "Show Jira Integration",
+  "ooo-title": "Return Date"
 };

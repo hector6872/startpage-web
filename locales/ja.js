@@ -207,9 +207,6 @@ export default {
   "delete-event-desc": "このイベントを削除してもよろしいですか？",
   "hide-events-title": "イベントを非表示",
   "hide-events-desc": "イベントを非表示にしても削除されません。トグルをオンにすることでいつでも再表示できます。",
-  "edit-event-action": "イベントを編集",
-  "delete-event-action": "イベントを削除",
-  "no-events-configured": "設定されたイベントはありません。",
   "git-connected": "接続済み",
   "git-disconnected": "未接続",
   "git-error-prefix": "エラー: ",
@@ -242,10 +239,15 @@ export default {
   "wiki-badge-tooltip": "設定でコンテンツを変更",
   "wiki-view-author": "Wikipediaで{author}を見る",
   "no-tasks": "タスクはありません。",
-  "delete-task-desc": "タスク <strong>\"{task}\"</strong> を削除してもよろしいですか？",
-  "delete-event-prompt-desc": "イベント <strong>\"{event}\"</strong> を削除してもよろしいですか？",
   "confirm-load-file": "選択したファイルにデータが含まれています。読み込んで現在のブラウザデータを上書きしますか？",
   "city-placeholder": "例: 東京",
   "clock-label-placeholder": "例: ロンドン",
-  "label-event-name": "イベント名"
+  "label-event-name": "イベント名",
+  "label-show-google-emails": "メールを表示 (Gmail)",
+  "label-ooo-active": "不在モード (OOO)",
+  "ooo-until": "有効期限:",
+  "label-show-git": "Git 統合を表示 (PR)",
+  "label-hide-ooo": "不在モードが有効な場合は非表示",
+  "label-show-jira": "Jira 統合を表示",
+  "ooo-title": "復帰予定日"
 };

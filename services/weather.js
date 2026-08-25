@@ -1,4 +1,4 @@
-import { translations } from "../locales/index.js";
+import { t } from "../locales/index.js";
 
 export const weatherContext = {
   state: null
@@ -17,8 +17,6 @@ export async function loadWeather() {
   }
   weatherWidget.classList.remove('hidden');
   weatherWidget.classList.add('loading');
-
-  const dict = translations[weatherContext.state.lang];
 
   try {
     let lat, lon, cityName = 'Madrid';
@@ -52,7 +50,7 @@ export async function loadWeather() {
       const desc = getWeatherDesc(code);
       
       weatherWidget.querySelector('.weather-temp').textContent = `${temp}°C`;
-      weatherWidget.querySelector('.weather-feels').textContent = dict['weather-feels-like'].replace('{temp}', apparentTemp);
+      weatherWidget.querySelector('.weather-feels').textContent = t('weather-feels-like', { temp: apparentTemp }, weatherContext.state.lang);
       weatherWidget.querySelector('.weather-desc').textContent = desc;
       weatherWidget.querySelector('.weather-loc').textContent = cityName;
 
@@ -88,10 +86,11 @@ export async function loadWeather() {
             icon = '❄️';
           }
 
-          const label = dict[typeKey].replace('{prob}', maxProb);
+          const label = t(typeKey, { prob: maxProb }, weatherContext.state.lang);
           precipHTML = `<span class="weather-precip-badge" title="${label}">${icon} ${label}</span>`;
         } else {
-          precipHTML = `<span class="weather-precip-badge none" title="${dict['weather-no-precip']}">☀️ ${dict['weather-no-precip']}</span>`;
+          const noPrecipText = t('weather-no-precip', {}, weatherContext.state.lang);
+          precipHTML = `<span class="weather-precip-badge none" title="${noPrecipText}">☀️ ${noPrecipText}</span>`;
         }
       }
       weatherWidget.querySelector('.weather-precip').innerHTML = precipHTML;
@@ -100,8 +99,8 @@ export async function loadWeather() {
   } catch (err) {
     weatherWidget.classList.add('unconfigured');
     weatherWidget.querySelector('.weather-unconfigured-text').textContent = err.isUnconfigured
-      ? dict['weather-unconfigured']
-      : dict['weather-error'];
+      ? t('weather-unconfigured', {}, weatherContext.state.lang)
+      : t('weather-error', {}, weatherContext.state.lang);
     weatherWidget.classList.remove('loading');
   }
 }

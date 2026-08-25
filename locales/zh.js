@@ -207,9 +207,6 @@ export default {
   "delete-event-desc": "确定要删除此事件吗？",
   "hide-events-title": "隐藏事件",
   "hide-events-desc": "隐藏事件不会删除它们。您可以随时通过开启开关再次显示。",
-  "edit-event-action": "编辑事件",
-  "delete-event-action": "删除事件",
-  "no-events-configured": "未配置任何事件。",
   "git-connected": "已连接",
   "git-disconnected": "未连接",
   "git-error-prefix": "错误: ",
@@ -242,10 +239,15 @@ export default {
   "wiki-badge-tooltip": "在设置中更改内容",
   "wiki-view-author": "在维基百科上查看 {author}",
   "no-tasks": "没有任务。",
-  "delete-task-desc": "确定要删除任务 <strong>\"{task}\"</strong> 吗？",
-  "delete-event-prompt-desc": "确定要删除事件 <strong>\"{event}\"</strong> 吗？",
   "confirm-load-file": "所选文件包含数据。是否要加载它并覆盖当前浏览器数据？",
   "city-placeholder": "例如: 北京",
   "clock-label-placeholder": "例如: 伦敦",
-  "label-event-name": "事件名称"
+  "label-event-name": "事件名称",
+  "label-show-google-emails": "显示邮件 (Gmail)",
+  "label-ooo-active": "外出/休假模式 (OOO)",
+  "ooo-until": "有效期至：",
+  "label-show-git": "显示 Git 集成 (PR)",
+  "label-hide-ooo": "休假模式激活时隐藏",
+  "label-show-jira": "显示 Jira 集成",
+  "ooo-title": "返回日期"
 };

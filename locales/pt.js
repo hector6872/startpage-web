@@ -207,9 +207,6 @@ export default {
   "delete-event-desc": "Tem certeza que deseja excluir este evento?",
   "hide-events-title": "Ocultar Eventos",
   "hide-events-desc": "Ocultar os eventos não os excluirá. Você pode exibi-los novamente quando quiser ativando o interruptor.",
-  "edit-event-action": "Editar evento",
-  "delete-event-action": "Excluir evento",
-  "no-events-configured": "Nenhum evento configurado.",
   "git-connected": "Conectado",
   "git-disconnected": "Desconectado",
   "git-error-prefix": "Erro: ",
@@ -242,10 +239,15 @@ export default {
   "wiki-badge-tooltip": "Alterar conteúdo nas Configurações",
   "wiki-view-author": "Ver {author} na Wikipédia",
   "no-tasks": "Nenhuma tarefa.",
-  "delete-task-desc": "Tem certeza que deseja excluir a tarefa: <strong>\"{task}\"</strong>?",
-  "delete-event-prompt-desc": "Tem certeza que deseja excluir o evento: <strong>\"{event}\"</strong>?",
   "confirm-load-file": "O arquivo selecionado contém dados. Deseja carregá-lo e sobrescrever os dados atuais do navegador?",
   "city-placeholder": "ex. Lisboa",
   "clock-label-placeholder": "ex. Londres",
-  "label-event-name": "Nome do Evento"
+  "label-event-name": "Nome do Evento",
+  "label-show-google-emails": "Mostrar e-mails (Gmail)",
+  "label-ooo-active": "Modo Fora do Escritório (OOO)",
+  "ooo-until": "Ativo até:",
+  "label-show-git": "Mostrar integração Git (PRs)",
+  "label-hide-ooo": "Ocultar se Fora do Escritório estiver ativo",
+  "label-show-jira": "Mostrar integração Jira",
+  "ooo-title": "Data de retorno"
 };

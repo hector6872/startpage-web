@@ -1,4 +1,4 @@
-import { translations, getLocale } from "../locales/index.js";
+import { getLocale, t } from "../locales/index.js";
 
 export function escapeHtml(text) {
   if (!text) return "";
@@ -40,13 +40,12 @@ export function formatDateShort(dateStr, lang = "en") {
   const diffTime = d.getTime() - today.getTime();
   const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
 
-  const dict = translations[lang] || translations.en;
   if (diffDays === 0) {
-    return dict["task-today"] || "Today";
+    return t("task-today", {}, lang);
   } else if (diffDays === 1) {
-    return dict["task-tomorrow"] || "Tomorrow";
+    return t("task-tomorrow", {}, lang);
   } else if (diffDays === -1) {
-    return dict["time-yesterday"] || "Yesterday";
+    return t("time-yesterday", {}, lang);
   }
 
   const locale = getLocale(lang);

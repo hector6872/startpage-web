@@ -1,6 +1,6 @@
 import { state as defaultState, state } from "../utils/state.js";
 import { safeFetch as defaultSafeFetch, escapeHtml as defaultEscapeHtml, safeFetch, escapeHtml } from "../utils/helpers.js";
-import { translations } from "../locales/index.js";
+import { t } from "../locales/index.js";
 import { saveSettings } from "./storage.js";
 import { translatePage } from "../ui/settings.js";
 
@@ -15,8 +15,7 @@ function startJiraTestCooldown(button) {
   let remaining = 60;
   button.disabled = true;
 
-  const dict = translations[state.lang] || translations.en;
-  const originalText = dict['btn-connect'] || 'Connect';
+  const originalText = t('btn-connect');
   
   const interval = setInterval(() => {
     remaining--;
@@ -36,9 +35,8 @@ function startJiraTestCooldown(button) {
 
 // Test Jira connection validator
 export async function testJiraConnection(button) {
-  const dict = translations[state.lang] || translations.en;
-  const originalText = dict['btn-connect'] || 'Connect';
-  button.textContent = dict['btn-connecting'] || 'Connecting...';
+  const originalText = t('btn-connect');
+  button.textContent = t('btn-connecting');
   button.disabled = true;
 
   let success = false;
@@ -53,7 +51,7 @@ export async function testJiraConnection(button) {
     const email = document.getElementById('jira-email').value.trim();
     const token = document.getElementById('jira-token').value.trim();
     if (!host || !email || !token) {
-      throw new Error(dict['git-fill-fields'] || 'Fill all fields');
+      throw new Error(t('git-fill-fields'));
     }
 
     const auth = btoa(`${email}:${token}`);
@@ -118,7 +116,7 @@ export async function testJiraConnection(button) {
   updateJiraStatusIndicators(state, escapeHtml);
 
   if (success) {
-    button.textContent = dict['btn-connected'] || 'Connected!';
+    button.textContent = t('btn-connected');
     button.style.backgroundColor = 'rgba(39, 174, 96, 0.1)';
     button.style.color = '#27ae60';
     button.style.borderColor = '#27ae60';
@@ -126,7 +124,7 @@ export async function testJiraConnection(button) {
     startJiraTestCooldown(button);
     fetchJira(state, safeFetch, escapeHtml);
   } else {
-    button.textContent = dict['btn-failed'] || 'Failed';
+    button.textContent = t('btn-failed');
     button.style.backgroundColor = 'rgba(235, 87, 87, 0.1)';
     button.style.color = '#eb5757';
     button.style.borderColor = '#eb5757';
@@ -147,21 +145,20 @@ export async function testJiraConnection(button) {
 
 // Update Jira status indicators (dots and warning icon)
 export function updateJiraStatusIndicators(state = defaultState, escapeHtml = defaultEscapeHtml) {
-  const dict = translations[state.lang] || translations.en;
   const isConfigured = !!(state.settings.jiraHost && state.settings.jiraEmail && state.settings.jiraToken);
   const status = state.jiraStatus || (isConfigured ? 'connected' : 'disconnected');
   const errorMsg = state.jiraError || '';
 
-  const jiraWarningTooltip = errorMsg ? `Jira Error: ${errorMsg}` : (dict['status-error-connecting'] || 'Failed to connect to some services');
+  const jiraWarningTooltip = errorMsg ? `${t('git-error-prefix')}${errorMsg}` : t('btn-failed');
   const jiraWarningIconHTML = `<span class="status-warning-icon" data-tooltip="${escapeHtml(jiraWarningTooltip)}" onclick="event.stopPropagation(); window.openSettingsJiraTab();">⚠️</span>`;
 
   let tooltip = 'Jira: ';
   if (status === 'disconnected') {
-    tooltip += dict['git-disconnected'] || 'Disconnected';
+    tooltip += t('disconnected');
   } else if (status === 'connected') {
-    tooltip += dict['git-connected'] || 'Connected';
+    tooltip += t('connected');
   } else {
-    tooltip += (dict['git-error-prefix'] || 'Error: ') + errorMsg;
+    tooltip += t('git-error-prefix') + errorMsg;
   }
 
   const dotClass = status === 'connected' ? 'connected' : (status === 'error' ? 'error' : 'disconnected');
@@ -205,7 +202,7 @@ export async function fetchJira(state = defaultState, safeFetch = defaultSafeFet
     state.jiraStatus = 'disconnected';
     state.jiraError = '';
     updateJiraStatusIndicators(state, escapeHtml);
-    container.innerHTML = `<p class="empty-msg">${translations[state.lang]["status-unconfigured"]}</p>`;
+    container.innerHTML = `<p class="empty-msg">${t('status-unconfigured')}</p>`;
     return;
   }
 
@@ -248,7 +245,7 @@ export async function fetchJira(state = defaultState, safeFetch = defaultSafeFet
 
     // 3. Jira Server / DC GET /rest/api/2/search (only if 404)
     if (!response.ok && response.status === 404) {
-      response = await safeFetch(`${host}/rest/api/2/search?jql=${encodeURIComponent(jql)}&maxResults=50&fields=${fieldsParam}`, {
+      response = await safeFetch(`${host}/rest/api/2/search?jql=${encodeURIComponent(simpleJql)}&maxResults=50&fields=${fieldsParam}`, {
         headers: authHeaders
       });
       if (response.status === 401 || response.status === 403) {
@@ -291,8 +288,7 @@ export async function fetchJira(state = defaultState, safeFetch = defaultSafeFet
     if (jiraBadge) {
       if (data.issues && data.issues.length > 0) {
         jiraBadge.textContent = totalCount > 5 ? "5+" : totalCount;
-        const dict = translations[state.lang] || translations.en;
-        jiraBadge.setAttribute("data-tooltip", (dict["jira-assigned-tasks"] || "{n} assigned tasks in Jira").replace("{n}", totalCount));
+        jiraBadge.setAttribute("data-tooltip", t("jira-assigned-tasks", { n: totalCount }));
         jiraBadge.classList.remove("hidden");
       } else {
         jiraBadge.classList.add("hidden");
@@ -300,7 +296,7 @@ export async function fetchJira(state = defaultState, safeFetch = defaultSafeFet
     }
 
     if (!data.issues || data.issues.length === 0) {
-      container.innerHTML = `<p class="empty-msg">${translations[state.lang]["no-jira-tasks"]}</p>`;
+      container.innerHTML = `<p class="empty-msg">${t("no-jira-tasks")}</p>`;
       return;
     }
 
@@ -367,6 +363,6 @@ export async function fetchJira(state = defaultState, safeFetch = defaultSafeFet
     state.jiraStatus = 'error';
     state.jiraError = error.message || "Error";
     updateJiraStatusIndicators(state, escapeHtml);
-    container.innerHTML = `<p class="empty-msg">${translations[state.lang]["no-jira-tasks"] || "No active Jira issues assigned."}</p>`;
+    container.innerHTML = `<p class="empty-msg">${t("no-jira-tasks")}</p>`;
   }
 }

@@ -1,4 +1,4 @@
-import { translations, getLocale } from "../locales/index.js";
+import { translations, getLocale, t } from "../locales/index.js";
 
 export const googleContext = {
   state: null,
@@ -192,34 +192,31 @@ export function handleInvalidToken(accountType) {
   }
 }
 
-export async function checkAndFetchGoogleEmails() {
-  let changed = false;
-  if (googleContext.state.googlePersonalToken && !googleContext.state.googlePersonalEmail) {
-    const email = await fetchGoogleUserEmail(googleContext.state.googlePersonalToken);
-    if (email) {
-      googleContext.state.googlePersonalEmail = email;
-      localStorage.setItem('google_personal_email', email);
-      sessionStorage.setItem('google_personal_email', email);
-      changed = true;
+export function handleGoogleLogout(target) {
+  if (target === 'personal') {
+    if (googleContext.state.googlePersonalToken && typeof google !== 'undefined' && google.accounts && google.accounts.oauth2) {
+      google.accounts.oauth2.revoke(googleContext.state.googlePersonalToken, () => {});
     }
-  }
-  if (googleContext.state.googleWorkToken && !googleContext.state.googleWorkEmail) {
-    const email = await fetchGoogleUserEmail(googleContext.state.googleWorkToken);
-    if (email) {
-      googleContext.state.googleWorkEmail = email;
-      localStorage.setItem('google_work_email', email);
-      sessionStorage.setItem('google_work_email', email);
-      changed = true;
+    googleContext.state.googlePersonalToken = null;
+    googleContext.state.googlePersonalEmail = '';
+    localStorage.removeItem('startpage_google_personal_token');
+    localStorage.removeItem('startpage_google_personal_email');
+  } else if (target === 'work') {
+    if (googleContext.state.googleWorkToken && typeof google !== 'undefined' && google.accounts && google.accounts.oauth2) {
+      google.accounts.oauth2.revoke(googleContext.state.googleWorkToken, () => {});
     }
+    googleContext.state.googleWorkToken = null;
+    googleContext.state.googleWorkEmail = '';
+    localStorage.removeItem('startpage_google_work_token');
+    localStorage.removeItem('startpage_google_work_email');
   }
-  if (changed) {
-    updateGoogleAuthStatus();
-  }
+  updateGoogleAuthStatus();
+  fetchGoogleCalendar();
+  fetchGmail();
+  fetchGoogleTasks();
 }
 
 export function updateGoogleAuthStatus() {
-  const dict = translations[googleContext.state.lang];
-  
   // Personal account status
   const personalStatusEl = document.getElementById('google-auth-status-personal');
   const personalLoginBtn = document.getElementById('google-login-btn-personal');
@@ -228,12 +225,12 @@ export function updateGoogleAuthStatus() {
   if (personalStatusEl && personalLoginBtn && personalLogoutBtn) {
     if (googleContext.state.googlePersonalToken) {
       const emailStr = googleContext.state.googlePersonalEmail ? ` (${googleContext.state.googlePersonalEmail})` : '';
-      personalStatusEl.textContent = `${dict['connected']}${emailStr}`;
+      personalStatusEl.textContent = `${t('connected')}${emailStr}`;
       personalStatusEl.className = "auth-status connected";
       personalLoginBtn.classList.add('hidden');
       personalLogoutBtn.classList.remove('hidden');
     } else {
-      personalStatusEl.textContent = dict['disconnected'];
+      personalStatusEl.textContent = t('disconnected');
       personalStatusEl.className = "auth-status disconnected";
       personalLoginBtn.classList.remove('hidden');
       personalLogoutBtn.classList.add('hidden');
@@ -248,12 +245,12 @@ export function updateGoogleAuthStatus() {
   if (workStatusEl && workLoginBtn && workLogoutBtn) {
     if (googleContext.state.googleWorkToken) {
       const emailStr = googleContext.state.googleWorkEmail ? ` (${googleContext.state.googleWorkEmail})` : '';
-      workStatusEl.textContent = `${dict['connected']}${emailStr}`;
+      workStatusEl.textContent = `${t('connected')}${emailStr}`;
       workStatusEl.className = "auth-status connected";
       workLoginBtn.classList.add('hidden');
       workLogoutBtn.classList.remove('hidden');
     } else {
-      workStatusEl.textContent = dict['disconnected'];
+      workStatusEl.textContent = t('disconnected');
       workStatusEl.className = "auth-status disconnected";
       workLoginBtn.classList.remove('hidden');
       workLogoutBtn.classList.add('hidden');
@@ -263,16 +260,17 @@ export function updateGoogleAuthStatus() {
   // Update header status indicators (dots) for Events, Emails, and Weekly Schedule
   const personalClass = googleContext.state.googlePersonalToken ? 'personal' : 'disconnected';
   const personalTooltip = googleContext.state.googlePersonalToken 
-    ? `${dict['google-personal'] || 'Personal'}: ${dict['git-connected'] || 'Connected'} (${googleContext.state.googlePersonalEmail || 'Google'})`
-    : `${dict['google-personal'] || 'Personal'}: ${dict['git-disconnected'] || 'Disconnected'}`;
+    ? `${t('badge-personal')}: ${t('connected')} (${googleContext.state.googlePersonalEmail || 'Google'})`
+    : `${t('badge-personal')}: ${t('disconnected')}`;
     
   const workClass = googleContext.state.googleWorkToken ? 'work' : 'disconnected';
   const workTooltip = googleContext.state.googleWorkToken 
-    ? `${dict['google-work'] || 'Work'}: ${dict['git-connected'] || 'Connected'} (${googleContext.state.googleWorkEmail || 'Google'})`
-    : `${dict['google-work'] || 'Work'}: ${dict['git-disconnected'] || 'Disconnected'}`;
+    ? `${t('badge-work')}: ${t('connected')} (${googleContext.state.googleWorkEmail || 'Google'})`
+    : `${t('badge-work')}: ${t('disconnected')}`;
 
   const hasGoogleError = !!(googleContext.state.googleErrors && (googleContext.state.googleErrors.personal || googleContext.state.googleErrors.work || googleContext.state.googleErrors.tasks));
-  const googleWarningTooltip = dict['status-error-connecting'] || 'Failed to connect to some services';
+  const googleErrDetail = googleContext.state.googleErrors?.personal || googleContext.state.googleErrors?.work || googleContext.state.googleErrors?.tasks || '';
+  const googleWarningTooltip = googleErrDetail ? `${t('git-error-prefix')}${googleErrDetail}` : t('btn-failed');
 
   const googleWarningIconHTML = `<span class="status-warning-icon" data-tooltip="${googleContext.escapeHtml(googleWarningTooltip)}" onclick="event.stopPropagation(); window.openSettingsGoogleTab();">⚠️</span>`;
 
@@ -327,15 +325,13 @@ export async function fetchGmail() {
   }
   if (gmailCard) gmailCard.classList.remove('hidden');
 
-  const container = document.getElementById('gmail-container');
   const emailsBadge = document.getElementById('emails-count-badge');
   if (emailsBadge) {
     emailsBadge.classList.add('hidden');
   }
 
   if (!googleContext.state.googlePersonalToken && !googleContext.state.googleWorkToken) {
-    const dict = translations[googleContext.state.lang] || translations.en;
-    const configLinkText = dict['google-config-gmail'] || 'Configure Gmail';
+    const configLinkText = t('google-config-gmail');
     container.innerHTML = `<p class="empty-msg" style="margin: 0.5rem 0;"><a href="#" onclick="event.preventDefault(); window.openSettingsGoogleTab();" style="color: var(--accent); text-decoration: underline; font-weight: 500;">${configLinkText}</a></p>`;
     return;
   }
@@ -403,7 +399,7 @@ export async function fetchGmail() {
     }
 
     if (allEmails.length === 0) {
-      container.innerHTML = `<p class="empty-msg">${translations[googleContext.state.lang]['no-emails']}</p>`;
+      container.innerHTML = `<p class="empty-msg">${t('no-emails')}</p>`;
       return;
     }
 
@@ -416,7 +412,7 @@ export async function fetchGmail() {
       const snippet = msg.snippet;
 
       const badgeClass = msg.accountType === 'personal' ? 'personal' : 'work';
-      const badgeLabel = translations[googleContext.state.lang][`badge-${msg.accountType}`] || msg.accountType;
+      const badgeLabel = t(`badge-${msg.accountType}`);
 
       let gmailLink = `https://mail.google.com/mail/#inbox/${msg.threadId}`;
       if (msg.accountEmail) {
@@ -454,7 +450,6 @@ export async function fetchGoogleTasks() {
   }
 
   function showPlaceholder(messageHTML) {
-    const dict = translations[googleContext.state.lang] || translations.en;
     if (showToday) {
       let gTodayCard = document.getElementById('gtasks-today');
       if (!gTodayCard) {
@@ -467,8 +462,8 @@ export async function fetchGoogleTasks() {
       gTodayCard.innerHTML = `
         <h3 class="card-subtitle">
           <span style="display: inline-flex; align-items: center; gap: 0.4rem;">
-            <span>${dict['google-tasks-today'] || 'Tasks · Today'}</span>
-            <button type="button" class="card-action-btn btn-open-gtasks" data-tooltip="${dict['google-open-tasks'] || 'Open Google Tasks'}" aria-label="Open Google Tasks">
+            <span>${t('google-tasks-today')}</span>
+            <button type="button" class="card-action-btn btn-open-gtasks" data-tooltip="${t('google-open-tasks')}" aria-label="Open Google Tasks">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                 <line x1="12" y1="5" x2="12" y2="19"></line>
                 <line x1="5" y1="12" x2="19" y2="12"></line>
@@ -495,8 +490,8 @@ export async function fetchGoogleTasks() {
       gWeekCard.innerHTML = `
         <h3 class="card-subtitle">
           <span style="display: inline-flex; align-items: center; gap: 0.4rem;">
-            <span>${dict['google-tasks-week'] || 'Tasks · Upcoming'}</span>
-            <button type="button" class="card-action-btn btn-open-gtasks" data-tooltip="${dict['google-open-tasks'] || 'Open Google Tasks'}" aria-label="Open Google Tasks">
+            <span>${t('google-tasks-week')}</span>
+            <button type="button" class="card-action-btn btn-open-gtasks" data-tooltip="${t('google-open-tasks')}" aria-label="Open Google Tasks">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                 <line x1="12" y1="5" x2="12" y2="19"></line>
                 <line x1="5" y1="12" x2="19" y2="12"></line>
@@ -514,8 +509,7 @@ export async function fetchGoogleTasks() {
   }
 
   if (!googleContext.state.googlePersonalToken && !googleContext.state.googleWorkToken) {
-    const dict = translations[googleContext.state.lang] || translations.en;
-    const configLinkText = dict['google-config-tasks'] || 'Configure Google Tasks';
+    const configLinkText = t('google-config-tasks');
     const msgHTML = `<p class="empty-msg" style="margin: 0.5rem 0;"><a href="#" onclick="event.preventDefault(); window.openSettingsGoogleTab();" style="color: var(--accent); text-decoration: underline; font-weight: 500;">${configLinkText}</a></p>`;
     showPlaceholder(msgHTML);
     return;
@@ -666,7 +660,6 @@ export async function fetchGoogleTasks() {
       return !!(task.recurrence || task.recurring);
     }
 
-    const dict = translations[googleContext.state.lang] || translations.en;
     if (showToday && todayGTasks.length > 0) {
       let gTodayCard = document.getElementById('gtasks-today');
       if (!gTodayCard) {
@@ -679,8 +672,8 @@ export async function fetchGoogleTasks() {
       gTodayCard.innerHTML = `
         <h3 class="card-subtitle">
           <span style="display: inline-flex; align-items: center; gap: 0.4rem;">
-            <span>${dict['google-tasks-today'] || 'Tasks · Today'}</span>
-            <button type="button" class="card-action-btn btn-open-gtasks" data-tooltip="${dict['google-open-tasks'] || 'Open Google Tasks'}" aria-label="Open Google Tasks">
+            <span>${t('google-tasks-today')}</span>
+            <button type="button" class="card-action-btn btn-open-gtasks" data-tooltip="${t('google-open-tasks')}" aria-label="Open Google Tasks">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                 <line x1="12" y1="5" x2="12" y2="19"></line>
                 <line x1="5" y1="12" x2="19" y2="12"></line>
@@ -690,20 +683,20 @@ export async function fetchGoogleTasks() {
           <span class="header-status-indicators" id="google-gtasks-today-status-indicators"></span>
         </h3>
         <div class="integration-list">
-          ${todayGTasks.map(t => {
-            const badgeClass = t.accountType === 'personal' ? 'personal' : 'work';
-            const badgeLabel = (translations[googleContext.state.lang] || translations.en)[`badge-${t.accountType}`] || t.accountType;
-            const isOverdue = t.due && new Date(t.due).getTime() < todayTime;
-            const dueLabel = isOverdue ? (dict['badge-overdue'] || 'Overdue') : '';
-            const timeText = getTaskTimeText(t);
-            const isRecurring = checkTaskRecurring(t);
+          ${todayGTasks.map(taskItem => {
+            const badgeClass = taskItem.accountType === 'personal' ? 'personal' : 'work';
+            const badgeLabel = t(`badge-${taskItem.accountType}`);
+            const isOverdue = taskItem.due && new Date(taskItem.due).getTime() < todayTime;
+            const dueLabel = isOverdue ? t('badge-overdue') : '';
+            const timeText = getTaskTimeText(taskItem);
+            const isRecurring = checkTaskRecurring(taskItem);
             const recurringClass = isRecurring ? 'recurring' : '';
             const repeatIcon = isRecurring 
               ? `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="opacity: 0.65; display: inline-block; vertical-align: middle; margin-right: 0.25rem; flex-shrink: 0;"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>` 
               : '';
-            const tooltipText = t.title + (isOverdue ? ` (${dueLabel})` : '') + (timeText ? `\n${timeText}` : '') + (isRecurring ? (dict['google-recurring-suffix'] || ' (Recurring)') : '');
+            const tooltipText = taskItem.title + (isOverdue ? ` (${dueLabel})` : '') + (timeText ? `\n${timeText}` : '') + (isRecurring ? t('google-recurring-suffix') : '');
             
-            const email = t.accountType === 'personal' ? googleContext.state.googlePersonalEmail : googleContext.state.googleWorkEmail;
+            const email = taskItem.accountType === 'personal' ? googleContext.state.googlePersonalEmail : googleContext.state.googleWorkEmail;
             const tasksLink = email 
               ? `https://tasks.google.com/?authuser=${encodeURIComponent(email)}` 
               : 'https://tasks.google.com/';
@@ -713,7 +706,7 @@ export async function fetchGoogleTasks() {
                 <div style="display: flex; align-items: center; gap: 0.4rem; min-width: 0; flex: 1;">
                   ${isOverdue ? `<span class="event-overdue-badge" style="margin-left: 0; flex-shrink: 0; padding: 0.05rem 0.25rem; font-size: 0.6rem;">${dueLabel}</span>` : ''}
                   ${repeatIcon}
-                  <span class="item-title">${googleContext.escapeHtml(t.title)}</span>
+                  <span class="item-title">${googleContext.escapeHtml(taskItem.title)}</span>
                 </div>
                 <span class="item-badge ${badgeClass}">${googleContext.escapeHtml(badgeLabel)}</span>
               </a>
@@ -735,8 +728,8 @@ export async function fetchGoogleTasks() {
       gWeekCard.innerHTML = `
         <h3 class="card-subtitle">
           <span style="display: inline-flex; align-items: center; gap: 0.4rem;">
-            <span>${dict['google-tasks-week'] || 'Tasks · Upcoming'}</span>
-            <button type="button" class="card-action-btn btn-open-gtasks" data-tooltip="${dict['google-open-tasks'] || 'Open Google Tasks'}" aria-label="Open Google Tasks">
+            <span>${t('google-tasks-week')}</span>
+            <button type="button" class="card-action-btn btn-open-gtasks" data-tooltip="${t('google-open-tasks')}" aria-label="Open Google Tasks">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                 <line x1="12" y1="5" x2="12" y2="19"></line>
                 <line x1="5" y1="12" x2="19" y2="12"></line>
@@ -746,19 +739,19 @@ export async function fetchGoogleTasks() {
           <span class="header-status-indicators" id="google-gtasks-week-status-indicators"></span>
         </h3>
         <div class="integration-list">
-          ${weekGTasks.map(t => {
-            const badgeClass = t.accountType === 'personal' ? 'personal' : 'work';
-            const badgeLabel = (translations[googleContext.state.lang] || translations.en)[`badge-${t.accountType}`] || t.accountType;
-            const timeText = getTaskTimeText(t);
-            const dateText = t.due ? googleContext.formatDateShort(t.due.split('T')[0]) : '';
-            const isRecurring = checkTaskRecurring(t);
+          ${weekGTasks.map(taskItem => {
+            const badgeClass = taskItem.accountType === 'personal' ? 'personal' : 'work';
+            const badgeLabel = t(`badge-${taskItem.accountType}`);
+            const timeText = getTaskTimeText(taskItem);
+            const dateText = taskItem.due ? googleContext.formatDateShort(taskItem.due.split('T')[0]) : '';
+            const isRecurring = checkTaskRecurring(taskItem);
             const recurringClass = isRecurring ? 'recurring' : '';
             const repeatIcon = isRecurring 
               ? `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="opacity: 0.65; display: inline-block; vertical-align: middle; margin-right: 0.25rem; flex-shrink: 0;"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>` 
               : '';
-            const tooltipText = t.title + (t.due ? `\n${dateText}` : '') + (isRecurring ? (dict['google-recurring-suffix'] || ' (Recurring)') : '');
+            const tooltipText = taskItem.title + (taskItem.due ? `\n${dateText}` : '') + (isRecurring ? t('google-recurring-suffix') : '');
             
-            const email = t.accountType === 'personal' ? googleContext.state.googlePersonalEmail : googleContext.state.googleWorkEmail;
+            const email = taskItem.accountType === 'personal' ? googleContext.state.googlePersonalEmail : googleContext.state.googleWorkEmail;
             const tasksLink = email 
               ? `https://tasks.google.com/?authuser=${encodeURIComponent(email)}` 
               : 'https://tasks.google.com/';
@@ -767,7 +760,7 @@ export async function fetchGoogleTasks() {
               <a href="${googleContext.escapeHtml(tasksLink)}" target="_blank" rel="noopener noreferrer" class="integration-item one-line ${recurringClass}" data-tooltip="${googleContext.escapeHtml(tooltipText)}">
                 <div style="display: flex; align-items: center; gap: 0.4rem; min-width: 0; flex: 1;">
                   ${repeatIcon}
-                  <span class="item-title">${googleContext.escapeHtml(t.title)}</span>
+                  <span class="item-title">${googleContext.escapeHtml(taskItem.title)}</span>
                 </div>
                 <div style="display: flex; align-items: center; gap: 0.4rem; flex-shrink: 0;">
                   ${dateText ? `<span style="font-size: 0.72rem; color: var(--text-secondary);">${googleContext.escapeHtml(dateText)}</span>` : ''}
@@ -797,10 +790,8 @@ export async function fetchGoogleCalendar() {
     weeklyBadge.classList.add('hidden');
   }
 
-  const dict = translations[googleContext.state.lang] || translations.en;
-
   if (!googleContext.state.googlePersonalToken && !googleContext.state.googleWorkToken) {
-    const configLinkText = dict['google-config-calendar'] || 'Configure Google Calendar';
+    const configLinkText = t('google-config-calendar');
     const msgHTML = `<p class="empty-msg" style="margin: 0.5rem 0;"><a href="#" onclick="event.preventDefault(); window.openSettingsGoogleTab();" style="color: var(--accent); text-decoration: underline; font-weight: 500;">${configLinkText}</a></p>`;
     todayEventsContainer.innerHTML = msgHTML;
     weeklyEventsContainer.innerHTML = msgHTML;
@@ -865,8 +856,8 @@ export async function fetchGoogleCalendar() {
     });
 
     if (allEvents.length === 0) {
-      todayEventsContainer.innerHTML = `<p class="empty-msg">${translations[googleContext.state.lang]['no-events']}</p>`;
-      weeklyEventsContainer.innerHTML = `<p class="empty-msg">${translations[googleContext.state.lang]['no-weekly-events']}</p>`;
+      todayEventsContainer.innerHTML = `<p class="empty-msg">${t('no-events')}</p>`;
+      weeklyEventsContainer.innerHTML = `<p class="empty-msg">${t('no-weekly-events')}</p>`;
       return;
     }
 
@@ -879,7 +870,7 @@ export async function fetchGoogleCalendar() {
       const isToday = startStr.startsWith(todayStr);
       
       const badgeClass = evt.accountType === 'personal' ? 'personal' : 'work';
-      const badgeLabel = translations[googleContext.state.lang][`badge-${evt.accountType}`] || evt.accountType;
+      const badgeLabel = t(`badge-${evt.accountType}`);
 
       let eventLink = evt.htmlLink || 'https://calendar.google.com/calendar/r';
       const email = evt.accountType === 'personal' ? googleContext.state.googlePersonalEmail : googleContext.state.googleWorkEmail;
@@ -892,12 +883,12 @@ export async function fetchGoogleCalendar() {
       const isRecurring = !!evt.recurringEventId;
       const recurringClass = isRecurring ? 'recurring' : '';
       const repeatIcon = isRecurring 
-        ? `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="opacity: 0.65; display: inline-block; vertical-align: middle; margin-right: 0.25rem;"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>` 
+        ? `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="opacity: 0.65; display: inline-block; vertical-align: middle; margin-right: 0.25rem; flex-shrink: 0;"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>` 
         : '';
 
       const evtDateObj = new Date(startStr.split('T')[0] + 'T00:00:00');
       const dateText = evtDateObj.toLocaleDateString(getLocale(googleContext.state.lang), { day: 'numeric', month: 'long' });
-      const tooltipText = evt.summary + `\n${dateText}\nTime: ${timeStr}` + (isRecurring ? (dict['google-recurring-suffix'] || ' (Recurring)') : '');
+      const tooltipText = evt.summary + `\n${dateText}\nTime: ${timeStr}` + (isRecurring ? t('google-recurring-suffix') : '');
 
       const eventHTML = `
         <a href="${googleContext.escapeHtml(eventLink)}" target="_blank" rel="noopener noreferrer" class="integration-item ${badgeClass} ${recurringClass}" data-tooltip="${googleContext.escapeHtml(tooltipText)}">
@@ -948,8 +939,8 @@ export async function fetchGoogleCalendar() {
       }
     }
 
-    todayEventsContainer.innerHTML = todayEvents.length > 0 ? todayEvents.join('') : `<p class="empty-msg">${translations[googleContext.state.lang]['no-events']}</p>`;
-    weeklyEventsContainer.innerHTML = weeklyHTML.length > 0 ? weeklyHTML.join('') : `<p class="empty-msg">${translations[googleContext.state.lang]['no-weekly-events']}</p>`;
+    todayEventsContainer.innerHTML = todayEvents.length > 0 ? todayEvents.join('') : `<p class="empty-msg">${t('no-events')}</p>`;
+    weeklyEventsContainer.innerHTML = weeklyHTML.length > 0 ? weeklyHTML.join('') : `<p class="empty-msg">${t('no-weekly-events')}</p>`;
 
   } catch (err) {
     console.error("Failed to load calendars", err);
@@ -957,3 +948,4 @@ export async function fetchGoogleCalendar() {
     weeklyEventsContainer.innerHTML = `<p class="empty-msg" style="color:var(--danger)">Calendar Loading Error</p>`;
   }
 }
+

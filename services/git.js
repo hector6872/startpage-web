@@ -1,5 +1,5 @@
 import { state } from "../utils/state.js";
-import { translations } from "../locales/index.js";
+import { t } from "../locales/index.js";
 import { safeFetch, escapeHtml } from "../utils/helpers.js";
 import { saveSettings } from "./storage.js";
 import { translatePage } from "../ui/settings.js";
@@ -9,33 +9,32 @@ export function updateGitStatusIndicators(appState = state, escapeHtmlFn = escap
   const ghStatus = appState.githubStatus || 'disconnected';
   const bbStatus = appState.bitbucketStatus || 'disconnected';
   const glStatus = appState.gitlabStatus || 'disconnected';
-  const dict = translations[appState.lang] || translations.en;
 
   let ghTooltip = 'GitHub: ';
   if (ghStatus === 'disconnected') {
-    ghTooltip += dict['git-disconnected'] || 'Disconnected';
+    ghTooltip += t('git-disconnected');
   } else if (ghStatus === 'connected') {
-    ghTooltip += dict['git-connected'] || 'Connected';
+    ghTooltip += t('git-connected');
   } else {
-    ghTooltip += (dict['git-error-prefix'] || 'Error: ') + (appState.githubError || '');
+    ghTooltip += t('git-error-prefix') + (appState.githubError || '');
   }
 
   let bbTooltip = 'Bitbucket: ';
   if (bbStatus === 'disconnected') {
-    bbTooltip += dict['git-disconnected'] || 'Disconnected';
+    bbTooltip += t('git-disconnected');
   } else if (bbStatus === 'connected') {
-    bbTooltip += dict['git-connected'] || 'Connected';
+    bbTooltip += t('git-connected');
   } else {
-    bbTooltip += (dict['git-error-prefix'] || 'Error: ') + (appState.bitbucketError || '');
+    bbTooltip += t('git-error-prefix') + (appState.bitbucketError || '');
   }
 
   let glTooltip = 'GitLab: ';
   if (glStatus === 'disconnected') {
-    glTooltip += dict['git-disconnected'] || 'Disconnected';
+    glTooltip += t('git-disconnected');
   } else if (glStatus === 'connected') {
-    glTooltip += dict['git-connected'] || 'Connected';
+    glTooltip += t('git-connected');
   } else {
-    glTooltip += (dict['git-error-prefix'] || 'Error: ') + (appState.gitlabError || '');
+    glTooltip += t('git-error-prefix') + (appState.gitlabError || '');
   }
 
   const ghClass = ghStatus === 'connected' ? 'github' : ghStatus;
@@ -43,7 +42,8 @@ export function updateGitStatusIndicators(appState = state, escapeHtmlFn = escap
   const glClass = glStatus === 'connected' ? 'gitlab' : glStatus;
 
   const hasGitError = ghStatus === 'error' || bbStatus === 'error' || glStatus === 'error';
-  const gitWarningTooltip = dict['status-error-connecting'] || 'Failed to connect to some services';
+  const gitErrDetail = appState.githubError || appState.bitbucketError || appState.gitlabError || '';
+  const gitWarningTooltip = gitErrDetail ? `${t('git-error-prefix')}${gitErrDetail}` : t('btn-failed');
 
   const gitWarningIconHTML = `<span class="status-warning-icon" data-tooltip="${escapeHtmlFn(gitWarningTooltip)}" onclick="event.stopPropagation(); window.openSettingsGitTab();">⚠️</span>`;
 
@@ -88,8 +88,7 @@ function startTestCooldown(provider, button) {
   let remaining = 60;
   button.disabled = true;
 
-  const dict = translations[state.lang] || translations.en;
-  const originalText = dict['btn-connect'] || 'Connect';
+  const originalText = t('btn-connect');
   
   const interval = setInterval(() => {
     remaining--;
@@ -109,9 +108,8 @@ function startTestCooldown(provider, button) {
 
 // Test connection endpoint validator using inputs currently in the settings form
 export async function testGitConnection(provider, button) {
-  const dict = translations[state.lang] || translations.en;
-  const originalText = dict['btn-connect'] || 'Connect';
-  button.textContent = dict['btn-connecting'] || 'Connecting...';
+  const originalText = t('btn-connect');
+  button.textContent = t('btn-connecting');
   button.disabled = true;
 
   let success = false;
@@ -121,7 +119,7 @@ export async function testGitConnection(provider, button) {
     if (provider === 'github') {
       const token = document.getElementById('github-token').value.trim();
       if (!token) {
-        throw new Error(dict['git-enter-token'] || 'Please enter token');
+        throw new Error(t('git-enter-token'));
       }
 
       const headers = {
@@ -141,7 +139,7 @@ export async function testGitConnection(provider, button) {
       const email = document.getElementById('bitbucket-username').value.trim();
       const token = document.getElementById('bitbucket-token').value.trim();
       if (!workspace || !email || !token) {
-        throw new Error(dict['git-fill-fields'] || 'Fill all fields');
+        throw new Error(t('git-fill-fields'));
       }
 
       const auth = btoa(`${email}:${token}`);
@@ -161,7 +159,7 @@ export async function testGitConnection(provider, button) {
       ]);
       if (!userRes.ok) {
         if (userRes.status === 403) {
-          throw new Error(dict['git-token-scope'] || 'Token lacks Account: Read scope');
+          throw new Error(t('git-token-scope'));
         }
         throw new Error(`${userRes.status} ${userRes.statusText}`);
       }
@@ -178,7 +176,7 @@ export async function testGitConnection(provider, button) {
       host = host.replace(/\/$/, "");
       const token = document.getElementById('gitlab-token').value.trim();
       if (!token) {
-        throw new Error(dict['git-enter-token'] || 'Please enter token');
+        throw new Error(t('git-enter-token'));
       }
 
       const headers = { 'PRIVATE-TOKEN': token };
@@ -211,7 +209,7 @@ export async function testGitConnection(provider, button) {
   updateGitStatusIndicators(state, escapeHtml);
 
   if (success) {
-    button.textContent = dict['btn-connected'] || 'Connected!';
+    button.textContent = t('btn-connected');
     button.style.backgroundColor = 'rgba(39, 174, 96, 0.1)';
     button.style.color = '#27ae60';
     button.style.borderColor = '#27ae60';
@@ -222,7 +220,7 @@ export async function testGitConnection(provider, button) {
     // Refresh main list
     fetchAllPRs(state, safeFetch, escapeHtml);
   } else {
-    button.textContent = dict['btn-failed'] || 'Failed';
+    button.textContent = t('btn-failed');
     button.style.backgroundColor = 'rgba(235, 87, 87, 0.1)';
     button.style.color = '#eb5757';
     button.style.borderColor = '#eb5757';
@@ -243,7 +241,6 @@ export async function testGitConnection(provider, button) {
 
 // Fetch GitHub, Bitbucket & GitLab PRs
 export async function fetchAllPRs(appState = state, safeFetchFn = safeFetch, escapeHtmlFn = escapeHtml) {
-  const dict = translations[appState.lang] || translations.en;
   const container = document.getElementById('prs-container');
   const prsBadge = document.getElementById('prs-count-badge');
   if (prsBadge) prsBadge.classList.add('hidden');
@@ -276,12 +273,12 @@ export async function fetchAllPRs(appState = state, safeFetchFn = safeFetch, esc
   }
 
   if (gitHiddenByOoo) {
-    container.innerHTML = `<p class="empty-msg">${dict['git-ooo-active'] || 'Out of Office Active'}</p>`;
+    container.innerHTML = `<p class="empty-msg">${t('git-ooo-active')}</p>`;
     return;
   }
 
   if (!hasGithub && !hasBitbucket && !hasGitlab) {
-    const configLinkText = dict['git-config-link'] || 'Configure Git Integration';
+    const configLinkText = t('git-config-link');
     container.innerHTML = `<p class="empty-msg" style="margin: 0.5rem 0;"><a href="#" onclick="event.preventDefault(); window.openSettingsGitTab();" style="color: var(--accent); text-decoration: underline; font-weight: 500;">${configLinkText}</a></p>`;
     return;
   }
@@ -339,7 +336,7 @@ export async function fetchAllPRs(appState = state, safeFetchFn = safeFetch, esc
                 prList.push({
                   title: pr.title,
                   status: 'review',
-                  statusLabel: dict['pr-needs-review'] || 'Needs Review',
+                  statusLabel: t('pr-needs-review'),
                   url: pr.html_url,
                   repo: pr.base.repo.name,
                   number: pr.number,
@@ -360,16 +357,16 @@ export async function fetchAllPRs(appState = state, safeFetchFn = safeFetch, esc
                   const hasRequestedChanges = reviewsRes && reviewsRes.some(rev => rev.state === 'CHANGES_REQUESTED');
 
                   let status = 'my_pr';
-                  let statusLabel = dict['pr-in-review'] || 'In Review';
+                  let statusLabel = t('pr-in-review');
                   if (hasConflicts && hasRequestedChanges) {
                     status = 'conflicts_changes_requested';
-                    statusLabel = dict['pr-conflicts-changes'] || 'Conflicts | Changes requested';
+                    statusLabel = t('pr-conflicts-changes');
                   } else if (hasConflicts) {
                     status = 'conflicts';
-                    statusLabel = dict['pr-conflicts'] || 'Conflicts';
+                    statusLabel = t('pr-conflicts');
                   } else if (hasRequestedChanges) {
                     status = 'changes_requested';
-                    statusLabel = dict['pr-changes-requested'] || 'Changes requested';
+                    statusLabel = t('pr-changes-requested');
                   }
 
                   prList.push({
@@ -387,7 +384,7 @@ export async function fetchAllPRs(appState = state, safeFetchFn = safeFetch, esc
                   prList.push({
                     title: pr.title,
                     status: 'my_pr',
-                    statusLabel: dict['pr-in-review'] || 'In Review',
+                    statusLabel: t('pr-in-review'),
                     url: pr.html_url,
                     repo: pr.base.repo.name,
                     number: pr.number,
@@ -497,7 +494,7 @@ export async function fetchAllPRs(appState = state, safeFetchFn = safeFetch, esc
               prList.push({
                 title: pr.title,
                 status: 'review',
-                statusLabel: dict['pr-needs-review'] || 'Needs Review',
+                statusLabel: t('pr-needs-review'),
                 url: pr.links && pr.links.html ? pr.links.html.href : '#',
                 repo: repoName,
                 number: pr.id,
@@ -511,16 +508,16 @@ export async function fetchAllPRs(appState = state, safeFetchFn = safeFetch, esc
             const hasTasks = pr.task_count > 0;
             
             let status = 'my_pr';
-            let statusLabel = dict['pr-in-review'] || 'In Review';
+            let statusLabel = t('pr-in-review');
             if (hasNeedsWork && hasTasks) {
               status = 'changes_requested_tasks';
-              statusLabel = dict['pr-changes-tasks'] || 'Changes requested | Tasks';
+              statusLabel = t('pr-changes-tasks');
             } else if (hasNeedsWork) {
               status = 'changes_requested';
-              statusLabel = dict['pr-changes-requested'] || 'Changes requested';
+              statusLabel = t('pr-changes-requested');
             } else if (hasTasks) {
               status = 'tasks_open';
-              statusLabel = dict['pr-tasks-open'] || 'Tasks open';
+              statusLabel = t('pr-tasks-open');
             }
 
             prList.push({
@@ -609,7 +606,7 @@ export async function fetchAllPRs(appState = state, safeFetchFn = safeFetch, esc
                       prList.push({
                         title: mr.title,
                         status: 'review',
-                        statusLabel: dict['pr-needs-review'] || 'Needs Review',
+                        statusLabel: t('pr-needs-review'),
                         url: mr.web_url,
                         repo: repoName,
                         number: mr.iid,
@@ -629,16 +626,16 @@ export async function fetchAllPRs(appState = state, safeFetchFn = safeFetch, esc
                 const hasUnresolvedDiscussions = mr.blocking_discussions_resolved === false || mr.detailed_merge_status === 'discussions_not_resolved';
 
                 let status = 'my_pr';
-                let statusLabel = dict['pr-in-review'] || 'In Review';
+                let statusLabel = t('pr-in-review');
                 if (hasConflicts && hasUnresolvedDiscussions) {
                   status = 'conflicts_discussions';
-                  statusLabel = dict['pr-conflicts-threads'] || 'Conflicts | Threads open';
+                  statusLabel = t('pr-conflicts-threads');
                 } else if (hasConflicts) {
                   status = 'conflicts';
-                  statusLabel = dict['pr-conflicts'] || 'Conflicts';
+                  statusLabel = t('pr-conflicts');
                 } else if (hasUnresolvedDiscussions) {
                   status = 'discussions_open';
-                  statusLabel = dict['pr-threads-open'] || 'Threads open';
+                  statusLabel = t('pr-threads-open');
                 }
 
                 let repoName = String(mr.project_id);
@@ -683,7 +680,7 @@ export async function fetchAllPRs(appState = state, safeFetchFn = safeFetch, esc
 
   // Render PRs
   if (prList.length === 0) {
-    container.innerHTML = `<p class="empty-msg">${translations[state.lang]['no-prs']}</p>`;
+    container.innerHTML = `<p class="empty-msg">${t('no-prs')}</p>`;
     if (prsBadge) prsBadge.classList.add('hidden');
     return;
   }

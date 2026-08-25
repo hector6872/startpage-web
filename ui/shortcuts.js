@@ -1,5 +1,5 @@
 import { state } from "../utils/state.js";
-import { translations, getLocale } from "../locales/index.js";
+import { getLocale, t } from "../locales/index.js";
 import { escapeHtml, formatDateShort, getLocalDateString } from "../utils/helpers.js";
 
 export function updateTimeAndGreeting() {
@@ -25,7 +25,7 @@ export function updateTimeAndGreeting() {
   } else if (hour >= 19 || hour < 6) {
     greetingKey = 'greeting-evening';
   }
-  const greetingText = (translations[state.lang] || translations.en)[greetingKey];
+  const greetingText = t(greetingKey);
   let fullGreeting = greetingText;
   if (state.settings.oooActive) {
     const oooEmojis = ['🏝️', '🏖️', '🍹', '🌊', '⛺', '🌴'];
@@ -89,7 +89,6 @@ export function updateWorldClock() {
   }
   
   widget.classList.remove('hidden');
-  const dict = translations[state.lang] || translations.en;
 
   if (!state.settings.worldClockTz) {
     widget.classList.add('unconfigured');
@@ -97,7 +96,7 @@ export function updateWorldClock() {
     const clockLabelEl = widget.querySelector('.clock-label');
     if (clockLabelEl) clockLabelEl.removeAttribute('title');
     const unconfEl = widget.querySelector('.clock-unconfigured-text');
-    if (unconfEl) unconfEl.textContent = dict['world-clock-unconfigured'];
+    if (unconfEl) unconfEl.textContent = t('world-clock-unconfigured');
     return;
   }
   widget.classList.remove('unconfigured');
@@ -166,16 +165,16 @@ export function updateWorldClock() {
       const dayNightIcon = isDaytime ? sunSvg : moonSvg;
 
       if (diffInfo.diffHours === 0 && diffInfo.dayDiffDays === 0) {
-        const sameTimeStr = dict['world-clock-same-time'] || 'Same time';
+        const sameTimeStr = t('world-clock-same-time');
         diffEl.innerHTML = `${sameTimeStr} ${dayNightIcon}`;
       } else {
         const diffStr = diffInfo.diffHours > 0 ? `+${diffInfo.diffHours}h` : `${diffInfo.diffHours}h`;
 
         let dayStr = '';
         if (diffInfo.dayDiffDays === 1) {
-          dayStr = dict['time-tomorrow-suffix'] || ' (tomorrow)';
+          dayStr = t('time-tomorrow-suffix');
         } else if (diffInfo.dayDiffDays === -1) {
-          dayStr = dict['time-yesterday-suffix'] || ' (yesterday)';
+          dayStr = t('time-yesterday-suffix');
         } else if (diffInfo.dayDiffDays > 1) {
           dayStr = ` (+${diffInfo.dayDiffDays}d)`;
         } else if (diffInfo.dayDiffDays < -1) {
@@ -312,8 +311,6 @@ export function syncDashboardColumns() {
   }
   const weekTasks = state.todos.filter(todo => !todo.completed && next7Days.includes(todo.dueDate));
 
-  const dict = translations[state.lang] || translations.en;
-
   if (todayTasks.length > 0) {
     const container = document.querySelector("#col-today .col-content");
     if (container) {
@@ -321,13 +318,13 @@ export function syncDashboardColumns() {
       card.id = "local-today-events";
       card.className = "section-card";
       card.innerHTML = `
-        <h3 class="card-subtitle">${dict["tasks-today-title"] || "Today's Tasks"}</h3>
+        <h3 class="card-subtitle">${t("tasks-today-title")}</h3>
         <div class="integration-list">
-          ${todayTasks.map(t => `
+          ${todayTasks.map(tTask => `
             <div class="integration-item urgent">
-              <span class="item-title">${escapeHtml(t.text)}</span>
+              <span class="item-title">${escapeHtml(tTask.text)}</span>
               <div class="item-meta">
-                <span class="item-badge priority-${t.priority}">${dict["priority-" + t.priority]}</span>
+                <span class="item-badge priority-${tTask.priority}">${t("priority-" + tTask.priority)}</span>
               </div>
             </div>
           `).join("")}
@@ -344,14 +341,14 @@ export function syncDashboardColumns() {
       card.id = "local-week-events";
       card.className = "section-card";
       card.innerHTML = `
-        <h3 class="card-subtitle">${dict["tasks-week-title"] || "Upcoming Tasks"}</h3>
+        <h3 class="card-subtitle">${t("tasks-week-title")}</h3>
         <div class="integration-list">
-          ${weekTasks.map(t => `
+          ${weekTasks.map(tTask => `
             <div class="integration-item">
-              <span class="item-title">${escapeHtml(t.text)}</span>
+              <span class="item-title">${escapeHtml(tTask.text)}</span>
               <div class="item-meta">
-                <span>${formatDateShort(t.dueDate, state.lang)}</span>
-                <span class="item-badge priority-${t.priority}">${dict["priority-" + t.priority]}</span>
+                <span>${formatDateShort(tTask.dueDate, state.lang)}</span>
+                <span class="item-badge priority-${tTask.priority}">${t("priority-" + tTask.priority)}</span>
               </div>
             </div>
           `).join("")}
@@ -361,3 +358,4 @@ export function syncDashboardColumns() {
     }
   }
 }
+

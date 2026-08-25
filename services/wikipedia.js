@@ -1,4 +1,4 @@
-import { translations } from "../locales/index.js";
+import { t } from "../locales/index.js";
 
 export const wikiContext = {
   state: null
@@ -224,40 +224,44 @@ export async function loadWikipediaContent() {
     quoteWidget.classList.add('hidden');
     return;
   }
-  quoteWidget.classList.remove('hidden');
-
-  const type = wikiContext.state.settings.wikipediaType || 'news';
-  const lang = wikiContext.state.lang === 'es' ? 'es' : 'en';
-  const dict = translations[wikiContext.state.lang] || translations.en;
-  const container = quoteWidget.querySelector('.quote-container');
+  const container = document.getElementById('wiki-content');
   if (!container) return;
 
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = String(now.getMonth() + 1).padStart(2, '0');
-  const day = String(now.getDate()).padStart(2, '0');
-
-  if (type === 'quote') {
+  const showQuote = wikiContext.state.settings.showQuote !== false;
+  const quoteCard = document.getElementById('quote-widget');
+  if (!showQuote) {
+    if (quoteCard) quoteCard.classList.add('hidden');
     stopAutoAdvance();
+    return;
+  }
+  if (quoteCard) quoteCard.classList.remove('hidden');
+
+  stopAutoAdvance();
+
+  const mode = wikiContext.state.settings.wikiMode || 'quote';
+  const lang = wikiContext.state.lang || 'en';
+  const { mm, dd } = getFeaturedFeedDate();
+  const month = mm;
+  const day = dd;
+
+  if (mode === 'quote') {
     await renderQuoteMode();
-  } else if (type === 'topread') {
+  } else if (mode === 'topread') {
     await renderTopReadMode();
-  } else if (type === 'news') {
+  } else if (mode === 'news') {
     await renderNewsMode();
-  } else if (type === 'onthisday') {
+  } else if (mode === 'onthisday') {
     await renderOnThisDayMode();
   }
 
   async function renderQuoteMode() {
     const currentLang = wikiContext.state.lang || 'en';
 
-    // 1. Check in-memory quote
-    if (currentQuoteData && currentQuoteData.text && currentQuoteData.text !== 'undefined' && currentQuoteData.lang === currentLang) {
+    if (currentQuoteData && currentQuoteData.lang === currentLang && currentQuoteData.text && currentQuoteData.text !== 'undefined') {
       displayQuote(currentQuoteData.text, currentQuoteData.author);
       return;
     }
 
-    // 2. Check localStorage daily cache
     const cached = getCachedQuote(currentLang);
     if (cached && cached.text && cached.text !== 'undefined') {
       currentQuoteData = { ...cached, lang: currentLang };
@@ -265,9 +269,8 @@ export async function loadWikipediaContent() {
       return;
     }
 
-    container.innerHTML = `<span class="quote-text">${dict['quote-loading']}</span>`;
+    container.innerHTML = `<span class="quote-text">${t('quote-loading')}</span>`;
     
-    // 3. Fetch from Wikiquote API
     const quote = await fetchWikiquoteOfTheDay(currentLang);
     if (quote && quote.text && quote.text !== 'undefined' && quote.text.trim() !== '') {
       currentQuoteData = { ...quote, lang: currentLang };
@@ -279,13 +282,13 @@ export async function loadWikipediaContent() {
   }
 
   function displayQuoteError() {
-    const badgeTooltip = dict['wiki-badge-tooltip'] || 'Change content in Settings';
-    const errorMsg = dict['quote-error'] || 'No se pudo cargar la frase para hoy, ¡mañana habrá más suerte!';
+    const badgeTooltip = t('wiki-badge-tooltip');
+    const errorMsg = t('quote-error');
     
     container.innerHTML = `
       <span class="wiki-badge" data-tooltip="${badgeTooltip}" onclick="window.openSettingsWikipediaTab()" title="${badgeTooltip}">
         <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14h2v2h-2zm0-10h2v8h-2z"/></svg>
-        ${dict['wiki-badge-quote'] || 'Quote'}
+        ${t('wiki-badge-quote')}
       </span>
       <span class="quote-text">${errorMsg}</span>
     `;
@@ -300,13 +303,13 @@ export async function loadWikipediaContent() {
     const cleanAuthor = author && author !== 'undefined' ? author.replace(/^[\s–—-]+/, '').trim() : '';
     const wikiLang = wikiContext.state.lang || 'en';
     const authorUrl = cleanAuthor ? `https://${wikiLang}.wikipedia.org/wiki/Special:Search?search=${encodeURIComponent(cleanAuthor)}` : '';
-    const authorTitle = (dict['wiki-view-author'] || 'View {author} on Wikipedia').replace('{author}', cleanAuthor);
-    const badgeTooltip = dict['wiki-badge-tooltip'] || 'Change content in Settings';
+    const authorTitle = t('wiki-view-author', { author: cleanAuthor });
+    const badgeTooltip = t('wiki-badge-tooltip');
     
     container.innerHTML = `
       <span class="wiki-badge" data-tooltip="${badgeTooltip}" onclick="window.openSettingsWikipediaTab()" title="${badgeTooltip}">
         <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14h2v2h-2zm0-10h2v8h-2z"/></svg>
-        ${dict['wiki-badge-quote'] || 'Quote'}
+        ${t('wiki-badge-quote')}
       </span>
       <div class="wiki-nav-controls">
         <button id="copy-quote-btn" class="wiki-nav-btn copy-quote-btn" title="Copy quote" aria-label="Copy quote">
@@ -323,31 +326,29 @@ export async function loadWikipediaContent() {
     const copyBtn = container.querySelector('#copy-quote-btn');
     if (copyBtn) {
       copyBtn.addEventListener('click', () => {
-        const textToCopy = cleanAuthor ? `"${text}" – ${cleanAuthor}` : `"${text}"`;
-        navigator.clipboard.writeText(textToCopy).then(() => {
-          const originalSVG = copyBtn.innerHTML;
-          copyBtn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
-          copyBtn.classList.add('copied');
+        const fullText = `"${text}"${cleanAuthor ? ` – ${cleanAuthor}` : ''}`;
+        navigator.clipboard.writeText(fullText).then(() => {
+          copyBtn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: #27ae60;"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
           setTimeout(() => {
-            copyBtn.innerHTML = originalSVG;
-            copyBtn.classList.remove('copied');
+            copyBtn.innerHTML = `
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+              </svg>
+            `;
           }, 2000);
+        }).catch(err => {
+          console.error('Could not copy quote:', err);
         });
       });
     }
   }
 
   async function fetchFeaturedFeed(feedLang) {
-    const key = `${feedLang}-${year}-${month}-${day}`;
-    if (wikiFeaturedCache[key]) return wikiFeaturedCache[key];
-
+    const { yyyy, mm, dd } = getFeaturedFeedDate();
     try {
-      const res = await fetch(`https://${feedLang}.wikipedia.org/api/rest_v1/feed/featured/${year}/${month}/${day}`);
-      if (res.ok) {
-        const data = await res.json();
-        wikiFeaturedCache[key] = data;
-        return data;
-      }
+      const res = await fetch(`https://${feedLang}.wikipedia.org/api/rest_v1/feed/featured/${yyyy}/${mm}/${dd}`);
+      if (res.ok) return await res.json();
     } catch (e) {
       console.warn('Failed to fetch Wikipedia featured feed for', feedLang, e);
     }
@@ -355,28 +356,24 @@ export async function loadWikipediaContent() {
   }
 
   async function renderTopReadMode() {
-    container.innerHTML = `<span class="quote-text">${dict['wiki-loading']}</span>`;
+    container.innerHTML = `<span class="quote-text">${t('wiki-loading')}</span>`;
     let data = await fetchFeaturedFeed(lang);
     if (!data || !data.mostread || !data.mostread.articles || data.mostread.articles.length === 0) {
-      if (lang !== 'en') {
-        data = await fetchFeaturedFeed('en');
-      }
+      if (lang !== 'en') data = await fetchFeaturedFeed('en');
     }
 
     if (!data || !data.mostread || !data.mostread.articles || data.mostread.articles.length === 0) {
-      container.innerHTML = `<span class="quote-text">${dict['wiki-error']}</span>`;
+      container.innerHTML = `<span class="quote-text">${t('wiki-error')}</span>`;
       return;
     }
 
     const articles = data.mostread.articles.filter(a => 
-      !a.title.includes('Special:') && 
-      !a.title.includes('Wikipedia:') && 
-      !a.title.includes('Main_Page') && 
-      !a.title.includes('Portada')
+      !a.title.includes('Special:') && !a.title.includes('Wikipedia:') && 
+      !a.title.includes('Main_Page') && !a.title.includes('Portada')
     );
 
     if (articles.length === 0) {
-      container.innerHTML = `<span class="quote-text">${dict['wiki-error']}</span>`;
+      container.innerHTML = `<span class="quote-text">${t('wiki-error')}</span>`;
       return;
     }
 
@@ -387,193 +384,105 @@ export async function loadWikipediaContent() {
     const pageUrl = cur.content_urls?.desktop?.page || `https://${lang}.wikipedia.org/wiki/${encodeURIComponent(cur.title)}`;
     const displayTitle = cur.displaytitle ? cur.displaytitle.replace(/<[^>]+>/g, '') : cur.title.replace(/_/g, ' ');
     const viewsStr = formatViewsCount(cur.views);
-    const badgeTooltip = dict['wiki-badge-tooltip'] || 'Change content in Settings';
+    const badgeTooltip = t('wiki-badge-tooltip');
 
     container.innerHTML = `
       <span class="wiki-badge" data-tooltip="${badgeTooltip}" onclick="window.openSettingsWikipediaTab()" title="${badgeTooltip}">
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 6l-9.5 9.5-5-5L1 18"></path><path d="M17 6h6v6"></path></svg>
-        ${dict['wiki-badge-topread'] || 'Top Read'} #${wikiTopReadIndex + 1}
+        ${t('wiki-badge-topread')} #${wikiTopReadIndex + 1}
       </span>
       <div class="wiki-nav-controls">
-        <button id="wiki-prev-btn" class="wiki-nav-btn" title="${dict['wiki-prev']}" aria-label="Previous">
+        <button id="wiki-prev-btn" class="wiki-nav-btn" title="${t('wiki-prev')}" aria-label="Previous">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
         </button>
-        <button id="wiki-next-btn" class="wiki-nav-btn" title="${dict['wiki-next']}" aria-label="Next">
+        <button id="wiki-next-btn" class="wiki-nav-btn" title="${t('wiki-next')}" aria-label="Next">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
         </button>
       </div>
       <a class="wiki-link" href="${pageUrl}" target="_blank" rel="noopener noreferrer" title="${cur.extract || displayTitle}">${displayTitle}</a>
-      ${viewsStr ? `<span class="wiki-views-badge">👁️ ${viewsStr} ${dict['wiki-views']}</span>` : ''}
+      ${viewsStr ? `<span class="wiki-views-badge">👁️ ${viewsStr} ${t('wiki-views')}</span>` : ''}
     `;
 
-    container.querySelector('#wiki-prev-btn')?.addEventListener('click', () => {
-      wikiTopReadIndex--;
-      renderTopReadMode();
-    });
-    container.querySelector('#wiki-next-btn')?.addEventListener('click', () => {
-      wikiTopReadIndex++;
-      renderTopReadMode();
-    });
+    container.querySelector('#wiki-prev-btn')?.addEventListener('click', () => { wikiTopReadIndex--; renderTopReadMode(); });
+    container.querySelector('#wiki-next-btn')?.addEventListener('click', () => { wikiTopReadIndex++; renderTopReadMode(); });
 
-    startAutoAdvance(() => {
-      wikiTopReadIndex++;
-      renderTopReadMode();
-    });
+    startAutoAdvance(() => { wikiTopReadIndex++; renderTopReadMode(); });
   }
 
   function formatNewsHtml(cur, feedLang) {
     let rawHtml = cur.story || '';
     const linksMap = new Map();
-
     if (Array.isArray(cur.links)) {
       cur.links.forEach(item => {
         const title = item.title ? item.title.replace(/_/g, ' ') : '';
         const url = item.content_urls?.desktop?.page || `https://${feedLang}.wikipedia.org/wiki/${encodeURIComponent(item.title || title)}`;
-        if (title) {
-          linksMap.set(title.toLowerCase(), { title, url, extract: item.extract || '' });
-        }
+        if (title) linksMap.set(title.toLowerCase(), { title, url, extract: item.extract || '' });
         if (item.displaytitle) {
           const cleanDisplay = item.displaytitle.replace(/<[^>]+>/g, '');
           linksMap.set(cleanDisplay.toLowerCase(), { title: cleanDisplay, url, extract: item.extract || '' });
         }
       });
     }
-
     const temp = document.createElement('div');
     temp.innerHTML = rawHtml;
-
-    // Convert existing <a> tags into working Wikipedia / Google search links
-    const aTags = temp.querySelectorAll('a');
-    if (aTags.length > 0) {
-      aTags.forEach(a => {
-        a.className = 'wiki-link';
-        a.target = '_blank';
-        a.rel = 'noopener noreferrer';
-        const text = a.textContent.trim();
-        let href = a.getAttribute('href') || '';
-        const matched = linksMap.get(text.toLowerCase());
-
-        if (matched) {
-          a.href = matched.url;
-          if (matched.extract) a.title = matched.extract;
-        } else if (href.startsWith('/wiki/') || href.startsWith('./')) {
-          const rawTitle = href.replace(/^(\/wiki\/|\.\/)/, '');
-          a.href = `https://${feedLang}.wikipedia.org/wiki/${rawTitle}`;
-        } else if (href.startsWith('http')) {
-          a.href = href;
-        } else if (text) {
-          a.href = `https://${feedLang}.wikipedia.org/wiki/Special:Search?search=${encodeURIComponent(text)}`;
-        } else {
-          a.href = `https://www.google.com/search?q=${encodeURIComponent(cur.story?.replace(/<[^>]+>/g, '') || '')}`;
-        }
-      });
-    }
-
-    // Convert bold <b> / <strong> tags to clickable links if they correspond to articles
-    const bTags = temp.querySelectorAll('b, strong');
-    bTags.forEach(b => {
+    temp.querySelectorAll('a').forEach(a => {
+      a.className = 'wiki-link'; a.target = '_blank'; a.rel = 'noopener noreferrer';
+      const text = a.textContent.trim();
+      const matched = linksMap.get(text.toLowerCase());
+      if (matched) { a.href = matched.url; if (matched.extract) a.title = matched.extract; }
+      else if (a.getAttribute('href')?.startsWith('/wiki/')) a.href = `https://${feedLang}.wikipedia.org${a.getAttribute('href')}`;
+    });
+    temp.querySelectorAll('b, strong').forEach(b => {
       if (b.closest('a')) return;
       const text = b.textContent.trim();
       const matched = linksMap.get(text.toLowerCase());
-      const a = document.createElement('a');
-      a.className = 'wiki-link';
-      a.target = '_blank';
-      a.rel = 'noopener noreferrer';
-      a.innerHTML = b.innerHTML;
-
       if (matched) {
-        a.href = matched.url;
-        if (matched.extract) a.title = matched.extract;
-      } else if (text) {
-        a.href = `https://${feedLang}.wikipedia.org/wiki/Special:Search?search=${encodeURIComponent(text)}`;
-      } else {
-        a.href = `https://www.google.com/search?q=${encodeURIComponent(text)}`;
+        const a = document.createElement('a'); a.className = 'wiki-link'; a.target = '_blank'; a.rel = 'noopener noreferrer';
+        a.href = matched.url; a.innerHTML = b.innerHTML; b.replaceWith(a);
       }
-      b.replaceWith(a);
     });
-
-    let resultHtml = temp.innerHTML;
-
-    // Check if there are any clickable links in the rendered output
-    if (!resultHtml.includes('<a class="wiki-link"')) {
-      const cleanStory = cur.story ? cur.story.replace(/<[^>]+>/g, '').trim() : '';
-      if (cleanStory) {
-        const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(cleanStory)}`;
-        resultHtml = `<a class="wiki-link" href="${searchUrl}" target="_blank" rel="noopener noreferrer" title="Buscar en Google">${resultHtml}</a>`;
-      }
-    }
-
-    // Append extra article links from cur.links if they were not already mentioned in the text
-    if (Array.isArray(cur.links)) {
-      cur.links.forEach(item => {
-        const title = item.displaytitle ? item.displaytitle.replace(/<[^>]+>/g, '') : (item.title ? item.title.replace(/_/g, ' ') : '');
-        const url = item.content_urls?.desktop?.page || `https://${feedLang}.wikipedia.org/wiki/${encodeURIComponent(item.title || title)}`;
-        if (title && !resultHtml.includes(url) && !resultHtml.toLowerCase().includes(title.toLowerCase())) {
-          resultHtml += ` <a class="wiki-link" href="${url}" target="_blank" rel="noopener noreferrer" title="${item.extract || title}">↗ ${title}</a>`;
-        }
-      });
-    }
-
-    return resultHtml;
+    return temp.innerHTML;
   }
 
   async function renderNewsMode() {
-    container.innerHTML = `<span class="quote-text">${dict['wiki-loading']}</span>`;
+    container.innerHTML = `<span class="quote-text">${t('wiki-loading')}</span>`;
     let data = await fetchFeaturedFeed(lang);
     if (!data || !data.news || data.news.length === 0) {
-      if (lang !== 'en') {
-        data = await fetchFeaturedFeed('en');
-      }
+      if (lang !== 'en') data = await fetchFeaturedFeed('en');
     }
-
     if (!data || !data.news || data.news.length === 0) {
-      container.innerHTML = `<span class="quote-text">${dict['wiki-error']}</span>`;
+      container.innerHTML = `<span class="quote-text">${t('wiki-error')}</span>`;
       return;
     }
-
-    const newsItems = data.news;
-    if (wikiNewsIndex >= newsItems.length) wikiNewsIndex = 0;
-    if (wikiNewsIndex < 0) wikiNewsIndex = newsItems.length - 1;
-
+    if (wikiNewsIndex >= data.news.length) wikiNewsIndex = 0;
+    if (wikiNewsIndex < 0) wikiNewsIndex = data.news.length - 1;
+    const cur = data.news[wikiNewsIndex];
     const storyHtml = formatNewsHtml(cur, lang);
-    const badgeTooltip = dict['wiki-badge-tooltip'] || 'Change content in Settings';
-
+    const badgeTooltip = t('wiki-badge-tooltip');
     container.innerHTML = `
       <span class="wiki-badge" data-tooltip="${badgeTooltip}" onclick="window.openSettingsWikipediaTab()" title="${badgeTooltip}">
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"></path><path d="M18 14h-8"></path><path d="M15 18h-5"></path><path d="M10 6h8v4h-8V6Z"></path></svg>
-        ${dict['wiki-badge-news'] || 'In the News'}
+        ${t('wiki-badge-news')}
       </span>
       <div class="wiki-nav-controls">
-        <button id="wiki-prev-btn" class="wiki-nav-btn" title="${dict['wiki-prev']}" aria-label="Previous">
+        <button id="wiki-prev-btn" class="wiki-nav-btn" title="${t('wiki-prev')}" aria-label="Previous">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
         </button>
-        <button id="wiki-next-btn" class="wiki-nav-btn" title="${dict['wiki-next']}" aria-label="Next">
+        <button id="wiki-next-btn" class="wiki-nav-btn" title="${t('wiki-next')}" aria-label="Next">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
         </button>
       </div>
       <span>${storyHtml}</span>
     `;
-
-    container.querySelector('#wiki-prev-btn')?.addEventListener('click', () => {
-      wikiNewsIndex--;
-      renderNewsMode();
-    });
-    container.querySelector('#wiki-next-btn')?.addEventListener('click', () => {
-      wikiNewsIndex++;
-      renderNewsMode();
-    });
-
-    startAutoAdvance(() => {
-      wikiNewsIndex++;
-      renderNewsMode();
-    });
+    container.querySelector('#wiki-prev-btn')?.addEventListener('click', () => { wikiNewsIndex--; renderNewsMode(); });
+    container.querySelector('#wiki-next-btn')?.addEventListener('click', () => { wikiNewsIndex++; renderNewsMode(); });
+    startAutoAdvance(() => { wikiNewsIndex++; renderNewsMode(); });
   }
 
   async function renderOnThisDayMode() {
-    container.innerHTML = `<span class="quote-text">${dict['wiki-loading']}</span>`;
+    container.innerHTML = `<span class="quote-text">${t('wiki-loading')}</span>`;
     const cacheKey = `${lang}-${month}-${day}`;
     let events = wikiOnThisDayCache[cacheKey];
-
     if (!events) {
       try {
         const res = await fetch(`https://${lang}.wikipedia.org/api/rest_v1/feed/onthisday/selected/${month}/${day}`);
@@ -581,10 +490,7 @@ export async function loadWikipediaContent() {
           const resData = await res.json();
           events = resData.selected || resData.events || [];
         }
-      } catch (e) {
-        console.warn('Failed to fetch onthisday for', lang, e);
-      }
-
+      } catch (e) { console.warn('Failed to fetch onthisday', e); }
       if ((!events || events.length === 0) && lang !== 'en') {
         try {
           const res = await fetch(`https://en.wikipedia.org/api/rest_v1/feed/onthisday/selected/${month}/${day}`);
@@ -592,24 +498,16 @@ export async function loadWikipediaContent() {
             const resData = await res.json();
             events = resData.selected || resData.events || [];
           }
-        } catch (e) {
-          console.warn('Failed to fetch English onthisday', e);
-        }
+        } catch (e) { console.warn('Failed to fetch English onthisday', e); }
       }
-
-      if (events && events.length > 0) {
-        wikiOnThisDayCache[cacheKey] = events;
-      }
+      if (events && events.length > 0) wikiOnThisDayCache[cacheKey] = events;
     }
-
     if (!events || events.length === 0) {
-      container.innerHTML = `<span class="quote-text">${dict['wiki-error']}</span>`;
+      container.innerHTML = `<span class="quote-text">${t('wiki-error')}</span>`;
       return;
     }
-
     if (wikiOnThisDayIndex >= events.length) wikiOnThisDayIndex = 0;
     if (wikiOnThisDayIndex < 0) wikiOnThisDayIndex = events.length - 1;
-
     const cur = events[wikiOnThisDayIndex];
     let pageLinkHtml = '';
     if (cur.pages && cur.pages.length > 0) {
@@ -618,23 +516,18 @@ export async function loadWikipediaContent() {
         const pageTitle = p.titles?.normalized || p.title.replace(/_/g, ' ');
         pageLinkHtml += ` <a class="wiki-link" href="${pageUrl}" target="_blank" rel="noopener noreferrer" title="${p.extract || pageTitle}">↗ ${pageTitle}</a>`;
       });
-    } else if (cur.text) {
-      const searchUrl = `https://www.google.com/search?q=${encodeURIComponent((cur.year ? cur.year + ' ' : '') + cur.text)}`;
-      pageLinkHtml = ` <a class="wiki-link" href="${searchUrl}" target="_blank" rel="noopener noreferrer" title="Buscar en Google">↗ Google</a>`;
     }
-
-    const badgeTooltip = dict['wiki-badge-tooltip'] || 'Change content in Settings';
-
+    const badgeTooltip = t('wiki-badge-tooltip');
     container.innerHTML = `
       <span class="wiki-badge" data-tooltip="${badgeTooltip}" onclick="window.openSettingsWikipediaTab()" title="${badgeTooltip}">
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
-        ${dict['wiki-badge-onthisday'] || 'On This Day'}
+        ${t('wiki-badge-onthisday')}
       </span>
       <div class="wiki-nav-controls">
-        <button id="wiki-prev-btn" class="wiki-nav-btn" title="${dict['wiki-prev']}" aria-label="Previous">
+        <button id="wiki-prev-btn" class="wiki-nav-btn" title="${t('wiki-prev')}" aria-label="Previous">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
         </button>
-        <button id="wiki-next-btn" class="wiki-nav-btn" title="${dict['wiki-next']}" aria-label="Next">
+        <button id="wiki-next-btn" class="wiki-nav-btn" title="${t('wiki-next')}" aria-label="Next">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
         </button>
       </div>
@@ -642,19 +535,8 @@ export async function loadWikipediaContent() {
       <span>${cur.text}</span>
       ${pageLinkHtml}
     `;
-
-    container.querySelector('#wiki-prev-btn')?.addEventListener('click', () => {
-      wikiOnThisDayIndex--;
-      renderOnThisDayMode();
-    });
-    container.querySelector('#wiki-next-btn')?.addEventListener('click', () => {
-      wikiOnThisDayIndex++;
-      renderOnThisDayMode();
-    });
-
-    startAutoAdvance(() => {
-      wikiOnThisDayIndex++;
-      renderOnThisDayMode();
-    });
+    container.querySelector('#wiki-prev-btn')?.addEventListener('click', () => { wikiOnThisDayIndex--; renderOnThisDayMode(); });
+    container.querySelector('#wiki-next-btn')?.addEventListener('click', () => { wikiOnThisDayIndex++; renderOnThisDayMode(); });
+    startAutoAdvance(() => { wikiOnThisDayIndex++; renderOnThisDayMode(); });
   }
 }

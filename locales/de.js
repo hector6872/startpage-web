@@ -207,9 +207,6 @@ export default {
   "delete-event-desc": "Möchten Sie dieses Ereignis wirklich löschen?",
   "hide-events-title": "Ereignisse ausblenden",
   "hide-events-desc": "Das Ausblenden löscht die Ereignisse nicht. Sie können sie jederzeit wieder aktivieren.",
-  "edit-event-action": "Ereignis bearbeiten",
-  "delete-event-action": "Ereignis löschen",
-  "no-events-configured": "Keine Ereignisse konfiguriert.",
   "git-connected": "Verbunden",
   "git-disconnected": "Getrennt",
   "git-error-prefix": "Fehler: ",
@@ -242,10 +239,15 @@ export default {
   "wiki-badge-tooltip": "Inhalt in Einstellungen ändern",
   "wiki-view-author": "{author} auf Wikipedia ansehen",
   "no-tasks": "Keine Aufgaben.",
-  "delete-task-desc": "Möchten Sie die Aufgabe <strong>\"{task}\"</strong> wirklich löschen?",
-  "delete-event-prompt-desc": "Möchten Sie das Ereignis <strong>\"{event}\"</strong> wirklich löschen?",
   "confirm-load-file": "Die ausgewählte Datei enthält Daten. Möchten Sie diese laden und die aktuellen Browserdaten überschreiben?",
   "city-placeholder": "z. B. Berlin",
   "clock-label-placeholder": "z. B. London",
-  "label-event-name": "Ereignisname"
+  "label-event-name": "Ereignisname",
+  "label-show-google-emails": "E-Mails anzeigen (Gmail)",
+  "label-ooo-active": "Abwesend (OOO)",
+  "ooo-until": "Aktiv bis:",
+  "label-show-git": "Git-Integration anzeigen (PRs)",
+  "label-hide-ooo": "Ausblenden, wenn Abwesenheit aktiv ist",
+  "label-show-jira": "Jira-Integration anzeigen",
+  "ooo-title": "Rückkehrdatum"
 };

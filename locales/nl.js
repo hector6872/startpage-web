@@ -207,9 +207,6 @@ export default {
   "delete-event-desc": "Weet je zeker dat je dit evenement wilt verwijderen?",
   "hide-events-title": "Evenementen verbergen",
   "hide-events-desc": "Het verbergen van evenementen verwijdert ze niet. Je kunt ze op elk gewenst moment weer inschakelen.",
-  "edit-event-action": "Evenement bewerken",
-  "delete-event-action": "Evenement verwijderen",
-  "no-events-configured": "Geen evenementen geconfigureerd.",
   "git-connected": "Verbonden",
   "git-disconnected": "Niet verbonden",
   "git-error-prefix": "Fout: ",
@@ -242,10 +239,15 @@ export default {
   "wiki-badge-tooltip": "Inhoud wijzigen in Instellingen",
   "wiki-view-author": "Bekijk {author} op Wikipedia",
   "no-tasks": "Geen taken.",
-  "delete-task-desc": "Weet je zeker dat je de taak <strong>\"{task}\"</strong> wilt verwijderen?",
-  "delete-event-prompt-desc": "Weet je zeker dat je het evenement <strong>\"{event}\"</strong> wilt verwijderen?",
   "confirm-load-file": "Het geselecteerde bestand bevat gegevens. Wilt u deze laden en de huidige browsergegevens overschrijven?",
   "city-placeholder": "bijv. Amsterdam",
   "clock-label-placeholder": "bijv. Londen",
-  "label-event-name": "Naam van Evenement"
+  "label-event-name": "Naam van Evenement",
+  "label-show-google-emails": "E-mails tonen (Gmail)",
+  "label-ooo-active": "Afwezig (OOO)",
+  "ooo-until": "Actief tot:",
+  "label-show-git": "Git-integratie tonen (PRs)",
+  "label-hide-ooo": "Verbergen als Afwezig actief is",
+  "label-show-jira": "Jira-integratie tonen",
+  "ooo-title": "Terugkeerdatum"
 };
