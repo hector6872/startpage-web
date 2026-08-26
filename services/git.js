@@ -511,52 +511,25 @@ export async function fetchAllPRs(appState = state, safeFetchFn = safeFetch, esc
         return idsToCheck.some(id => userIdentifiers.has(id));
       }
 
-      // Fetch repositories in workspace and member repositories across workspaces
-      const repoMap = new Map();
-
-      try {
-        const [wsReposRes, memberReposRes] = await Promise.all([
-          fetch(`https://api.bitbucket.org/2.0/repositories/${encodeURIComponent(workspace)}?sort=-updated_on&pagelen=100`, { headers }),
-          fetch(`https://api.bitbucket.org/2.0/repositories?role=member&sort=-updated_on&pagelen=100`, { headers }).catch(() => null)
-        ]);
-
-        if (wsReposRes.ok) {
-          const wsData = await wsReposRes.json();
-          (wsData.values || []).forEach(r => {
-            const key = r.full_name || r.uuid || `${workspace}/${r.slug || r.name}`;
-            repoMap.set(key, r);
-          });
-        }
-
-        if (memberReposRes && memberReposRes.ok) {
-          const memberData = await memberReposRes.json();
-          (memberData.values || []).forEach(r => {
-            const key = r.full_name || r.uuid || `${workspace}/${r.slug || r.name}`;
-            if (!repoMap.has(key)) {
-              repoMap.set(key, r);
-            }
-          });
-        }
-      } catch (e) {
-        console.error("Error fetching Bitbucket repositories:", e);
-      }
-
-      const repos = Array.from(repoMap.values());
-
-      if (repos.length === 0 && repoMap.size === 0) {
+      // Fetch the 10 most recently modified repositories in workspace
+      const reposRes = await fetch(`https://api.bitbucket.org/2.0/repositories/${encodeURIComponent(workspace)}?sort=-updated_on&pagelen=10`, { headers });
+      if (!reposRes.ok) {
         state.bitbucketStatus = 'error';
-        state.bitbucketError = 'Could not find repositories';
+        state.bitbucketError = `${reposRes.status} ${reposRes.statusText}`;
       } else {
-        // Fetch open PRs for repositories in parallel
+        const reposData = await reposRes.json();
+        const repos = reposData.values || [];
+
+        // Fetch open PRs for the 10 repositories in parallel
         const prPromises = repos.map(async (repo) => {
           try {
-            const repoPath = repo.full_name ? encodeURIComponent(repo.full_name.split('/')[0]) + '/' + encodeURIComponent(repo.full_name.split('/')[1]) : `${encodeURIComponent(workspace)}/${encodeURIComponent(repo.slug || repo.name)}`;
-            const prsRes = await fetch(`https://api.bitbucket.org/2.0/repositories/${repoPath}/pullrequests?state=OPEN&pagelen=50`, { headers });
+            const repoSlug = repo.slug || repo.name;
+            const prsRes = await fetch(`https://api.bitbucket.org/2.0/repositories/${encodeURIComponent(workspace)}/${encodeURIComponent(repoSlug)}/pullrequests?state=OPEN&pagelen=20`, { headers });
             if (prsRes.ok) {
               const data = await prsRes.json();
               return (data.values || []).map(pr => ({
                 ...pr,
-                _repoName: repo.name || repo.slug || (repo.full_name ? repo.full_name.split('/')[1] : '')
+                _repoName: repo.name || repoSlug
               }));
             }
             return [];
