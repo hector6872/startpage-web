@@ -97,7 +97,10 @@ Before creating credentials, the OAuth consent screen must be configured to defi
 2. Click the settings gear icon (`⚙️`) in the bottom corner.
 3. Navigate to the **Google Integration** tab.
 4. Paste the **Google Client ID** into the input field and save settings.
-5. Personal and Work accounts can now be connected separately.
+5. Click **Log In (Personal)** or **Log In (Work)** to authenticate with Google.
+
+> [!NOTE]
+> **Allow Browser Popups**: Google authentication opens the official Google Identity Services (GIS) OAuth login dialog inside a popup window. Ensure that **popups are allowed** for your dashboard URL (e.g. `http://localhost:5173` or your hosted domain) in the browser address bar / site settings so the authentication window is not blocked.
 
 ---
 
