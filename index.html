@@ -383,6 +383,33 @@
               <input type="hidden" id="settings-primary-color" value="blue">
             </div>
 
+            <!-- Out of Office (OOO) Card -->
+            <div class="settings-section-card ooo-settings-card">
+              <div class="card-toggle-header">
+                <span class="card-toggle-title">
+                  <span class="ooo-icon-badge">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M22 12A10 10 0 0 0 2 12h20Z"/>
+                      <path d="M12 12v7a2 2 0 0 0 4 0"/>
+                      <path d="M12 2v2"/>
+                    </svg>
+                  </span>
+                  <span data-i18n="label-ooo-active">Out of Office (OOO)</span>
+                </span>
+                <label class="switch-control">
+                  <input type="checkbox" id="settings-ooo-active">
+                  <span class="switch-slider"></span>
+                </label>
+              </div>
+              <div id="ooo-date-display" class="ooo-date-banner hidden">
+                <div class="ooo-date-content">
+                  <span class="ooo-status-dot"></span>
+                  <span class="ooo-date-label" data-i18n="ooo-until">Active until:</span>
+                  <span id="ooo-return-date-text" class="ooo-date-value">--</span>
+                </div>
+              </div>
+            </div>
+
             <!-- Wikipedia Card -->
             <div class="settings-section-card">
               <div class="card-toggle-header">
@@ -760,22 +787,7 @@
                 </div>
                 <input type="hidden" id="google-color-work" value="black">
               </div>
-              <div class="settings-section-card" style="margin-top: 1rem; margin-bottom: 1rem;">
-                <div class="card-toggle-header">
-                  <span class="card-toggle-title">
-                    <span data-i18n="label-ooo-active">Out of Office (OOO)</span>
-                  </span>
-                  <label class="switch-control">
-                    <input type="checkbox" id="settings-ooo-active">
-                    <span class="switch-slider"></span>
-                  </label>
-                </div>
-                <div id="ooo-date-display" class="form-group row-align hidden" style="margin: 0; padding-top: 0.5rem; border-top: 1px solid var(--border-color, rgba(255,255,255,0.05));">
-                  <span style="font-size: 0.75rem; color: var(--text-secondary);" data-i18n="ooo-until">Active until:</span>
-                  <span id="ooo-return-date-text" style="font-size: 0.75rem; font-weight: 600; color: var(--accent);">--</span>
-                </div>
-              </div>
-              <div class="google-auth-actions">
+              <div class="google-auth-actions" style="margin-top: 1rem;">
                 <button type="button" id="google-login-btn-work" class="btn-secondary" data-i18n="google-login-work">Log In (Work)</button>
                 <button type="button" id="google-logout-btn-work" class="btn-danger hidden" data-i18n="google-logout">Log Out</button>
               </div>

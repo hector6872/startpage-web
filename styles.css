@@ -2326,6 +2326,92 @@ html.dark .settings-section-card {
   background: #27272a;
 }
 
+.ooo-settings-card {
+  margin-top: 0.75rem;
+  margin-bottom: 1.25rem;
+  padding: 1.15rem 1.25rem;
+  background: var(--bg-surface, #ffffff);
+  border: 1px solid var(--border-color);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+  transition: all 0.25s ease;
+}
+
+.ooo-settings-card:hover {
+  border-color: rgba(239, 68, 68, 0.35);
+}
+
+.ooo-icon-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 7px;
+  background: var(--danger-bg, rgba(239, 68, 68, 0.12));
+  color: var(--danger, #ef4444);
+  flex-shrink: 0;
+}
+
+.ooo-icon-badge svg {
+  color: var(--danger, #ef4444) !important;
+}
+
+.ooo-settings-card:has(#settings-ooo-active:checked) {
+  border-color: rgba(239, 68, 68, 0.35);
+  background: linear-gradient(180deg, rgba(239, 68, 68, 0.03) 0%, rgba(239, 68, 68, 0.005) 100%);
+  box-shadow: 0 4px 14px rgba(239, 68, 68, 0.06);
+}
+
+html.dark .ooo-settings-card {
+  background: #27272a;
+}
+
+html.dark .ooo-settings-card:has(#settings-ooo-active:checked) {
+  border-color: rgba(239, 68, 68, 0.4);
+  background: linear-gradient(180deg, rgba(239, 68, 68, 0.09) 0%, rgba(239, 68, 68, 0.02) 100%);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);
+}
+
+.ooo-settings-card #settings-ooo-active:checked + .switch-slider {
+  background-color: var(--danger, #ef4444);
+}
+
+.ooo-date-banner {
+  margin-top: 0.75rem;
+  padding: 0.5rem 0.85rem;
+  background: var(--danger-bg, rgba(239, 68, 68, 0.1));
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.ooo-date-content {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+}
+
+.ooo-status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--danger, #ef4444);
+  box-shadow: 0 0 6px var(--danger, #ef4444);
+  display: inline-block;
+}
+
+.ooo-date-label {
+  color: var(--text-secondary);
+}
+
+.ooo-date-value {
+  font-weight: 700;
+  color: var(--danger, #ef4444);
+}
+
 /* Card Header with switch */
 .card-toggle-header {
   display: flex;

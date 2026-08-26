@@ -146,6 +146,10 @@ export let lastActiveElementBeforeModal = null;
 export function openModalAccessible(dialogElement, focusTargetElement) {
   if (!dialogElement) return;
   lastActiveElementBeforeModal = document.activeElement;
+  const modalBody = dialogElement.querySelector('.modal-body');
+  if (modalBody) {
+    modalBody.scrollTop = 0;
+  }
   if (typeof dialogElement.showModal === "function") {
     dialogElement.showModal();
   } else {

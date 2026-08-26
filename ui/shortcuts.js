@@ -1,8 +1,13 @@
 import { state } from "../utils/state.js";
 import { getLocale, t } from "../locales/index.js";
 import { escapeHtml, formatDateShort, getLocalDateString } from "../utils/helpers.js";
+import { checkOooExpiration } from "../services/storage.js";
 
 export function updateTimeAndGreeting() {
+  if (checkOooExpiration(state)) {
+    updateOooBadges();
+    updateOrganizerVisibility();
+  }
   const now = new Date();
   
   // Format Clock
@@ -202,6 +207,7 @@ export function updateNotesBadge() {
 }
 
 export function updateOooBadges() {
+  checkOooExpiration(state);
   const active = state.settings.oooActive === true;
   const badgeToday = document.getElementById("ooo-badge-today");
   const badgeWeek = document.getElementById("ooo-badge-week");

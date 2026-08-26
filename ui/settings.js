@@ -9,7 +9,7 @@ import { loadWikipediaContent } from "../services/wikipedia.js";
 import { fetchAllPRs, testGitConnection, updateGitStatusIndicators } from "../services/git.js";
 import { fetchJira, testJiraConnection, updateJiraStatusIndicators, sanitizeJiraHost } from "../services/jira.js";
 import { initGoogleOAuth, updateGoogleAuthStatus, getGoogleTokenClient, setGoogleLoginTarget, fetchGoogleData, fetchGoogleCalendar, fetchGmail, fetchGoogleTasks } from "../services/google.js";
-import { saveSettings, saveTodos, writeDataToFile, readDataFromFile, exportStateToFile, saveFileHandle, setFileHandle, fileHandle, mergeSettingsWithLocalSecrets, clearFileHandle } from "../services/storage.js";
+import { saveSettings, saveTodos, writeDataToFile, readDataFromFile, exportStateToFile, saveFileHandle, setFileHandle, fileHandle, mergeSettingsWithLocalSecrets, clearFileHandle, checkOooExpiration } from "../services/storage.js";
 import { openModalAccessible, trapFocusInDialog, showInputErrorFeedback, ensureHttpUrl, lastActiveElementBeforeModal } from "../utils/helpers.js";
 
 export function translatePage() {
@@ -755,7 +755,7 @@ export function setupEventListeners() {
     });
   }
 
-  // Click OOO badge to open settings at Google tab
+  // Click OOO badge to open settings at General tab
   const oooBadges = document.querySelectorAll('.ooo-badge');
   oooBadges.forEach(b => {
     b.addEventListener('click', (e) => {
@@ -763,8 +763,12 @@ export function setupEventListeners() {
       const toggleBtn = document.getElementById('settings-toggle');
       if (toggleBtn) {
         toggleBtn.click();
-        const googleTab = document.querySelector('.tab-btn[data-tab="tab-google"]');
-        if (googleTab) googleTab.click();
+        const generalTab = document.querySelector('.tab-btn[data-tab="tab-general"]');
+        if (generalTab) generalTab.click();
+        const oooCard = document.querySelector('.ooo-settings-card');
+        if (oooCard) {
+          oooCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
       }
     });
   });
@@ -805,14 +809,38 @@ export function setupEventListeners() {
         const dd = String(today.getDate()).padStart(2, '0');
         if (oooDateInput) {
           oooDateInput.min = `${yyyy}-${mm}-${dd}`;
-          oooDateInput.value = `${yyyy}-${mm}-${dd}`;
+          oooDateInput.value = state.settings.oooUntil || `${yyyy}-${mm}-${dd}`;
         }
         if (oooDateModal) openModalAccessible(oooDateModal, oooDateInput);
       } else {
+        state.settings.oooActive = false;
+        state.settings.oooUntil = null;
+        oooActiveSwitch.removeAttribute('data-until');
         const display = document.getElementById('ooo-date-display');
         if (display) display.classList.add('hidden');
+        autoSaveSettingsForm();
       }
     });
+  }
+
+  const oooDisplay = document.getElementById('ooo-date-display');
+  if (oooDisplay) {
+    oooDisplay.addEventListener('click', () => {
+      if (state.settings.oooActive) {
+        const today = new Date();
+        today.setDate(today.getDate() + 1);
+        const yyyy = today.getFullYear();
+        const mm = String(today.getMonth() + 1).padStart(2, '0');
+        const dd = String(today.getDate()).padStart(2, '0');
+        if (oooDateInput) {
+          oooDateInput.min = `${yyyy}-${mm}-${dd}`;
+          oooDateInput.value = state.settings.oooUntil || `${yyyy}-${mm}-${dd}`;
+        }
+        if (oooDateModal) openModalAccessible(oooDateModal, oooDateInput);
+      }
+    });
+    oooDisplay.style.cursor = 'pointer';
+    oooDisplay.title = 'Click to change return date';
   }
 
   if (oooForm && oooDateModal) {
@@ -822,8 +850,11 @@ export function setupEventListeners() {
       if (!val) return;
       
       if (oooActiveSwitch) {
+        oooActiveSwitch.checked = true;
         oooActiveSwitch.setAttribute('data-until', val);
       }
+      state.settings.oooActive = true;
+      state.settings.oooUntil = val;
 
       const display = document.getElementById('ooo-date-display');
       const text = document.getElementById('ooo-return-date-text');
@@ -831,6 +862,7 @@ export function setupEventListeners() {
       if (text) text.textContent = new Date(val + 'T00:00:00').toLocaleDateString(getLocale(state.lang), { day: 'numeric', month: 'long', year: 'numeric' });
       
       oooDateModal.close();
+      autoSaveSettingsForm();
     });
   }
 
@@ -838,13 +870,13 @@ export function setupEventListeners() {
   const closeOooModalBtn = document.getElementById('close-ooo-modal');
   if (cancelOooBtn && oooDateModal) {
     cancelOooBtn.addEventListener('click', () => {
-      if (oooActiveSwitch) oooActiveSwitch.checked = false;
+      if (oooActiveSwitch && !state.settings.oooActive) oooActiveSwitch.checked = false;
       oooDateModal.close();
     });
   }
   if (closeOooModalBtn && oooDateModal) {
     closeOooModalBtn.addEventListener('click', () => {
-      if (oooActiveSwitch) oooActiveSwitch.checked = false;
+      if (oooActiveSwitch && !state.settings.oooActive) oooActiveSwitch.checked = false;
       oooDateModal.close();
     });
   }
@@ -852,6 +884,11 @@ export function setupEventListeners() {
   // Settings Modal Open
   const settingsModal = document.getElementById('settings-modal');
   document.getElementById('settings-toggle').addEventListener('click', () => {
+    checkOooExpiration(state);
+    const modalBody = settingsModal ? settingsModal.querySelector('.modal-body') : null;
+    if (modalBody) {
+      modalBody.scrollTop = 0;
+    }
     // Fill form fields with current settings
     document.getElementById('settings-lang').value = state.settings.lang;
     document.getElementById('settings-theme').value = state.settings.theme || 'system';
@@ -936,6 +973,11 @@ export function setupEventListeners() {
     const oooActiveInput = document.getElementById('settings-ooo-active');
     if (oooActiveInput) {
       oooActiveInput.checked = state.settings.oooActive === true;
+      if (state.settings.oooActive && state.settings.oooUntil) {
+        oooActiveInput.setAttribute('data-until', state.settings.oooUntil);
+      } else {
+        oooActiveInput.removeAttribute('data-until');
+      }
       const display = document.getElementById('ooo-date-display');
       const text = document.getElementById('ooo-return-date-text');
       if (state.settings.oooActive && state.settings.oooUntil) {
@@ -1025,6 +1067,10 @@ export function setupEventListeners() {
   });
 
   settingsModal.addEventListener('close', () => {
+    const modalBody = settingsModal.querySelector('.modal-body');
+    if (modalBody) {
+      modalBody.scrollTop = 0;
+    }
     applyDashboardLayoutOrder(state);
     updateOrganizerVisibility();
     renderTodos();
@@ -1153,6 +1199,12 @@ export function setupEventListeners() {
       const isTarget = pane.id === targetTab;
       pane.classList.toggle('active', isTarget);
     });
+
+    // Reset scroll position on tab switch
+    const modalBody = settingsModal ? settingsModal.querySelector('.modal-body') : document.querySelector('#settings-modal .modal-body');
+    if (modalBody) {
+      modalBody.scrollTop = 0;
+    }
 
     // Scroll the selected tab into view inside the tab bar container
     targetBtn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
@@ -1385,10 +1437,10 @@ export function setupEventListeners() {
     loadWeather();
     fetchGoogleTasks();
     fetchGoogleCalendar();
+    updateTimeAndGreeting();
 
     if (prevLang !== state.lang) {
       translatePage();
-      updateTimeAndGreeting();
     }
   }
 

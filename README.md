@@ -174,12 +174,12 @@ The Jira Host URL is the root domain of the Jira Cloud workspace:
 
 ## 🏖️ Out of Office (OOO) Mode
 
-Under Preferences (`⚙️`) -> Google Integration, **Out of Office (OOO) Mode** can be toggled:
+Under Preferences (`⚙️`) -> General, **Out of Office (OOO) Mode** can be toggled:
 1. When enabling OOO, a prompt requests a return date.
 2. While OOO is active:
    - 🛑 **Work** events (Gmail, Tasks, Google Calendar) remain hidden from the Today and This Week panels.
    - 🔒 Integrations for **Jira**, **GitHub**, **Bitbucket**, and **GitLab** can be individually configured to hide while OOO is active.
-   - 🔴 OOO status is indicated by a red "OOO" badge in the Today and This Week column headers. Clicking this badge opens the Google Integration tab in Preferences.
+   - 🔴 OOO status is indicated by a red "OOO" badge in the Today and This Week column headers. Clicking this badge opens the General tab in Preferences.
 3. OOO mode automatically disables itself on or after the specified return date.
 
 ---
