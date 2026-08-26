@@ -1421,6 +1421,40 @@ export function setupEventListeners() {
     });
   }
 
+  // Reset connected state when provider inputs are edited
+  const providerInputMap = {
+    github: ['github-token'],
+    bitbucket: ['bitbucket-workspace', 'bitbucket-username', 'bitbucket-token'],
+    gitlab: ['gitlab-host', 'gitlab-token'],
+    jira: ['jira-host', 'jira-email', 'jira-token']
+  };
+
+  Object.entries(providerInputMap).forEach(([provider, inputIds]) => {
+    inputIds.forEach(id => {
+      const el = document.getElementById(id);
+      if (el) {
+        el.addEventListener('input', () => {
+          const btn = document.querySelector(`.test-conn-btn[data-provider="${provider}"]`);
+          if (btn && !btn.dataset.cooldownInterval) {
+            btn.disabled = false;
+            btn.textContent = t('btn-connect');
+            btn.setAttribute('data-i18n', 'btn-connect');
+            btn.style.backgroundColor = '';
+            btn.style.color = '';
+            btn.style.borderColor = '';
+            btn.style.cursor = '';
+          }
+          if (provider === 'github') state.githubStatus = 'disconnected';
+          if (provider === 'bitbucket') state.bitbucketStatus = 'disconnected';
+          if (provider === 'gitlab') state.gitlabStatus = 'disconnected';
+          if (provider === 'jira') state.jiraStatus = 'disconnected';
+          updateGitStatusIndicators(state);
+          updateJiraStatusIndicators(state);
+        });
+      }
+    });
+  });
+
   // Google OAuth Personal Login Action
   const loginBtnPersonal = document.getElementById('google-login-btn-personal');
   loginBtnPersonal.addEventListener('click', () => {

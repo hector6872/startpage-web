@@ -40,27 +40,41 @@ export function getJiraAuthHeader(settings) {
   return "Basic " + btoa(`${settings.jiraEmail}:${settings.jiraToken}`);
 }
 
-// Cooldown tracker for successful Jira connection tests (60 seconds)
-function startJiraTestCooldown(button) {
-  let remaining = 60;
+// Cooldown tracker for failed Jira connection tests (30 seconds)
+export function startJiraTestCooldown(button) {
+  if (button.dataset.cooldownInterval) {
+    clearInterval(parseInt(button.dataset.cooldownInterval, 10));
+  }
+
+  let remaining = 30;
   button.disabled = true;
+  button.style.backgroundColor = 'rgba(235, 87, 87, 0.1)';
+  button.style.color = '#eb5757';
+  button.style.borderColor = '#eb5757';
+  button.style.cursor = 'not-allowed';
 
   const originalText = t('btn-connect');
+  button.textContent = `${originalText} (${remaining}s)`;
   
   const interval = setInterval(() => {
     remaining--;
     if (remaining <= 0) {
       clearInterval(interval);
+      delete button.dataset.cooldownInterval;
       button.disabled = false;
       button.textContent = originalText;
       button.setAttribute('data-i18n', 'btn-connect');
+      button.style.backgroundColor = '';
+      button.style.color = '';
+      button.style.borderColor = '';
+      button.style.cursor = '';
       if (typeof translatePage === 'function') translatePage();
     } else {
       button.textContent = `${originalText} (${remaining}s)`;
     }
   }, 1000);
   
-  button.dataset.cooldownInterval = interval;
+  button.dataset.cooldownInterval = String(interval);
 }
 
 // Test Jira connection validator
@@ -146,29 +160,22 @@ export async function testJiraConnection(button) {
   updateJiraStatusIndicators(state, escapeHtml);
 
   if (success) {
+    if (button.dataset.cooldownInterval) {
+      clearInterval(parseInt(button.dataset.cooldownInterval, 10));
+      delete button.dataset.cooldownInterval;
+    }
     button.textContent = t('btn-connected');
+    button.setAttribute('data-i18n', 'btn-connected');
     button.style.backgroundColor = 'rgba(39, 174, 96, 0.1)';
     button.style.color = '#27ae60';
     button.style.borderColor = '#27ae60';
+    button.style.cursor = 'default';
+    button.disabled = true;
     
-    startJiraTestCooldown(button);
     fetchJira(state, safeFetch, escapeHtml);
   } else {
-    button.textContent = t('btn-failed');
-    button.style.backgroundColor = 'rgba(235, 87, 87, 0.1)';
-    button.style.color = '#eb5757';
-    button.style.borderColor = '#eb5757';
-    
-    const originalTexti18n = button.getAttribute('data-i18n');
-    setTimeout(() => {
-      button.disabled = false;
-      button.textContent = originalText;
-      button.style.backgroundColor = '';
-      button.style.color = '';
-      button.style.borderColor = '';
-      if (originalTexti18n) button.setAttribute('data-i18n', originalTexti18n);
-    }, 3000);
-    
+    // 30s cooldown on failure
+    startJiraTestCooldown(button);
     fetchJira(state, safeFetch, escapeHtml);
   }
 }
@@ -208,6 +215,32 @@ export function updateJiraStatusIndicators(state = defaultState, escapeHtml = de
   if (setDot) {
     setDot.className = `status-dot ${dotClass}`;
     setDot.title = tooltip;
+  }
+
+  // Update Jira Test Connection button in Settings modal
+  const jiraBtn = document.querySelector('.test-conn-btn[data-provider="jira"]');
+  if (jiraBtn) {
+    if (status === 'connected') {
+      if (jiraBtn.dataset.cooldownInterval) {
+        clearInterval(parseInt(jiraBtn.dataset.cooldownInterval, 10));
+        delete jiraBtn.dataset.cooldownInterval;
+      }
+      jiraBtn.textContent = t('btn-connected');
+      jiraBtn.setAttribute('data-i18n', 'btn-connected');
+      jiraBtn.disabled = true;
+      jiraBtn.style.backgroundColor = 'rgba(39, 174, 96, 0.1)';
+      jiraBtn.style.color = '#27ae60';
+      jiraBtn.style.borderColor = '#27ae60';
+      jiraBtn.style.cursor = 'default';
+    } else if (!jiraBtn.dataset.cooldownInterval) {
+      jiraBtn.disabled = false;
+      jiraBtn.textContent = t('btn-connect');
+      jiraBtn.setAttribute('data-i18n', 'btn-connect');
+      jiraBtn.style.backgroundColor = '';
+      jiraBtn.style.color = '';
+      jiraBtn.style.borderColor = '';
+      jiraBtn.style.cursor = '';
+    }
   }
 }
 
