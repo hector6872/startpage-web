@@ -10,7 +10,7 @@ import { fetchAllPRs, testGitConnection, updateGitStatusIndicators } from "../se
 import { fetchJira, testJiraConnection, updateJiraStatusIndicators } from "../services/jira.js";
 import { initGoogleOAuth, updateGoogleAuthStatus, getGoogleTokenClient, setGoogleLoginTarget, fetchGoogleData, fetchGoogleCalendar, fetchGmail, fetchGoogleTasks } from "../services/google.js";
 import { saveSettings, saveTodos, writeDataToFile, readDataFromFile, exportStateToFile, saveFileHandle, setFileHandle, fileHandle, mergeSettingsWithLocalSecrets, clearFileHandle } from "../services/storage.js";
-import { openModalAccessible, trapFocusInDialog, showInputErrorFeedback, ensureHttpUrl } from "../utils/helpers.js";
+import { openModalAccessible, trapFocusInDialog, showInputErrorFeedback, ensureHttpUrl, lastActiveElementBeforeModal } from "../utils/helpers.js";
 
 export function translatePage() {
   // Translate standard content elements

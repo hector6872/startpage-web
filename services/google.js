@@ -1,4 +1,5 @@
 import { translations, getLocale, t } from "../locales/index.js";
+import { getRelativeDateLabel } from "../utils/helpers.js";
 
 export const googleContext = {
   state: null,
@@ -6,7 +7,8 @@ export const googleContext = {
   escapeHtml: null,
   formatDateShort: null,
   formatEventTime: null,
-  getLocalDateString: null
+  getLocalDateString: null,
+  getRelativeDateLabel: null
 };
 
 export function setupGoogleContext(context) {
@@ -25,8 +27,6 @@ export function getGoogleTokenClient() {
 
 // Google APIs Integrations (Gmail, Tasks, Calendar)
 
-
-
 export async function fetchGoogleUserEmail(token) {
   try {
     const res = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
@@ -40,6 +40,32 @@ export async function fetchGoogleUserEmail(token) {
     console.error("Failed to fetch user email", e);
   }
   return null;
+}
+
+export async function checkAndFetchGoogleEmails() {
+  if (!googleContext.state) return;
+  let changed = false;
+  if (googleContext.state.googlePersonalToken && !googleContext.state.googlePersonalEmail) {
+    const email = await fetchGoogleUserEmail(googleContext.state.googlePersonalToken);
+    if (email) {
+      googleContext.state.googlePersonalEmail = email;
+      localStorage.setItem('google_personal_email', email);
+      sessionStorage.setItem('google_personal_email', email);
+      changed = true;
+    }
+  }
+  if (googleContext.state.googleWorkToken && !googleContext.state.googleWorkEmail) {
+    const email = await fetchGoogleUserEmail(googleContext.state.googleWorkToken);
+    if (email) {
+      googleContext.state.googleWorkEmail = email;
+      localStorage.setItem('google_work_email', email);
+      sessionStorage.setItem('google_work_email', email);
+      changed = true;
+    }
+  }
+  if (changed) {
+    updateGoogleAuthStatus();
+  }
 }
 
 export function initGoogleOAuth() {
@@ -923,7 +949,7 @@ export async function fetchGoogleCalendar() {
         todayEvents.push(eventHTML);
       } else {
         const dateVal = evt.start.dateTime || evt.start.date;
-        const relativeLabel = getRelativeDateLabel(dateVal);
+        const relativeLabel = getRelativeDateLabel(dateVal, googleContext.state?.lang || 'en');
         if (!weeklyGroups[relativeLabel]) {
           weeklyGroups[relativeLabel] = [];
         }

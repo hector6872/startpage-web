@@ -98,8 +98,37 @@ export async function safeFetch(url, options = {}) {
   }
 }
 
+export function getRelativeDateLabel(dateVal, lang = "en") {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const target = new Date(dateVal);
+  target.setHours(0, 0, 0, 0);
+
+  const diffTime = target.getTime() - today.getTime();
+  const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+
+  if (diffDays === -1) {
+    return t("time-yesterday", {}, lang);
+  } else if (diffDays === 0) {
+    return lang === "es" ? "Hoy" : (lang === "en" ? "Today" : t("task-today", {}, lang));
+  } else if (diffDays === 1) {
+    return lang === "es" ? "Mañana" : (lang === "en" ? "Tomorrow" : t("task-tomorrow", {}, lang));
+  } else if (diffDays === 2) {
+    return lang === "es" ? "Pasado mañana" : "Day after tomorrow";
+  } else {
+    const locale = getLocale(lang);
+    const options = { weekday: "long", day: "numeric", month: "short" };
+    const formatted = target.toLocaleDateString(locale, options);
+    return formatted.charAt(0).toUpperCase() + formatted.slice(1);
+  }
+}
+
+export let lastActiveElementBeforeModal = null;
+
 export function openModalAccessible(dialogElement, focusTargetElement) {
   if (!dialogElement) return;
+  lastActiveElementBeforeModal = document.activeElement;
   if (typeof dialogElement.showModal === "function") {
     dialogElement.showModal();
   } else {

@@ -1,5 +1,5 @@
 import { state } from "./utils/state.js";
-import { safeFetch, escapeHtml, formatDateShort, formatEventTime, getLocalDateString } from "./utils/helpers.js";
+import { safeFetch, escapeHtml, formatDateShort, formatEventTime, getLocalDateString, getRelativeDateLabel } from "./utils/helpers.js";
 import { loadState } from "./services/storage.js";
 import { setupGoogleContext, initGoogleOAuth, fetchGmail, fetchGoogleTasks, fetchGoogleCalendar } from "./services/google.js";
 import { setupWikiContext, loadWikipediaContent } from "./services/wikipedia.js";
@@ -23,7 +23,8 @@ async function init() {
     escapeHtml,
     formatDateShort,
     formatEventTime,
-    getLocalDateString
+    getLocalDateString,
+    getRelativeDateLabel
   });
   setupWikiContext({ state });
   setupWeatherContext({ state });
