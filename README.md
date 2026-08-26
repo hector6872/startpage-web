@@ -5,6 +5,11 @@
 
 A beautiful, modern, and minimalist productivity dashboard featuring task management, calendar schedules, weather forecasts, world clocks, quote & Wikipedia widgets, and seamless integrations with Git (GitHub, Bitbucket, GitLab), Jira, and Google Workspace. ✨
 
+<p align="center">
+  <img src="assets/dashboard.png" alt="startpage-web dashboard" width="49%">
+  <img src="assets/preferences.png" alt="startpage-web preferences" width="49%">
+</p>
+
 > [!IMPORTANT]
 > ### 🔒 100% Local & Privacy-First
 > **Privacy is paramount — data never touches any external servers.** This dashboard operates completely client-side:
