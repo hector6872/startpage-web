@@ -269,5 +269,6 @@ export default {
   "layout-card-countdowns": "Events & Milestones",
   "layout-card-tasks": "My Tasks",
   "layout-card-prs": "Pull Requests",
-  "layout-card-jira": "Jira Issues"
+  "layout-card-jira": "Jira Issues",
+  "badge-ooo": "out of office"
 };

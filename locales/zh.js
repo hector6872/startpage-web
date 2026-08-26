@@ -269,5 +269,6 @@ export default {
   "layout-card-countdowns": "重要事件与倒数日",
   "layout-card-tasks": "我的任务",
   "layout-card-prs": "Pull Requests",
-  "layout-card-jira": "Jira 事项"
+  "layout-card-jira": "Jira 事项",
+  "badge-ooo": "外出/休假"
 };

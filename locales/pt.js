@@ -269,5 +269,6 @@ export default {
   "layout-card-countdowns": "Eventos e Marcos",
   "layout-card-tasks": "Minhas tarefas",
   "layout-card-prs": "Pull Requests",
-  "layout-card-jira": "Tarefas Jira"
+  "layout-card-jira": "Tarefas Jira",
+  "badge-ooo": "fora do escritório"
 };

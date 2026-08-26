@@ -269,5 +269,6 @@ export default {
   "layout-card-countdowns": "Evenementen & Mijlpalen",
   "layout-card-tasks": "Mijn taken",
   "layout-card-prs": "Pull Requests",
-  "layout-card-jira": "Jira-taken"
+  "layout-card-jira": "Jira-taken",
+  "badge-ooo": "afwezig"
 };

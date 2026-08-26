@@ -269,5 +269,6 @@ export default {
   "layout-card-countdowns": "イベントとマイルストーン",
   "layout-card-tasks": "タスク一覧",
   "layout-card-prs": "プルリクエスト",
-  "layout-card-jira": "Jira課題"
+  "layout-card-jira": "Jira課題",
+  "badge-ooo": "休暇中"
 };
