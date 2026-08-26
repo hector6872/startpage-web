@@ -239,19 +239,14 @@ export async function fetchJira(state = defaultState, safeFetch = defaultSafeFet
     };
     const fieldsParam = encodeURIComponent("summary,status,priority,updated");
 
-    // 1. Standard Jira Cloud GET /rest/api/3/search
-    let response = await safeFetch(`${host}/rest/api/3/search?jql=${encodeURIComponent(jql)}&maxResults=50&fields=${fieldsParam}`, {
+    // 1. Primary: Standard Jira Cloud GET /rest/api/3/search/jql
+    let response = await safeFetch(`${host}/rest/api/3/search/jql?jql=${encodeURIComponent(jql)}&maxResults=50&fields=${fieldsParam}`, {
       headers: authHeaders
     });
 
-    // If authentication error, abort immediately - do not loop retry
-    if (response.status === 401 || response.status === 403) {
-      throw new Error(`Authentication failed (${response.status} ${response.status === 403 ? 'Forbidden' : 'Unauthorized'})`);
-    }
-
-    // 2. Standard Jira Cloud POST /rest/api/3/search
-    if (!response.ok && response.status !== 401 && response.status !== 403) {
-      response = await safeFetch(`${host}/rest/api/3/search`, {
+    // 2. Fallback: Jira Cloud POST /rest/api/3/search/jql
+    if (!response.ok && response.status !== 401) {
+      const postRes = await safeFetch(`${host}/rest/api/3/search/jql`, {
         method: "POST",
         headers: {
           ...authHeaders,
@@ -263,18 +258,28 @@ export async function fetchJira(state = defaultState, safeFetch = defaultSafeFet
           fields: ["summary", "status", "priority", "updated"]
         })
       });
-      if (response.status === 401 || response.status === 403) {
-        throw new Error(`Authentication failed (${response.status} ${response.status === 403 ? 'Forbidden' : 'Unauthorized'})`);
+      if (postRes.ok) {
+        response = postRes;
       }
     }
 
-    // 3. Jira Server / DC GET /rest/api/2/search (only if 404)
-    if (!response.ok && response.status === 404) {
-      response = await safeFetch(`${host}/rest/api/2/search?jql=${encodeURIComponent(simpleJql)}&maxResults=50&fields=${fieldsParam}`, {
+    // 3. Fallback: Legacy Jira Cloud GET /rest/api/3/search
+    if (!response.ok && response.status !== 401) {
+      const legacyRes = await safeFetch(`${host}/rest/api/3/search?jql=${encodeURIComponent(jql)}&maxResults=50&fields=${fieldsParam}`, {
         headers: authHeaders
       });
-      if (response.status === 401 || response.status === 403) {
-        throw new Error(`Authentication failed (${response.status} ${response.status === 403 ? 'Forbidden' : 'Unauthorized'})`);
+      if (legacyRes.ok) {
+        response = legacyRes;
+      }
+    }
+
+    // 4. Fallback: Jira Server / Data Center GET /rest/api/2/search
+    if (!response.ok && response.status !== 401) {
+      const dcRes = await safeFetch(`${host}/rest/api/2/search?jql=${encodeURIComponent(jql)}&maxResults=50&fields=${fieldsParam}`, {
+        headers: authHeaders
+      });
+      if (dcRes.ok) {
+        response = dcRes;
       }
     }
 
