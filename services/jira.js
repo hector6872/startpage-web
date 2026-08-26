@@ -4,6 +4,36 @@ import { t } from "../locales/index.js";
 import { saveSettings } from "./storage.js";
 import { translatePage } from "../ui/settings.js";
 
+// General helper to sanitize Jira Host URL (strips trailing slash, /jira, /secure, /browse suffixes)
+export function sanitizeJiraHost(host) {
+  if (!host) return "";
+  let trimmed = String(host).trim();
+  if (!trimmed) return "";
+
+  if (!trimmed.startsWith("http://") && !trimmed.startsWith("https://")) {
+    trimmed = "https://" + trimmed;
+  }
+
+  try {
+    const parsed = new URL(trimmed);
+    if (parsed.hostname.endsWith(".atlassian.net")) {
+      return parsed.origin;
+    }
+    const cleanedPath = parsed.pathname
+      .replace(/\/jira(\/.*)?$/i, "")
+      .replace(/\/secure(\/.*)?$/i, "")
+      .replace(/\/browse(\/.*)?$/i, "")
+      .replace(/\/+$/, "");
+    return `${parsed.origin}${cleanedPath}`;
+  } catch (e) {
+    return trimmed
+      .replace(/\/jira(\/.*)?$/i, "")
+      .replace(/\/secure(\/.*)?$/i, "")
+      .replace(/\/browse(\/.*)?$/i, "")
+      .replace(/\/+$/, "");
+  }
+}
+
 // General helper to encode Jira Basic Auth
 export function getJiraAuthHeader(settings) {
   if (!settings || !settings.jiraEmail || !settings.jiraToken) return null;
@@ -43,11 +73,11 @@ export async function testJiraConnection(button) {
   let errorMsg = '';
 
   try {
-    let host = document.getElementById('jira-host').value.trim().replace(/\/$/, "");
-    if (host && !host.startsWith('http://') && !host.startsWith('https://')) {
-      host = 'https://' + host;
+    const hostInputEl = document.getElementById('jira-host');
+    let host = sanitizeJiraHost(hostInputEl ? hostInputEl.value : '');
+    if (hostInputEl && host) {
+      hostInputEl.value = host;
     }
-    host = host.replace(/\/jira\/?$/, '').replace(/\/secure.*$/, '');
     const email = document.getElementById('jira-email').value.trim();
     const token = document.getElementById('jira-token').value.trim();
     if (!host || !email || !token) {
@@ -191,12 +221,7 @@ export async function fetchJira(state = defaultState, safeFetch = defaultSafeFet
     jiraBadge.classList.add("hidden");
   }
 
-  let host = (state.settings.jiraHost || "").trim().replace(/\/$/, "");
-  if (host && !host.startsWith("http://") && !host.startsWith("https://")) {
-    host = "https://" + host;
-  }
-  // Sanitize host in case user entered a specific subpath like /jira or /secure
-  host = host.replace(/\/jira\/?$/, "").replace(/\/secure.*$/, "");
+  let host = sanitizeJiraHost(state.settings.jiraHost || "");
 
   if (!host || !state.settings.jiraEmail || !state.settings.jiraToken) {
     state.jiraStatus = 'disconnected';

@@ -7,7 +7,7 @@ import { renderCountdowns, updateUpcomingEventBanner, addCountdown, renderSettin
 import { loadWeather } from "../services/weather.js";
 import { loadWikipediaContent } from "../services/wikipedia.js";
 import { fetchAllPRs, testGitConnection, updateGitStatusIndicators } from "../services/git.js";
-import { fetchJira, testJiraConnection, updateJiraStatusIndicators } from "../services/jira.js";
+import { fetchJira, testJiraConnection, updateJiraStatusIndicators, sanitizeJiraHost } from "../services/jira.js";
 import { initGoogleOAuth, updateGoogleAuthStatus, getGoogleTokenClient, setGoogleLoginTarget, fetchGoogleData, fetchGoogleCalendar, fetchGmail, fetchGoogleTasks } from "../services/google.js";
 import { saveSettings, saveTodos, writeDataToFile, readDataFromFile, exportStateToFile, saveFileHandle, setFileHandle, fileHandle, mergeSettingsWithLocalSecrets, clearFileHandle } from "../services/storage.js";
 import { openModalAccessible, trapFocusInDialog, showInputErrorFeedback, ensureHttpUrl, lastActiveElementBeforeModal } from "../utils/helpers.js";
@@ -1301,7 +1301,7 @@ export function setupEventListeners() {
     if (glOooEl) state.settings.hideGitlabOoo = glOooEl.checked;
 
     const jiraHostEl = document.getElementById('jira-host');
-    if (jiraHostEl) state.settings.jiraHost = jiraHostEl.value.trim();
+    if (jiraHostEl) state.settings.jiraHost = sanitizeJiraHost(jiraHostEl.value);
     const jiraEmailEl = document.getElementById('jira-email');
     if (jiraEmailEl) state.settings.jiraEmail = jiraEmailEl.value.trim();
     const jiraTokEl = document.getElementById('jira-token');
@@ -1408,6 +1408,16 @@ export function setupEventListeners() {
     settingsForm.addEventListener('submit', (e) => {
       e.preventDefault();
       autoSaveSettingsForm();
+    });
+  }
+
+  const jiraHostInput = document.getElementById('jira-host');
+  if (jiraHostInput) {
+    jiraHostInput.addEventListener('blur', () => {
+      const clean = sanitizeJiraHost(jiraHostInput.value);
+      if (clean && clean !== jiraHostInput.value) {
+        jiraHostInput.value = clean;
+      }
     });
   }
 
