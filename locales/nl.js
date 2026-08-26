@@ -24,7 +24,7 @@ export default {
   "tab-general": "Algemeen",
   "tab-google": "Google-integratie",
   "tab-git": "Git-integraties",
-  "tab-jira": "Jira",
+  "tab-jira": "Jira-integratie",
   "tab-storage": "Gegevens & Sync",
   "label-language": "Taal",
   "label-primary-color": "Thema-accent",

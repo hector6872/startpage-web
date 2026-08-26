@@ -24,7 +24,7 @@ export default {
   "tab-general": "Allgemein",
   "tab-google": "Google-Integration",
   "tab-git": "Git-Integrationen",
-  "tab-jira": "Jira",
+  "tab-jira": "Jira-Integration",
   "tab-storage": "Daten & Sync",
   "label-language": "Sprache",
   "label-primary-color": "Design-Akzent",
