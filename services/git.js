@@ -542,6 +542,7 @@ export async function fetchAllPRs(appState = state, safeFetchFn = safeFetch, esc
         const allRepoPRs = await Promise.all(prPromises);
         const allFetchedPRs = allRepoPRs.flat();
         const seenBbPrUrls = new Set();
+        const prDetailPromises = [];
 
         allFetchedPRs.forEach(pr => {
           const prUrl = pr.links && pr.links.html ? pr.links.html.href : pr.id;
@@ -549,56 +550,74 @@ export async function fetchAllPRs(appState = state, safeFetchFn = safeFetch, esc
           seenBbPrUrls.add(prUrl);
 
           const isAuthor = isMatchingUser(pr.author);
-          const isReviewer = (Array.isArray(pr.reviewers) && pr.reviewers.some(r => isMatchingUser(r))) ||
-                             (Array.isArray(pr.participants) && pr.participants.some(p => (p.role === 'REVIEWER' || p.role === 'reviewer') && isMatchingUser(p.user))) ||
-                             (Array.isArray(pr.participants) && pr.participants.some(p => isMatchingUser(p.user) && !isAuthor));
           const repoName = pr._repoName || (pr.source && pr.source.repository && pr.source.repository.name) || (pr.destination && pr.destination.repository && pr.destination.repository.name) || '';
+          const detailUrl = pr.links && pr.links.self && pr.links.self.href ? pr.links.self.href : null;
 
-          if (isReviewer && !isAuthor) {
-            // Teammate's PR: check if I already approved it
-            const hasApproved = Array.isArray(pr.participants) && pr.participants.some(p => p.approved && isMatchingUser(p.user));
-            if (!hasApproved) {
+          prDetailPromises.push((async () => {
+            let fullPR = pr;
+            if (detailUrl) {
+              try {
+                const dRes = await fetch(detailUrl, { headers });
+                if (dRes.ok) {
+                  fullPR = await dRes.json();
+                }
+              } catch (e) {
+                console.warn(`Could not fetch detail for Bitbucket PR #${pr.id}:`, e);
+              }
+            }
+
+            const isReviewer = (Array.isArray(fullPR.reviewers) && fullPR.reviewers.some(r => isMatchingUser(r))) ||
+                               (Array.isArray(fullPR.participants) && fullPR.participants.some(p => (p.role === 'REVIEWER' || p.role === 'reviewer') && isMatchingUser(p.user))) ||
+                               (Array.isArray(fullPR.participants) && fullPR.participants.some(p => isMatchingUser(p.user) && !isAuthor));
+
+            if (isReviewer && !isAuthor) {
+              // Teammate's PR: check if I already approved it
+              const hasApproved = Array.isArray(fullPR.participants) && fullPR.participants.some(p => p.approved && isMatchingUser(p.user));
+              if (!hasApproved) {
+                prList.push({
+                  title: fullPR.title || pr.title,
+                  status: 'review',
+                  statusLabel: t('pr-needs-review'),
+                  url: fullPR.links && fullPR.links.html ? fullPR.links.html.href : (pr.links && pr.links.html ? pr.links.html.href : '#'),
+                  repo: repoName,
+                  number: fullPR.id || pr.id,
+                  source: 'Bitbucket',
+                  sortTime: new Date(fullPR.updated_on || pr.updated_on).getTime()
+                });
+              }
+            } else if (isAuthor) {
+              // My own PR: check for needs_work (requested changes) or task_count > 0 (blocked)
+              const hasNeedsWork = Array.isArray(fullPR.participants) && fullPR.participants.some(p => p.state === 'needs_work');
+              const hasTasks = (fullPR.task_count || pr.task_count || 0) > 0;
+              
+              let status = 'my_pr';
+              let statusLabel = t('pr-in-review');
+              if (hasNeedsWork && hasTasks) {
+                status = 'changes_requested_tasks';
+                statusLabel = t('pr-changes-tasks');
+              } else if (hasNeedsWork) {
+                status = 'changes_requested';
+                statusLabel = t('pr-changes-requested');
+              } else if (hasTasks) {
+                status = 'tasks_open';
+                statusLabel = t('pr-tasks-open');
+              }
+
               prList.push({
-                title: pr.title,
-                status: 'review',
-                statusLabel: t('pr-needs-review'),
-                url: pr.links && pr.links.html ? pr.links.html.href : '#',
+                title: fullPR.title || pr.title,
+                status: status,
+                statusLabel: statusLabel,
+                url: fullPR.links && fullPR.links.html ? fullPR.links.html.href : (pr.links && pr.links.html ? pr.links.html.href : '#'),
                 repo: repoName,
-                number: pr.id,
+                number: fullPR.id || pr.id,
                 source: 'Bitbucket',
-                sortTime: new Date(pr.updated_on).getTime()
+                sortTime: new Date(fullPR.updated_on || pr.updated_on).getTime()
               });
             }
-          } else if (isAuthor) {
-            // My own PR: check for needs_work (requested changes) or task_count > 0 (blocked)
-            const hasNeedsWork = Array.isArray(pr.participants) && pr.participants.some(p => p.state === 'needs_work');
-            const hasTasks = pr.task_count > 0;
-            
-            let status = 'my_pr';
-            let statusLabel = t('pr-in-review');
-            if (hasNeedsWork && hasTasks) {
-              status = 'changes_requested_tasks';
-              statusLabel = t('pr-changes-tasks');
-            } else if (hasNeedsWork) {
-              status = 'changes_requested';
-              statusLabel = t('pr-changes-requested');
-            } else if (hasTasks) {
-              status = 'tasks_open';
-              statusLabel = t('pr-tasks-open');
-            }
-
-            prList.push({
-              title: pr.title,
-              status: status,
-              statusLabel: statusLabel,
-              url: pr.links && pr.links.html ? pr.links.html.href : '#',
-              repo: repoName,
-              number: pr.id,
-              source: 'Bitbucket',
-              sortTime: new Date(pr.updated_on).getTime()
-            });
-          }
+          })());
         });
+
+        await Promise.all(prDetailPromises);
       }
     } catch (e) {
       console.error("Error fetching Bitbucket PRs:", e);
