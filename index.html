@@ -626,7 +626,7 @@
               <div class="settings-section-card" style="margin-bottom: 0;">
                 <div class="card-toggle-header">
                   <span class="card-toggle-title">
-                    <span data-i18n="label-show-google-emails">Show Emails (Gmail)</span>
+                    <span data-i18n="label-show-google-emails">Show Emails</span>
                   </span>
                   <label class="switch-control">
                     <input type="checkbox" id="settings-show-google-emails" checked>
@@ -637,7 +637,7 @@
               <div class="settings-section-card" style="margin-bottom: 0;">
                 <div class="card-toggle-header" style="margin-bottom: 0.5rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border-color, rgba(255,255,255,0.08));">
                   <span class="card-toggle-title">
-                    <span data-i18n="label-show-google-tasks-title">Google Tasks</span>
+                    <span data-i18n="label-show-google-tasks-title">Show Tasks</span>
                   </span>
                 </div>
                 <div style="display: flex; flex-direction: column; gap: 0.75rem;">
@@ -684,12 +684,11 @@
 
             <!-- Personal Account -->
             <div class="google-account-section" style="margin-bottom: 1.5rem;">
-              <h4 style="margin-top: 0; margin-bottom: 0.5rem; font-family: var(--font-title); display: flex; align-items: center; gap: 0.4rem;">
-                <span class="status-dot disconnected" id="google-settings-dot-personal"></span>
-                <span data-i18n="badge-personal">Personal</span>
-              </h4>
-              <div class="form-group row-align" style="margin-bottom: 0.75rem;">
-                <label data-i18n="google-status-personal">Personal Account:</label>
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+                <h4 style="margin: 0; font-family: var(--font-title); display: flex; align-items: center; gap: 0.4rem;">
+                  <span class="status-dot disconnected" id="google-settings-dot-personal"></span>
+                  <span data-i18n="badge-personal">Personal</span>
+                </h4>
                 <span id="google-auth-status-personal" class="auth-status disconnected" data-i18n="disconnected">Disconnected</span>
               </div>
               <div class="form-group row-align" style="margin-bottom: 0.75rem;">
@@ -716,12 +715,11 @@
 
             <!-- Work Account -->
             <div class="google-account-section">
-              <h4 style="margin-top: 0; margin-bottom: 0.5rem; font-family: var(--font-title); display: flex; align-items: center; gap: 0.4rem;">
-                <span class="status-dot disconnected" id="google-settings-dot-work"></span>
-                <span data-i18n="badge-work">Work</span>
-              </h4>
-              <div class="form-group row-align" style="margin-bottom: 0.75rem;">
-                <label data-i18n="google-status-work">Work Account:</label>
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+                <h4 style="margin: 0; font-family: var(--font-title); display: flex; align-items: center; gap: 0.4rem;">
+                  <span class="status-dot disconnected" id="google-settings-dot-work"></span>
+                  <span data-i18n="badge-work">Work</span>
+                </h4>
                 <span id="google-auth-status-work" class="auth-status disconnected" data-i18n="disconnected">Disconnected</span>
               </div>
               <div class="form-group row-align" style="margin-bottom: 0.75rem;">
