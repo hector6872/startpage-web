@@ -332,7 +332,7 @@ export async function fetchAllPRs(appState = state, safeFetchFn = safeFetch, esc
         const userData = await userRes.json();
         const githubUserLogin = userData.login;
 
-        // 2. Fetch Review-Requested, Assignee, and Authored PRs across all repos via GitHub Search API
+        // 2. Fetch Review-Requested, Assignee, and Authored PRs across all repositories in parallel
         const [reviewRes, assigneeRes, authorRes] = await Promise.all([
           fetch(`https://api.github.com/search/issues?q=is:pr+is:open+review-requested:${encodeURIComponent(githubUserLogin)}&sort=updated&order=desc&per_page=30`, { headers }),
           fetch(`https://api.github.com/search/issues?q=is:pr+is:open+assignee:${encodeURIComponent(githubUserLogin)}+-author:${encodeURIComponent(githubUserLogin)}&sort=updated&order=desc&per_page=30`, { headers }),
@@ -462,7 +462,7 @@ export async function fetchAllPRs(appState = state, safeFetchFn = safeFetch, esc
         'Accept': 'application/json'
       };
 
-      // 1. Get authenticated user account_id / uuid / names
+      // 1. Get authenticated user account_id / uuid / display names
       let bitbucketUserUUID = '';
       let bitbucketAccountID = '';
       let bitbucketNickname = '';
@@ -511,7 +511,7 @@ export async function fetchAllPRs(appState = state, safeFetchFn = safeFetch, esc
         return idsToCheck.some(id => userIdentifiers.has(id));
       }
 
-      // Fetch the 10 most recently modified repositories in workspace
+      // 2. Fetch the 10 most recently modified repositories in workspace
       const reposRes = await fetch(`https://api.bitbucket.org/2.0/repositories/${encodeURIComponent(workspace)}?sort=-updated_on&pagelen=10`, { headers });
       if (!reposRes.ok) {
         state.bitbucketStatus = 'error';
@@ -520,7 +520,7 @@ export async function fetchAllPRs(appState = state, safeFetchFn = safeFetch, esc
         const reposData = await reposRes.json();
         const repos = reposData.values || [];
 
-        // Fetch open PRs for the 10 repositories in parallel
+        // 3. Fetch open PRs for the 10 repositories in parallel
         const prPromises = repos.map(async (repo) => {
           try {
             const repoSlug = repo.slug || repo.name;
@@ -544,6 +544,7 @@ export async function fetchAllPRs(appState = state, safeFetchFn = safeFetch, esc
         const seenBbPrUrls = new Set();
         const prDetailPromises = [];
 
+        // 4. Fetch PR details to obtain reviewers & participants lists (omitted in list endpoint)
         allFetchedPRs.forEach(pr => {
           const prUrl = pr.links && pr.links.html ? pr.links.html.href : pr.id;
           if (seenBbPrUrls.has(prUrl)) return;
