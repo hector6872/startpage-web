@@ -241,6 +241,8 @@ export default {
   "city-placeholder": "例: 東京",
   "clock-label-placeholder": "例: ロンドン",
   "label-event-name": "イベント名",
+  "label-show-google-schedule": "スケジュールを表示",
+  "label-show-google-recurring-events": "定期的な予定を表示",
   "label-show-google-emails": "メールを表示",
   "label-ooo-active": "不在モード (OOO)",
   "ooo-until": "有効期限:",

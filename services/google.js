@@ -835,6 +835,14 @@ export async function fetchGoogleCalendar() {
     weeklyBadge.classList.add('hidden');
   }
 
+  if (googleContext.state?.settings?.showGoogleSchedule === false) {
+    const todayBadge = document.getElementById('events-count-badge');
+    if (todayBadge) todayBadge.classList.add('hidden');
+    if (todayEventsContainer) todayEventsContainer.innerHTML = '';
+    if (weeklyEventsContainer) weeklyEventsContainer.innerHTML = '';
+    return;
+  }
+
   if (!googleContext.state.googlePersonalToken && !googleContext.state.googleWorkToken) {
     const configLinkText = t('google-config-calendar');
     const msgHTML = `<p class="empty-msg" style="margin: 0.5rem 0;"><a href="#" onclick="event.preventDefault(); window.openSettingsGoogleTab();" style="color: var(--accent); text-decoration: underline; font-weight: 500;">${configLinkText}</a></p>`;
@@ -909,8 +917,14 @@ export async function fetchGoogleCalendar() {
     const todayStr = googleContext.getLocalDateString(new Date());
     const todayEvents = [];
     const weeklyGroups = {}; // relative date string -> list of event HTMLs
+    const showRecurring = googleContext.state?.settings?.showGoogleRecurringEvents !== false;
 
     allEvents.forEach(evt => {
+      const isRecurring = !!(evt.recurringEventId || (evt.recurrence && evt.recurrence.length > 0));
+      if (!showRecurring && isRecurring) {
+        return;
+      }
+
       const startStr = evt.start.dateTime || evt.start.date;
       const isToday = startStr.startsWith(todayStr);
       
@@ -925,7 +939,6 @@ export async function fetchGoogleCalendar() {
       }
 
       const timeStr = (googleContext.formatEventTime || formatEventTime)(evt, googleContext.state?.lang || 'en');
-      const isRecurring = !!evt.recurringEventId;
       const recurringClass = isRecurring ? 'recurring' : '';
       const repeatIcon = isRecurring 
         ? `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="opacity: 0.65; display: inline-block; vertical-align: middle; margin-right: 0.25rem; flex-shrink: 0;"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>` 

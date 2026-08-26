@@ -215,6 +215,22 @@ export function setupEventListeners() {
     });
   }
 
+  const toggleScheduleInputs = () => {
+    const showEl = document.getElementById('settings-show-google-schedule');
+    const show = showEl ? showEl.checked : true;
+    const group = document.getElementById('google-schedule-suboptions');
+    if (group) {
+      group.style.opacity = show ? '1' : '0.4';
+      group.style.pointerEvents = show ? 'auto' : 'none';
+    }
+  };
+  const showScheduleEl = document.getElementById('settings-show-google-schedule');
+  if (showScheduleEl) {
+    showScheduleEl.addEventListener('change', () => {
+      toggleScheduleInputs();
+    });
+  }
+
   // Color swatches click handlers
   const swatches = document.querySelectorAll('#color-picker-swatches .color-swatch-btn');
   swatches.forEach(btn => {
@@ -865,6 +881,10 @@ export function setupEventListeners() {
     document.getElementById('settings-show-tasks').checked = state.settings.showTasks !== false;
     const showShortcutsModalInput = document.getElementById('settings-show-shortcuts');
     if (showShortcutsModalInput) showShortcutsModalInput.checked = state.settings.showShortcuts !== false;
+    const gScheduleEl = document.getElementById('settings-show-google-schedule');
+    if (gScheduleEl) gScheduleEl.checked = state.settings.showGoogleSchedule !== false;
+    const gRecurringEl = document.getElementById('settings-show-google-recurring-events');
+    if (gRecurringEl) gRecurringEl.checked = state.settings.showGoogleRecurringEvents !== false;
     document.getElementById('settings-show-google-emails').checked = state.settings.showGoogleEmails !== false;
     const gTasksTodayEl = document.getElementById('settings-show-google-tasks-today');
     if (gTasksTodayEl) gTasksTodayEl.checked = state.settings.showGoogleTasksToday !== false;
@@ -884,6 +904,7 @@ export function setupEventListeners() {
     toggleClockInputs();
     toggleShortcutsInputs();
     toggleWikipediaInputs();
+    toggleScheduleInputs();
     
     document.getElementById('settings-storage-mode').value = state.settings.storageMode || 'local';
     document.getElementById('google-client-id').value = state.settings.googleClientId;
@@ -1323,6 +1344,10 @@ export function setupEventListeners() {
     if (showTasksEl) state.settings.showTasks = showTasksEl.checked;
     const showShortcutsEl = document.getElementById('settings-show-shortcuts');
     if (showShortcutsEl) state.settings.showShortcuts = showShortcutsEl.checked;
+    const showScheduleEl = document.getElementById('settings-show-google-schedule');
+    if (showScheduleEl) state.settings.showGoogleSchedule = showScheduleEl.checked;
+    const showRecurringEl = document.getElementById('settings-show-google-recurring-events');
+    if (showRecurringEl) state.settings.showGoogleRecurringEvents = showRecurringEl.checked;
     const showEmailsEl = document.getElementById('settings-show-google-emails');
     if (showEmailsEl) state.settings.showGoogleEmails = showEmailsEl.checked;
     const gTasksTodayElSave = document.getElementById('settings-show-google-tasks-today');
@@ -1352,12 +1377,14 @@ export function setupEventListeners() {
     toggleClockInputs();
     toggleShortcutsInputs();
     toggleWikipediaInputs();
+    toggleScheduleInputs();
     updateWorldClock();
     updateOrganizerVisibility();
     updateUpcomingEventBanner();
     updateOooBadges();
     loadWeather();
     fetchGoogleTasks();
+    fetchGoogleCalendar();
 
     if (prevLang !== state.lang) {
       translatePage();

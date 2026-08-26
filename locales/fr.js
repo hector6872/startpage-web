@@ -241,6 +241,8 @@ export default {
   "city-placeholder": "ex. Paris",
   "clock-label-placeholder": "ex. Londres",
   "label-event-name": "Nom de l'événement",
+  "label-show-google-schedule": "Afficher le planning",
+  "label-show-google-recurring-events": "Afficher les événements récurrents",
   "label-show-google-emails": "Afficher les e-mails",
   "label-ooo-active": "Mode Absent du bureau (OOO)",
   "ooo-until": "Actif jusqu'au :",

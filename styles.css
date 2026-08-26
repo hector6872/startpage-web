@@ -642,6 +642,10 @@ html:not(.dark) .moon-icon { display: block; }
   grid-template-columns: repeat(2, 1fr);
 }
 
+.dashboard-grid.one-col {
+  grid-template-columns: 1fr;
+}
+
 @media (max-width: 1024px) {
   .dashboard-grid {
     grid-template-columns: 1fr;

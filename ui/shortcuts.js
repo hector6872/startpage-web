@@ -261,13 +261,35 @@ export function updateOrganizerVisibility() {
   }
 
   const colTasks = document.getElementById('col-tasks');
+  const colToday = document.getElementById('col-today');
+  const colWeek = document.getElementById('col-week');
   const dashboardGrid = document.querySelector('.dashboard-grid');
+
+  const showTodaySchedule = state.settings.showGoogleSchedule !== false;
+  const showTodayEmails = state.settings.showGoogleEmails !== false;
+  const showTodayGtasks = state.settings.showGoogleTasksToday !== false;
+  const colTodayHidden = !showTodaySchedule && !showTodayEmails && !showTodayGtasks;
+
+  const showWeekSchedule = state.settings.showGoogleSchedule !== false;
+  const showWeekGtasks = state.settings.showGoogleTasksWeek !== false;
+  const colWeekHidden = !showWeekSchedule && !showWeekGtasks;
+
   const colTasksHidden = !showCountdowns && !showTasks && !showWork;
+
+  if (colToday) {
+    colToday.classList.toggle('hidden', colTodayHidden);
+  }
+  if (colWeek) {
+    colWeek.classList.toggle('hidden', colWeekHidden);
+  }
   if (colTasks) {
     colTasks.classList.toggle('hidden', colTasksHidden);
   }
+
+  const visibleColsCount = (!colTodayHidden ? 1 : 0) + (!colWeekHidden ? 1 : 0) + (!colTasksHidden ? 1 : 0);
   if (dashboardGrid) {
-    dashboardGrid.classList.toggle('two-cols', colTasksHidden);
+    dashboardGrid.classList.toggle('two-cols', visibleColsCount === 2);
+    dashboardGrid.classList.toggle('one-col', visibleColsCount === 1);
   }
 
   // Update World Clock, Weather, Wikipedia and Gmail widgets visibility
@@ -283,6 +305,14 @@ export function updateOrganizerVisibility() {
   const gmailCard = document.getElementById('gmail-card');
   if (gmailCard) {
     gmailCard.classList.toggle('hidden', state.settings.showGoogleEmails === false);
+  }
+  const todayEventsCard = document.getElementById('today-events-card');
+  if (todayEventsCard) {
+    todayEventsCard.classList.toggle('hidden', state.settings.showGoogleSchedule === false);
+  }
+  const weeklyEventsCard = document.getElementById('weekly-events-card');
+  if (weeklyEventsCard) {
+    weeklyEventsCard.classList.toggle('hidden', state.settings.showGoogleSchedule === false);
   }
   const shortcutButtonsColumn = document.getElementById('shortcut-buttons-column') || document.querySelector('.shortcut-buttons-column');
   if (shortcutButtonsColumn) {
