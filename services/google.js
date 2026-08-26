@@ -1,5 +1,5 @@
 import { translations, getLocale, t } from "../locales/index.js";
-import { getRelativeDateLabel } from "../utils/helpers.js";
+import { getRelativeDateLabel, formatEventTime } from "../utils/helpers.js";
 
 export const googleContext = {
   state: null,
@@ -924,7 +924,7 @@ export async function fetchGoogleCalendar() {
         eventLink = `${eventLink}${separator}authuser=${encodeURIComponent(email)}`;
       }
 
-      const timeStr = googleContext.formatEventTime(evt);
+      const timeStr = (googleContext.formatEventTime || formatEventTime)(evt, googleContext.state?.lang || 'en');
       const isRecurring = !!evt.recurringEventId;
       const recurringClass = isRecurring ? 'recurring' : '';
       const repeatIcon = isRecurring 

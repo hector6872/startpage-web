@@ -52,11 +52,28 @@ export function formatDateShort(dateStr, lang = "en") {
   return d.toLocaleDateString(locale, { day: "numeric", month: "short" });
 }
 
-export function formatEventTime(evt) {
-  if (evt.isAllDay) return "All day";
-  if (!evt.start) return "";
-  const d = new Date(evt.start);
-  return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: false });
+export function formatEventTime(evt, lang = "en") {
+  if (!evt) return "";
+  if (evt.isAllDay || (evt.start && evt.start.date && !evt.start.dateTime)) {
+    return lang === "es" ? "Todo el día" : "All day";
+  }
+
+  let rawDate = null;
+  if (typeof evt === "string" || evt instanceof Date) {
+    rawDate = evt;
+  } else if (evt.start) {
+    rawDate = evt.start.dateTime || evt.start.date || evt.start;
+  } else if (evt.dateTime || evt.date) {
+    rawDate = evt.dateTime || evt.date;
+  }
+
+  if (!rawDate) return "";
+
+  const d = new Date(rawDate);
+  if (isNaN(d.getTime())) return "";
+
+  const locale = getLocale(lang);
+  return d.toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit", hour12: false });
 }
 
 export async function safeFetch(url, options = {}) {
