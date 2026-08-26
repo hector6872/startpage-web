@@ -142,6 +142,9 @@ This dashboard integrates with Jira Cloud to display assigned open issues in rea
 4. In the dialog, provide a label (e.g., `Personal Dashboard`) and click **Create**.
 5. Click **Copy** to save the generated API token (displayed only once).
 
+> [!NOTE]
+> **No Scopes Required**: Atlassian API tokens generated from `id.atlassian.com` are Basic Authentication tokens tied directly to the Atlassian user account. They do not require configuring individual permission scopes; they automatically inherit the user's existing Jira Cloud permissions (`Browse Projects`, `View Issues`).
+
 ### 2. 🌐 Identify the Jira Host URL
 The Jira Host URL is the root domain of the Jira Cloud workspace:
 - Example: `https://company.atlassian.net` (without any trailing slash or `/jira` suffix).
