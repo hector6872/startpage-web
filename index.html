@@ -622,40 +622,38 @@
 
           <!-- Tab: Google -->
           <div id="tab-google" class="tab-pane" role="tabpanel" aria-labelledby="tab-btn-google" tabindex="0">
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem; align-items: start;">
-              <div style="display: flex; flex-direction: column; gap: 1rem;">
-                <div class="settings-section-card" style="margin-bottom: 0;">
-                  <div class="card-toggle-header" style="margin-bottom: 0.5rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border-color, rgba(255,255,255,0.08));">
-                    <span class="card-toggle-title">
-                      <span data-i18n="label-show-google-schedule">Show Schedule</span>
+            <div style="display: flex; flex-direction: column; gap: 1rem; margin-bottom: 1.5rem;">
+              <div class="settings-section-card" style="margin-bottom: 0;">
+                <div class="card-toggle-header" style="margin-bottom: 0.5rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border-color, rgba(255,255,255,0.08));">
+                  <span class="card-toggle-title">
+                    <span data-i18n="label-show-google-schedule">Show Schedule</span>
+                  </span>
+                  <label class="switch-control">
+                    <input type="checkbox" id="settings-show-google-schedule" checked>
+                    <span class="switch-slider"></span>
+                  </label>
+                </div>
+                <div id="google-schedule-suboptions" style="display: flex; flex-direction: column; gap: 0.75rem; transition: opacity 0.2s ease;">
+                  <div class="card-toggle-header">
+                    <span class="card-toggle-title" style="font-size: 0.9rem; font-weight: 500;">
+                      <span data-i18n="label-show-google-recurring-events">Show Repeating Events</span>
                     </span>
                     <label class="switch-control">
-                      <input type="checkbox" id="settings-show-google-schedule" checked>
+                      <input type="checkbox" id="settings-show-google-recurring-events" checked>
                       <span class="switch-slider"></span>
                     </label>
-                  </div>
-                  <div id="google-schedule-suboptions" style="display: flex; flex-direction: column; gap: 0.75rem; transition: opacity 0.2s ease;">
-                    <div class="card-toggle-header">
-                      <span class="card-toggle-title" style="font-size: 0.9rem; font-weight: 500;">
-                        <span data-i18n="label-show-google-recurring-events">Show Repeating Events</span>
-                      </span>
-                      <label class="switch-control">
-                        <input type="checkbox" id="settings-show-google-recurring-events" checked>
-                        <span class="switch-slider"></span>
-                      </label>
-                    </div>
                   </div>
                 </div>
-                <div class="settings-section-card" style="margin-bottom: 0;">
-                  <div class="card-toggle-header">
-                    <span class="card-toggle-title">
-                      <span data-i18n="label-show-google-emails">Show Emails</span>
-                    </span>
-                    <label class="switch-control">
-                      <input type="checkbox" id="settings-show-google-emails" checked>
-                      <span class="switch-slider"></span>
-                    </label>
-                  </div>
+              </div>
+              <div class="settings-section-card" style="margin-bottom: 0;">
+                <div class="card-toggle-header">
+                  <span class="card-toggle-title">
+                    <span data-i18n="label-show-google-emails">Show Emails</span>
+                  </span>
+                  <label class="switch-control">
+                    <input type="checkbox" id="settings-show-google-emails" checked>
+                    <span class="switch-slider"></span>
+                  </label>
                 </div>
               </div>
               <div class="settings-section-card" style="margin-bottom: 0;">
