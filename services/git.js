@@ -332,105 +332,116 @@ export async function fetchAllPRs(appState = state, safeFetchFn = safeFetch, esc
         const userData = await userRes.json();
         const githubUserLogin = userData.login;
 
-        // 2. Get the 5 most recently updated repositories
-        const reposRes = await fetch(`https://api.github.com/user/repos?sort=updated&direction=desc&per_page=5`, { headers });
-        if (reposRes.ok) {
-          const repos = await reposRes.json();
-          
-          // 3. Fetch open pull requests for each repository in parallel
-          const prPromises = repos.map(async (repo) => {
-            try {
-              const prsRes = await fetch(`https://api.github.com/repos/${repo.owner.login}/${repo.name}/pulls?state=open`, { headers });
-              if (prsRes.ok) {
-                return await prsRes.json();
-              }
-              return [];
-            } catch (e) {
-              console.error(`Error fetching GitHub PRs for ${repo.full_name}:`, e);
-              return [];
-            }
+        // 2. Fetch Review-Requested, Assignee, and Authored PRs across all repos via GitHub Search API
+        const [reviewRes, assigneeRes, authorRes] = await Promise.all([
+          fetch(`https://api.github.com/search/issues?q=is:pr+is:open+review-requested:${encodeURIComponent(githubUserLogin)}&sort=updated&order=desc&per_page=30`, { headers }),
+          fetch(`https://api.github.com/search/issues?q=is:pr+is:open+assignee:${encodeURIComponent(githubUserLogin)}+-author:${encodeURIComponent(githubUserLogin)}&sort=updated&order=desc&per_page=30`, { headers }),
+          fetch(`https://api.github.com/search/issues?q=is:pr+is:open+author:${encodeURIComponent(githubUserLogin)}&sort=updated&order=desc&per_page=30`, { headers })
+        ]);
+
+        const seenPrUrls = new Set();
+        const prDetailPromises = [];
+
+        // Process Review-Requested PRs
+        if (reviewRes.ok) {
+          const reviewData = await reviewRes.json();
+          (reviewData.items || []).forEach(item => {
+            if (seenPrUrls.has(item.html_url)) return;
+            seenPrUrls.add(item.html_url);
+            const repoName = item.repository_url ? item.repository_url.split('/').pop() : '';
+            prList.push({
+              title: item.title,
+              status: 'review',
+              statusLabel: t('pr-needs-review'),
+              url: item.html_url,
+              repo: repoName,
+              number: item.number,
+              source: 'GitHub',
+              sortTime: new Date(item.updated_at).getTime()
+            });
           });
-
-          const allRepoPRs = await Promise.all(prPromises);
-          const openPRs = allRepoPRs.flat();
-          const prDetailPromises = [];
-
-          // 4. Process and filter PRs
-          openPRs.forEach(pr => {
-            const isAuthor = pr.user && pr.user.login.toLowerCase() === githubUserLogin.toLowerCase();
-            const isReviewer = pr.requested_reviewers && pr.requested_reviewers.some(r => r.login.toLowerCase() === githubUserLogin.toLowerCase());
-            
-            if (isReviewer) {
-              // Teammate's PR where I am requested to review
-              prDetailPromises.push((async () => {
-                prList.push({
-                  title: pr.title,
-                  status: 'review',
-                  statusLabel: t('pr-needs-review'),
-                  url: pr.html_url,
-                  repo: pr.base.repo.name,
-                  number: pr.number,
-                  source: 'GitHub',
-                  sortTime: new Date(pr.updated_at).getTime()
-                });
-              })());
-            } else if (isAuthor) {
-              // My own PR: check for conflicts and requested changes
-              prDetailPromises.push((async () => {
-                try {
-                  const [detailRes, reviewsRes] = await Promise.all([
-                    fetch(pr.url, { headers }).then(r => r.ok ? r.json() : null),
-                    fetch(`${pr.url}/reviews`, { headers }).then(r => r.ok ? r.json() : [])
-                  ]);
-
-                  const hasConflicts = detailRes && detailRes.mergeable === false;
-                  const hasRequestedChanges = reviewsRes && reviewsRes.some(rev => rev.state === 'CHANGES_REQUESTED');
-
-                  let status = 'my_pr';
-                  let statusLabel = t('pr-in-review');
-                  if (hasConflicts && hasRequestedChanges) {
-                    status = 'conflicts_changes_requested';
-                    statusLabel = t('pr-conflicts-changes');
-                  } else if (hasConflicts) {
-                    status = 'conflicts';
-                    statusLabel = t('pr-conflicts');
-                  } else if (hasRequestedChanges) {
-                    status = 'changes_requested';
-                    statusLabel = t('pr-changes-requested');
-                  }
-
-                  prList.push({
-                    title: pr.title,
-                    status: status,
-                    statusLabel: statusLabel,
-                    url: pr.html_url,
-                    repo: pr.base.repo.name,
-                    number: pr.number,
-                    source: 'GitHub',
-                    sortTime: new Date(pr.updated_at).getTime()
-                  });
-                } catch (e) {
-                  console.error(`Error fetching details for GitHub PR #${pr.number}:`, e);
-                  prList.push({
-                    title: pr.title,
-                    status: 'my_pr',
-                    statusLabel: t('pr-in-review'),
-                    url: pr.html_url,
-                    repo: pr.base.repo.name,
-                    number: pr.number,
-                    source: 'GitHub',
-                    sortTime: new Date(pr.updated_at).getTime()
-                  });
-                }
-              })());
-            }
-          });
-
-          await Promise.all(prDetailPromises);
-        } else {
-          state.githubStatus = 'error';
-          state.githubError = `${reposRes.status} ${reposRes.statusText}`;
         }
+
+        // Process Assignee PRs (where user is assigned to review/work on teammate's PR)
+        if (assigneeRes.ok) {
+          const assigneeData = await assigneeRes.json();
+          (assigneeData.items || []).forEach(item => {
+            if (seenPrUrls.has(item.html_url)) return;
+            seenPrUrls.add(item.html_url);
+            const repoName = item.repository_url ? item.repository_url.split('/').pop() : '';
+            prList.push({
+              title: item.title,
+              status: 'review',
+              statusLabel: t('pr-needs-review'),
+              url: item.html_url,
+              repo: repoName,
+              number: item.number,
+              source: 'GitHub',
+              sortTime: new Date(item.updated_at).getTime()
+            });
+          });
+        }
+
+        // Process Authored PRs
+        if (authorRes.ok) {
+          const authorData = await authorRes.json();
+          (authorData.items || []).forEach(item => {
+            if (seenPrUrls.has(item.html_url)) return;
+            seenPrUrls.add(item.html_url);
+            const repoName = item.repository_url ? item.repository_url.split('/').pop() : '';
+            const pullUrl = item.pull_request ? item.pull_request.url : item.url;
+
+            prDetailPromises.push((async () => {
+              try {
+                const [detailRes, reviewsRes] = await Promise.all([
+                  fetch(pullUrl, { headers }).then(r => r.ok ? r.json() : null),
+                  fetch(`${pullUrl}/reviews`, { headers }).then(r => r.ok ? r.json() : [])
+                ]);
+
+                const hasConflicts = detailRes && detailRes.mergeable === false;
+                const hasRequestedChanges = Array.isArray(reviewsRes) && reviewsRes.some(rev => rev.state === 'CHANGES_REQUESTED');
+
+                let status = 'my_pr';
+                let statusLabel = t('pr-in-review');
+                if (hasConflicts && hasRequestedChanges) {
+                  status = 'conflicts_changes_requested';
+                  statusLabel = t('pr-conflicts-changes');
+                } else if (hasConflicts) {
+                  status = 'conflicts';
+                  statusLabel = t('pr-conflicts');
+                } else if (hasRequestedChanges) {
+                  status = 'changes_requested';
+                  statusLabel = t('pr-changes-requested');
+                }
+
+                prList.push({
+                  title: item.title,
+                  status: status,
+                  statusLabel: statusLabel,
+                  url: item.html_url,
+                  repo: repoName,
+                  number: item.number,
+                  source: 'GitHub',
+                  sortTime: new Date(item.updated_at).getTime()
+                });
+              } catch (e) {
+                console.error(`Error fetching details for GitHub PR #${item.number}:`, e);
+                prList.push({
+                  title: item.title,
+                  status: 'my_pr',
+                  statusLabel: t('pr-in-review'),
+                  url: item.html_url,
+                  repo: repoName,
+                  number: item.number,
+                  source: 'GitHub',
+                  sortTime: new Date(item.updated_at).getTime()
+                });
+              }
+            })());
+          });
+        }
+
+        await Promise.all(prDetailPromises);
       }
     } catch (e) {
       console.error("Error fetching GitHub PRs:", e);
@@ -451,10 +462,12 @@ export async function fetchAllPRs(appState = state, safeFetchFn = safeFetch, esc
         'Accept': 'application/json'
       };
 
-      // 1. Get authenticated user account_id / uuid
+      // 1. Get authenticated user account_id / uuid / names
       let bitbucketUserUUID = '';
       let bitbucketAccountID = '';
-      let bitbucketUsername = username.toLowerCase();
+      let bitbucketNickname = '';
+      let bitbucketDisplayName = '';
+      let bitbucketUsername = username.toLowerCase().trim();
 
       try {
         const userRes = await fetch(`https://api.bitbucket.org/2.0/user`, { headers });
@@ -462,27 +475,44 @@ export async function fetchAllPRs(appState = state, safeFetchFn = safeFetch, esc
           const uData = await userRes.json();
           bitbucketUserUUID = (uData.uuid || '').toLowerCase();
           bitbucketAccountID = (uData.account_id || '').toLowerCase();
+          if (uData.nickname) bitbucketNickname = uData.nickname.toLowerCase();
+          if (uData.display_name) bitbucketDisplayName = uData.display_name.toLowerCase();
           if (uData.username) bitbucketUsername = uData.username.toLowerCase();
-          if (uData.nickname) bitbucketUsername = uData.nickname.toLowerCase();
         }
       } catch (e) {
-        console.warn("Could not fetch Bitbucket user UUID:", e);
+        console.warn("Could not fetch Bitbucket user details:", e);
       }
+
+      function normalizeBitbucketId(id) {
+        return (id || '').toLowerCase().replace(/[{}]/g, '').trim();
+      }
+
+      const userIdentifiers = new Set([
+        normalizeBitbucketId(bitbucketAccountID),
+        normalizeBitbucketId(bitbucketUserUUID),
+        bitbucketNickname.trim(),
+        bitbucketDisplayName.trim(),
+        bitbucketUsername.trim(),
+        username.toLowerCase().trim(),
+        username.toLowerCase().split('@')[0].trim()
+      ].filter(Boolean));
 
       function isMatchingUser(u) {
         if (!u) return false;
-        const uId = (u.account_id || '').toLowerCase();
-        const uUuid = (u.uuid || '').toLowerCase();
-        const uNick = (u.nickname || '').toLowerCase();
-        const uUser = (u.username || '').toLowerCase();
-        const uDisplay = (u.display_name || '').toLowerCase();
-        return (bitbucketAccountID && uId === bitbucketAccountID) ||
-               (bitbucketUserUUID && uUuid === bitbucketUserUUID) ||
-               (bitbucketUsername && (uNick === bitbucketUsername || uUser === bitbucketUsername || uDisplay === bitbucketUsername));
+        const idsToCheck = [
+          normalizeBitbucketId(u.account_id),
+          normalizeBitbucketId(u.uuid),
+          (u.nickname || '').toLowerCase().trim(),
+          (u.display_name || '').toLowerCase().trim(),
+          (u.username || '').toLowerCase().trim(),
+          (u.email || '').toLowerCase().trim()
+        ].filter(Boolean);
+
+        return idsToCheck.some(id => userIdentifiers.has(id));
       }
 
-      // 2. Get the 10 most recently updated repositories in the workspace
-      const reposRes = await fetch(`https://api.bitbucket.org/2.0/repositories/${workspace}?sort=-updated_on&pagelen=10`, { headers });
+      // Fetch the 10 most recently modified repositories in workspace
+      const reposRes = await fetch(`https://api.bitbucket.org/2.0/repositories/${encodeURIComponent(workspace)}?sort=-updated_on&pagelen=10`, { headers });
       if (!reposRes.ok) {
         state.bitbucketStatus = 'error';
         state.bitbucketError = `${reposRes.status} ${reposRes.statusText}`;
@@ -490,11 +520,11 @@ export async function fetchAllPRs(appState = state, safeFetchFn = safeFetch, esc
         const reposData = await reposRes.json();
         const repos = reposData.values || [];
 
-        // 3. Fetch open pull requests for each repository in parallel
+        // Fetch open PRs for the 10 repositories in parallel
         const prPromises = repos.map(async (repo) => {
           try {
             const repoSlug = repo.slug || repo.name;
-            const prsRes = await fetch(`https://api.bitbucket.org/2.0/repositories/${workspace}/${encodeURIComponent(repoSlug)}/pullrequests?state=OPEN&pagelen=20`, { headers });
+            const prsRes = await fetch(`https://api.bitbucket.org/2.0/repositories/${encodeURIComponent(workspace)}/${encodeURIComponent(repoSlug)}/pullrequests?state=OPEN&pagelen=20`, { headers });
             if (prsRes.ok) {
               const data = await prsRes.json();
               return (data.values || []).map(pr => ({
@@ -510,58 +540,84 @@ export async function fetchAllPRs(appState = state, safeFetchFn = safeFetch, esc
         });
 
         const allRepoPRs = await Promise.all(prPromises);
-        const prs = allRepoPRs.flat();
+        const allFetchedPRs = allRepoPRs.flat();
+        const seenBbPrUrls = new Set();
+        const prDetailPromises = [];
 
-        prs.forEach(pr => {
+        allFetchedPRs.forEach(pr => {
+          const prUrl = pr.links && pr.links.html ? pr.links.html.href : pr.id;
+          if (seenBbPrUrls.has(prUrl)) return;
+          seenBbPrUrls.add(prUrl);
+
           const isAuthor = isMatchingUser(pr.author);
-          const isReviewer = pr.reviewers && pr.reviewers.some(r => isMatchingUser(r));
-          const repoName = pr._repoName || (pr.source && pr.source.repository && pr.source.repository.name) || '';
+          const repoName = pr._repoName || (pr.source && pr.source.repository && pr.source.repository.name) || (pr.destination && pr.destination.repository && pr.destination.repository.name) || '';
+          const detailUrl = pr.links && pr.links.self && pr.links.self.href ? pr.links.self.href : null;
 
-          if (isReviewer) {
-            // Teammate's PR: check if I already approved it
-            const hasApproved = pr.participants && pr.participants.some(p => p.approved && isMatchingUser(p.user));
-            if (!hasApproved) {
+          prDetailPromises.push((async () => {
+            let fullPR = pr;
+            if (detailUrl) {
+              try {
+                const dRes = await fetch(detailUrl, { headers });
+                if (dRes.ok) {
+                  fullPR = await dRes.json();
+                }
+              } catch (e) {
+                console.warn(`Could not fetch detail for Bitbucket PR #${pr.id}:`, e);
+              }
+            }
+
+            const isReviewer = (Array.isArray(fullPR.reviewers) && fullPR.reviewers.some(r => isMatchingUser(r))) ||
+                               (Array.isArray(fullPR.participants) && fullPR.participants.some(p => (p.role === 'REVIEWER' || p.role === 'reviewer') && isMatchingUser(p.user))) ||
+                               (Array.isArray(fullPR.participants) && fullPR.participants.some(p => isMatchingUser(p.user) && !isAuthor));
+
+            if (isReviewer && !isAuthor) {
+              // Teammate's PR: check if I already approved it
+              const hasApproved = Array.isArray(fullPR.participants) && fullPR.participants.some(p => p.approved && isMatchingUser(p.user));
+              if (!hasApproved) {
+                prList.push({
+                  title: fullPR.title || pr.title,
+                  status: 'review',
+                  statusLabel: t('pr-needs-review'),
+                  url: fullPR.links && fullPR.links.html ? fullPR.links.html.href : (pr.links && pr.links.html ? pr.links.html.href : '#'),
+                  repo: repoName,
+                  number: fullPR.id || pr.id,
+                  source: 'Bitbucket',
+                  sortTime: new Date(fullPR.updated_on || pr.updated_on).getTime()
+                });
+              }
+            } else if (isAuthor) {
+              // My own PR: check for needs_work (requested changes) or task_count > 0 (blocked)
+              const hasNeedsWork = Array.isArray(fullPR.participants) && fullPR.participants.some(p => p.state === 'needs_work');
+              const hasTasks = (fullPR.task_count || pr.task_count || 0) > 0;
+              
+              let status = 'my_pr';
+              let statusLabel = t('pr-in-review');
+              if (hasNeedsWork && hasTasks) {
+                status = 'changes_requested_tasks';
+                statusLabel = t('pr-changes-tasks');
+              } else if (hasNeedsWork) {
+                status = 'changes_requested';
+                statusLabel = t('pr-changes-requested');
+              } else if (hasTasks) {
+                status = 'tasks_open';
+                statusLabel = t('pr-tasks-open');
+              }
+
               prList.push({
-                title: pr.title,
-                status: 'review',
-                statusLabel: t('pr-needs-review'),
-                url: pr.links && pr.links.html ? pr.links.html.href : '#',
+                title: fullPR.title || pr.title,
+                status: status,
+                statusLabel: statusLabel,
+                url: fullPR.links && fullPR.links.html ? fullPR.links.html.href : (pr.links && pr.links.html ? pr.links.html.href : '#'),
                 repo: repoName,
-                number: pr.id,
+                number: fullPR.id || pr.id,
                 source: 'Bitbucket',
-                sortTime: new Date(pr.updated_on).getTime()
+                sortTime: new Date(fullPR.updated_on || pr.updated_on).getTime()
               });
             }
-          } else if (isAuthor) {
-            // My own PR: check for needs_work (requested changes) or task_count > 0 (blocked)
-            const hasNeedsWork = pr.participants && pr.participants.some(p => p.state === 'needs_work');
-            const hasTasks = pr.task_count > 0;
-            
-            let status = 'my_pr';
-            let statusLabel = t('pr-in-review');
-            if (hasNeedsWork && hasTasks) {
-              status = 'changes_requested_tasks';
-              statusLabel = t('pr-changes-tasks');
-            } else if (hasNeedsWork) {
-              status = 'changes_requested';
-              statusLabel = t('pr-changes-requested');
-            } else if (hasTasks) {
-              status = 'tasks_open';
-              statusLabel = t('pr-tasks-open');
-            }
-
-            prList.push({
-              title: pr.title,
-              status: status,
-              statusLabel: statusLabel,
-              url: pr.links && pr.links.html ? pr.links.html.href : '#',
-              repo: repoName,
-              number: pr.id,
-              source: 'Bitbucket',
-              sortTime: new Date(pr.updated_on).getTime()
-            });
-          }
+          })());
         });
+
+        await Promise.all(prDetailPromises);
       }
     } catch (e) {
       console.error("Error fetching Bitbucket PRs:", e);
@@ -587,115 +643,124 @@ export async function fetchAllPRs(appState = state, safeFetchFn = safeFetch, esc
         const userData = await userRes.json();
         const gitlabUsername = userData.username;
 
-        // 2. Get the 10 most recently active projects (repositories)
-        const projectsRes = await fetch(`${host}/api/v4/projects?membership=true&order_by=last_activity_at&sort=desc&per_page=10`, { headers });
-        if (projectsRes.ok) {
-          const projects = await projectsRes.json();
+        // 2. Fetch Reviewer, Assignee, and Authored MRs globally across all projects
+        const [reviewerMrsRes, assigneeMrsRes, authorMrsRes] = await Promise.all([
+          fetch(`${host}/api/v4/merge_requests?state=opened&scope=all&reviewer_username=${encodeURIComponent(gitlabUsername)}&per_page=30`, { headers }),
+          fetch(`${host}/api/v4/merge_requests?state=opened&scope=all&assignee_username=${encodeURIComponent(gitlabUsername)}&per_page=30`, { headers }),
+          fetch(`${host}/api/v4/merge_requests?state=opened&scope=all&author_username=${encodeURIComponent(gitlabUsername)}&per_page=30`, { headers })
+        ]);
 
-          // 3. Fetch open merge requests for each project in parallel
-          const mrPromises = projects.map(async (project) => {
-            try {
-              const mrsRes = await fetch(`${host}/api/v4/projects/${project.id}/merge_requests?state=opened`, { headers });
-              if (mrsRes.ok) {
-                return await mrsRes.json();
+        const allMRs = [];
+        const seenMrIds = new Set();
+
+        const appendMRs = (mrs) => {
+          if (Array.isArray(mrs)) {
+            mrs.forEach(mr => {
+              if (mr && mr.id && !seenMrIds.has(mr.id)) {
+                seenMrIds.add(mr.id);
+                allMRs.push(mr);
               }
-              return [];
-            } catch (e) {
-              console.error(`Error fetching GitLab MRs for project ${project.path_with_namespace}:`, e);
-              return [];
-            }
-          });
+            });
+          }
+        };
 
-          const allProjectMRs = await Promise.all(mrPromises);
-          const openMRs = allProjectMRs.flat();
-          const mrDetailPromises = [];
+        if (reviewerMrsRes.ok) appendMRs(await reviewerMrsRes.json());
+        if (assigneeMrsRes.ok) appendMRs(await assigneeMrsRes.json());
+        if (authorMrsRes.ok) appendMRs(await authorMrsRes.json());
 
-          // 4. Process and filter MRs
-          openMRs.forEach(mr => {
-            const isAuthor = mr.author && mr.author.username.toLowerCase() === gitlabUsername.toLowerCase();
-            const isReviewer = mr.reviewers && mr.reviewers.some(r => r.username.toLowerCase() === gitlabUsername.toLowerCase());
+        const mrDetailPromises = [];
 
-            if (isReviewer) {
-              // Teammate's MR where I am requested to review: check if I have approved it yet
-              mrDetailPromises.push((async () => {
-                try {
-                  const appRes = await fetch(`${host}/api/v4/projects/${mr.project_id}/merge_requests/${mr.iid}/approvals`, { headers });
-                  if (appRes.ok) {
-                    const appData = await appRes.json();
-                    const hasApproved = appData.approved_by && appData.approved_by.some(app => app.user.username.toLowerCase() === gitlabUsername.toLowerCase());
-                    if (!hasApproved) {
-                      let repoName = String(mr.project_id);
-                      try {
-                        const pathParts = mr.web_url.split('/');
-                        const idx = pathParts.indexOf('-');
-                        if (idx !== -1) {
-                          repoName = pathParts.slice(3, idx).join('/');
-                        }
-                      } catch (e) {}
+        // 3. Process and filter MRs
+        allMRs.forEach(mr => {
+          const isAuthor = mr.author && mr.author.username.toLowerCase() === gitlabUsername.toLowerCase();
+          const isReviewer = (mr.reviewers && mr.reviewers.some(r => r.username.toLowerCase() === gitlabUsername.toLowerCase())) ||
+                             (mr.assignees && mr.assignees.some(a => a.username.toLowerCase() === gitlabUsername.toLowerCase()) && !isAuthor) ||
+                             (mr.assignee && mr.assignee.username && mr.assignee.username.toLowerCase() === gitlabUsername.toLowerCase() && !isAuthor);
 
-                      prList.push({
-                        title: mr.title,
-                        status: 'review',
-                        statusLabel: t('pr-needs-review'),
-                        url: mr.web_url,
-                        repo: repoName,
-                        number: mr.iid,
-                        source: 'GitLab',
-                        sortTime: new Date(mr.updated_at).getTime()
-                      });
-                    }
+          let repoName = String(mr.project_id);
+          if (mr.references && mr.references.full) {
+            repoName = mr.references.full.split('!')[0] || repoName;
+          } else {
+            try {
+              const pathParts = mr.web_url.split('/');
+              const idx = pathParts.indexOf('-');
+              if (idx !== -1) {
+                repoName = pathParts.slice(3, idx).join('/');
+              }
+            } catch (e) {}
+          }
+
+          if (isReviewer && !isAuthor) {
+            // Teammate's MR where I am requested/assigned to review: check if I have approved it yet
+            mrDetailPromises.push((async () => {
+              try {
+                const appRes = await fetch(`${host}/api/v4/projects/${mr.project_id}/merge_requests/${mr.iid}/approvals`, { headers });
+                if (appRes.ok) {
+                  const appData = await appRes.json();
+                  const hasApproved = appData.approved_by && appData.approved_by.some(app => app.user && app.user.username.toLowerCase() === gitlabUsername.toLowerCase());
+                  if (!hasApproved) {
+                    prList.push({
+                      title: mr.title,
+                      status: 'review',
+                      statusLabel: t('pr-needs-review'),
+                      url: mr.web_url,
+                      repo: repoName,
+                      number: mr.iid,
+                      source: 'GitLab',
+                      sortTime: new Date(mr.updated_at).getTime()
+                    });
                   }
-                } catch (e) {
-                  console.error(`Error fetching approvals for GitLab MR #${mr.iid}:`, e);
+                } else {
+                  // If approvals endpoint not available, include it as pending review
+                  prList.push({
+                    title: mr.title,
+                    status: 'review',
+                    statusLabel: t('pr-needs-review'),
+                    url: mr.web_url,
+                    repo: repoName,
+                    number: mr.iid,
+                    source: 'GitLab',
+                    sortTime: new Date(mr.updated_at).getTime()
+                  });
                 }
-              })());
-            } else if (isAuthor) {
-              // My own MR: check for conflicts and unresolved threads (blocking discussions)
-              mrDetailPromises.push((async () => {
-                const hasConflicts = mr.has_conflicts === true || mr.merge_status === 'cannot_be_merged' || mr.detailed_merge_status === 'conflict';
-                const hasUnresolvedDiscussions = mr.blocking_discussions_resolved === false || mr.detailed_merge_status === 'discussions_not_resolved';
+              } catch (e) {
+                console.error(`Error fetching approvals for GitLab MR #${mr.iid}:`, e);
+              }
+            })());
+          } else if (isAuthor) {
+            // My own MR: check for conflicts and unresolved threads (blocking discussions)
+            mrDetailPromises.push((async () => {
+              const hasConflicts = mr.has_conflicts === true || mr.merge_status === 'cannot_be_merged' || mr.detailed_merge_status === 'conflict';
+              const hasUnresolvedDiscussions = mr.blocking_discussions_resolved === false || mr.detailed_merge_status === 'discussions_not_resolved';
 
-                let status = 'my_pr';
-                let statusLabel = t('pr-in-review');
-                if (hasConflicts && hasUnresolvedDiscussions) {
-                  status = 'conflicts_discussions';
-                  statusLabel = t('pr-conflicts-threads');
-                } else if (hasConflicts) {
-                  status = 'conflicts';
-                  statusLabel = t('pr-conflicts');
-                } else if (hasUnresolvedDiscussions) {
-                  status = 'discussions_open';
-                  statusLabel = t('pr-threads-open');
-                }
+              let status = 'my_pr';
+              let statusLabel = t('pr-in-review');
+              if (hasConflicts && hasUnresolvedDiscussions) {
+                status = 'conflicts_discussions';
+                statusLabel = t('pr-conflicts-threads');
+              } else if (hasConflicts) {
+                status = 'conflicts';
+                statusLabel = t('pr-conflicts');
+              } else if (hasUnresolvedDiscussions) {
+                status = 'discussions_open';
+                statusLabel = t('pr-threads-open');
+              }
 
-                let repoName = String(mr.project_id);
-                try {
-                  const pathParts = mr.web_url.split('/');
-                  const idx = pathParts.indexOf('-');
-                  if (idx !== -1) {
-                    repoName = pathParts.slice(3, idx).join('/');
-                  }
-                } catch (e) {}
+              prList.push({
+                title: mr.title,
+                status: status,
+                statusLabel: statusLabel,
+                url: mr.web_url,
+                repo: repoName,
+                number: mr.iid,
+                source: 'GitLab',
+                sortTime: new Date(mr.updated_at).getTime()
+              });
+            })());
+          }
+        });
 
-                prList.push({
-                  title: mr.title,
-                  status: status,
-                  statusLabel: statusLabel,
-                  url: mr.web_url,
-                  repo: repoName,
-                  number: mr.iid,
-                  source: 'GitLab',
-                  sortTime: new Date(mr.updated_at).getTime()
-                });
-              })());
-            }
-          });
-
-          await Promise.all(mrDetailPromises);
-        } else {
-          state.gitlabStatus = 'error';
-          state.gitlabError = `${projectsRes.status} ${projectsRes.statusText}`;
-        }
+        await Promise.all(mrDetailPromises);
       }
     } catch (e) {
       console.error("Error fetching GitLab MRs:", e);
