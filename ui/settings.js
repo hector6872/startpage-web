@@ -7,10 +7,10 @@ import { renderCountdowns, updateUpcomingEventBanner, addCountdown, renderSettin
 import { loadWeather } from "../services/weather.js";
 import { loadWikipediaContent } from "../services/wikipedia.js";
 import { fetchAllPRs, testGitConnection, updateGitStatusIndicators } from "../services/git.js";
-import { fetchJira, testJiraConnection, updateJiraStatusIndicators } from "../services/jira.js";
+import { fetchJira, testJiraConnection, updateJiraStatusIndicators, sanitizeJiraHost } from "../services/jira.js";
 import { initGoogleOAuth, updateGoogleAuthStatus, getGoogleTokenClient, setGoogleLoginTarget, fetchGoogleData, fetchGoogleCalendar, fetchGmail, fetchGoogleTasks } from "../services/google.js";
-import { saveSettings, saveTodos, writeDataToFile, readDataFromFile, exportStateToFile, saveFileHandle, setFileHandle, fileHandle, mergeSettingsWithLocalSecrets, clearFileHandle } from "../services/storage.js";
-import { openModalAccessible, trapFocusInDialog, showInputErrorFeedback, ensureHttpUrl } from "../utils/helpers.js";
+import { saveSettings, saveTodos, writeDataToFile, readDataFromFile, exportStateToFile, saveFileHandle, setFileHandle, fileHandle, mergeSettingsWithLocalSecrets, clearFileHandle, checkOooExpiration } from "../services/storage.js";
+import { openModalAccessible, trapFocusInDialog, showInputErrorFeedback, ensureHttpUrl, lastActiveElementBeforeModal } from "../utils/helpers.js";
 
 export function translatePage() {
   // Translate standard content elements
@@ -212,6 +212,22 @@ export function setupEventListeners() {
     wikiTypeSelect.addEventListener('change', () => {
       state.settings.wikipediaType = wikiTypeSelect.value;
       loadWikipediaContent();
+    });
+  }
+
+  const toggleScheduleInputs = () => {
+    const showEl = document.getElementById('settings-show-google-schedule');
+    const show = showEl ? showEl.checked : true;
+    const group = document.getElementById('google-schedule-suboptions');
+    if (group) {
+      group.style.opacity = show ? '1' : '0.4';
+      group.style.pointerEvents = show ? 'auto' : 'none';
+    }
+  };
+  const showScheduleEl = document.getElementById('settings-show-google-schedule');
+  if (showScheduleEl) {
+    showScheduleEl.addEventListener('change', () => {
+      toggleScheduleInputs();
     });
   }
 
@@ -739,7 +755,7 @@ export function setupEventListeners() {
     });
   }
 
-  // Click OOO badge to open settings at Google tab
+  // Click OOO badge to open settings at General tab
   const oooBadges = document.querySelectorAll('.ooo-badge');
   oooBadges.forEach(b => {
     b.addEventListener('click', (e) => {
@@ -747,8 +763,12 @@ export function setupEventListeners() {
       const toggleBtn = document.getElementById('settings-toggle');
       if (toggleBtn) {
         toggleBtn.click();
-        const googleTab = document.querySelector('.tab-btn[data-tab="tab-google"]');
-        if (googleTab) googleTab.click();
+        const generalTab = document.querySelector('.tab-btn[data-tab="tab-general"]');
+        if (generalTab) generalTab.click();
+        const oooCard = document.querySelector('.ooo-settings-card');
+        if (oooCard) {
+          oooCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
       }
     });
   });
@@ -789,14 +809,38 @@ export function setupEventListeners() {
         const dd = String(today.getDate()).padStart(2, '0');
         if (oooDateInput) {
           oooDateInput.min = `${yyyy}-${mm}-${dd}`;
-          oooDateInput.value = `${yyyy}-${mm}-${dd}`;
+          oooDateInput.value = state.settings.oooUntil || `${yyyy}-${mm}-${dd}`;
         }
         if (oooDateModal) openModalAccessible(oooDateModal, oooDateInput);
       } else {
+        state.settings.oooActive = false;
+        state.settings.oooUntil = null;
+        oooActiveSwitch.removeAttribute('data-until');
         const display = document.getElementById('ooo-date-display');
         if (display) display.classList.add('hidden');
+        autoSaveSettingsForm();
       }
     });
+  }
+
+  const oooDisplay = document.getElementById('ooo-date-display');
+  if (oooDisplay) {
+    oooDisplay.addEventListener('click', () => {
+      if (state.settings.oooActive) {
+        const today = new Date();
+        today.setDate(today.getDate() + 1);
+        const yyyy = today.getFullYear();
+        const mm = String(today.getMonth() + 1).padStart(2, '0');
+        const dd = String(today.getDate()).padStart(2, '0');
+        if (oooDateInput) {
+          oooDateInput.min = `${yyyy}-${mm}-${dd}`;
+          oooDateInput.value = state.settings.oooUntil || `${yyyy}-${mm}-${dd}`;
+        }
+        if (oooDateModal) openModalAccessible(oooDateModal, oooDateInput);
+      }
+    });
+    oooDisplay.style.cursor = 'pointer';
+    oooDisplay.title = 'Click to change return date';
   }
 
   if (oooForm && oooDateModal) {
@@ -806,8 +850,11 @@ export function setupEventListeners() {
       if (!val) return;
       
       if (oooActiveSwitch) {
+        oooActiveSwitch.checked = true;
         oooActiveSwitch.setAttribute('data-until', val);
       }
+      state.settings.oooActive = true;
+      state.settings.oooUntil = val;
 
       const display = document.getElementById('ooo-date-display');
       const text = document.getElementById('ooo-return-date-text');
@@ -815,6 +862,7 @@ export function setupEventListeners() {
       if (text) text.textContent = new Date(val + 'T00:00:00').toLocaleDateString(getLocale(state.lang), { day: 'numeric', month: 'long', year: 'numeric' });
       
       oooDateModal.close();
+      autoSaveSettingsForm();
     });
   }
 
@@ -822,13 +870,13 @@ export function setupEventListeners() {
   const closeOooModalBtn = document.getElementById('close-ooo-modal');
   if (cancelOooBtn && oooDateModal) {
     cancelOooBtn.addEventListener('click', () => {
-      if (oooActiveSwitch) oooActiveSwitch.checked = false;
+      if (oooActiveSwitch && !state.settings.oooActive) oooActiveSwitch.checked = false;
       oooDateModal.close();
     });
   }
   if (closeOooModalBtn && oooDateModal) {
     closeOooModalBtn.addEventListener('click', () => {
-      if (oooActiveSwitch) oooActiveSwitch.checked = false;
+      if (oooActiveSwitch && !state.settings.oooActive) oooActiveSwitch.checked = false;
       oooDateModal.close();
     });
   }
@@ -836,6 +884,11 @@ export function setupEventListeners() {
   // Settings Modal Open
   const settingsModal = document.getElementById('settings-modal');
   document.getElementById('settings-toggle').addEventListener('click', () => {
+    checkOooExpiration(state);
+    const modalBody = settingsModal ? settingsModal.querySelector('.modal-body') : null;
+    if (modalBody) {
+      modalBody.scrollTop = 0;
+    }
     // Fill form fields with current settings
     document.getElementById('settings-lang').value = state.settings.lang;
     document.getElementById('settings-theme').value = state.settings.theme || 'system';
@@ -865,6 +918,10 @@ export function setupEventListeners() {
     document.getElementById('settings-show-tasks').checked = state.settings.showTasks !== false;
     const showShortcutsModalInput = document.getElementById('settings-show-shortcuts');
     if (showShortcutsModalInput) showShortcutsModalInput.checked = state.settings.showShortcuts !== false;
+    const gScheduleEl = document.getElementById('settings-show-google-schedule');
+    if (gScheduleEl) gScheduleEl.checked = state.settings.showGoogleSchedule !== false;
+    const gRecurringEl = document.getElementById('settings-show-google-recurring-events');
+    if (gRecurringEl) gRecurringEl.checked = state.settings.showGoogleRecurringEvents !== false;
     document.getElementById('settings-show-google-emails').checked = state.settings.showGoogleEmails !== false;
     const gTasksTodayEl = document.getElementById('settings-show-google-tasks-today');
     if (gTasksTodayEl) gTasksTodayEl.checked = state.settings.showGoogleTasksToday !== false;
@@ -884,6 +941,7 @@ export function setupEventListeners() {
     toggleClockInputs();
     toggleShortcutsInputs();
     toggleWikipediaInputs();
+    toggleScheduleInputs();
     
     document.getElementById('settings-storage-mode').value = state.settings.storageMode || 'local';
     document.getElementById('google-client-id').value = state.settings.googleClientId;
@@ -915,6 +973,11 @@ export function setupEventListeners() {
     const oooActiveInput = document.getElementById('settings-ooo-active');
     if (oooActiveInput) {
       oooActiveInput.checked = state.settings.oooActive === true;
+      if (state.settings.oooActive && state.settings.oooUntil) {
+        oooActiveInput.setAttribute('data-until', state.settings.oooUntil);
+      } else {
+        oooActiveInput.removeAttribute('data-until');
+      }
       const display = document.getElementById('ooo-date-display');
       const text = document.getElementById('ooo-return-date-text');
       if (state.settings.oooActive && state.settings.oooUntil) {
@@ -1004,6 +1067,10 @@ export function setupEventListeners() {
   });
 
   settingsModal.addEventListener('close', () => {
+    const modalBody = settingsModal.querySelector('.modal-body');
+    if (modalBody) {
+      modalBody.scrollTop = 0;
+    }
     applyDashboardLayoutOrder(state);
     updateOrganizerVisibility();
     renderTodos();
@@ -1132,6 +1199,12 @@ export function setupEventListeners() {
       const isTarget = pane.id === targetTab;
       pane.classList.toggle('active', isTarget);
     });
+
+    // Reset scroll position on tab switch
+    const modalBody = settingsModal ? settingsModal.querySelector('.modal-body') : document.querySelector('#settings-modal .modal-body');
+    if (modalBody) {
+      modalBody.scrollTop = 0;
+    }
 
     // Scroll the selected tab into view inside the tab bar container
     targetBtn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
@@ -1280,7 +1353,7 @@ export function setupEventListeners() {
     if (glOooEl) state.settings.hideGitlabOoo = glOooEl.checked;
 
     const jiraHostEl = document.getElementById('jira-host');
-    if (jiraHostEl) state.settings.jiraHost = jiraHostEl.value.trim();
+    if (jiraHostEl) state.settings.jiraHost = sanitizeJiraHost(jiraHostEl.value);
     const jiraEmailEl = document.getElementById('jira-email');
     if (jiraEmailEl) state.settings.jiraEmail = jiraEmailEl.value.trim();
     const jiraTokEl = document.getElementById('jira-token');
@@ -1323,6 +1396,10 @@ export function setupEventListeners() {
     if (showTasksEl) state.settings.showTasks = showTasksEl.checked;
     const showShortcutsEl = document.getElementById('settings-show-shortcuts');
     if (showShortcutsEl) state.settings.showShortcuts = showShortcutsEl.checked;
+    const showScheduleEl = document.getElementById('settings-show-google-schedule');
+    if (showScheduleEl) state.settings.showGoogleSchedule = showScheduleEl.checked;
+    const showRecurringEl = document.getElementById('settings-show-google-recurring-events');
+    if (showRecurringEl) state.settings.showGoogleRecurringEvents = showRecurringEl.checked;
     const showEmailsEl = document.getElementById('settings-show-google-emails');
     if (showEmailsEl) state.settings.showGoogleEmails = showEmailsEl.checked;
     const gTasksTodayElSave = document.getElementById('settings-show-google-tasks-today');
@@ -1352,16 +1429,18 @@ export function setupEventListeners() {
     toggleClockInputs();
     toggleShortcutsInputs();
     toggleWikipediaInputs();
+    toggleScheduleInputs();
     updateWorldClock();
     updateOrganizerVisibility();
     updateUpcomingEventBanner();
     updateOooBadges();
     loadWeather();
     fetchGoogleTasks();
+    fetchGoogleCalendar();
+    updateTimeAndGreeting();
 
     if (prevLang !== state.lang) {
       translatePage();
-      updateTimeAndGreeting();
     }
   }
 
@@ -1383,6 +1462,50 @@ export function setupEventListeners() {
       autoSaveSettingsForm();
     });
   }
+
+  const jiraHostInput = document.getElementById('jira-host');
+  if (jiraHostInput) {
+    jiraHostInput.addEventListener('blur', () => {
+      const clean = sanitizeJiraHost(jiraHostInput.value);
+      if (clean && clean !== jiraHostInput.value) {
+        jiraHostInput.value = clean;
+      }
+    });
+  }
+
+  // Reset connected state when provider inputs are edited
+  const providerInputMap = {
+    github: ['github-token'],
+    bitbucket: ['bitbucket-workspace', 'bitbucket-username', 'bitbucket-token'],
+    gitlab: ['gitlab-host', 'gitlab-token'],
+    jira: ['jira-host', 'jira-email', 'jira-token']
+  };
+
+  Object.entries(providerInputMap).forEach(([provider, inputIds]) => {
+    inputIds.forEach(id => {
+      const el = document.getElementById(id);
+      if (el) {
+        el.addEventListener('input', () => {
+          const btn = document.querySelector(`.test-conn-btn[data-provider="${provider}"]`);
+          if (btn && !btn.dataset.cooldownInterval) {
+            btn.disabled = false;
+            btn.textContent = t('btn-connect');
+            btn.setAttribute('data-i18n', 'btn-connect');
+            btn.style.backgroundColor = '';
+            btn.style.color = '';
+            btn.style.borderColor = '';
+            btn.style.cursor = '';
+          }
+          if (provider === 'github') state.githubStatus = 'disconnected';
+          if (provider === 'bitbucket') state.bitbucketStatus = 'disconnected';
+          if (provider === 'gitlab') state.gitlabStatus = 'disconnected';
+          if (provider === 'jira') state.jiraStatus = 'disconnected';
+          updateGitStatusIndicators(state);
+          updateJiraStatusIndicators(state);
+        });
+      }
+    });
+  });
 
   // Google OAuth Personal Login Action
   const loginBtnPersonal = document.getElementById('google-login-btn-personal');

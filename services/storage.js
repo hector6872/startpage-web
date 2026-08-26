@@ -187,16 +187,7 @@ export async function loadState(state = defaultState) {
   st.theme = st.settings.theme || localStorage.getItem("theme") || "system";
 
   // Check OOO expiration
-  if (st.settings.oooActive && st.settings.oooUntil) {
-    const returnTime = new Date(st.settings.oooUntil).getTime();
-    if (Date.now() >= returnTime) {
-      st.settings.oooActive = false;
-      st.settings.oooUntil = null;
-      st.settings.oooReturnDate = "";
-      st.settings.oooReturnTime = "09:00";
-      localStorage.setItem("dashboard_settings", JSON.stringify(st.settings));
-    }
-  }
+  checkOooExpiration(st);
 
   const storedTodos = localStorage.getItem("todos");
   if (storedTodos) {
@@ -222,4 +213,25 @@ export async function cleanupOldCompletedTodos(state = defaultState) {
   if (st.todos.length !== originalLength) {
     await saveTodos(st);
   }
+}
+
+export function checkOooExpiration(state = defaultState) {
+  const st = state || defaultState;
+  if (st.settings?.oooActive && st.settings?.oooUntil) {
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, '0');
+    const dd = String(today.getDate()).padStart(2, '0');
+    const todayStr = `${yyyy}-${mm}-${dd}`;
+
+    if (todayStr >= st.settings.oooUntil) {
+      st.settings.oooActive = false;
+      st.settings.oooUntil = null;
+      st.settings.oooReturnDate = "";
+      st.settings.oooReturnTime = "09:00";
+      saveSettings(st);
+      return true;
+    }
+  }
+  return false;
 }

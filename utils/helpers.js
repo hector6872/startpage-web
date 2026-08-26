@@ -52,11 +52,28 @@ export function formatDateShort(dateStr, lang = "en") {
   return d.toLocaleDateString(locale, { day: "numeric", month: "short" });
 }
 
-export function formatEventTime(evt) {
-  if (evt.isAllDay) return "All day";
-  if (!evt.start) return "";
-  const d = new Date(evt.start);
-  return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: false });
+export function formatEventTime(evt, lang = "en") {
+  if (!evt) return "";
+  if (evt.isAllDay || (evt.start && evt.start.date && !evt.start.dateTime)) {
+    return lang === "es" ? "Todo el día" : "All day";
+  }
+
+  let rawDate = null;
+  if (typeof evt === "string" || evt instanceof Date) {
+    rawDate = evt;
+  } else if (evt.start) {
+    rawDate = evt.start.dateTime || evt.start.date || evt.start;
+  } else if (evt.dateTime || evt.date) {
+    rawDate = evt.dateTime || evt.date;
+  }
+
+  if (!rawDate) return "";
+
+  const d = new Date(rawDate);
+  if (isNaN(d.getTime())) return "";
+
+  const locale = getLocale(lang);
+  return d.toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit", hour12: false });
 }
 
 export async function safeFetch(url, options = {}) {
@@ -98,8 +115,41 @@ export async function safeFetch(url, options = {}) {
   }
 }
 
+export function getRelativeDateLabel(dateVal, lang = "en") {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const target = new Date(dateVal);
+  target.setHours(0, 0, 0, 0);
+
+  const diffTime = target.getTime() - today.getTime();
+  const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+
+  if (diffDays === -1) {
+    return t("time-yesterday", {}, lang);
+  } else if (diffDays === 0) {
+    return lang === "es" ? "Hoy" : (lang === "en" ? "Today" : t("task-today", {}, lang));
+  } else if (diffDays === 1) {
+    return lang === "es" ? "Mañana" : (lang === "en" ? "Tomorrow" : t("task-tomorrow", {}, lang));
+  } else if (diffDays === 2) {
+    return lang === "es" ? "Pasado mañana" : "Day after tomorrow";
+  } else {
+    const locale = getLocale(lang);
+    const options = { weekday: "long", day: "numeric", month: "short" };
+    const formatted = target.toLocaleDateString(locale, options);
+    return formatted.charAt(0).toUpperCase() + formatted.slice(1);
+  }
+}
+
+export let lastActiveElementBeforeModal = null;
+
 export function openModalAccessible(dialogElement, focusTargetElement) {
   if (!dialogElement) return;
+  lastActiveElementBeforeModal = document.activeElement;
+  const modalBody = dialogElement.querySelector('.modal-body');
+  if (modalBody) {
+    modalBody.scrollTop = 0;
+  }
   if (typeof dialogElement.showModal === "function") {
     dialogElement.showModal();
   } else {

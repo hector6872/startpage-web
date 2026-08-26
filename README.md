@@ -5,16 +5,24 @@
 
 A beautiful, modern, and minimalist productivity dashboard featuring task management, calendar schedules, weather forecasts, world clocks, quote & Wikipedia widgets, and seamless integrations with Git (GitHub, Bitbucket, GitLab), Jira, and Google Workspace. ✨
 
+> [!IMPORTANT]
+> ### 🔒 100% Local & Privacy-First
+> **Privacy is paramount — data never touches any external servers.** This dashboard operates completely client-side:
+> - 🚫 **Zero Server Storage**: No data is ever stored on external servers, remote databases, or tracking services.
+> - 🛡️ **Local Storage in the Browser**: All API keys, PATs, tokens, settings, notes, and tasks live strictly in the browser (`localStorage`) or in a chosen local/Google Drive JSON sync file.
+> - ⚡ **Direct Official API Calls**: All integrations communicate directly from the browser to the official provider APIs (Google, GitHub, Bitbucket, GitLab, Jira).
+
 ---
 
 ## ✨ Features & Highlights
 
+- 🔒 **100% Local & Privacy-First**: Zero server storage, zero telemetry, and zero remote databases. All configurations and credentials remain strictly on the local device.
 - 🌍 **Full Internationalization (10 Languages)**: English (`en`), Español (`es`), Català (`ca`), Français (`fr`), Deutsch (`de`), Italiano (`it`), Português (`pt`), Nederlands (`nl`), 日本語 (`ja`), and 简体中文 (`zh`) with localized date & time formatting.
 - 🐙 **Git Pull Requests Aggregator**: Real-time PR/MR tracking across GitHub, Bitbucket, and GitLab with provider indicator dots, automatic reviewer identity detection, and status badges (`Needs Review`, `Changes Requested`, `Conflicts`, `Tasks Open`, `In Review`).
 - 📅 **Google Workspace Integration**: Dual account support (Personal & Work) with calendar agenda, priority Gmail inbox, and Google Tasks.
 - ✅ **Intelligent Task Scheduling**: Google Tasks sorted chronologically by deadline first (overdue on top), then by most recently updated timestamp.
 - 🎯 **Jira Integration**: Displays assigned open issues in real-time with priority badges, issue keys, and direct links.
-- 🏖️ **Out of Office (OOO) Mode**: Auto-hides work commitments, tasks, and notification feeds until your return date.
+- 🏖️ **Out of Office (OOO) Mode**: Auto-hides work commitments, tasks, and notification feeds until the selected return date.
 - 🎛️ **Customizable Dashboard Layout (Drag & Drop)**: Reorder columns and cards via intuitive drag-and-drop handles directly in Preferences (supports desktop mouse and mobile touch).
 - 🌓 **Themes & Customization**: Light, Dark, and System modes with 10 vibrant accent colors.
 - 💾 **Flexible Data & Sync**: Private browser local storage or live synchronization with a local/Google Drive JSON file via File System Access API.
@@ -24,52 +32,52 @@ A beautiful, modern, and minimalist productivity dashboard featuring task manage
 
 ## ☁️ Google Cloud Console & APIs Setup Guide
 
-To enable Google Calendar and Gmail integrations on this dashboard, you need to set up a project in the Google Cloud Console and configure OAuth 2.0 credentials. Follow these steps:
+To enable Google Calendar and Gmail integrations on the dashboard, a project in the Google Cloud Console and OAuth 2.0 credentials are required:
 
 ### 1. 🏗️ Create a Google Cloud Project
-1. Go to the [Google Cloud Console](https://console.cloud.google.com/).
-2. Log in with your Google account.
+1. Navigate to the [Google Cloud Console](https://console.cloud.google.com/).
+2. Log in with a Google account.
 3. Click on the project dropdown at the top navigation bar and select **New Project**.
-4. Give your project a name (e.g., `Personal Dashboard`) and click **Create**.
+4. Provide a project name (e.g., `Personal Dashboard`) and click **Create**.
 
 ### 2. 🔌 Enable Required APIs
-You must enable the APIs that this dashboard communicates with:
+The following APIs must be enabled for the dashboard to communicate with Google services:
 1. Go directly to the [Google Cloud API Library](https://console.cloud.google.com/apis/library).
-2. Search for and enable the following APIs one by one:
+2. Search for and enable the following APIs:
    - 📅 **Google Calendar API**
    - ✉️ **Gmail API**
    - ✅ **Google Tasks API**
-   - 👥 **People API** (Optional, used for user info retrieval)
+   - 👥 **People API** (Optional, used for user profile information)
 
 ### 3. 🛡️ Configure the OAuth Consent Screen
-Before creating credentials, you must configure the OAuth consent screen to define what permissions your application will request:
+Before creating credentials, the OAuth consent screen must be configured to define requested permissions:
 1. Go directly to the [Google Cloud OAuth Consent Screen Page](https://console.cloud.google.com/apis/credentials/consent).
-2. Select **External** (or **Internal** if you have a Google Workspace organization and want to restrict access to your domain) and click **Create**.
+2. Select **External** (or **Internal** for Google Workspace domains) and click **Create**.
 3. **App Information**:
    - Enter **App name** (e.g., `My Startpage`).
-   - Select your email in **User support email**.
-   - Scroll to the bottom and enter your email in **Developer contact information**.
+   - Select an email address in **User support email**.
+   - Scroll to the bottom and enter an email in **Developer contact information**.
    - Click **Save and Continue**.
-4. **Data Access / Scopes Step (Crucial)**:
-   - In the wizard steps sidebar on the left, this step is labeled as **Data Access** (or **Scopes**).
-   - On the **Scopes** page, click the **Add or Remove Scopes** button at the top. A sliding panel will open on the right side of the screen.
+4. **Data Access / Scopes Step**:
+   - In the wizard steps sidebar, navigate to **Data Access** (or **Scopes**).
+   - On the **Scopes** page, click the **Add or Remove Scopes** button at the top.
    - In the sliding panel, scroll to the bottom to the section labeled **Manually add scopes**.
-   - Copy and paste the following exact URIs into the text box (you can paste them comma-separated or one by one):
+   - Copy and paste the following URIs into the text box (comma-separated or one by one):
      ```text
      https://www.googleapis.com/auth/userinfo.email
      https://www.googleapis.com/auth/calendar.readonly
      https://www.googleapis.com/auth/gmail.readonly
      https://www.googleapis.com/auth/tasks.readonly
      ```
-   - Click the **Add to table** button.
-   - Look at the table above in the sliding panel and verify that the checkboxes next to these newly added scopes are checked (usually they are checked automatically after adding).
+   - Click **Add to table**.
+   - Ensure the checkboxes next to these scopes are checked in the table.
    - Scroll to the bottom of the sliding panel and click the blue **Update** button.
-   - Back on the main Scopes page, verify that these scopes are now listed in the "Your sensitive scopes" or "Your non-sensitive scopes" tables.
-   - Scroll to the bottom of the main page and click **Save and Continue**.
+   - Verify that these scopes appear in the scope tables.
+   - Click **Save and Continue**.
 5. **Test Users Step**:
-   - In the wizard steps sidebar on the left, this step is labeled as **Audience** (or **Test Users**).
+   - In the wizard sidebar, navigate to **Audience** (or **Test Users**).
    - Under the **Test Users** section, click **Add Users**.
-   - Enter the Google email addresses of the accounts you intend to log in with (both your **Personal** and **Work** Gmail/Workspace emails).
+   - Enter the Google email addresses intended for dashboard access (both Personal and Work Gmail/Workspace accounts).
    - Click **Add** / **Save**.
    - Click **Save and Continue**, then review the summary and click **Back to Dashboard**.
 
@@ -77,78 +85,84 @@ Before creating credentials, you must configure the OAuth consent screen to defi
 1. Go directly to the [Google Cloud Credentials Page](https://console.cloud.google.com/apis/credentials).
 2. Click **Create Credentials** at the top and select **OAuth client ID**.
 3. Choose **Web application** as the Application type.
-4. Name your client (e.g., `Web Client`).
+4. Set a client name (e.g., `Web Client`).
 5. Under **Authorized JavaScript origins**, click **Add URI** and enter:
-   - `http://localhost:5173` (or the specific local/production URL where your landing page is served).
+   - `http://localhost:5173` (or the specific local/production URL where the dashboard is hosted).
    - *Note: Wildcards and IP addresses are not permitted as Authorized JavaScript origins by Google. Always use localhost or a qualified domain name.*
 6. Click **Create**.
-7. Copy the generated **Client ID** (it looks like `xxxxxxxx.apps.googleusercontent.com`).
+7. Copy the generated **Client ID** (formatted as `xxxxxxxx.apps.googleusercontent.com`).
 
 ### 5. ⚙️ Configure the Dashboard
-1. Open your dashboard in the browser.
+1. Open the dashboard in the browser.
 2. Click the settings gear icon (`⚙️`) in the bottom corner.
-3. Navigate to the **Google** tab.
-4. Paste your **Google Client ID** into the input field and save settings.
-5. You can now log into your **Personal** and **Work** accounts separately! 🎉
+3. Navigate to the **Google Integration** tab.
+4. Paste the **Google Client ID** into the input field and save settings.
+5. Click **Log In (Personal)** or **Log In (Work)** to authenticate with Google.
+
+> [!NOTE]
+> **Allow Browser Popups**: Google authentication opens the official Google Identity Services (GIS) OAuth login dialog inside a popup window. Ensure that **popups are allowed** for your dashboard URL (e.g. `http://localhost:5173` or your hosted domain) in the browser address bar / site settings so the authentication window is not blocked.
 
 ---
 
 ## 🐙 Git Integrations (GitHub, Bitbucket, GitLab)
 
-This dashboard supports aggregating pull requests and merge requests across git providers. 
+This dashboard supports aggregating pull requests and merge requests across multiple Git providers.
 
 For each active provider, the dashboard:
-* 🔄 Automatically fetches open Pull/Merge Requests from your **5 most recently updated** repositories/projects.
-* 🔍 Filters to show teammate PRs/MRs where you are a **requested reviewer** (and have not approved yet), and your own open PRs/MRs that have **merge conflicts, requested changes, or unresolved discussion threads**.
+* 🔄 Automatically fetches open Pull/Merge Requests from the **5 most recently updated** repositories/projects.
+* 🔍 Filters to display teammate PRs/MRs where review is requested (and not yet approved), as well as open PRs/MRs containing **merge conflicts, requested changes, or unresolved discussion threads**.
 
 ### ⚙️ Configuration Requirements & Scopes:
 
 - 🐙 **GitHub**:
-  - **Inputs**: Only your [Personal Access Token (PAT)](https://github.com/settings/tokens/new?scopes=repo&description=Personal%20Startpage). *(Your username is automatically resolved from `/user`)*.
+  - **Inputs**: [Personal Access Token (PAT)](https://github.com/settings/tokens/new?scopes=repo&description=Personal%20Startpage). *(User identity is automatically resolved from `/user`)*.
   - **Required Token Scopes**:
     - `repo` (Full control of private repositories to read PRs and reviews) or a Fine-grained PAT with `Pull requests: Read-only` and `Metadata: Read-only`.
 
 - 🪣 **Bitbucket**:
-  - **Inputs**: **Workspace ID** (the slug in the URL `bitbucket.org/<workspace-id>`), **Atlassian Account Email**, and a [Personal API Token](https://bitbucket.org/account/settings/api-tokens/). *(Your user identity is automatically resolved from `/2.0/user`)*.
+  - **Inputs**: **Workspace ID** (the slug in the URL `bitbucket.org/<workspace-id>`), **Atlassian Account Email**, and a [Personal API Token](https://bitbucket.org/account/settings/api-tokens/). *(User identity is automatically resolved from `/2.0/user`)*.
   - **Required Token Scopes**:
-    - `Account: Read` (`read:user:bitbucket`) — required to resolve your user identity (`nickname`, `account_id`) for PR filtering.
+    - `Account: Read` (`read:user:bitbucket`) — required to resolve user identity (`nickname`, `account_id`) for PR filtering.
     - `Repositories: Read` (`read:repository:bitbucket`) — required to list workspace repositories.
     - `Pull requests: Read` (`read:pullrequest:bitbucket`) — required to read pull requests, reviewers, and approval states.
 
 - 🦊 **GitLab**:
-  - **Inputs**: [Personal Access Token (PAT)](https://gitlab.com/-/profile/personal_access_tokens?name=Personal%20Startpage&scopes=read_user,read_api) and optionally your **GitLab Host URL** (defaults to `https://gitlab.com` if left empty, supports self-hosted instances). *(Your username is automatically resolved from `/api/v4/user`)*.
+  - **Inputs**: [Personal Access Token (PAT)](https://gitlab.com/-/profile/personal_access_tokens?name=Personal%20Startpage&scopes=read_user,read_api) and optionally a custom **GitLab Host URL** (defaults to `https://gitlab.com` if left empty, supports self-hosted instances). *(User identity is automatically resolved from `/api/v4/user`)*.
   - **Required Token Scopes**:
-    - `read_user` — required to automatically retrieve your authenticated username.
+    - `read_user` — required to automatically retrieve the authenticated username.
     - `read_api` (or `api`) — required to list active projects and merge requests.
 
 ---
 
 ## 🎯 Jira Cloud Setup Guide
 
-This dashboard integrates with Jira Cloud to display your assigned open issues in real-time.
+This dashboard integrates with Jira Cloud to display assigned open issues in real-time.
 
 ### 1. 🔑 Generate an Atlassian API Token
 1. Go directly to [Atlassian Account Security: API Tokens](https://id.atlassian.com/manage-profile/security/api-tokens).
-2. Log in with your Atlassian account.
+2. Log in with an Atlassian account.
 3. Click **Create API token**.
 4. In the dialog, provide a label (e.g., `Personal Dashboard`) and click **Create**.
-5. Click **Copy** to save the generated API token (you won't be able to view it again).
+5. Click **Copy** to save the generated API token (displayed only once).
 
-### 2. 🌐 Identify your Jira Host URL
-Your Jira Host URL is the root domain of your Jira Cloud workspace:
-- Example: `https://yourcompany.atlassian.net` (without any trailing slash or `/jira` suffix).
+> [!NOTE]
+> **No Scopes Required**: Atlassian API tokens generated from `id.atlassian.com` are Basic Authentication tokens tied directly to the Atlassian user account. They do not require configuring individual permission scopes; they automatically inherit the user's existing Jira Cloud permissions (`Browse Projects`, `View Issues`).
+
+### 2. 🌐 Identify the Jira Host URL
+The Jira Host URL is the root domain of the Jira Cloud workspace:
+- Example: `https://company.atlassian.net` (without any trailing slash or `/jira` suffix).
 
 ### 3. ⚙️ Configure the Dashboard
-1. Open your dashboard in the browser.
+1. Open the dashboard in the browser.
 2. Click the preferences gear icon (`⚙️`) in the bottom corner.
-3. Navigate to the **Jira** tab.
+3. Navigate to the **Jira Integration** tab.
 4. Fill in the required fields:
-   - **Jira Host URL**: e.g., `https://yourcompany.atlassian.net`
-   - **Atlassian Account Email**: The email address of your Atlassian account (e.g., `you@yourcompany.com`).
+   - **Jira Host URL**: e.g., `https://company.atlassian.net`
+   - **Atlassian Account Email**: The email address associated with the Atlassian account (e.g., `user@company.com`).
    - **Jira API Token**: The API token generated in step 1.
-5. Click **Test Connection** to verify credentials. When successful, the button will show **Connected!** and the status dot will turn green.
+5. Click **Test Connection** to verify credentials. When successful, the button displays **Connected!** and the status dot turns green.
 
-### 4. 📊 What the Jira Widget Displays
+### 4. 📊 Jira Widget Capabilities
 - Queries assigned open issues using JQL: `assignee = currentUser() AND statusCategory != Done`.
 - Displays up to 5 assigned tasks with:
   - 📝 Issue key & summary (e.g., `[PROJ-123] Fix authentication bug`).
@@ -163,19 +177,19 @@ Your Jira Host URL is the root domain of your Jira Cloud workspace:
 
 ## 🏖️ Out of Office (OOO) Mode
 
-Under Preferences (`⚙️`) -> Google Workspace, you can toggle **Out of Office (OOO) Mode**:
-1. When enabling OOO, the dashboard will prompt you to select a return date.
+Under Preferences (`⚙️`) -> General, **Out of Office (OOO) Mode** can be toggled:
+1. When enabling OOO, a prompt requests a return date.
 2. While OOO is active:
-   - 🛑 **Work** events (Gmail, Tasks, Google Calendar) will be hidden from the Today/This Week panels.
-   - 🔒 You can choose to hide **Jira**, **GitHub**, **Bitbucket**, and **GitLab** integrations individually if OOO is active.
-   - 🔴 OOO status is indicated by a red "OOO" badge in the Today and This Week column headers. Clicking this badge takes you directly to the Google Workspace Preferences tab.
+   - 🛑 **Work** events (Gmail, Tasks, Google Calendar) remain hidden from the Today and This Week panels.
+   - 🔒 Integrations for **Jira**, **GitHub**, **Bitbucket**, and **GitLab** can be individually configured to hide while OOO is active.
+   - 🔴 OOO status is indicated by a red "OOO" badge in the Today and This Week column headers. Clicking this badge opens the General tab in Preferences.
 3. OOO mode automatically disables itself on or after the specified return date.
 
 ---
 
 ## 🎛️ Customizable Dashboard Layout (Drag & Drop)
 
-You can customize the layout and order of columns and cards on your dashboard directly from **Preferences (`⚙️`) -> Layout**:
+The dashboard layout and card arrangement can be customized directly from **Preferences (`⚙️`) -> Layout**:
 
 - ↔️ **Column Order**: Rearrange the sequence of columns (*Today*, *This Week*, *Workplace*). Columns flow left-to-right on desktop displays and stack top-to-bottom on mobile devices.
 - 📅 **Today Order**: Reorder cards inside the *Today* column (*Schedule & Meetings*, *Inbox*, *Tasks · Today*).
@@ -184,7 +198,7 @@ You can customize the layout and order of columns and cards on your dashboard di
 - 🐙 **Work Integrations Order**: Reorder integration cards (*Pull Requests* vs *Jira Issues*).
 - 🖐️ **Fluid Drag & Drop**: Native drag handles (`⋮⋮`) with seamless mouse and touch support.
 - 💾 **Instant Sync & Persistence**: Changes apply immediately to the dashboard without reloading and persist across sessions via `localStorage` and JSON export backups.
-- 🔄 **One-Click Reset**: Easily restore the default dashboard layout at any time using the *Reset to Default Layout* button.
+- 🔄 **One-Click Reset**: Restore the default dashboard layout at any time using the *Reset to Default Layout* button.
 
 ---
 
@@ -192,7 +206,7 @@ You can customize the layout and order of columns and cards on your dashboard di
 
 Direct browser-to-API calls for **Jira Cloud** (`*.atlassian.net`) and **Gmail** (`gmail.googleapis.com`) typically face CORS restrictions because their endpoints do not return permissive `Access-Control-Allow-Origin` headers for raw browser clients.
 
-To solve this completely without requiring browser extensions, this project includes built-in transparent proxy handlers for all major deployment platforms:
+To solve this without requiring browser extensions, built-in transparent proxy handlers are included for major deployment platforms:
 
 ### 1. 💻 Local Development (`npm run dev`)
 - Powered by a custom Vite middleware in [`vite.config.js`](file:///Users/hector.de.isidro/Developer/startpage-web/vite.config.js) under the endpoint `/api/proxy`.
@@ -214,9 +228,9 @@ To solve this completely without requiring browser extensions, this project incl
 
 ### 5. 📦 Pure Static Hosting (GitHub Pages, Firebase Hosting, AWS S3)
 - Pure static web hosts do not execute serverless functions.
-- If deploying to a pure static host, you can either:
-  - Deploy a free standalone Cloudflare Worker proxy endpoint.
-  - Or use a browser extension (such as *Allow CORS*).
+- When deploying to a pure static host, options include:
+  - Deploying a free standalone Cloudflare Worker proxy endpoint.
+  - Using a browser extension (such as *Allow CORS*).
 
 ### 6. 🐳 Self-Hosted Server / Docker (Node.js, Nginx)
 - Run `npm run preview` or configure a reverse proxy in Nginx forwarding `/api/proxy` to target services.
@@ -241,7 +255,7 @@ The dashboard is built with first-class accessibility and full keyboard navigati
 
 ### 🧭 Full Keyboard Navigation
 
-- **Sequential Tab Order**: Navigate seamlessly through all widgets, header buttons, task items, and modals using <kbd>Tab</kbd> and <kbd>Shift + Tab</kbd>.
+- **Sequential Tab Order**: Navigate through all widgets, header buttons, task items, and modals using <kbd>Tab</kbd> and <kbd>Shift + Tab</kbd>.
 - **Visible Focus Indicator**: Accessible `:focus-visible` outline rings highlight the active element with clean contrast across dark and light themes.
 - **Settings Tabs (WAI-ARIA Pattern)**:
   - <kbd>→</kbd> / <kbd>↓</kbd>: Move to next settings tab.
@@ -260,7 +274,7 @@ The dashboard is built with first-class accessibility and full keyboard navigati
 
 ## 🤝 Contributing
 
-Contributions are always welcome! Please check out our [Contributing Guidelines](./CONTRIBUTING.md) for details on submitting bug reports, suggesting features, and creating pull requests.
+Contributions are always welcome! Please check out the [Contributing Guidelines](./CONTRIBUTING.md) for details on submitting bug reports, suggesting features, and creating pull requests.
 
 ---
 

@@ -128,7 +128,7 @@
       <section class="grid-col" id="col-today">
         <h2 class="col-title">
           <span data-i18n="col-today">Today</span>
-          <span class="ooo-badge hidden" id="ooo-badge-today" tabindex="0" role="button" title="Out of Office mode active. Click to open settings." aria-label="Out of Office mode active. Click to open settings.">out of office</span>
+          <span class="ooo-badge hidden" id="ooo-badge-today" tabindex="0" role="button" title="Out of Office mode active. Click to open settings." aria-label="Out of Office mode active. Click to open settings." data-i18n="badge-ooo">out of office</span>
         </h2>
         <div class="col-content">
           <!-- Calendar and tasks summaries will go here -->
@@ -177,7 +177,7 @@
       <section class="grid-col" id="col-week">
         <h2 class="col-title">
           <span data-i18n="col-week">This Week</span>
-          <span class="ooo-badge hidden" id="ooo-badge-week" tabindex="0" role="button" title="Out of Office mode active. Click to open settings." aria-label="Out of Office mode active. Click to open settings.">out of office</span>
+          <span class="ooo-badge hidden" id="ooo-badge-week" tabindex="0" role="button" title="Out of Office mode active. Click to open settings." aria-label="Out of Office mode active. Click to open settings." data-i18n="badge-ooo">out of office</span>
         </h2>
         <div class="col-content">
           <div class="section-card" id="weekly-events-card">
@@ -208,7 +208,7 @@
         <div id="work-section" class="task-col-section">
           <h2 class="col-title" id="work-section-title">
             <span data-i18n="col-work">Work</span>
-            <span class="ooo-badge hidden" id="ooo-badge-work" tabindex="0" role="button" title="Out of Office mode active. Click to open settings." aria-label="Out of Office mode active. Click to open settings.">out of office</span>
+            <span class="ooo-badge hidden" id="ooo-badge-work" tabindex="0" role="button" title="Out of Office mode active. Click to open settings." aria-label="Out of Office mode active. Click to open settings." data-i18n="badge-ooo">out of office</span>
           </h2>
           <div class="col-content" id="work-section-content">
             <div class="section-card" id="prs-card">
@@ -383,26 +383,57 @@
               <input type="hidden" id="settings-primary-color" value="blue">
             </div>
 
-            <!-- Weather Card -->
-            <div class="settings-section-card">
+            <!-- Out of Office (OOO) Card -->
+            <div class="settings-section-card ooo-settings-card">
               <div class="card-toggle-header">
                 <span class="card-toggle-title">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v2"/><path d="M4.93 4.93l1.41 1.41"/><path d="M20 12h2"/><path d="M19.07 4.93l-1.41 1.41"/><path d="M15.95 12.65a4 4 0 0 0-5.93-4.13"/><path d="M13 22H7a5 5 0 1 1 4.9-6H13a3 3 0 0 1 0 6z"/></svg>
-                  <span data-i18n="label-show-weather">Show Weather</span>
+                  <span class="ooo-icon-badge">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M22 12A10 10 0 0 0 2 12h20Z"/>
+                      <path d="M12 12v7a2 2 0 0 0 4 0"/>
+                      <path d="M12 2v2"/>
+                    </svg>
+                  </span>
+                  <span data-i18n="label-ooo-active">Out of Office (OOO)</span>
                 </span>
                 <label class="switch-control">
-                  <input type="checkbox" id="settings-show-weather" checked>
+                  <input type="checkbox" id="settings-ooo-active">
                   <span class="switch-slider"></span>
                 </label>
               </div>
-              <div id="weather-city-group" class="card-collapsible-content">
-                <div class="form-group">
-                  <label for="settings-city" data-i18n="label-city">Weather Location (City)</label>
-                  <input type="text" id="settings-city" data-i18n-placeholder="city-placeholder" placeholder="e.g. Madrid">
+              <div id="ooo-date-display" class="ooo-date-banner hidden">
+                <div class="ooo-date-content">
+                  <span class="ooo-status-dot"></span>
+                  <span class="ooo-date-label" data-i18n="ooo-until">Active until:</span>
+                  <span id="ooo-return-date-text" class="ooo-date-value">--</span>
                 </div>
-                <div class="form-group" style="margin-top: 0.75rem;">
-                  <label for="settings-weather-url" data-i18n="label-weather-url">Weather Web URL</label>
-                  <input type="url" id="settings-weather-url" data-i18n-placeholder="weather-url-placeholder" placeholder="https://weather.com" value="https://weather.com">
+              </div>
+            </div>
+
+            <!-- Wikipedia Card -->
+            <div class="settings-section-card">
+              <div class="card-toggle-header">
+                <span class="card-toggle-title">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+                    <path d="M2 12h20"></path>
+                  </svg>
+                  <span data-i18n="label-show-wikipedia">Wikipedia</span>
+                </span>
+                <label class="switch-control">
+                  <input type="checkbox" id="settings-show-wikipedia" checked>
+                  <span class="switch-slider"></span>
+                </label>
+              </div>
+              <div id="wikipedia-settings-group" class="card-collapsible-content">
+                <div class="form-group">
+                  <select id="settings-wikipedia-type" aria-label="Feed">
+                    <option value="news" data-i18n="wiki-type-news" selected>News</option>
+                    <option value="onthisday" data-i18n="wiki-type-onthisday">On this day</option>
+                    <option value="quote" data-i18n="wiki-type-quote">Quote</option>
+                    <option value="topread" data-i18n="wiki-type-topread">Top read</option>
+                  </select>
                 </div>
               </div>
             </div>
@@ -463,6 +494,30 @@
               </div>
             </div>
 
+            <!-- Weather Card -->
+            <div class="settings-section-card">
+              <div class="card-toggle-header">
+                <span class="card-toggle-title">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v2"/><path d="M4.93 4.93l1.41 1.41"/><path d="M20 12h2"/><path d="M19.07 4.93l-1.41 1.41"/><path d="M15.95 12.65a4 4 0 0 0-5.93-4.13"/><path d="M13 22H7a5 5 0 1 1 4.9-6H13a3 3 0 0 1 0 6z"/></svg>
+                  <span data-i18n="label-show-weather">Show Weather</span>
+                </span>
+                <label class="switch-control">
+                  <input type="checkbox" id="settings-show-weather" checked>
+                  <span class="switch-slider"></span>
+                </label>
+              </div>
+              <div id="weather-city-group" class="card-collapsible-content">
+                <div class="form-group">
+                  <label for="settings-city" data-i18n="label-city">Weather Location (City)</label>
+                  <input type="text" id="settings-city" data-i18n-placeholder="city-placeholder" placeholder="e.g. Madrid">
+                </div>
+                <div class="form-group" style="margin-top: 0.75rem;">
+                  <label for="settings-weather-url" data-i18n="label-weather-url">Weather Web URL</label>
+                  <input type="url" id="settings-weather-url" data-i18n-placeholder="weather-url-placeholder" placeholder="https://weather.com" value="https://weather.com">
+                </div>
+              </div>
+            </div>
+
             <!-- Countdowns Toggle Card -->
             <div class="settings-section-card">
               <div class="card-toggle-header">
@@ -490,35 +545,6 @@
                 </label>
               </div>
             </div>
-
-            <!-- Wikipedia Card -->
-            <div class="settings-section-card">
-              <div class="card-toggle-header">
-                <span class="card-toggle-title">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <circle cx="12" cy="12" r="10"></circle>
-                    <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
-                    <path d="M2 12h20"></path>
-                  </svg>
-                  <span data-i18n="label-show-wikipedia">Wikipedia</span>
-                </span>
-                <label class="switch-control">
-                  <input type="checkbox" id="settings-show-wikipedia" checked>
-                  <span class="switch-slider"></span>
-                </label>
-              </div>
-              <div id="wikipedia-settings-group" class="card-collapsible-content">
-                <div class="form-group">
-                  <label for="settings-wikipedia-type" data-i18n="label-wikipedia-type">Content</label>
-                  <select id="settings-wikipedia-type">
-                    <option value="news" data-i18n="wiki-type-news" selected>News</option>
-                    <option value="onthisday" data-i18n="wiki-type-onthisday">On this day</option>
-                    <option value="quote" data-i18n="wiki-type-quote">Quote</option>
-                    <option value="topread" data-i18n="wiki-type-topread">Top read</option>
-                  </select>
-                </div>
-              </div>
-            </div>
           </div>
 
           <!-- Tab: Layout -->
@@ -527,8 +553,7 @@
             <div class="settings-section-card" style="margin-bottom: 1.25rem;">
               <div class="layout-section-header">
                 <div>
-                  <h3 class="layout-section-title" data-i18n="layout-columns-title">Column Order</h3>
-                  <p class="layout-section-desc" data-i18n="layout-columns-desc">Customize the order of columns (left-to-right on desktop, top-to-bottom on mobile).</p>
+                  <h3 class="layout-section-title" data-i18n="layout-columns-title">Columns</h3>
                 </div>
               </div>
               <div id="layout-columns-list" class="layout-order-list">
@@ -540,7 +565,7 @@
             <div class="settings-section-card" style="margin-bottom: 1.25rem;">
               <div class="layout-section-header">
                 <div>
-                  <h3 class="layout-section-title" data-i18n="layout-today-cards-title">Today Order</h3>
+                  <h3 class="layout-section-title" data-i18n="layout-today-cards-title">Today</h3>
                 </div>
               </div>
               <div id="layout-today-cards-list" class="layout-order-list">
@@ -552,7 +577,7 @@
             <div class="settings-section-card" style="margin-bottom: 1.25rem;">
               <div class="layout-section-header">
                 <div>
-                  <h3 class="layout-section-title" data-i18n="layout-week-cards-title">This Week Order</h3>
+                  <h3 class="layout-section-title" data-i18n="layout-week-cards-title">This Week</h3>
                 </div>
               </div>
               <div id="layout-week-cards-list" class="layout-order-list">
@@ -564,7 +589,7 @@
             <div class="settings-section-card" style="margin-bottom: 1.25rem;">
               <div class="layout-section-header">
                 <div>
-                  <h3 class="layout-section-title" data-i18n="layout-work-cards-title">Workplace Order</h3>
+                  <h3 class="layout-section-title" data-i18n="layout-work-cards-title">Workplace</h3>
                 </div>
               </div>
               <div id="layout-work-cards-list" class="layout-order-list">
@@ -576,7 +601,7 @@
             <div class="settings-section-card" style="margin-bottom: 1.25rem;">
               <div class="layout-section-header">
                 <div>
-                  <h3 class="layout-section-title" data-i18n="layout-work-subcards-title">Work Integrations Order</h3>
+                  <h3 class="layout-section-title" data-i18n="layout-work-subcards-title">Integrations</h3>
                 </div>
               </div>
               <div id="layout-work-subcards-list" class="layout-order-list">
@@ -624,11 +649,33 @@
 
           <!-- Tab: Google -->
           <div id="tab-google" class="tab-pane" role="tabpanel" aria-labelledby="tab-btn-google" tabindex="0">
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem; align-items: start;">
+            <div style="display: flex; flex-direction: column; gap: 1rem; margin-bottom: 1.5rem;">
+              <div class="settings-section-card" style="margin-bottom: 0;">
+                <div class="card-toggle-header" style="margin-bottom: 0.5rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border-color, rgba(255,255,255,0.08));">
+                  <span class="card-toggle-title">
+                    <span data-i18n="label-show-google-schedule">Show Schedule</span>
+                  </span>
+                  <label class="switch-control">
+                    <input type="checkbox" id="settings-show-google-schedule" checked>
+                    <span class="switch-slider"></span>
+                  </label>
+                </div>
+                <div id="google-schedule-suboptions" style="display: flex; flex-direction: column; gap: 0.75rem; transition: opacity 0.2s ease;">
+                  <div class="card-toggle-header">
+                    <span class="card-toggle-title" style="font-size: 0.9rem; font-weight: 500;">
+                      <span data-i18n="label-show-google-recurring-events">Show Repeating Events</span>
+                    </span>
+                    <label class="switch-control">
+                      <input type="checkbox" id="settings-show-google-recurring-events" checked>
+                      <span class="switch-slider"></span>
+                    </label>
+                  </div>
+                </div>
+              </div>
               <div class="settings-section-card" style="margin-bottom: 0;">
                 <div class="card-toggle-header">
                   <span class="card-toggle-title">
-                    <span data-i18n="label-show-google-emails">Show Emails (Gmail)</span>
+                    <span data-i18n="label-show-google-emails">Show Emails</span>
                   </span>
                   <label class="switch-control">
                     <input type="checkbox" id="settings-show-google-emails" checked>
@@ -639,7 +686,7 @@
               <div class="settings-section-card" style="margin-bottom: 0;">
                 <div class="card-toggle-header" style="margin-bottom: 0.5rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border-color, rgba(255,255,255,0.08));">
                   <span class="card-toggle-title">
-                    <span data-i18n="label-show-google-tasks-title">Google Tasks</span>
+                    <span data-i18n="label-show-google-tasks-title">Show Tasks</span>
                   </span>
                 </div>
                 <div style="display: flex; flex-direction: column; gap: 0.75rem;">
@@ -686,12 +733,11 @@
 
             <!-- Personal Account -->
             <div class="google-account-section" style="margin-bottom: 1.5rem;">
-              <h4 style="margin-top: 0; margin-bottom: 0.5rem; font-family: var(--font-title); display: flex; align-items: center; gap: 0.4rem;">
-                <span class="status-dot disconnected" id="google-settings-dot-personal"></span>
-                <span data-i18n="badge-personal">Personal</span>
-              </h4>
-              <div class="form-group row-align" style="margin-bottom: 0.75rem;">
-                <label data-i18n="google-status-personal">Personal Account:</label>
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+                <h4 style="margin: 0; font-family: var(--font-title); display: flex; align-items: center; gap: 0.4rem;">
+                  <span class="status-dot disconnected" id="google-settings-dot-personal"></span>
+                  <span data-i18n="badge-personal">Personal</span>
+                </h4>
                 <span id="google-auth-status-personal" class="auth-status disconnected" data-i18n="disconnected">Disconnected</span>
               </div>
               <div class="form-group row-align" style="margin-bottom: 0.75rem;">
@@ -718,12 +764,11 @@
 
             <!-- Work Account -->
             <div class="google-account-section">
-              <h4 style="margin-top: 0; margin-bottom: 0.5rem; font-family: var(--font-title); display: flex; align-items: center; gap: 0.4rem;">
-                <span class="status-dot disconnected" id="google-settings-dot-work"></span>
-                <span data-i18n="badge-work">Work</span>
-              </h4>
-              <div class="form-group row-align" style="margin-bottom: 0.75rem;">
-                <label data-i18n="google-status-work">Work Account:</label>
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+                <h4 style="margin: 0; font-family: var(--font-title); display: flex; align-items: center; gap: 0.4rem;">
+                  <span class="status-dot disconnected" id="google-settings-dot-work"></span>
+                  <span data-i18n="badge-work">Work</span>
+                </h4>
                 <span id="google-auth-status-work" class="auth-status disconnected" data-i18n="disconnected">Disconnected</span>
               </div>
               <div class="form-group row-align" style="margin-bottom: 0.75rem;">
@@ -742,22 +787,7 @@
                 </div>
                 <input type="hidden" id="google-color-work" value="black">
               </div>
-              <div class="settings-section-card" style="margin-top: 1rem; margin-bottom: 1rem;">
-                <div class="card-toggle-header">
-                  <span class="card-toggle-title">
-                    <span data-i18n="label-ooo-active">Out of Office (OOO)</span>
-                  </span>
-                  <label class="switch-control">
-                    <input type="checkbox" id="settings-ooo-active">
-                    <span class="switch-slider"></span>
-                  </label>
-                </div>
-                <div id="ooo-date-display" class="form-group row-align hidden" style="margin: 0; padding-top: 0.5rem; border-top: 1px solid var(--border-color, rgba(255,255,255,0.05));">
-                  <span style="font-size: 0.75rem; color: var(--text-secondary);" data-i18n="ooo-until">Active until:</span>
-                  <span id="ooo-return-date-text" style="font-size: 0.75rem; font-weight: 600; color: var(--accent);">--</span>
-                </div>
-              </div>
-              <div class="google-auth-actions">
+              <div class="google-auth-actions" style="margin-top: 1rem;">
                 <button type="button" id="google-login-btn-work" class="btn-secondary" data-i18n="google-login-work">Log In (Work)</button>
                 <button type="button" id="google-logout-btn-work" class="btn-danger hidden" data-i18n="google-logout">Log Out</button>
               </div>
@@ -958,7 +988,7 @@
             <input type="text" id="countdown-title-input" data-i18n-placeholder="countdown-placeholder" placeholder="Event title..." required>
           </div>
           <div class="form-group">
-            <label for="countdown-date-input">Target Date</label>
+            <label for="countdown-date-input" data-i18n="label-target-date">Target Date</label>
             <input type="date" id="countdown-date-input" required>
           </div>
           <div class="modal-footer" style="padding: 1rem 0 0 0; margin-top: 1rem; border-top: 1px solid var(--border-color);">
@@ -985,7 +1015,7 @@
             <input type="text" id="edit-event-name-input" data-i18n-placeholder="countdown-placeholder" placeholder="Event title..." required>
           </div>
           <div class="form-group">
-            <label for="edit-event-date-input">Target Date</label>
+            <label for="edit-event-date-input" data-i18n="label-target-date">Target Date</label>
             <input type="date" id="edit-event-date-input" required>
           </div>
           <div class="modal-footer" style="padding: 1rem 0 0 0; margin-top: 1rem; border-top: 1px solid var(--border-color);">
@@ -1105,7 +1135,7 @@
       <div class="modal-body" style="padding-bottom: 1rem;">
         <form id="ooo-form" style="display: flex; flex-direction: column; gap: 1rem; margin-bottom: 0;">
           <div class="form-group">
-            <label for="ooo-date-input">Until when will you be away?</label>
+            <label for="ooo-date-input" data-i18n="label-ooo-until-question">Until when will you be away?</label>
             <input type="date" id="ooo-date-input" required>
           </div>
           <div class="modal-footer" style="padding: 1rem 0 0 0; margin-top: 1rem; border-top: 1px solid var(--border-color);">

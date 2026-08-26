@@ -4,33 +4,77 @@ import { t } from "../locales/index.js";
 import { saveSettings } from "./storage.js";
 import { translatePage } from "../ui/settings.js";
 
+// General helper to sanitize Jira Host URL (strips trailing slash, /jira, /secure, /browse suffixes)
+export function sanitizeJiraHost(host) {
+  if (!host) return "";
+  let trimmed = String(host).trim();
+  if (!trimmed) return "";
+
+  if (!trimmed.startsWith("http://") && !trimmed.startsWith("https://")) {
+    trimmed = "https://" + trimmed;
+  }
+
+  try {
+    const parsed = new URL(trimmed);
+    if (parsed.hostname.endsWith(".atlassian.net")) {
+      return parsed.origin;
+    }
+    const cleanedPath = parsed.pathname
+      .replace(/\/jira(\/.*)?$/i, "")
+      .replace(/\/secure(\/.*)?$/i, "")
+      .replace(/\/browse(\/.*)?$/i, "")
+      .replace(/\/+$/, "");
+    return `${parsed.origin}${cleanedPath}`;
+  } catch (e) {
+    return trimmed
+      .replace(/\/jira(\/.*)?$/i, "")
+      .replace(/\/secure(\/.*)?$/i, "")
+      .replace(/\/browse(\/.*)?$/i, "")
+      .replace(/\/+$/, "");
+  }
+}
+
 // General helper to encode Jira Basic Auth
 export function getJiraAuthHeader(settings) {
   if (!settings || !settings.jiraEmail || !settings.jiraToken) return null;
   return "Basic " + btoa(`${settings.jiraEmail}:${settings.jiraToken}`);
 }
 
-// Cooldown tracker for successful Jira connection tests (60 seconds)
-function startJiraTestCooldown(button) {
-  let remaining = 60;
+// Cooldown tracker for failed Jira connection tests (30 seconds)
+export function startJiraTestCooldown(button) {
+  if (button.dataset.cooldownInterval) {
+    clearInterval(parseInt(button.dataset.cooldownInterval, 10));
+  }
+
+  let remaining = 30;
   button.disabled = true;
+  button.style.backgroundColor = 'rgba(235, 87, 87, 0.1)';
+  button.style.color = '#eb5757';
+  button.style.borderColor = '#eb5757';
+  button.style.cursor = 'not-allowed';
 
   const originalText = t('btn-connect');
+  button.textContent = `${originalText} (${remaining}s)`;
   
   const interval = setInterval(() => {
     remaining--;
     if (remaining <= 0) {
       clearInterval(interval);
+      delete button.dataset.cooldownInterval;
       button.disabled = false;
       button.textContent = originalText;
       button.setAttribute('data-i18n', 'btn-connect');
+      button.style.backgroundColor = '';
+      button.style.color = '';
+      button.style.borderColor = '';
+      button.style.cursor = '';
       if (typeof translatePage === 'function') translatePage();
     } else {
       button.textContent = `${originalText} (${remaining}s)`;
     }
   }, 1000);
   
-  button.dataset.cooldownInterval = interval;
+  button.dataset.cooldownInterval = String(interval);
 }
 
 // Test Jira connection validator
@@ -43,11 +87,11 @@ export async function testJiraConnection(button) {
   let errorMsg = '';
 
   try {
-    let host = document.getElementById('jira-host').value.trim().replace(/\/$/, "");
-    if (host && !host.startsWith('http://') && !host.startsWith('https://')) {
-      host = 'https://' + host;
+    const hostInputEl = document.getElementById('jira-host');
+    let host = sanitizeJiraHost(hostInputEl ? hostInputEl.value : '');
+    if (hostInputEl && host) {
+      hostInputEl.value = host;
     }
-    host = host.replace(/\/jira\/?$/, '').replace(/\/secure.*$/, '');
     const email = document.getElementById('jira-email').value.trim();
     const token = document.getElementById('jira-token').value.trim();
     if (!host || !email || !token) {
@@ -116,29 +160,22 @@ export async function testJiraConnection(button) {
   updateJiraStatusIndicators(state, escapeHtml);
 
   if (success) {
+    if (button.dataset.cooldownInterval) {
+      clearInterval(parseInt(button.dataset.cooldownInterval, 10));
+      delete button.dataset.cooldownInterval;
+    }
     button.textContent = t('btn-connected');
+    button.setAttribute('data-i18n', 'btn-connected');
     button.style.backgroundColor = 'rgba(39, 174, 96, 0.1)';
     button.style.color = '#27ae60';
     button.style.borderColor = '#27ae60';
+    button.style.cursor = 'default';
+    button.disabled = true;
     
-    startJiraTestCooldown(button);
     fetchJira(state, safeFetch, escapeHtml);
   } else {
-    button.textContent = t('btn-failed');
-    button.style.backgroundColor = 'rgba(235, 87, 87, 0.1)';
-    button.style.color = '#eb5757';
-    button.style.borderColor = '#eb5757';
-    
-    const originalTexti18n = button.getAttribute('data-i18n');
-    setTimeout(() => {
-      button.disabled = false;
-      button.textContent = originalText;
-      button.style.backgroundColor = '';
-      button.style.color = '';
-      button.style.borderColor = '';
-      if (originalTexti18n) button.setAttribute('data-i18n', originalTexti18n);
-    }, 3000);
-    
+    // 30s cooldown on failure
+    startJiraTestCooldown(button);
     fetchJira(state, safeFetch, escapeHtml);
   }
 }
@@ -179,6 +216,32 @@ export function updateJiraStatusIndicators(state = defaultState, escapeHtml = de
     setDot.className = `status-dot ${dotClass}`;
     setDot.title = tooltip;
   }
+
+  // Update Jira Test Connection button in Settings modal
+  const jiraBtn = document.querySelector('.test-conn-btn[data-provider="jira"]');
+  if (jiraBtn) {
+    if (status === 'connected') {
+      if (jiraBtn.dataset.cooldownInterval) {
+        clearInterval(parseInt(jiraBtn.dataset.cooldownInterval, 10));
+        delete jiraBtn.dataset.cooldownInterval;
+      }
+      jiraBtn.textContent = t('btn-connected');
+      jiraBtn.setAttribute('data-i18n', 'btn-connected');
+      jiraBtn.disabled = true;
+      jiraBtn.style.backgroundColor = 'rgba(39, 174, 96, 0.1)';
+      jiraBtn.style.color = '#27ae60';
+      jiraBtn.style.borderColor = '#27ae60';
+      jiraBtn.style.cursor = 'default';
+    } else if (!jiraBtn.dataset.cooldownInterval) {
+      jiraBtn.disabled = false;
+      jiraBtn.textContent = t('btn-connect');
+      jiraBtn.setAttribute('data-i18n', 'btn-connect');
+      jiraBtn.style.backgroundColor = '';
+      jiraBtn.style.color = '';
+      jiraBtn.style.borderColor = '';
+      jiraBtn.style.cursor = '';
+    }
+  }
 }
 
 // Fetch Jira Tasks
@@ -191,12 +254,7 @@ export async function fetchJira(state = defaultState, safeFetch = defaultSafeFet
     jiraBadge.classList.add("hidden");
   }
 
-  let host = (state.settings.jiraHost || "").trim().replace(/\/$/, "");
-  if (host && !host.startsWith("http://") && !host.startsWith("https://")) {
-    host = "https://" + host;
-  }
-  // Sanitize host in case user entered a specific subpath like /jira or /secure
-  host = host.replace(/\/jira\/?$/, "").replace(/\/secure.*$/, "");
+  let host = sanitizeJiraHost(state.settings.jiraHost || "");
 
   if (!host || !state.settings.jiraEmail || !state.settings.jiraToken) {
     state.jiraStatus = 'disconnected';
@@ -214,19 +272,14 @@ export async function fetchJira(state = defaultState, safeFetch = defaultSafeFet
     };
     const fieldsParam = encodeURIComponent("summary,status,priority,updated");
 
-    // 1. Standard Jira Cloud GET /rest/api/3/search
-    let response = await safeFetch(`${host}/rest/api/3/search?jql=${encodeURIComponent(jql)}&maxResults=50&fields=${fieldsParam}`, {
+    // 1. Primary: Standard Jira Cloud GET /rest/api/3/search/jql
+    let response = await safeFetch(`${host}/rest/api/3/search/jql?jql=${encodeURIComponent(jql)}&maxResults=50&fields=${fieldsParam}`, {
       headers: authHeaders
     });
 
-    // If authentication error, abort immediately - do not loop retry
-    if (response.status === 401 || response.status === 403) {
-      throw new Error(`Authentication failed (${response.status} ${response.status === 403 ? 'Forbidden' : 'Unauthorized'})`);
-    }
-
-    // 2. Standard Jira Cloud POST /rest/api/3/search
-    if (!response.ok && response.status !== 401 && response.status !== 403) {
-      response = await safeFetch(`${host}/rest/api/3/search`, {
+    // 2. Fallback: Jira Cloud POST /rest/api/3/search/jql
+    if (!response.ok && response.status !== 401) {
+      const postRes = await safeFetch(`${host}/rest/api/3/search/jql`, {
         method: "POST",
         headers: {
           ...authHeaders,
@@ -238,18 +291,28 @@ export async function fetchJira(state = defaultState, safeFetch = defaultSafeFet
           fields: ["summary", "status", "priority", "updated"]
         })
       });
-      if (response.status === 401 || response.status === 403) {
-        throw new Error(`Authentication failed (${response.status} ${response.status === 403 ? 'Forbidden' : 'Unauthorized'})`);
+      if (postRes.ok) {
+        response = postRes;
       }
     }
 
-    // 3. Jira Server / DC GET /rest/api/2/search (only if 404)
-    if (!response.ok && response.status === 404) {
-      response = await safeFetch(`${host}/rest/api/2/search?jql=${encodeURIComponent(simpleJql)}&maxResults=50&fields=${fieldsParam}`, {
+    // 3. Fallback: Legacy Jira Cloud GET /rest/api/3/search
+    if (!response.ok && response.status !== 401) {
+      const legacyRes = await safeFetch(`${host}/rest/api/3/search?jql=${encodeURIComponent(jql)}&maxResults=50&fields=${fieldsParam}`, {
         headers: authHeaders
       });
-      if (response.status === 401 || response.status === 403) {
-        throw new Error(`Authentication failed (${response.status} ${response.status === 403 ? 'Forbidden' : 'Unauthorized'})`);
+      if (legacyRes.ok) {
+        response = legacyRes;
+      }
+    }
+
+    // 4. Fallback: Jira Server / Data Center GET /rest/api/2/search
+    if (!response.ok && response.status !== 401) {
+      const dcRes = await safeFetch(`${host}/rest/api/2/search?jql=${encodeURIComponent(jql)}&maxResults=50&fields=${fieldsParam}`, {
+        headers: authHeaders
+      });
+      if (dcRes.ok) {
+        response = dcRes;
       }
     }
 

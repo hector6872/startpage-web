@@ -78,32 +78,71 @@ export function updateGitStatusIndicators(appState = state, escapeHtmlFn = escap
     setDotGl.className = `status-dot ${glSettingsClass}`;
     setDotGl.title = glTooltip;
   }
+
+  // Update Test Connection buttons in settings panel
+  ['github', 'bitbucket', 'gitlab'].forEach(p => {
+    const btn = document.querySelector(`.test-conn-btn[data-provider="${p}"]`);
+    if (!btn) return;
+    const pStatus = p === 'github' ? ghStatus : (p === 'bitbucket' ? bbStatus : glStatus);
+    if (pStatus === 'connected') {
+      if (btn.dataset.cooldownInterval) {
+        clearInterval(parseInt(btn.dataset.cooldownInterval, 10));
+        delete btn.dataset.cooldownInterval;
+      }
+      btn.textContent = t('btn-connected');
+      btn.setAttribute('data-i18n', 'btn-connected');
+      btn.disabled = true;
+      btn.style.backgroundColor = 'rgba(39, 174, 96, 0.1)';
+      btn.style.color = '#27ae60';
+      btn.style.borderColor = '#27ae60';
+      btn.style.cursor = 'default';
+    } else if (!btn.dataset.cooldownInterval) {
+      btn.disabled = false;
+      btn.textContent = t('btn-connect');
+      btn.setAttribute('data-i18n', 'btn-connect');
+      btn.style.backgroundColor = '';
+      btn.style.color = '';
+      btn.style.borderColor = '';
+      btn.style.cursor = '';
+    }
+  });
 }
 
-// Cooldown tracker for successful connection tests (60 seconds)
-function startTestCooldown(provider, button) {
-  state.lastSuccessGit = state.lastSuccessGit || {};
-  state.lastSuccessGit[provider] = Date.now();
+// Cooldown tracker for failed connection tests (30 seconds)
+export function startTestCooldown(provider, button) {
+  if (button.dataset.cooldownInterval) {
+    clearInterval(parseInt(button.dataset.cooldownInterval, 10));
+  }
 
-  let remaining = 60;
+  let remaining = 30;
   button.disabled = true;
+  button.style.backgroundColor = 'rgba(235, 87, 87, 0.1)';
+  button.style.color = '#eb5757';
+  button.style.borderColor = '#eb5757';
+  button.style.cursor = 'not-allowed';
 
   const originalText = t('btn-connect');
+  button.textContent = `${originalText} (${remaining}s)`;
   
   const interval = setInterval(() => {
     remaining--;
     if (remaining <= 0) {
       clearInterval(interval);
+      delete button.dataset.cooldownInterval;
       button.disabled = false;
       button.textContent = originalText;
       button.setAttribute('data-i18n', 'btn-connect');
+      button.style.backgroundColor = '';
+      button.style.color = '';
+      button.style.borderColor = '';
+      button.style.cursor = '';
       if (typeof translatePage === 'function') translatePage();
     } else {
       button.textContent = `${originalText} (${remaining}s)`;
     }
   }, 1000);
   
-  button.dataset.cooldownInterval = interval;
+  button.dataset.cooldownInterval = String(interval);
 }
 
 // Test connection endpoint validator using inputs currently in the settings form
@@ -209,32 +248,23 @@ export async function testGitConnection(provider, button) {
   updateGitStatusIndicators(state, escapeHtml);
 
   if (success) {
+    if (button.dataset.cooldownInterval) {
+      clearInterval(parseInt(button.dataset.cooldownInterval, 10));
+      delete button.dataset.cooldownInterval;
+    }
     button.textContent = t('btn-connected');
+    button.setAttribute('data-i18n', 'btn-connected');
     button.style.backgroundColor = 'rgba(39, 174, 96, 0.1)';
     button.style.color = '#27ae60';
     button.style.borderColor = '#27ae60';
-    
-    // Start 1 minute cooldown
-    startTestCooldown(provider, button);
+    button.style.cursor = 'default';
+    button.disabled = true;
     
     // Refresh main list
     fetchAllPRs(state, safeFetch, escapeHtml);
   } else {
-    button.textContent = t('btn-failed');
-    button.style.backgroundColor = 'rgba(235, 87, 87, 0.1)';
-    button.style.color = '#eb5757';
-    button.style.borderColor = '#eb5757';
-    
-    const originalTexti18n = button.getAttribute('data-i18n');
-    setTimeout(() => {
-      button.disabled = false;
-      button.textContent = originalText;
-      button.style.backgroundColor = '';
-      button.style.color = '';
-      button.style.borderColor = '';
-      if (originalTexti18n) button.setAttribute('data-i18n', originalTexti18n);
-    }, 3000);
-    
+    // 30s cooldown on failure
+    startTestCooldown(provider, button);
     fetchAllPRs(state, safeFetch, escapeHtml);
   }
 }
