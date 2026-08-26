@@ -462,10 +462,12 @@ export async function fetchAllPRs(appState = state, safeFetchFn = safeFetch, esc
         'Accept': 'application/json'
       };
 
-      // 1. Get authenticated user account_id / uuid
+      // 1. Get authenticated user account_id / uuid / names
       let bitbucketUserUUID = '';
       let bitbucketAccountID = '';
-      let bitbucketUsername = username.toLowerCase();
+      let bitbucketNickname = '';
+      let bitbucketDisplayName = '';
+      let bitbucketUsername = username.toLowerCase().trim();
 
       try {
         const userRes = await fetch(`https://api.bitbucket.org/2.0/user`, { headers });
@@ -473,102 +475,115 @@ export async function fetchAllPRs(appState = state, safeFetchFn = safeFetch, esc
           const uData = await userRes.json();
           bitbucketUserUUID = (uData.uuid || '').toLowerCase();
           bitbucketAccountID = (uData.account_id || '').toLowerCase();
+          if (uData.nickname) bitbucketNickname = uData.nickname.toLowerCase();
+          if (uData.display_name) bitbucketDisplayName = uData.display_name.toLowerCase();
           if (uData.username) bitbucketUsername = uData.username.toLowerCase();
-          if (uData.nickname) bitbucketUsername = uData.nickname.toLowerCase();
         }
       } catch (e) {
-        console.warn("Could not fetch Bitbucket user UUID:", e);
+        console.warn("Could not fetch Bitbucket user details:", e);
       }
 
       function normalizeBitbucketId(id) {
         return (id || '').toLowerCase().replace(/[{}]/g, '').trim();
       }
 
+      const userIdentifiers = new Set([
+        normalizeBitbucketId(bitbucketAccountID),
+        normalizeBitbucketId(bitbucketUserUUID),
+        bitbucketNickname.trim(),
+        bitbucketDisplayName.trim(),
+        bitbucketUsername.trim(),
+        username.toLowerCase().trim(),
+        username.toLowerCase().split('@')[0].trim()
+      ].filter(Boolean));
+
       function isMatchingUser(u) {
         if (!u) return false;
-        const uId = normalizeBitbucketId(u.account_id);
-        const uUuid = normalizeBitbucketId(u.uuid);
-        const uNick = (u.nickname || '').toLowerCase().trim();
-        const uUser = (u.username || '').toLowerCase().trim();
-        const uDisplay = (u.display_name || '').toLowerCase().trim();
-        
-        const targetId = normalizeBitbucketId(bitbucketAccountID);
-        const targetUuid = normalizeBitbucketId(bitbucketUserUUID);
-        const targetUser = bitbucketUsername.toLowerCase().trim();
+        const idsToCheck = [
+          normalizeBitbucketId(u.account_id),
+          normalizeBitbucketId(u.uuid),
+          (u.nickname || '').toLowerCase().trim(),
+          (u.display_name || '').toLowerCase().trim(),
+          (u.username || '').toLowerCase().trim(),
+          (u.email || '').toLowerCase().trim()
+        ].filter(Boolean);
 
-        return (targetId && uId && uId === targetId) ||
-               (targetUuid && uUuid && uUuid === targetUuid) ||
-               (targetUser && (uNick === targetUser || uUser === targetUser || uDisplay === targetUser));
+        return idsToCheck.some(id => userIdentifiers.has(id));
       }
 
-      const allFetchedPRs = [];
-      const seenBbPrUrls = new Set();
+      // Fetch repositories in workspace and member repositories across workspaces
+      const repoMap = new Map();
 
-      // Try fetching direct user PRs first (endpoint returns PRs where user is author, reviewer, or participant)
-      const userIdent = bitbucketAccountID || bitbucketUserUUID || username;
       try {
-        const userPrsRes = await fetch(`https://api.bitbucket.org/2.0/pullrequests/${encodeURIComponent(userIdent)}?state=OPEN&pagelen=50`, { headers });
-        if (userPrsRes.ok) {
-          const uPrsData = await userPrsRes.json();
-          (uPrsData.values || []).forEach(pr => {
-            const prUrl = pr.links && pr.links.html ? pr.links.html.href : pr.id;
-            if (!seenBbPrUrls.has(prUrl)) {
-              seenBbPrUrls.add(prUrl);
-              allFetchedPRs.push(pr);
+        const [wsReposRes, memberReposRes] = await Promise.all([
+          fetch(`https://api.bitbucket.org/2.0/repositories/${encodeURIComponent(workspace)}?sort=-updated_on&pagelen=100`, { headers }),
+          fetch(`https://api.bitbucket.org/2.0/repositories?role=member&sort=-updated_on&pagelen=100`, { headers }).catch(() => null)
+        ]);
+
+        if (wsReposRes.ok) {
+          const wsData = await wsReposRes.json();
+          (wsData.values || []).forEach(r => {
+            const key = r.full_name || r.uuid || `${workspace}/${r.slug || r.name}`;
+            repoMap.set(key, r);
+          });
+        }
+
+        if (memberReposRes && memberReposRes.ok) {
+          const memberData = await memberReposRes.json();
+          (memberData.values || []).forEach(r => {
+            const key = r.full_name || r.uuid || `${workspace}/${r.slug || r.name}`;
+            if (!repoMap.has(key)) {
+              repoMap.set(key, r);
             }
           });
         }
       } catch (e) {
-        console.warn("Could not fetch Bitbucket user pull requests endpoint:", e);
+        console.error("Error fetching Bitbucket repositories:", e);
       }
 
-      // Also fetch workspace repositories to ensure complete coverage
-      const reposRes = await fetch(`https://api.bitbucket.org/2.0/repositories/${workspace}?sort=-updated_on&pagelen=30`, { headers });
-      if (!reposRes.ok && allFetchedPRs.length === 0) {
+      const repos = Array.from(repoMap.values());
+
+      if (repos.length === 0 && repoMap.size === 0) {
         state.bitbucketStatus = 'error';
-        state.bitbucketError = `${reposRes.status} ${reposRes.statusText}`;
+        state.bitbucketError = 'Could not find repositories';
       } else {
-        if (reposRes.ok) {
-          const reposData = await reposRes.json();
-          const repos = reposData.values || [];
-
-          const prPromises = repos.map(async (repo) => {
-            try {
-              const repoSlug = repo.slug || repo.name;
-              const prsRes = await fetch(`https://api.bitbucket.org/2.0/repositories/${workspace}/${encodeURIComponent(repoSlug)}/pullrequests?state=OPEN&pagelen=30`, { headers });
-              if (prsRes.ok) {
-                const data = await prsRes.json();
-                return (data.values || []).map(pr => ({
-                  ...pr,
-                  _repoName: repo.name || repoSlug
-                }));
-              }
-              return [];
-            } catch (e) {
-              console.error(`Error fetching Bitbucket PRs for ${repo.name}:`, e);
-              return [];
+        // Fetch open PRs for repositories in parallel
+        const prPromises = repos.map(async (repo) => {
+          try {
+            const repoPath = repo.full_name ? encodeURIComponent(repo.full_name.split('/')[0]) + '/' + encodeURIComponent(repo.full_name.split('/')[1]) : `${encodeURIComponent(workspace)}/${encodeURIComponent(repo.slug || repo.name)}`;
+            const prsRes = await fetch(`https://api.bitbucket.org/2.0/repositories/${repoPath}/pullrequests?state=OPEN&pagelen=50`, { headers });
+            if (prsRes.ok) {
+              const data = await prsRes.json();
+              return (data.values || []).map(pr => ({
+                ...pr,
+                _repoName: repo.name || repo.slug || (repo.full_name ? repo.full_name.split('/')[1] : '')
+              }));
             }
-          });
+            return [];
+          } catch (e) {
+            console.error(`Error fetching Bitbucket PRs for ${repo.name}:`, e);
+            return [];
+          }
+        });
 
-          const allRepoPRs = await Promise.all(prPromises);
-          allRepoPRs.flat().forEach(pr => {
-            const prUrl = pr.links && pr.links.html ? pr.links.html.href : pr.id;
-            if (!seenBbPrUrls.has(prUrl)) {
-              seenBbPrUrls.add(prUrl);
-              allFetchedPRs.push(pr);
-            }
-          });
-        }
+        const allRepoPRs = await Promise.all(prPromises);
+        const allFetchedPRs = allRepoPRs.flat();
+        const seenBbPrUrls = new Set();
 
         allFetchedPRs.forEach(pr => {
+          const prUrl = pr.links && pr.links.html ? pr.links.html.href : pr.id;
+          if (seenBbPrUrls.has(prUrl)) return;
+          seenBbPrUrls.add(prUrl);
+
           const isAuthor = isMatchingUser(pr.author);
-          const isReviewer = (pr.reviewers && pr.reviewers.some(r => isMatchingUser(r))) ||
-                             (pr.participants && pr.participants.some(p => p.role === 'REVIEWER' && isMatchingUser(p.user)));
+          const isReviewer = (Array.isArray(pr.reviewers) && pr.reviewers.some(r => isMatchingUser(r))) ||
+                             (Array.isArray(pr.participants) && pr.participants.some(p => (p.role === 'REVIEWER' || p.role === 'reviewer') && isMatchingUser(p.user))) ||
+                             (Array.isArray(pr.participants) && pr.participants.some(p => isMatchingUser(p.user) && !isAuthor));
           const repoName = pr._repoName || (pr.source && pr.source.repository && pr.source.repository.name) || (pr.destination && pr.destination.repository && pr.destination.repository.name) || '';
 
-          if (isReviewer) {
+          if (isReviewer && !isAuthor) {
             // Teammate's PR: check if I already approved it
-            const hasApproved = pr.participants && pr.participants.some(p => p.approved && isMatchingUser(p.user));
+            const hasApproved = Array.isArray(pr.participants) && pr.participants.some(p => p.approved && isMatchingUser(p.user));
             if (!hasApproved) {
               prList.push({
                 title: pr.title,
@@ -583,7 +598,7 @@ export async function fetchAllPRs(appState = state, safeFetchFn = safeFetch, esc
             }
           } else if (isAuthor) {
             // My own PR: check for needs_work (requested changes) or task_count > 0 (blocked)
-            const hasNeedsWork = pr.participants && pr.participants.some(p => p.state === 'needs_work');
+            const hasNeedsWork = Array.isArray(pr.participants) && pr.participants.some(p => p.state === 'needs_work');
             const hasTasks = pr.task_count > 0;
             
             let status = 'my_pr';
