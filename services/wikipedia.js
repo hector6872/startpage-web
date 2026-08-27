@@ -196,7 +196,7 @@ function startAutoAdvance(advanceFn) {
     if (!isHoveringQuoteWidget) {
       advanceFn();
     }
-  }, 8000);
+  }, 30000);
 }
 
 function stopAutoAdvance() {
