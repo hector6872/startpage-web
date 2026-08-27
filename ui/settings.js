@@ -313,11 +313,26 @@ export function setupEventListeners() {
     tooltip.classList.remove('hidden');
     
     const rect = target.getBoundingClientRect();
-    tooltip.style.left = `${rect.left + rect.width / 2}px`;
-    tooltip.style.top = `${rect.top - 8}px`;
+    let left = rect.left + rect.width / 2;
+    let top = rect.top - 8;
     
-    // Force layout reflow
-    tooltip.getBoundingClientRect();
+    tooltip.style.left = `${left}px`;
+    tooltip.style.top = `${top}px`;
+    
+    // Force layout reflow and adjust boundaries
+    const tooltipRect = tooltip.getBoundingClientRect();
+    const halfWidth = tooltipRect.width / 2;
+    if (left - halfWidth < 12) {
+      left = halfWidth + 12;
+    } else if (left + halfWidth > window.innerWidth - 12) {
+      left = window.innerWidth - halfWidth - 12;
+    }
+    if (top - tooltipRect.height < 12) {
+      top = rect.bottom + 8 + tooltipRect.height;
+    }
+    tooltip.style.left = `${left}px`;
+    tooltip.style.top = `${top}px`;
+
     tooltip.classList.add('visible');
   });
 
