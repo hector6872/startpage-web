@@ -94,6 +94,7 @@ export default {
   "google-config-title": "Configuración de Google",
   "jira-config-title": "Configuración de Jira",
   "label-client-id": "Cliente ID de Google OAuth",
+  "label-client-secret": "Client Secret de Google OAuth",
   "google-status": "Autenticación:",
   "disconnected": "Desconectado",
   "connected": "Conectado",

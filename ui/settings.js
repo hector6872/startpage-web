@@ -8,7 +8,7 @@ import { loadWeather } from "../services/weather.js";
 import { loadWikipediaContent } from "../services/wikipedia.js";
 import { fetchAllPRs, testGitConnection, updateGitStatusIndicators } from "../services/git.js";
 import { fetchJira, testJiraConnection, updateJiraStatusIndicators, sanitizeJiraHost } from "../services/jira.js";
-import { initGoogleOAuth, updateGoogleAuthStatus, getGoogleTokenClient, setGoogleLoginTarget, fetchGoogleData, fetchGoogleCalendar, fetchGmail, fetchGoogleTasks } from "../services/google.js";
+import { initGoogleOAuth, updateGoogleAuthStatus, getGoogleTokenClient, setGoogleLoginTarget, fetchGoogleData, fetchGoogleCalendar, fetchGmail, fetchGoogleTasks, initiateGoogleAuth } from "../services/google.js";
 import { saveSettings, saveTodos, writeDataToFile, readDataFromFile, exportStateToFile, saveFileHandle, setFileHandle, fileHandle, mergeSettingsWithLocalSecrets, clearFileHandle, checkOooExpiration } from "../services/storage.js";
 import { openModalAccessible, trapFocusInDialog, showInputErrorFeedback, ensureHttpUrl, lastActiveElementBeforeModal } from "../utils/helpers.js";
 
@@ -944,7 +944,9 @@ export function setupEventListeners() {
     toggleScheduleInputs();
     
     document.getElementById('settings-storage-mode').value = state.settings.storageMode || 'local';
-    document.getElementById('google-client-id').value = state.settings.googleClientId;
+    document.getElementById('google-client-id').value = state.settings.googleClientId || '';
+    const gClientSecretInput = document.getElementById('google-client-secret');
+    if (gClientSecretInput) gClientSecretInput.value = state.settings.googleClientSecret || '';
     
     const personalCol = state.settings.personalColor || 'blue';
     const workCol = state.settings.workColor || 'black';
@@ -1325,6 +1327,8 @@ export function setupEventListeners() {
     
     const gClientIdEl = document.getElementById('google-client-id');
     if (gClientIdEl) state.settings.googleClientId = gClientIdEl.value.trim();
+    const gClientSecretEl = document.getElementById('google-client-secret');
+    if (gClientSecretEl) state.settings.googleClientSecret = gClientSecretEl.value.trim();
     const gPersColEl = document.getElementById('google-color-personal');
     if (gPersColEl) state.settings.personalColor = gPersColEl.value;
     const gWorkColEl = document.getElementById('google-color-work');
@@ -1516,13 +1520,7 @@ export function setupEventListeners() {
       showInputErrorFeedback(clientIdInput, msg);
       return;
     }
-    setGoogleLoginTarget('personal');
-    if (getGoogleTokenClient()) {
-      getGoogleTokenClient().requestAccessToken({ prompt: 'select_account' });
-    } else {
-      initGoogleOAuth();
-      getGoogleTokenClient().requestAccessToken({ prompt: 'select_account' });
-    }
+    initiateGoogleAuth('personal');
   });
 
   // Google OAuth Work Login Action
@@ -1534,13 +1532,7 @@ export function setupEventListeners() {
       showInputErrorFeedback(clientIdInput, msg);
       return;
     }
-    setGoogleLoginTarget('work');
-    if (getGoogleTokenClient()) {
-      getGoogleTokenClient().requestAccessToken({ prompt: 'select_account' });
-    } else {
-      initGoogleOAuth();
-      getGoogleTokenClient().requestAccessToken({ prompt: 'select_account' });
-    }
+    initiateGoogleAuth('work');
   });
 
   // Google OAuth Personal Logout Action
@@ -1558,10 +1550,14 @@ export function setupEventListeners() {
       delete state.googleErrors.personal;
     }
     localStorage.removeItem('google_personal_token');
+    localStorage.removeItem('google_personal_refresh_token');
     localStorage.removeItem('google_personal_email');
     localStorage.removeItem('google_personal_expiry');
+    localStorage.removeItem('google_access_token');
     sessionStorage.removeItem('google_personal_token');
+    sessionStorage.removeItem('google_personal_refresh_token');
     sessionStorage.removeItem('google_personal_email');
+    sessionStorage.removeItem('google_personal_expiry');
     
     // Sync legacy/compatibility tokens
     state.googleClientToken = state.googleWorkToken;
@@ -1595,10 +1591,14 @@ export function setupEventListeners() {
       delete state.googleErrors.work;
     }
     localStorage.removeItem('google_work_token');
+    localStorage.removeItem('google_work_refresh_token');
     localStorage.removeItem('google_work_email');
     localStorage.removeItem('google_work_expiry');
+    localStorage.removeItem('google_access_token');
     sessionStorage.removeItem('google_work_token');
+    sessionStorage.removeItem('google_work_refresh_token');
     sessionStorage.removeItem('google_work_email');
+    sessionStorage.removeItem('google_work_expiry');
     
     // Sync legacy/compatibility tokens
     state.googleClientToken = state.googlePersonalToken;

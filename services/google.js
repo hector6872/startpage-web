@@ -49,7 +49,6 @@ export async function checkAndFetchGoogleEmails() {
     const email = await fetchGoogleUserEmail(googleContext.state.googlePersonalToken);
     if (email) {
       googleContext.state.googlePersonalEmail = email;
-      localStorage.setItem('google_personal_email', email);
       sessionStorage.setItem('google_personal_email', email);
       changed = true;
     }
@@ -58,13 +57,188 @@ export async function checkAndFetchGoogleEmails() {
     const email = await fetchGoogleUserEmail(googleContext.state.googleWorkToken);
     if (email) {
       googleContext.state.googleWorkEmail = email;
-      localStorage.setItem('google_work_email', email);
       sessionStorage.setItem('google_work_email', email);
       changed = true;
     }
   }
   if (changed) {
     updateGoogleAuthStatus();
+  }
+}
+
+export const GOOGLE_SCOPES = 'https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/gmail.readonly https://www.googleapis.com/auth/tasks.readonly https://www.googleapis.com/auth/calendar.readonly';
+
+export function isLocalDevelopment() {
+  return typeof window !== 'undefined' && (
+    window.location.hostname === 'localhost' ||
+    window.location.hostname === '127.0.0.1' ||
+    window.location.hostname.endsWith('.localhost')
+  );
+}
+
+export async function exchangeGoogleAuthCode(code, targetAccount, redirectUri) {
+  const clientId = googleContext.state?.settings?.googleClientId;
+  const clientSecret = googleContext.state?.settings?.googleClientSecret;
+
+  if (!clientId) {
+    console.error("Missing Google Client ID for token exchange");
+    return false;
+  }
+
+  const tokenUrl = 'https://oauth2.googleapis.com/token';
+  const proxyEndpoint = `/api/proxy?url=${encodeURIComponent(tokenUrl)}`;
+  const params = new URLSearchParams({
+    code,
+    client_id: clientId,
+    client_secret: clientSecret || '',
+    redirect_uri: redirectUri || `${window.location.origin}/api/auth/google/callback`,
+    grant_type: 'authorization_code'
+  });
+
+  try {
+    const res = await fetch(proxyEndpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded'
+      },
+      body: params.toString()
+    });
+
+    if (!res.ok) {
+      const errText = await res.text();
+      console.error("Failed to exchange auth code:", res.status, errText);
+      return false;
+    }
+
+    const data = await res.json();
+    const token = data.access_token;
+    const refreshToken = data.refresh_token;
+    const expiresInSec = data.expires_in || 3600;
+    const expiryTimestamp = Date.now() + (expiresInSec * 1000) - 60000;
+
+    if (targetAccount === 'personal') {
+      googleContext.state.googlePersonalToken = token;
+      localStorage.setItem('google_personal_token', token);
+      localStorage.setItem('google_personal_expiry', String(expiryTimestamp));
+      sessionStorage.setItem('google_personal_token', token);
+      sessionStorage.setItem('google_personal_expiry', String(expiryTimestamp));
+      if (refreshToken) {
+        localStorage.setItem('google_personal_refresh_token', refreshToken);
+        sessionStorage.setItem('google_personal_refresh_token', refreshToken);
+      }
+      const email = await fetchGoogleUserEmail(token);
+      if (email) {
+        googleContext.state.googlePersonalEmail = email;
+        localStorage.setItem('google_personal_email', email);
+        sessionStorage.setItem('google_personal_email', email);
+      }
+    } else {
+      googleContext.state.googleWorkToken = token;
+      localStorage.setItem('google_work_token', token);
+      localStorage.setItem('google_work_expiry', String(expiryTimestamp));
+      sessionStorage.setItem('google_work_token', token);
+      sessionStorage.setItem('google_work_expiry', String(expiryTimestamp));
+      if (refreshToken) {
+        localStorage.setItem('google_work_refresh_token', refreshToken);
+        sessionStorage.setItem('google_work_refresh_token', refreshToken);
+      }
+      const email = await fetchGoogleUserEmail(token);
+      if (email) {
+        googleContext.state.googleWorkEmail = email;
+        localStorage.setItem('google_work_email', email);
+        sessionStorage.setItem('google_work_email', email);
+      }
+    }
+
+    if (googleContext.state.googleErrors) {
+      delete googleContext.state.googleErrors[targetAccount];
+    }
+
+    googleContext.state.googleClientToken = googleContext.state.googlePersonalToken || googleContext.state.googleWorkToken;
+    localStorage.setItem('google_access_token', googleContext.state.googleClientToken || '');
+    sessionStorage.setItem('google_access_token', googleContext.state.googleClientToken || '');
+
+    updateGoogleAuthStatus();
+    await fetchGoogleData();
+    return true;
+  } catch (err) {
+    console.error("Error during code exchange:", err);
+    return false;
+  }
+}
+
+export function initiateGoogleAuth(targetAccount) {
+  setGoogleLoginTarget(targetAccount);
+  const clientId = googleContext.state?.settings?.googleClientId;
+  const clientSecret = googleContext.state?.settings?.googleClientSecret;
+
+  if (!clientId) {
+    return false;
+  }
+
+  // 1. In Local Development: use GIS client popup if no clientSecret
+  if (isLocalDevelopment() && !clientSecret) {
+    if (getGoogleTokenClient()) {
+      getGoogleTokenClient().requestAccessToken({ prompt: 'select_account' });
+    } else {
+      initGoogleOAuth();
+      getGoogleTokenClient()?.requestAccessToken({ prompt: 'select_account' });
+    }
+    return true;
+  }
+
+  // 2. In Production (or offline code flow with clientSecret):
+  const redirectUri = `${window.location.origin}/api/auth/google/callback`;
+  const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?` + new URLSearchParams({
+    client_id: clientId,
+    redirect_uri: redirectUri,
+    response_type: 'code',
+    scope: GOOGLE_SCOPES,
+    access_type: 'offline',
+    prompt: 'consent',
+    state: targetAccount
+  }).toString();
+
+  const width = 520;
+  const height = 650;
+  const left = window.screenX + (window.outerWidth - width) / 2;
+  const top = window.screenY + (window.outerHeight - height) / 2;
+  const popup = window.open(
+    authUrl,
+    'GoogleAuthPopup',
+    `width=${width},height=${height},left=${left},top=${top},scrollbars=yes,status=1`
+  );
+
+  if (!popup || popup.closed || typeof popup.closed === 'undefined') {
+    window.location.href = authUrl;
+  }
+
+  return true;
+}
+
+// Global listeners for Google OAuth popup messages and redirect callback params
+if (typeof window !== 'undefined') {
+  window.addEventListener('message', async (event) => {
+    if (event.data && event.data.type === 'GOOGLE_AUTH_CODE') {
+      const { code, state, error } = event.data;
+      if (error) {
+        console.error("Google Auth error from popup:", error);
+        return;
+      }
+      if (code) {
+        await exchangeGoogleAuthCode(code, state || 'personal');
+      }
+    }
+  });
+
+  const urlParams = new URLSearchParams(window.location.search);
+  const codeParam = urlParams.get('google_code') || urlParams.get('code');
+  const stateParam = urlParams.get('state') || 'personal';
+  if (codeParam) {
+    exchangeGoogleAuthCode(codeParam, stateParam).then(() => {
+      const cleanUrl = window.location.pathname;
+      window.history.replaceState({}, document.title, cleanUrl);
+    });
   }
 }
 
@@ -83,7 +257,7 @@ export function initGoogleOAuth() {
 
   googleTokenClient = google.accounts.oauth2.initTokenClient({
     client_id: googleContext.state.settings.googleClientId,
-    scope: 'https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/gmail.readonly https://www.googleapis.com/auth/tasks.readonly https://www.googleapis.com/auth/calendar.readonly',
+    scope: GOOGLE_SCOPES,
     callback: async (response) => {
       if (response.error) {
         console.error("Google Auth error:", response.error);
@@ -100,6 +274,7 @@ export function initGoogleOAuth() {
         localStorage.setItem('google_personal_token', token);
         localStorage.setItem('google_personal_expiry', String(expiryTimestamp));
         sessionStorage.setItem('google_personal_token', token);
+        sessionStorage.setItem('google_personal_expiry', String(expiryTimestamp));
         
         let email = googleContext.state.googlePersonalEmail;
         if (!email) {
@@ -115,6 +290,7 @@ export function initGoogleOAuth() {
         localStorage.setItem('google_work_token', token);
         localStorage.setItem('google_work_expiry', String(expiryTimestamp));
         sessionStorage.setItem('google_work_token', token);
+        sessionStorage.setItem('google_work_expiry', String(expiryTimestamp));
         
         let email = googleContext.state.googleWorkEmail;
         if (!email) {
@@ -142,8 +318,8 @@ export function initGoogleOAuth() {
   
   // Check if tokens need a silent refresh on initialization
   const now = Date.now();
-  const personalExpiry = Number(localStorage.getItem('google_personal_expiry') || 0);
-  const workExpiry = Number(localStorage.getItem('google_work_expiry') || 0);
+  const personalExpiry = Number(localStorage.getItem('google_personal_expiry') || sessionStorage.getItem('google_personal_expiry') || 0);
+  const workExpiry = Number(localStorage.getItem('google_work_expiry') || sessionStorage.getItem('google_work_expiry') || 0);
 
   if (googleContext.state.googlePersonalEmail && (!googleContext.state.googlePersonalToken || now >= personalExpiry)) {
     refreshGoogleToken('personal');
@@ -151,6 +327,17 @@ export function initGoogleOAuth() {
 
   if (googleContext.state.googleWorkEmail && (!googleContext.state.googleWorkToken || now >= workExpiry)) {
     refreshGoogleToken('work');
+  }
+
+  // On localhost dev, if client ID is set and no tokens active, attempt auto popup
+  if (isLocalDevelopment() && !googleContext.state.settings.googleClientSecret) {
+    if (!googleContext.state.googlePersonalToken && !googleContext.state.googleWorkToken && googleContext.state.settings.googleClientId) {
+      try {
+        googleTokenClient.requestAccessToken({ prompt: 'select_account' });
+      } catch (e) {
+        console.warn("Auto-popup on localhost dev skipped:", e);
+      }
+    }
   }
 
   updateGoogleAuthStatus();
@@ -165,57 +352,103 @@ export function initGoogleOAuth() {
 
 let isRefreshingToken = { personal: false, work: false };
 
-export function refreshGoogleToken(accountType) {
+export async function refreshGoogleToken(accountType) {
   if (isRefreshingToken[accountType]) return;
-  if (typeof google === 'undefined' || !googleTokenClient) {
-    console.warn("Google Client not initialized for refresh");
-    return;
-  }
-  
-  const emailHint = accountType === 'personal' ? googleContext.state.googlePersonalEmail : googleContext.state.googleWorkEmail;
-  if (!emailHint) return;
 
-  console.log(`Attempting silent token refresh for ${accountType} (${emailHint})...`);
-  isRefreshingToken[accountType] = true;
-  googleLoginTarget = accountType;
-  
-  try {
-    googleTokenClient.requestAccessToken({
-      hint: emailHint,
-      prompt: ''
-    });
-    setTimeout(() => { isRefreshingToken[accountType] = false; }, 8000);
-  } catch (e) {
-    console.error("Silent refresh failed", e);
+  const refreshToken = localStorage.getItem(`google_${accountType}_refresh_token`) || sessionStorage.getItem(`google_${accountType}_refresh_token`);
+  const clientId = googleContext.state?.settings?.googleClientId;
+  const clientSecret = googleContext.state?.settings?.googleClientSecret;
+
+  // 1. Silent Background Refresh via refresh_token (Production / Offline mode)
+  if (refreshToken && clientId && clientSecret) {
+    isRefreshingToken[accountType] = true;
+    try {
+      console.log(`Silent serverless refresh for ${accountType} with refresh_token...`);
+      const tokenUrl = 'https://oauth2.googleapis.com/token';
+      const proxyEndpoint = `/api/proxy?url=${encodeURIComponent(tokenUrl)}`;
+      const params = new URLSearchParams({
+        client_id: clientId,
+        client_secret: clientSecret,
+        refresh_token: refreshToken,
+        grant_type: 'refresh_token'
+      });
+
+      const res = await fetch(proxyEndpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: params.toString()
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        const token = data.access_token;
+        const expiresInSec = data.expires_in || 3600;
+        const expiryTimestamp = Date.now() + (expiresInSec * 1000) - 60000;
+
+        if (accountType === 'personal') {
+          googleContext.state.googlePersonalToken = token;
+          localStorage.setItem('google_personal_token', token);
+          localStorage.setItem('google_personal_expiry', String(expiryTimestamp));
+          sessionStorage.setItem('google_personal_token', token);
+          sessionStorage.setItem('google_personal_expiry', String(expiryTimestamp));
+        } else {
+          googleContext.state.googleWorkToken = token;
+          localStorage.setItem('google_work_token', token);
+          localStorage.setItem('google_work_expiry', String(expiryTimestamp));
+          sessionStorage.setItem('google_work_token', token);
+          sessionStorage.setItem('google_work_expiry', String(expiryTimestamp));
+        }
+
+        googleContext.state.googleClientToken = googleContext.state.googlePersonalToken || googleContext.state.googleWorkToken;
+        localStorage.setItem('google_access_token', googleContext.state.googleClientToken || '');
+        sessionStorage.setItem('google_access_token', googleContext.state.googleClientToken || '');
+
+        if (googleContext.state.googleErrors) {
+          delete googleContext.state.googleErrors[accountType];
+        }
+
+        isRefreshingToken[accountType] = false;
+        updateGoogleAuthStatus();
+        fetchGoogleData();
+        return;
+      }
+    } catch (e) {
+      console.warn("Silent refresh_token exchange failed:", e);
+    }
     isRefreshingToken[accountType] = false;
   }
+
+  // 2. Local development GIS flow (localhost)
+  if (isLocalDevelopment() && typeof google !== 'undefined' && googleTokenClient) {
+    const emailHint = accountType === 'personal' ? googleContext.state.googlePersonalEmail : googleContext.state.googleWorkEmail;
+    if (!emailHint) return;
+
+    isRefreshingToken[accountType] = true;
+    googleLoginTarget = accountType;
+    try {
+      googleTokenClient.requestAccessToken({
+        hint: emailHint,
+        prompt: ''
+      });
+      setTimeout(() => { isRefreshingToken[accountType] = false; }, 8000);
+    } catch (e) {
+      console.error("Local GIS refresh failed", e);
+      isRefreshingToken[accountType] = false;
+    }
+    return;
+  }
+
+  // 3. Mark session expired if cannot be refreshed silently
+  googleContext.state.googleErrors = googleContext.state.googleErrors || {};
+  googleContext.state.googleErrors[accountType] = 'Session expired';
+  updateGoogleAuthStatus();
 }
 
 export function handleInvalidToken(accountType) {
-  console.warn(`Token expired (401) for ${accountType} account. Attempting silent renewal.`);
-  const emailHint = accountType === 'personal' ? googleContext.state.googlePersonalEmail : googleContext.state.googleWorkEmail;
-  if (emailHint && typeof googleTokenClient !== 'undefined' && googleTokenClient) {
-    refreshGoogleToken(accountType);
-  } else {
-    googleContext.state.googleErrors = googleContext.state.googleErrors || {};
-    googleContext.state.googleErrors[accountType] = 'Token expired (401)';
-    if (accountType === 'personal') {
-      googleContext.state.googlePersonalToken = null;
-      localStorage.removeItem('google_personal_token');
-      localStorage.removeItem('google_personal_expiry');
-      sessionStorage.removeItem('google_personal_token');
-    } else {
-      googleContext.state.googleWorkToken = null;
-      localStorage.removeItem('google_work_token');
-      localStorage.removeItem('google_work_expiry');
-      sessionStorage.removeItem('google_work_token');
-    }
-    googleContext.state.googleClientToken = googleContext.state.googlePersonalToken || googleContext.state.googleWorkToken;
-    localStorage.setItem('google_access_token', googleContext.state.googleClientToken || '');
-    sessionStorage.setItem('google_access_token', googleContext.state.googleClientToken || '');
-    
-    updateGoogleAuthStatus();
-  }
+  console.warn(`Token expired (401) for ${accountType} account. Attempting renewal.`);
+  refreshGoogleToken(accountType);
 }
 
 export function handleGoogleLogout(target) {
@@ -233,10 +466,13 @@ export function handleGoogleLogout(target) {
       if (googleContext.state.googleErrors) delete googleContext.state.googleErrors.personal;
     }
     localStorage.removeItem('google_personal_token');
+    localStorage.removeItem('google_personal_refresh_token');
     localStorage.removeItem('google_personal_email');
     localStorage.removeItem('google_personal_expiry');
     sessionStorage.removeItem('google_personal_token');
+    sessionStorage.removeItem('google_personal_refresh_token');
     sessionStorage.removeItem('google_personal_email');
+    sessionStorage.removeItem('google_personal_expiry');
   } else if (target === 'work') {
     if (googleContext.state?.googleWorkToken && typeof google !== 'undefined' && google?.accounts?.oauth2?.revoke) {
       try {
@@ -251,10 +487,13 @@ export function handleGoogleLogout(target) {
       if (googleContext.state.googleErrors) delete googleContext.state.googleErrors.work;
     }
     localStorage.removeItem('google_work_token');
+    localStorage.removeItem('google_work_refresh_token');
     localStorage.removeItem('google_work_email');
     localStorage.removeItem('google_work_expiry');
     sessionStorage.removeItem('google_work_token');
+    sessionStorage.removeItem('google_work_refresh_token');
     sessionStorage.removeItem('google_work_email');
+    sessionStorage.removeItem('google_work_expiry');
   }
   if (googleContext.state) {
     googleContext.state.googleClientToken = googleContext.state.googlePersonalToken || googleContext.state.googleWorkToken;

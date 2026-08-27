@@ -72,7 +72,9 @@ export const SENSITIVE_SETTING_KEYS = [
   "githubToken",
   "bitbucketToken",
   "gitlabToken",
-  "jiraToken"
+  "jiraToken",
+  "googleClientId",
+  "googleClientSecret"
 ];
 
 export function sanitizeSettingsForSync(settings) {
@@ -165,7 +167,11 @@ export async function loadState(state = defaultState) {
   const st = state || defaultState;
   const storedSettings = localStorage.getItem("dashboard_settings");
   if (storedSettings) {
-    st.settings = { ...st.settings, ...JSON.parse(storedSettings) };
+    try {
+      st.settings = { ...st.settings, ...JSON.parse(storedSettings) };
+    } catch (e) {
+      console.warn("Failed to parse settings", e);
+    }
   }
   function sanitizeOrderList(currentList, defaultList) {
     if (!Array.isArray(currentList) || !currentList.length) return [...defaultList];

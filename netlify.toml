@@ -6,3 +6,8 @@
   from = "/api/proxy"
   to = "/.netlify/functions/proxy"
   status = 200
+
+[[redirects]]
+  from = "/api/auth/google/callback"
+  to = "/.netlify/functions/auth-google-callback"
+  status = 200
