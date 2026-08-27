@@ -99,6 +99,7 @@ export default {
   "disconnected": "Desconnectat",
   "connected": "Connectat",
   "google-session-expired": "Sessió caducada. Torna a iniciar sessió.",
+  "error-could-not-connect": "No s'ha pogut connectar. Revisa les credencials.",
   "google-login": "Inicia la sessió amb Google",
   "google-logout": "Desconnectar",
   "google-login-personal": "Connecta Compte Personal",

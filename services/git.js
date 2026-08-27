@@ -1,6 +1,6 @@
 import { state } from "../utils/state.js";
 import { t } from "../locales/index.js";
-import { safeFetch, escapeHtml } from "../utils/helpers.js";
+import { safeFetch, escapeHtml, formatAuthErrorMessage } from "../utils/helpers.js";
 import { saveSettings } from "./storage.js";
 import { translatePage } from "../ui/settings.js";
 
@@ -171,7 +171,7 @@ export async function testGitConnection(provider, button) {
         state.settings.githubToken = token;
         await saveSettings(state);
       } else {
-        throw new Error(`${res.status} ${res.statusText}`);
+        throw new Error(formatAuthErrorMessage(null, res.status));
       }
     } else if (provider === 'bitbucket') {
       const workspace = document.getElementById('bitbucket-workspace').value.trim();
@@ -200,10 +200,10 @@ export async function testGitConnection(provider, button) {
         if (userRes.status === 403) {
           throw new Error(t('git-token-scope'));
         }
-        throw new Error(`${userRes.status} ${userRes.statusText}`);
+        throw new Error(formatAuthErrorMessage(null, userRes.status));
       }
       if (!reposRes.ok) {
-        throw new Error(`${reposRes.status} ${reposRes.statusText}`);
+        throw new Error(formatAuthErrorMessage(null, reposRes.status));
       }
       success = true;
       state.settings.bitbucketWorkspace = workspace;
@@ -226,11 +226,11 @@ export async function testGitConnection(provider, button) {
         state.settings.gitlabToken = token;
         await saveSettings(state);
       } else {
-        throw new Error(`${res.status} ${res.statusText}`);
+        throw new Error(formatAuthErrorMessage(null, res.status));
       }
     }
   } catch (e) {
-    errorMsg = e.message || String(e);
+    errorMsg = formatAuthErrorMessage(e);
   }
 
   // Update State Status and Error Message
@@ -327,7 +327,7 @@ export async function fetchAllPRs(appState = state, safeFetchFn = safeFetch, esc
       const userRes = await fetch(`https://api.github.com/user`, { headers });
       if (!userRes.ok) {
         state.githubStatus = 'error';
-        state.githubError = `${userRes.status} ${userRes.statusText}`;
+        state.githubError = formatAuthErrorMessage(null, userRes.status);
       } else {
         const userData = await userRes.json();
         const githubUserLogin = userData.login;
@@ -446,7 +446,7 @@ export async function fetchAllPRs(appState = state, safeFetchFn = safeFetch, esc
     } catch (e) {
       console.error("Error fetching GitHub PRs:", e);
       state.githubStatus = 'error';
-      state.githubError = e.message || String(e);
+      state.githubError = formatAuthErrorMessage(e);
     }
     updateGitStatusIndicators(state, escapeHtml);
   }
@@ -515,7 +515,7 @@ export async function fetchAllPRs(appState = state, safeFetchFn = safeFetch, esc
       const reposRes = await fetch(`https://api.bitbucket.org/2.0/repositories/${encodeURIComponent(workspace)}?sort=-updated_on&pagelen=10`, { headers });
       if (!reposRes.ok) {
         state.bitbucketStatus = 'error';
-        state.bitbucketError = `${reposRes.status} ${reposRes.statusText}`;
+        state.bitbucketError = formatAuthErrorMessage(null, reposRes.status);
       } else {
         const reposData = await reposRes.json();
         const repos = reposData.values || [];
@@ -623,7 +623,7 @@ export async function fetchAllPRs(appState = state, safeFetchFn = safeFetch, esc
     } catch (e) {
       console.error("Error fetching Bitbucket PRs:", e);
       state.bitbucketStatus = 'error';
-      state.bitbucketError = e.message || String(e);
+      state.bitbucketError = formatAuthErrorMessage(e);
     }
     updateGitStatusIndicators(state, escapeHtml);
   }
@@ -639,7 +639,7 @@ export async function fetchAllPRs(appState = state, safeFetchFn = safeFetch, esc
       const userRes = await fetch(`${host}/api/v4/user`, { headers });
       if (!userRes.ok) {
         state.gitlabStatus = 'error';
-        state.gitlabError = `${userRes.status} ${userRes.statusText}`;
+        state.gitlabError = formatAuthErrorMessage(null, userRes.status);
       } else {
         const userData = await userRes.json();
         const gitlabUsername = userData.username;
@@ -766,7 +766,7 @@ export async function fetchAllPRs(appState = state, safeFetchFn = safeFetch, esc
     } catch (e) {
       console.error("Error fetching GitLab MRs:", e);
       state.gitlabStatus = 'error';
-      state.gitlabError = e.message || String(e);
+      state.gitlabError = formatAuthErrorMessage(e);
     }
     updateGitStatusIndicators(state, escapeHtml);
   }

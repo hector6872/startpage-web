@@ -1,5 +1,5 @@
 import { state as defaultState, state } from "../utils/state.js";
-import { safeFetch as defaultSafeFetch, escapeHtml as defaultEscapeHtml, safeFetch, escapeHtml } from "../utils/helpers.js";
+import { safeFetch as defaultSafeFetch, escapeHtml as defaultEscapeHtml, safeFetch, escapeHtml, formatAuthErrorMessage } from "../utils/helpers.js";
 import { t } from "../locales/index.js";
 import { saveSettings } from "./storage.js";
 import { translatePage } from "../ui/settings.js";
@@ -107,7 +107,7 @@ export async function testJiraConnection(button) {
     });
 
     if (res.status === 401 || res.status === 403) {
-      throw new Error(`Authentication failed (${res.status} ${res.status === 403 ? 'Forbidden' : 'Unauthorized'})`);
+      throw new Error(formatAuthErrorMessage(null, res.status));
     }
 
     // Fallback to /rest/api/2/ only if 404 (Jira Server/Data Center)
@@ -119,24 +119,24 @@ export async function testJiraConnection(button) {
         }
       });
       if (res.status === 401 || res.status === 403) {
-        throw new Error(`Authentication failed (${res.status} ${res.status === 403 ? 'Forbidden' : 'Unauthorized'})`);
+        throw new Error(formatAuthErrorMessage(null, res.status));
       }
     }
 
     if (!res.ok) {
-      throw new Error(`HTTP ${res.status} ${res.statusText || 'Error'}`);
+      throw new Error(formatAuthErrorMessage(null, res.status));
     }
 
     const contentType = (res.headers.get("content-type") || "").toLowerCase();
     if (contentType.includes("text/html")) {
-      throw new Error("Received HTML login page instead of Jira API response");
+      throw new Error(formatAuthErrorMessage(t('error-could-not-connect')));
     }
 
     let userData;
     try {
       userData = await res.json();
     } catch (e) {
-      throw new Error("Invalid JSON response from Jira");
+      throw new Error(formatAuthErrorMessage(t('error-could-not-connect')));
     }
 
     if (userData && (userData.accountId || userData.name || userData.emailAddress || userData.displayName || userData.key)) {
@@ -148,10 +148,10 @@ export async function testJiraConnection(button) {
       state.jiraError = '';
       await saveSettings(state);
     } else {
-      throw new Error((userData && userData.errorMessages && userData.errorMessages.join(', ')) || "Invalid Jira credentials or response");
+      throw new Error((userData && userData.errorMessages && userData.errorMessages.join(', ')) || formatAuthErrorMessage(t('error-could-not-connect')));
     }
   } catch (e) {
-    errorMsg = e.message || String(e);
+    errorMsg = formatAuthErrorMessage(e);
     state.jiraStatus = 'error';
     state.jiraError = errorMsg;
   }
@@ -317,19 +317,23 @@ export async function fetchJira(state = defaultState, safeFetch = defaultSafeFet
     }
 
     if (!response.ok) {
-      throw new Error(`HTTP ${response.status} ${response.statusText || 'Error'}`);
+      state.jiraStatus = 'error';
+      state.jiraError = formatAuthErrorMessage(null, response.status);
+      updateJiraStatusIndicators(state, escapeHtml);
+      container.innerHTML = `<p class="empty-msg">${t("no-jira-tasks")}</p>`;
+      return;
     }
 
     const contentType = (response.headers.get("content-type") || "").toLowerCase();
     if (contentType.includes("text/html")) {
-      throw new Error("Received HTML login page instead of Jira API response");
+      throw new Error(formatAuthErrorMessage(t('error-could-not-connect')));
     }
 
     let data;
     try {
       data = await response.json();
     } catch (e) {
-      throw new Error("Invalid JSON response from Jira");
+      throw new Error(formatAuthErrorMessage(t('error-could-not-connect')));
     }
 
     if (data.errorMessages && data.errorMessages.length > 0) {
@@ -339,7 +343,7 @@ export async function fetchJira(state = defaultState, safeFetch = defaultSafeFet
       throw new Error(Object.values(data.errors).join(", "));
     }
     if (!Array.isArray(data.issues)) {
-      throw new Error("Invalid Jira response (no issues list)");
+      throw new Error(formatAuthErrorMessage(t('error-could-not-connect')));
     }
 
     const totalCount = typeof data.total === "number" ? data.total : data.issues.length;
@@ -424,7 +428,7 @@ export async function fetchJira(state = defaultState, safeFetch = defaultSafeFet
   } catch (error) {
     console.error("Jira fetch error:", error);
     state.jiraStatus = 'error';
-    state.jiraError = error.message || "Error";
+    state.jiraError = formatAuthErrorMessage(error);
     updateJiraStatusIndicators(state, escapeHtml);
     container.innerHTML = `<p class="empty-msg">${t("no-jira-tasks")}</p>`;
   }

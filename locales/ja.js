@@ -99,6 +99,7 @@ export default {
   "disconnected": "未接続",
   "connected": "接続済み",
   "google-session-expired": "セッションの有効期限が切れました。再接続してください。",
+  "error-could-not-connect": "接続できませんでした。認証情報を確認してください。",
   "google-login": "Google でログイン",
   "google-logout": "接続解除",
   "google-login-personal": "個人アカウントを接続",

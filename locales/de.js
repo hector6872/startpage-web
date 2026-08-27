@@ -99,6 +99,7 @@ export default {
   "disconnected": "Getrennt",
   "connected": "Verbunden",
   "google-session-expired": "Sitzung abgelaufen. Bitte erneut anmelden.",
+  "error-could-not-connect": "Verbindung fehlgeschlagen. Bitte Anmeldedaten prüfen.",
   "google-login": "Mit Google anmelden",
   "google-logout": "Trennen",
   "google-login-personal": "Privatkonto verbinden",

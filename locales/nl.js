@@ -99,6 +99,7 @@ export default {
   "disconnected": "Niet Verbonden",
   "connected": "Verbonden",
   "google-session-expired": "Sessie verlopen. Maak opnieuw verbinding.",
+  "error-could-not-connect": "Kan geen verbinding maken. Controleer inloggegevens.",
   "google-login": "Inloggen met Google",
   "google-logout": "Ontkoppelen",
   "google-login-personal": "Persoonlijk Account Koppelen",

@@ -99,6 +99,7 @@ export default {
   "disconnected": "未连接",
   "connected": "已连接",
   "google-session-expired": "会话已过期，请重新连接。",
+  "error-could-not-connect": "无法连接，请检查凭据。",
   "google-login": "通过 Google 登录",
   "google-logout": "断开连接",
   "google-login-personal": "连接个人账户",

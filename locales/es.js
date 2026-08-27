@@ -99,6 +99,7 @@ export default {
   "disconnected": "Desconectado",
   "connected": "Conectado",
   "google-session-expired": "Sesión expirada. Vuelve a iniciar sesión.",
+  "error-could-not-connect": "No se pudo conectar. Revisa las credenciales.",
   "google-login": "Iniciar sesión con Google",
   "google-logout": "Desconectar",
   "google-login-personal": "Iniciar Sesión (Personal)",
