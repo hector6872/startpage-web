@@ -1694,18 +1694,41 @@ html.dark .priority-low {
   animation: fadeIn 0.6s ease;
   display: flex;
   align-items: center;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .quote-container {
-  display: inline-flex;
+  display: flex;
   align-items: center;
   justify-content: flex-start;
-  flex-wrap: wrap;
-  gap: 0.3rem;
+  flex-wrap: nowrap;
+  width: 100%;
+  min-width: 0;
+  gap: 0.35rem;
   line-height: 1.45;
   font-family: var(--font-sans);
   font-size: 0.82rem;
   color: var(--text-secondary);
+  overflow: hidden;
+}
+
+.quote-content {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  word-break: break-word;
+  line-height: 1.45;
+  cursor: default;
+}
+
+.quote-content a.wiki-link,
+.quote-content a.quote-author {
+  cursor: pointer;
 }
 
 .quote-text,
@@ -2091,7 +2114,8 @@ html.dark select {
   align-items: center;
 }
 
-.form-group label {
+.form-group label,
+.form-group .form-label {
   font-size: 0.85rem;
   font-weight: 600;
   color: var(--text-primary);
@@ -2280,6 +2304,27 @@ html.dark .notes-textarea {
     max-width: 100%;
     overflow-x: clip;
     box-sizing: border-box;
+  }
+  .quote-container {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.35rem 0.5rem;
+  }
+  .wiki-badge,
+  .wiki-nav-controls,
+  .wiki-year-badge {
+    margin-top: 0;
+    flex-shrink: 0;
+  }
+  .quote-content {
+    flex-basis: 100%;
+    width: 100%;
+    margin-top: 0.25rem;
+    -webkit-line-clamp: 2;
+    min-height: calc(2 * 1.45em);
+    max-height: calc(2 * 1.45em);
+    line-height: 1.45;
   }
   .settings-btn-floating {
     bottom: 1rem;
@@ -3290,20 +3335,20 @@ textarea:focus-visible {
   background: var(--bg-card);
   color: var(--text-primary);
   border: 1px solid var(--border-color);
-  padding: 0.45rem 0.75rem;
+  padding: 0.5rem 0.85rem;
   border-radius: 8px;
   font-size: 0.75rem;
   font-weight: 500;
   box-shadow: var(--shadow-md);
   z-index: 9999;
   pointer-events: none;
-  max-width: 280px;
+  max-width: min(480px, calc(100vw - 32px));
   white-space: pre-wrap;
   word-break: break-word;
   opacity: 0;
   transform: translate(-50%, -100%) scale(0.95);
   transition: opacity 0.1s ease, transform 0.1s ease;
-  line-height: 1.35;
+  line-height: 1.4;
   backdrop-filter: blur(8px);
 }
 

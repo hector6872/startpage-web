@@ -45,7 +45,7 @@
         <div class="header-right">
           <!-- Shortcut Buttons Stack -->
           <div id="shortcut-buttons-column" class="shortcut-buttons-column">
-            <button id="notes-btn-header" type="button" class="btn-icon shortcut-btn" title="Notas" aria-label="Notas" data-i18n-title="notes-btn-title">
+            <button id="notes-btn-header" type="button" class="btn-icon shortcut-btn" title="Scratchpad" aria-label="Notas" data-i18n-title="notes-btn-title">
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
                 <polyline points="14 2 14 8 20 8"></polyline>
@@ -62,7 +62,7 @@
                 <circle cx="12" cy="14" r="8"></circle>
               </svg>
             </button>
-            <button id="finance-btn-header" type="button" class="btn-icon shortcut-btn" title="Finanzas" aria-label="Finanzas" data-i18n-title="finance-btn-title">
+            <button id="finance-btn-header" type="button" class="btn-icon shortcut-btn" title="Markets" aria-label="Finanzas" data-i18n-title="finance-btn-title">
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <polyline points="22 7 13.5 15.5 8.5 10.5 2 17"></polyline>
                 <polyline points="16 7 22 7 22 13"></polyline>
@@ -109,15 +109,9 @@
       <!-- Dedicated Wikipedia Row in Header -->
       <div id="quote-widget" class="quote-widget">
         <div class="quote-container">
-          <span class="quote-text">"Loading quote of the day..."</span>
-          <span class="quote-sep"> – </span>
-          <a id="quote-author" class="quote-author" href="#" target="_blank" rel="noopener noreferrer"></a>
-          <button id="copy-quote-btn" class="copy-quote-btn" title="Copy quote" aria-label="Copy quote">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-            </svg>
-          </button>
+          <div class="quote-content" data-tooltip="Loading quote of the day...">
+            <span class="quote-text">"Loading quote of the day..."</span>
+          </div>
         </div>
       </div>
     </header>
@@ -135,7 +129,7 @@
           <div class="section-card" id="today-events-card">
             <h3 class="card-subtitle">
               <span style="display: inline-flex; align-items: center; gap: 0.4rem;">
-                <span data-i18n="calendar-events">Events</span>
+                <span data-i18n="calendar-events">Schedule & Meetings</span>
                 <span id="events-count-badge" class="filter-badge hidden" style="margin-left: 0;"></span>
                 <button type="button" id="btn-create-event-today" class="card-action-btn" data-tooltip="Create Event (C)" aria-label="Create Event">
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -148,7 +142,7 @@
             </h3>
             <div id="google-events-container" class="integration-list">
               <!-- Dynamically populated -->
-              <p class="empty-msg" data-i18n="no-events">No events scheduled.</p>
+              <p class="empty-msg" data-i18n="no-events">No events scheduled for today</p>
             </div>
           </div>
           <div class="section-card" id="gmail-card">
@@ -196,7 +190,7 @@
             </h3>
             <div id="weekly-events-container" class="integration-list">
               <!-- Dynamically populated -->
-              <p class="empty-msg" data-i18n="no-weekly-events">No events this week.</p>
+              <p class="empty-msg" data-i18n="no-weekly-events">No upcoming events scheduled</p>
             </div>
           </div>
         </div>
@@ -221,7 +215,7 @@
               </h3>
               <div id="prs-container" class="integration-list">
                 <!-- Dynamically populated -->
-                <p class="empty-msg" data-i18n="no-prs">No pull requests awaiting review.</p>
+                <p class="empty-msg" data-i18n="no-prs">No pull requests awaiting review</p>
               </div>
             </div>
             <div class="section-card" id="jira-card">
@@ -234,7 +228,7 @@
               </h3>
               <div id="jira-container" class="integration-list">
                 <!-- Dynamically populated -->
-                <p class="empty-msg" data-i18n="no-jira-tasks">No active Jira issues assigned.</p>
+                <p class="empty-msg" data-i18n="no-jira-tasks">No active Jira issues assigned</p>
               </div>
             </div>
           </div>
@@ -254,7 +248,7 @@
               <ul id="countdown-list" class="countdown-list">
                 <!-- Dynamically populated -->
               </ul>
-              <p id="countdown-empty" class="empty-msg countdown-empty" data-i18n="countdown-empty">No events scheduled.</p>
+              <p id="countdown-empty" class="empty-msg countdown-empty" data-i18n="countdown-empty">No events scheduled</p>
             </div>
           </div>
         </div>
@@ -262,7 +256,7 @@
         <!-- My Tasks Section -->
         <div id="tasks-section" class="task-col-section">
           <div class="section-header" id="tasks-section-header">
-            <h2 class="col-title" id="tasks-section-title" data-i18n="tasks-card-title">My Tasks</h2>
+            <h2 class="col-title" id="tasks-section-title" data-i18n="tasks-card-title">Tasks</h2>
             <button id="btn-show-add-task" class="add-section-btn" title="Add Task (T)" data-tooltip="Add Task (T)" aria-label="Add Task">
               <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
             </button>
@@ -284,17 +278,15 @@
               <div class="todo-list-container">
                 <div class="todo-filters">
                   <div class="filter-group">
-                    <button class="filter-btn active" data-filter="pending" data-i18n="filter-pending">Pending</button>
+                    <button class="filter-btn active" data-filter="pending" data-i18n="filter-pending">Active</button>
                     <button class="filter-btn" data-filter="completed" data-i18n="filter-completed">Completed</button>
                   </div>
-                  <button id="btn-clear-completed" class="clear-completed-btn hidden" data-i18n="clear-completed-btn">Clear All</button>
+                  <button id="btn-clear-completed" class="clear-completed-btn hidden" data-i18n="clear-completed-btn">Clear Completed</button>
                 </div>
                 <ul id="todo-list" class="todo-list">
                   <!-- Dynamically populated -->
                 </ul>
-                <div id="completed-tasks-note" class="completed-tasks-note hidden" data-i18n="completed-tasks-note">
-                   Only tasks completed within the last 7 days are displayed.
-                </div>
+                <div id="completed-tasks-note" class="completed-tasks-note hidden" data-i18n="completed-tasks-note">Showing tasks completed within the last 7 days</div>
               </div>
             </div>
           </div>
@@ -315,10 +307,10 @@
           <button type="button" class="tab-btn active" role="tab" id="tab-btn-general" aria-selected="true" aria-controls="tab-general" tabindex="0" data-tab="tab-general" data-i18n="tab-general">General</button>
           <button type="button" class="tab-btn" role="tab" id="tab-btn-layout" aria-selected="false" aria-controls="tab-layout" tabindex="-1" data-tab="tab-layout" data-i18n="tab-layout">Layout</button>
           <button type="button" class="tab-btn" role="tab" id="tab-btn-shortcuts" aria-selected="false" aria-controls="tab-shortcuts" tabindex="-1" data-tab="tab-shortcuts" data-i18n="tab-shortcuts">Shortcuts</button>
-          <button type="button" class="tab-btn" role="tab" id="tab-btn-google" aria-selected="false" aria-controls="tab-google" tabindex="-1" data-tab="tab-google" data-i18n="tab-google">Google</button>
-          <button type="button" class="tab-btn" role="tab" id="tab-btn-git" aria-selected="false" aria-controls="tab-git" tabindex="-1" data-tab="tab-git" data-i18n="tab-git">GitHub & Bitbucket</button>
-          <button type="button" class="tab-btn" role="tab" id="tab-btn-jira" aria-selected="false" aria-controls="tab-jira" tabindex="-1" data-tab="tab-jira" data-i18n="tab-jira">Jira</button>
-          <button type="button" class="tab-btn" role="tab" id="tab-btn-storage" aria-selected="false" aria-controls="tab-storage" tabindex="-1" data-tab="tab-storage" data-i18n="tab-storage">Storage</button>
+          <button type="button" class="tab-btn" role="tab" id="tab-btn-google" aria-selected="false" aria-controls="tab-google" tabindex="-1" data-tab="tab-google" data-i18n="tab-google">Google Integration</button>
+          <button type="button" class="tab-btn" role="tab" id="tab-btn-git" aria-selected="false" aria-controls="tab-git" tabindex="-1" data-tab="tab-git" data-i18n="tab-git">Git Integrations</button>
+          <button type="button" class="tab-btn" role="tab" id="tab-btn-jira" aria-selected="false" aria-controls="tab-jira" tabindex="-1" data-tab="tab-jira" data-i18n="tab-jira">Jira Integration</button>
+          <button type="button" class="tab-btn" role="tab" id="tab-btn-storage" aria-selected="false" aria-controls="tab-storage" tabindex="-1" data-tab="tab-storage" data-i18n="tab-storage">Data & Sync</button>
         </nav>
         <div class="modal-body">
           <!-- Tab: General -->
@@ -329,7 +321,7 @@
                 <div style="display: flex; align-items: center; gap: 0.75rem; min-width: 0;">
                   <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--accent); flex-shrink: 0;"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/></svg>
                   <div>
-                    <div style="font-size: 0.88rem; font-weight: 600; color: var(--text-primary);" data-i18n="repo-instructions-desc">Setup guide, token scopes, and instructions on GitHub</div>
+                    <div style="font-size: 0.88rem; font-weight: 600; color: var(--text-primary);" data-i18n="repo-instructions-desc">Setup guide and instructions on GitHub</div>
                   </div>
                 </div>
                 <a href="https://github.com/hector6872/startpage-web" target="_blank" rel="noopener noreferrer" class="btn-primary" style="font-size: 0.75rem; padding: 0.45rem 0.85rem; text-decoration: none; display: inline-flex; align-items: center; gap: 0.35rem; border-radius: var(--radius-sm); white-space: nowrap;">
@@ -341,7 +333,7 @@
             <!-- Language and Theme Group -->
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.25rem;">
               <div class="form-group">
-                <label for="settings-lang" data-i18n="label-language">Default Language</label>
+                <label for="settings-lang" data-i18n="label-language">Language</label>
                 <select id="settings-lang">
                   <option value="en">🇬🇧 English</option>
                   <option value="es">🇪🇸 Español</option>
@@ -356,7 +348,7 @@
                 </select>
               </div>
               <div class="form-group">
-                <label for="settings-theme" data-i18n="label-theme">Default Theme</label>
+                <label for="settings-theme" data-i18n="label-theme">Theme</label>
                 <select id="settings-theme">
                   <option value="system" data-i18n="theme-system">System Default</option>
                   <option value="light" data-i18n="theme-light">Light</option>
@@ -367,7 +359,7 @@
 
             <!-- Primary Color Group -->
             <div class="form-group" style="margin-bottom: 1.25rem;">
-              <label data-i18n="label-primary-color">Primary Color</label>
+              <span class="form-label" data-i18n="label-primary-color">Theme accent</span>
               <div class="color-picker-grid" id="color-picker-swatches">
                 <button type="button" class="color-swatch-btn active" data-color="blue" data-i18n-title="color-blue" title="Blue" style="--swatch-color: #3b82f6;"></button>
                 <button type="button" class="color-swatch-btn" data-color="indigo" data-i18n-title="color-indigo" title="Indigo" style="--swatch-color: #6366f1;"></button>
@@ -377,8 +369,8 @@
                 <button type="button" class="color-swatch-btn" data-color="orange" data-i18n-title="color-orange" title="Orange" style="--swatch-color: #f97316;"></button>
                 <button type="button" class="color-swatch-btn" data-color="green" data-i18n-title="color-green" title="Green" style="--swatch-color: #10b981;"></button>
                 <button type="button" class="color-swatch-btn" data-color="teal" data-i18n-title="color-teal" title="Teal" style="--swatch-color: #06b6d4;"></button>
-                <button type="button" class="color-swatch-btn" data-color="slate" data-i18n-title="color-slate" title="Slate Gray" style="--swatch-color: #64748b;"></button>
-                <button type="button" class="color-swatch-btn" data-color="black" data-i18n-title="color-black" title="Black / Onyx" style="--swatch-color: #18181b;"></button>
+                <button type="button" class="color-swatch-btn" data-color="slate" data-i18n-title="color-slate" title="Gray" style="--swatch-color: #64748b;"></button>
+                <button type="button" class="color-swatch-btn" data-color="black" data-i18n-title="color-black" title="Black" style="--swatch-color: #18181b;"></button>
               </div>
               <input type="hidden" id="settings-primary-color" value="blue">
             </div>
@@ -419,7 +411,7 @@
                     <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
                     <path d="M2 12h20"></path>
                   </svg>
-                  <span data-i18n="label-show-wikipedia">Wikipedia</span>
+                  <span data-i18n="label-show-wikipedia">Wikipedia Widget</span>
                 </span>
                 <label class="switch-control">
                   <input type="checkbox" id="settings-show-wikipedia" checked>
@@ -443,7 +435,7 @@
               <div class="card-toggle-header">
                 <span class="card-toggle-title">
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                  <span data-i18n="label-show-world-clock">Show World Clock</span>
+                  <span data-i18n="label-show-world-clock">World Clock Widget</span>
                 </span>
                 <label class="switch-control">
                   <input type="checkbox" id="settings-show-world-clock" checked>
@@ -484,12 +476,12 @@
                   </select>
                 </div>
                 <div class="form-group">
-                  <label for="settings-world-clock-label" data-i18n="label-world-clock-label">World Clock Label</label>
+                  <label for="settings-world-clock-label" data-i18n="label-world-clock-label">Label</label>
                   <input type="text" id="settings-world-clock-label" data-i18n-placeholder="clock-label-placeholder" placeholder="e.g. London">
                 </div>
                 <div class="form-group" style="margin-top: 0.75rem;">
-                  <label for="settings-world-clock-url" data-i18n="label-world-clock-url">World Clock Web URL</label>
-                  <input type="url" id="settings-world-clock-url" data-i18n-placeholder="clock-url-placeholder" placeholder="https://time.is" value="https://time.is">
+                  <label for="settings-world-clock-url" data-i18n="label-world-clock-url">Clock page</label>
+                  <input type="url" id="settings-world-clock-url" data-i18n-placeholder="clock-url-placeholder" placeholder="e.g. https://time.is or leave empty for default page" value="https://time.is">
                 </div>
               </div>
             </div>
@@ -499,7 +491,7 @@
               <div class="card-toggle-header">
                 <span class="card-toggle-title">
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v2"/><path d="M4.93 4.93l1.41 1.41"/><path d="M20 12h2"/><path d="M19.07 4.93l-1.41 1.41"/><path d="M15.95 12.65a4 4 0 0 0-5.93-4.13"/><path d="M13 22H7a5 5 0 1 1 4.9-6H13a3 3 0 0 1 0 6z"/></svg>
-                  <span data-i18n="label-show-weather">Show Weather</span>
+                  <span data-i18n="label-show-weather">Weather Widget</span>
                 </span>
                 <label class="switch-control">
                   <input type="checkbox" id="settings-show-weather" checked>
@@ -508,12 +500,12 @@
               </div>
               <div id="weather-city-group" class="card-collapsible-content">
                 <div class="form-group">
-                  <label for="settings-city" data-i18n="label-city">Weather Location (City)</label>
-                  <input type="text" id="settings-city" data-i18n-placeholder="city-placeholder" placeholder="e.g. Madrid">
+                  <label for="settings-city" data-i18n="label-city">Location</label>
+                  <input type="text" id="settings-city" data-i18n-placeholder="city-placeholder" placeholder="e.g. London">
                 </div>
                 <div class="form-group" style="margin-top: 0.75rem;">
-                  <label for="settings-weather-url" data-i18n="label-weather-url">Weather Web URL</label>
-                  <input type="url" id="settings-weather-url" data-i18n-placeholder="weather-url-placeholder" placeholder="https://weather.com" value="https://weather.com">
+                  <label for="settings-weather-url" data-i18n="label-weather-url">Weather Page</label>
+                  <input type="url" id="settings-weather-url" data-i18n-placeholder="weather-url-placeholder" placeholder="e.g. https://weather.com or leave empty for default page" value="https://weather.com">
                 </div>
               </div>
             </div>
@@ -523,7 +515,7 @@
               <div class="card-toggle-header">
                 <span class="card-toggle-title">
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                  <span data-i18n="label-show-countdowns">Show Countdowns</span>
+                  <span data-i18n="label-show-countdowns">Show Events & Milestones</span>
                 </span>
                 <label class="switch-control">
                   <input type="checkbox" id="settings-show-countdowns" checked>
@@ -537,7 +529,7 @@
               <div class="card-toggle-header">
                 <span class="card-toggle-title">
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
-                  <span data-i18n="label-show-tasks">Show Tasks</span>
+                  <span data-i18n="label-show-tasks">Show Local Tasks</span>
                 </span>
                 <label class="switch-control">
                   <input type="checkbox" id="settings-show-tasks" checked>
@@ -633,15 +625,15 @@
               <div id="shortcuts-settings-group" class="card-collapsible-content">
                 <div class="form-group" style="margin-bottom: 0.85rem;">
                   <label for="settings-finance-url" data-i18n="label-finance-url">Finance Web URL</label>
-                  <input type="url" id="settings-finance-url" data-i18n-placeholder="finance-url-placeholder" placeholder="e.g. https://www.google.com/finance">
+                  <input type="url" id="settings-finance-url" data-i18n-placeholder="finance-url-placeholder" placeholder="e.g. https://www.google.com/finance or leave empty for default page">
                 </div>
                 <div class="form-group" style="margin-bottom: 0.85rem;">
                   <label for="settings-timer-url" data-i18n="label-timer-url">Timer Web URL</label>
-                  <input type="url" id="settings-timer-url" data-i18n-placeholder="timer-url-placeholder" placeholder="e.g. https://www.google.com/search?q=timer">
+                  <input type="url" id="settings-timer-url" data-i18n-placeholder="timer-url-placeholder" placeholder="e.g. https://www.google.com/search?q=timer or leave empty for default page">
                 </div>
                 <div class="form-group">
                   <label for="settings-stopwatch-url" data-i18n="label-stopwatch-url">Stopwatch Web URL</label>
-                  <input type="url" id="settings-stopwatch-url" data-i18n-placeholder="stopwatch-url-placeholder" placeholder="e.g. https://www.google.com/search?q=stopwatch">
+                  <input type="url" id="settings-stopwatch-url" data-i18n-placeholder="stopwatch-url-placeholder" placeholder="e.g. https://www.google.com/search?q=stopwatch or leave empty for default page">
                 </div>
               </div>
             </div>
@@ -701,7 +693,7 @@
                   </div>
                   <div class="card-toggle-header">
                     <span class="card-toggle-title" style="font-size: 0.9rem; font-weight: 500;">
-                      <span data-i18n="label-show-google-tasks-week">Upcoming Tasks (Week)</span>
+                      <span data-i18n="label-show-google-tasks-week">Upcoming</span>
                     </span>
                     <label class="switch-control">
                       <input type="checkbox" id="settings-show-google-tasks-week" checked>
@@ -726,9 +718,13 @@
                 <span data-i18n="google-config-title">Google Configuration</span>
               </h3>
             </div>
-            <div class="form-group" style="margin-bottom: 1.5rem;">
-              <label for="google-client-id" data-i18n="label-client-id">Google Client ID</label>
+            <div class="form-group" style="margin-bottom: 1rem;">
+              <label for="google-client-id" data-i18n="label-client-id">Google OAuth Client ID</label>
               <input type="text" id="google-client-id" placeholder="xxxxxxxx.apps.googleusercontent.com">
+            </div>
+            <div class="form-group" style="margin-bottom: 1.5rem;">
+              <label for="google-client-secret" data-i18n="label-client-secret">Google OAuth Client Secret</label>
+              <input type="password" id="google-client-secret" placeholder="GOCSPX-xxxxxxxxxxxxxxxxxxxxxxxx" autocomplete="off">
             </div>
 
             <!-- Personal Account -->
@@ -741,7 +737,7 @@
                 <span id="google-auth-status-personal" class="auth-status disconnected" data-i18n="disconnected">Disconnected</span>
               </div>
               <div class="form-group row-align" style="margin-bottom: 0.75rem;">
-                <label data-i18n="google-color">Account Color:</label>
+                <span class="form-label" data-i18n="google-color">Account Color:</span>
                 <div class="color-picker-grid" id="google-color-personal-swatches" style="margin-top: 0;">
                   <button type="button" class="color-swatch-btn" data-color="blue" title="Blue" style="--swatch-color: #3b82f6;"></button>
                   <button type="button" class="color-swatch-btn" data-color="indigo" title="Indigo" style="--swatch-color: #6366f1;"></button>
@@ -757,8 +753,8 @@
                 <input type="hidden" id="google-color-personal" value="blue">
               </div>
               <div class="google-auth-actions">
-                <button type="button" id="google-login-btn-personal" class="btn-secondary" data-i18n="google-login-personal">Log In (Personal)</button>
-                <button type="button" id="google-logout-btn-personal" class="btn-danger hidden" data-i18n="google-logout">Log Out</button>
+                <button type="button" id="google-login-btn-personal" class="btn-secondary" data-i18n="google-login-personal">Connect (Personal)</button>
+                <button type="button" id="google-logout-btn-personal" class="btn-danger hidden" data-i18n="google-logout">Disconnect</button>
               </div>
             </div>
 
@@ -772,7 +768,7 @@
                 <span id="google-auth-status-work" class="auth-status disconnected" data-i18n="disconnected">Disconnected</span>
               </div>
               <div class="form-group row-align" style="margin-bottom: 0.75rem;">
-                <label data-i18n="google-color">Account Color:</label>
+                <span class="form-label" data-i18n="google-color">Account Color:</span>
                 <div class="color-picker-grid" id="google-color-work-swatches" style="margin-top: 0;">
                   <button type="button" class="color-swatch-btn" data-color="blue" title="Blue" style="--swatch-color: #3b82f6;"></button>
                   <button type="button" class="color-swatch-btn" data-color="indigo" title="Indigo" style="--swatch-color: #6366f1;"></button>
@@ -788,8 +784,8 @@
                 <input type="hidden" id="google-color-work" value="black">
               </div>
               <div class="google-auth-actions" style="margin-top: 1rem;">
-                <button type="button" id="google-login-btn-work" class="btn-secondary" data-i18n="google-login-work">Log In (Work)</button>
-                <button type="button" id="google-logout-btn-work" class="btn-danger hidden" data-i18n="google-logout">Log Out</button>
+                <button type="button" id="google-login-btn-work" class="btn-secondary" data-i18n="google-login-work">Connect (Work)</button>
+                <button type="button" id="google-logout-btn-work" class="btn-danger hidden" data-i18n="google-logout">Disconnect</button>
               </div>
             </div>
           </div>
@@ -811,7 +807,7 @@
             <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; margin-top: 1rem; margin-bottom: 0.5rem;">
               <h3 style="display: flex; align-items: center; gap: 0.35rem; margin: 0;">
                 <span class="status-dot disconnected" id="settings-git-dot-github"></span>
-                <span data-i18n="github-settings">GitHub</span>
+                <span data-i18n="github-settings">GitHub Configuration</span>
               </h3>
               <button type="button" class="btn-secondary test-conn-btn" data-provider="github" data-i18n="btn-connect" style="padding: 0.3rem 0.6rem; font-size: 0.72rem; border-radius: var(--radius-sm); margin: 0; line-height: 1;">Connect</button>
             </div>
@@ -830,12 +826,12 @@
             <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; margin-top: 1.25rem; margin-bottom: 0.5rem;">
               <h3 style="display: flex; align-items: center; gap: 0.35rem; margin: 0;">
                 <span class="status-dot disconnected" id="settings-git-dot-bitbucket"></span>
-                <span data-i18n="bitbucket-settings">Bitbucket</span>
+                <span data-i18n="bitbucket-settings">Bitbucket Configuration</span>
               </h3>
               <button type="button" class="btn-secondary test-conn-btn" data-provider="bitbucket" data-i18n="btn-connect" style="padding: 0.3rem 0.6rem; font-size: 0.72rem; border-radius: var(--radius-sm); margin: 0; line-height: 1;">Connect</button>
             </div>
             <div class="form-group">
-              <label for="bitbucket-workspace" data-i18n="label-workspace">Workspace ID / Username</label>
+              <label for="bitbucket-workspace" data-i18n="label-workspace">Workspace ID / Slug</label>
               <input type="text" id="bitbucket-workspace" placeholder="my-workspace">
             </div>
             <div class="form-group">
@@ -903,11 +899,11 @@
               <input type="url" id="jira-host" placeholder="https://your-company.atlassian.net">
             </div>
             <div class="form-group">
-              <label for="jira-email" data-i18n="label-jira-email">Account Email</label>
+              <label for="jira-email" data-i18n="label-jira-email">Atlassian Account Email</label>
               <input type="email" id="jira-email" placeholder="name@company.com">
             </div>
              <div class="form-group">
-               <label for="jira-token" data-i18n="label-jira-token">API Token</label>
+               <label for="jira-token" data-i18n="label-jira-token">Jira API Token</label>
                <input type="password" id="jira-token" placeholder="API token from Atlassian Account">
              </div>
              <div class="form-group row-align" style="margin-top: 0.5rem; margin-bottom: 1rem;">
@@ -921,21 +917,21 @@
 
           <!-- Tab: Storage -->
           <div id="tab-storage" class="tab-pane" role="tabpanel" aria-labelledby="tab-btn-storage" tabindex="0">
-            <p class="tab-desc" data-i18n="storage-desc">Configure where your data is stored. You can select a JSON file in your Google Drive or local sync folder to share tasks across devices.</p>
+            <p class="tab-desc" data-i18n="storage-desc">Choose how your data is stored across devices. Select a JSON file in Google Drive or local sync folder, or keep it private in local storage</p>
             <div class="form-group">
-              <label for="settings-storage-mode" data-i18n="label-storage-mode">Storage Mode</label>
+              <label for="settings-storage-mode" data-i18n="label-storage-mode">Storage Provider</label>
               <select id="settings-storage-mode">
-                <option value="local" data-i18n="storage-local">Browser Local Storage only</option>
-                <option value="file" data-i18n="storage-file">Local JSON File Sync (Auto-Sync)</option>
+                <option value="local" data-i18n="storage-local">Browser Storage (Local & Private)</option>
+                <option value="file" data-i18n="storage-file">File System Sync (Google Drive / JSON File)</option>
               </select>
             </div>
             
             <div id="file-sync-settings" class="hidden">
               <div class="form-group">
-                <label data-i18n="label-sync-file">Sync File</label>
+                <span class="form-label" data-i18n="label-sync-file">Sync file</span>
                 <div class="form-row row-align" style="align-items: center; justify-content: space-between; width: 100%;">
-                  <span id="sync-file-name" class="field-desc" data-i18n="no-file-selected" style="margin-right: 1rem;">No file selected.</span>
-                  <button type="button" id="btn-select-file" class="btn-secondary" data-i18n="btn-select-file" style="flex: 0 0 auto;">Select File</button>
+                  <span id="sync-file-name" class="field-desc" data-i18n="no-file-selected" style="margin-right: 1rem;">No file selected</span>
+                  <button type="button" id="btn-select-file" class="btn-secondary" data-i18n="btn-select-file" style="flex: 0 0 auto;">Choose File...</button>
                 </div>
               </div>
             </div>
@@ -943,10 +939,10 @@
             <hr class="form-divider">
             
             <div class="form-group">
-              <label data-i18n="label-backup">Manual Backup (Import/Export)</label>
+              <span class="form-label" data-i18n="label-backup">Manual Backup (Import/Export)</span>
               <div class="google-auth-actions" style="margin-top: 0.25rem;">
-                <button type="button" id="btn-export-data" class="btn-secondary" data-i18n="btn-export" style="flex: 1;">Export JSON</button>
-                <button type="button" id="btn-import-trigger" class="btn-secondary" data-i18n="btn-import" style="flex: 1;">Import JSON</button>
+                <button type="button" id="btn-export-data" class="btn-secondary" data-i18n="btn-export" style="flex: 1;">Export Backup (JSON)</button>
+                <button type="button" id="btn-import-trigger" class="btn-secondary" data-i18n="btn-import" style="flex: 1;">Restore from JSON</button>
                 <input type="file" id="file-import-input" class="hidden" accept=".json">
               </div>
             </div>
@@ -961,15 +957,15 @@
   <dialog id="notes-modal" class="modal-dialog" aria-labelledby="notes-modal-title">
     <div class="modal-content" style="max-width: 550px;">
       <header class="modal-header">
-        <h2 id="notes-modal-title" data-i18n="notes-modal-title">Notas Rápidas</h2>
+        <h2 id="notes-modal-title" data-i18n="notes-modal-title">Quick Notes</h2>
         <button id="close-notes-modal" class="btn-close" type="button" aria-label="Close notes">&times;</button>
       </header>
       <div class="modal-body" style="display: flex; flex-direction: column;">
-        <textarea id="notes-textarea" class="notes-textarea" rows="12" placeholder="Escribe tus notas aquí..." data-i18n-placeholder="notes-placeholder"></textarea>
+        <textarea id="notes-textarea" class="notes-textarea" rows="12" placeholder="Write your notes here..." data-i18n-placeholder="notes-placeholder"></textarea>
       </div>
       <div class="modal-footer" style="justify-content: space-between;">
-        <button type="button" id="btn-clear-notes" class="btn-danger" data-i18n="clear-notes-btn">Vaciar</button>
-        <button type="button" id="btn-close-notes-footer" class="btn-secondary" data-i18n="close-btn">Cerrar</button>
+        <button type="button" id="btn-clear-notes" class="btn-danger" data-i18n="clear-notes-btn">Clear Notes</button>
+        <button type="button" id="btn-close-notes-footer" class="btn-secondary" data-i18n="close-btn">Close</button>
       </div>
     </div>
   </dialog>
@@ -978,14 +974,14 @@
   <dialog id="add-countdown-modal" class="modal-dialog" aria-labelledby="add-countdown-title">
     <div class="modal-content" style="max-width: 450px;">
       <header class="modal-header">
-        <h2 id="add-countdown-title" data-i18n="add-countdown-title">Add New Countdown</h2>
+        <h2 id="add-countdown-title" data-i18n="add-countdown-title">New Event</h2>
         <button id="close-add-countdown-modal" class="btn-close" type="button" aria-label="Close dialog">&times;</button>
       </header>
       <div class="modal-body" style="padding-bottom: 1rem;">
         <form id="countdown-form" class="todo-form" style="gap: 1.25rem; margin-bottom: 0;">
           <div class="form-group">
             <label for="countdown-title-input" data-i18n="label-event-name">Event Title</label>
-            <input type="text" id="countdown-title-input" data-i18n-placeholder="countdown-placeholder" placeholder="Event title..." required>
+            <input type="text" id="countdown-title-input" data-i18n-placeholder="countdown-placeholder" placeholder="Event title" required>
           </div>
           <div class="form-group">
             <label for="countdown-date-input" data-i18n="label-target-date">Target Date</label>
@@ -1012,7 +1008,7 @@
           <input type="hidden" id="edit-event-id">
           <div class="form-group">
             <label for="edit-event-name-input" data-i18n="label-event-name">Event Title</label>
-            <input type="text" id="edit-event-name-input" data-i18n-placeholder="countdown-placeholder" placeholder="Event title..." required>
+            <input type="text" id="edit-event-name-input" data-i18n-placeholder="countdown-placeholder" placeholder="Event title" required>
           </div>
           <div class="form-group">
             <label for="edit-event-date-input" data-i18n="label-target-date">Target Date</label>
@@ -1031,14 +1027,14 @@
   <dialog id="add-task-modal" class="modal-dialog" aria-labelledby="add-task-title-modal">
     <div class="modal-content" style="max-width: 450px;">
       <header class="modal-header">
-        <h2 id="add-task-title-modal" data-i18n="add-task-title-modal">Add New Task</h2>
+        <h2 id="add-task-title-modal" data-i18n="add-task-title-modal">New Task</h2>
         <button id="close-add-task-modal" class="btn-close" type="button" aria-label="Close dialog">&times;</button>
       </header>
       <div class="modal-body" style="padding-bottom: 1rem;">
         <form id="todo-form" class="todo-form" style="gap: 1.25rem; margin-bottom: 0;">
           <div class="form-group">
-            <label for="todo-input" data-i18n="label-task-text">Task Name</label>
-            <input type="text" id="todo-input" data-i18n-placeholder="todo-placeholder" placeholder="Add a new task..." required>
+            <label for="todo-input" data-i18n="label-task-text">Task Title</label>
+            <input type="text" id="todo-input" data-i18n-placeholder="todo-placeholder" placeholder="Add a new task" required>
           </div>
           <div class="form-group">
             <label for="todo-date" data-i18n="label-due-date">Due Date</label>
@@ -1072,8 +1068,8 @@
         <form id="edit-task-form">
           <input type="hidden" id="edit-task-id">
           <div class="form-group">
-            <label for="edit-task-text" data-i18n="label-task-text">Task Name</label>
-            <input type="text" id="edit-task-text" data-i18n-placeholder="todo-placeholder" placeholder="Add a new task..." required>
+            <label for="edit-task-text" data-i18n="label-task-text">Task Title</label>
+            <input type="text" id="edit-task-text" data-i18n-placeholder="todo-placeholder" placeholder="Add a new task" required>
           </div>
           <div class="form-group">
             <label for="edit-task-date" data-i18n="label-due-date">Due Date</label>
@@ -1100,11 +1096,11 @@
   <dialog id="confirm-delete-modal" class="modal-dialog" aria-labelledby="confirm-delete-title">
     <div class="modal-content" style="max-width: 400px;">
       <header class="modal-header">
-        <h2 id="confirm-delete-title" data-i18n="confirm-delete-title">Confirm Deletion</h2>
+        <h2 id="confirm-delete-title" data-i18n="confirm-delete-title">Delete Task</h2>
         <button id="close-delete-modal" class="btn-close" type="button" aria-label="Close dialog">&times;</button>
       </header>
       <div class="modal-body" style="padding-top: 0.5rem; padding-bottom: 1.5rem;">
-        <p data-i18n="confirm-delete-desc">Are you sure you want to delete this task?</p>
+        <p data-i18n="confirm-delete-desc">Are you sure you want to permanently delete this task?</p>
       </div>
       <div class="modal-footer" style="display: flex; gap: 0.5rem; justify-content: flex-end;">
         <button type="button" id="btn-cancel-delete" class="btn-secondary" data-i18n="cancel-btn">Cancel</button>
@@ -1140,7 +1136,7 @@
           </div>
           <div class="modal-footer" style="padding: 1rem 0 0 0; margin-top: 1rem; border-top: 1px solid var(--border-color);">
             <button type="button" id="btn-cancel-ooo" class="btn-secondary" data-i18n="cancel-btn">Cancel</button>
-            <button type="submit" class="btn-primary" data-i18n="save-btn">Save</button>
+            <button type="submit" class="btn-primary" data-i18n="save-btn">Save Changes</button>
           </div>
         </form>
       </div>

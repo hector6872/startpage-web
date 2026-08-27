@@ -1,4 +1,5 @@
 import { t } from "../locales/index.js";
+import { escapeHtml } from "../utils/helpers.js";
 
 export const wikiContext = {
   state: null
@@ -19,6 +20,13 @@ function decodeHtml(html) {
   const txt = document.createElement('textarea');
   txt.innerHTML = html;
   return txt.value;
+}
+
+function stripHtml(html) {
+  if (!html) return '';
+  const tmp = document.createElement('div');
+  tmp.innerHTML = html;
+  return (tmp.textContent || tmp.innerText || '').trim();
 }
 
 export async function fetchWikiquoteOfTheDay(lang) {
@@ -188,7 +196,7 @@ function startAutoAdvance(advanceFn) {
     if (!isHoveringQuoteWidget) {
       advanceFn();
     }
-  }, 8000);
+  }, 30000);
 }
 
 function stopAutoAdvance() {
@@ -280,11 +288,13 @@ export async function loadWikipediaContent() {
     const errorMsg = t('quote-error');
     
     container.innerHTML = `
-      <span class="wiki-badge" data-tooltip="${badgeTooltip}" onclick="window.openSettingsWikipediaTab()" title="${badgeTooltip}">
+      <span class="wiki-badge" data-tooltip="${badgeTooltip}" onclick="window.openSettingsWikipediaTab()">
         <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14h2v2h-2zm0-10h2v8h-2z"/></svg>
         ${t('wiki-badge-quote')}
       </span>
-      <span class="quote-text">${errorMsg}</span>
+      <div class="quote-content" data-tooltip="${escapeHtml(errorMsg)}">
+        <span class="quote-text">${errorMsg}</span>
+      </div>
     `;
   }
 
@@ -297,24 +307,26 @@ export async function loadWikipediaContent() {
     const cleanAuthor = author && author !== 'undefined' ? author.replace(/^[\s–—-]+/, '').trim() : '';
     const wikiLang = wikiContext.state.lang || 'en';
     const authorUrl = cleanAuthor ? `https://${wikiLang}.wikipedia.org/wiki/Special:Search?search=${encodeURIComponent(cleanAuthor)}` : '';
-    const authorTitle = t('wiki-view-author', { author: cleanAuthor });
     const badgeTooltip = t('wiki-badge-tooltip');
+    const fullQuoteText = `"${text}"${cleanAuthor ? ` – ${cleanAuthor}` : ''}`;
     
     container.innerHTML = `
-      <span class="wiki-badge" data-tooltip="${badgeTooltip}" onclick="window.openSettingsWikipediaTab()" title="${badgeTooltip}">
+      <span class="wiki-badge" data-tooltip="${badgeTooltip}" onclick="window.openSettingsWikipediaTab()">
         <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14h2v2h-2zm0-10h2v8h-2z"/></svg>
         ${t('wiki-badge-quote')}
       </span>
       <div class="wiki-nav-controls">
-        <button id="copy-quote-btn" class="wiki-nav-btn copy-quote-btn" title="Copy quote" aria-label="Copy quote">
+        <button id="copy-quote-btn" class="wiki-nav-btn copy-quote-btn" data-tooltip="Copy quote" aria-label="Copy quote">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
             <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
           </svg>
         </button>
       </div>
-      <span class="quote-text">"${toSentenceCase(text)}"</span>
-      ${cleanAuthor ? `<span class="quote-sep"> – </span><a class="quote-author wiki-link" href="${authorUrl}" target="_blank" rel="noopener noreferrer" title="${authorTitle}">${cleanAuthor}</a>` : ''}
+      <div class="quote-content" data-tooltip="${escapeHtml(fullQuoteText)}">
+        <span class="quote-text">"${toSentenceCase(text)}"</span>
+        ${cleanAuthor ? `<span class="quote-sep"> – </span><a class="quote-author wiki-link" href="${authorUrl}" target="_blank" rel="noopener noreferrer">${cleanAuthor}</a>` : ''}
+      </div>
     `;
 
     const copyBtn = container.querySelector('#copy-quote-btn');
@@ -385,22 +397,25 @@ export async function loadWikipediaContent() {
     const displayTitle = cur.displaytitle ? cur.displaytitle.replace(/<[^>]+>/g, '') : cur.title.replace(/_/g, ' ');
     const viewsStr = formatViewsCount(cur.views);
     const badgeTooltip = t('wiki-badge-tooltip');
+    const fullTooltip = `${displayTitle}${cur.extract ? ` — ${cur.extract}` : ''}`;
 
     container.innerHTML = `
-      <span class="wiki-badge" data-tooltip="${badgeTooltip}" onclick="window.openSettingsWikipediaTab()" title="${badgeTooltip}">
+      <span class="wiki-badge" data-tooltip="${badgeTooltip}" onclick="window.openSettingsWikipediaTab()">
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 6l-9.5 9.5-5-5L1 18"></path><path d="M17 6h6v6"></path></svg>
         ${t('wiki-badge-topread')} #${wikiTopReadIndex + 1}
       </span>
       <div class="wiki-nav-controls">
-        <button id="wiki-prev-btn" class="wiki-nav-btn" title="${t('wiki-prev')}" aria-label="Previous">
+        <button id="wiki-prev-btn" class="wiki-nav-btn" data-tooltip="${t('wiki-prev')}" aria-label="Previous">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
         </button>
-        <button id="wiki-next-btn" class="wiki-nav-btn" title="${t('wiki-next')}" aria-label="Next">
+        <button id="wiki-next-btn" class="wiki-nav-btn" data-tooltip="${t('wiki-next')}" aria-label="Next">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
         </button>
       </div>
-      <a class="wiki-link" href="${pageUrl}" target="_blank" rel="noopener noreferrer" title="${cur.extract || displayTitle}">${displayTitle}</a>
-      ${viewsStr ? `<span class="wiki-views-badge">👁️ ${viewsStr} ${t('wiki-views')}</span>` : ''}
+      <div class="quote-content" data-tooltip="${escapeHtml(fullTooltip)}">
+        <a class="wiki-link" href="${pageUrl}" target="_blank" rel="noopener noreferrer">${displayTitle}</a>
+        ${viewsStr ? `<span class="wiki-views-badge">👁️ ${viewsStr} ${t('wiki-views')}</span>` : ''}
+      </div>
     `;
 
     container.querySelector('#wiki-prev-btn')?.addEventListener('click', () => { wikiTopReadIndex--; renderTopReadMode(); });
@@ -429,7 +444,7 @@ export async function loadWikipediaContent() {
       a.className = 'wiki-link'; a.target = '_blank'; a.rel = 'noopener noreferrer';
       const text = a.textContent.trim();
       const matched = linksMap.get(text.toLowerCase());
-      if (matched) { a.href = matched.url; if (matched.extract) a.title = matched.extract; }
+      if (matched) { a.href = matched.url; }
       else if (a.getAttribute('href')?.startsWith('/wiki/')) a.href = `https://${feedLang}.wikipedia.org${a.getAttribute('href')}`;
     });
     temp.querySelectorAll('b, strong').forEach(b => {
@@ -458,21 +473,24 @@ export async function loadWikipediaContent() {
     if (wikiNewsIndex < 0) wikiNewsIndex = data.news.length - 1;
     const cur = data.news[wikiNewsIndex];
     const storyHtml = formatNewsHtml(cur, lang);
+    const plainStory = stripHtml(cur.story || '');
     const badgeTooltip = t('wiki-badge-tooltip');
     container.innerHTML = `
-      <span class="wiki-badge" data-tooltip="${badgeTooltip}" onclick="window.openSettingsWikipediaTab()" title="${badgeTooltip}">
+      <span class="wiki-badge" data-tooltip="${badgeTooltip}" onclick="window.openSettingsWikipediaTab()">
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"></path><path d="M18 14h-8"></path><path d="M15 18h-5"></path><path d="M10 6h8v4h-8V6Z"></path></svg>
         ${t('wiki-badge-news')}
       </span>
       <div class="wiki-nav-controls">
-        <button id="wiki-prev-btn" class="wiki-nav-btn" title="${t('wiki-prev')}" aria-label="Previous">
+        <button id="wiki-prev-btn" class="wiki-nav-btn" data-tooltip="${t('wiki-prev')}" aria-label="Previous">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
         </button>
-        <button id="wiki-next-btn" class="wiki-nav-btn" title="${t('wiki-next')}" aria-label="Next">
+        <button id="wiki-next-btn" class="wiki-nav-btn" data-tooltip="${t('wiki-next')}" aria-label="Next">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
         </button>
       </div>
-      <span>${storyHtml}</span>
+      <div class="quote-content" data-tooltip="${escapeHtml(plainStory)}">
+        <span>${storyHtml}</span>
+      </div>
     `;
     container.querySelector('#wiki-prev-btn')?.addEventListener('click', () => { wikiNewsIndex--; renderNewsMode(); });
     container.querySelector('#wiki-next-btn')?.addEventListener('click', () => { wikiNewsIndex++; renderNewsMode(); });
@@ -514,26 +532,30 @@ export async function loadWikipediaContent() {
       cur.pages.slice(0, 3).forEach(p => {
         const pageUrl = p.content_urls?.desktop?.page || `https://${lang}.wikipedia.org/wiki/${encodeURIComponent(p.title)}`;
         const pageTitle = p.titles?.normalized || p.title.replace(/_/g, ' ');
-        pageLinkHtml += ` <a class="wiki-link" href="${pageUrl}" target="_blank" rel="noopener noreferrer" title="${p.extract || pageTitle}">↗ ${pageTitle}</a>`;
+        pageLinkHtml += ` <a class="wiki-link" href="${pageUrl}" target="_blank" rel="noopener noreferrer">↗ ${pageTitle}</a>`;
       });
     }
     const badgeTooltip = t('wiki-badge-tooltip');
+    const fullEventText = `${cur.year ? `${cur.year} – ` : ''}${cur.text}`;
+
     container.innerHTML = `
-      <span class="wiki-badge" data-tooltip="${badgeTooltip}" onclick="window.openSettingsWikipediaTab()" title="${badgeTooltip}">
+      <span class="wiki-badge" data-tooltip="${badgeTooltip}" onclick="window.openSettingsWikipediaTab()">
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
         ${t('wiki-badge-onthisday')}
       </span>
       <div class="wiki-nav-controls">
-        <button id="wiki-prev-btn" class="wiki-nav-btn" title="${t('wiki-prev')}" aria-label="Previous">
+        <button id="wiki-prev-btn" class="wiki-nav-btn" data-tooltip="${t('wiki-prev')}" aria-label="Previous">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
         </button>
-        <button id="wiki-next-btn" class="wiki-nav-btn" title="${t('wiki-next')}" aria-label="Next">
+        <button id="wiki-next-btn" class="wiki-nav-btn" data-tooltip="${t('wiki-next')}" aria-label="Next">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
         </button>
       </div>
       ${cur.year ? `<span class="wiki-year-badge">${cur.year}</span>` : ''}
-      <span>${cur.text}</span>
-      ${pageLinkHtml}
+      <div class="quote-content" data-tooltip="${escapeHtml(fullEventText)}">
+        <span>${cur.text}</span>
+        ${pageLinkHtml}
+      </div>
     `;
     container.querySelector('#wiki-prev-btn')?.addEventListener('click', () => { wikiOnThisDayIndex--; renderOnThisDayMode(); });
     container.querySelector('#wiki-next-btn')?.addEventListener('click', () => { wikiOnThisDayIndex++; renderOnThisDayMode(); });

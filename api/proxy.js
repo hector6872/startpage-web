@@ -25,10 +25,15 @@ export default async function handler(req, res) {
       }
     }
 
+    let requestBody = undefined;
+    if (req.method !== 'GET' && req.method !== 'HEAD' && req.body) {
+      requestBody = typeof req.body === 'string' ? req.body : JSON.stringify(req.body);
+    }
+
     const response = await fetch(targetUrl, {
       method: req.method,
       headers: forwardHeaders,
-      body: req.method !== 'GET' && req.method !== 'HEAD' ? JSON.stringify(req.body) : undefined,
+      body: requestBody,
     });
 
     res.status(response.status);

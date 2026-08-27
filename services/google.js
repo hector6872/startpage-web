@@ -49,7 +49,6 @@ export async function checkAndFetchGoogleEmails() {
     const email = await fetchGoogleUserEmail(googleContext.state.googlePersonalToken);
     if (email) {
       googleContext.state.googlePersonalEmail = email;
-      localStorage.setItem('google_personal_email', email);
       sessionStorage.setItem('google_personal_email', email);
       changed = true;
     }
@@ -58,13 +57,192 @@ export async function checkAndFetchGoogleEmails() {
     const email = await fetchGoogleUserEmail(googleContext.state.googleWorkToken);
     if (email) {
       googleContext.state.googleWorkEmail = email;
-      localStorage.setItem('google_work_email', email);
       sessionStorage.setItem('google_work_email', email);
       changed = true;
     }
   }
   if (changed) {
     updateGoogleAuthStatus();
+  }
+}
+
+export const GOOGLE_SCOPES = 'https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/gmail.readonly https://www.googleapis.com/auth/tasks.readonly https://www.googleapis.com/auth/calendar.readonly';
+
+export function isLocalDevelopment() {
+  return typeof window !== 'undefined' && (
+    window.location.hostname === 'localhost' ||
+    window.location.hostname === '127.0.0.1' ||
+    window.location.hostname.endsWith('.localhost')
+  );
+}
+
+export async function exchangeGoogleAuthCode(code, targetAccount, redirectUri) {
+  const clientId = googleContext.state?.settings?.googleClientId;
+  const clientSecret = googleContext.state?.settings?.googleClientSecret;
+
+  if (!clientId) {
+    console.error("Missing Google Client ID for token exchange");
+    return false;
+  }
+
+  const tokenUrl = 'https://oauth2.googleapis.com/token';
+  const proxyEndpoint = `/api/proxy?url=${encodeURIComponent(tokenUrl)}`;
+  const params = new URLSearchParams({
+    code,
+    client_id: clientId,
+    client_secret: clientSecret || '',
+    redirect_uri: redirectUri || `${window.location.origin}/api/auth/google/callback`,
+    grant_type: 'authorization_code'
+  });
+
+  try {
+    const res = await fetch(proxyEndpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded'
+      },
+      body: params.toString()
+    });
+
+    if (!res.ok) {
+      const errText = await res.text();
+      console.error("Failed to exchange auth code:", res.status, errText);
+      return false;
+    }
+
+    const data = await res.json();
+    const token = data.access_token;
+    const refreshToken = data.refresh_token;
+    const expiresInSec = data.expires_in || 3600;
+    const expiryTimestamp = Date.now() + (expiresInSec * 1000) - 60000;
+
+    if (targetAccount === 'personal') {
+      googleContext.state.googlePersonalToken = token;
+      localStorage.setItem('google_personal_token', token);
+      localStorage.setItem('google_personal_expiry', String(expiryTimestamp));
+      sessionStorage.setItem('google_personal_token', token);
+      sessionStorage.setItem('google_personal_expiry', String(expiryTimestamp));
+      if (refreshToken) {
+        localStorage.setItem('google_personal_refresh_token', refreshToken);
+        sessionStorage.setItem('google_personal_refresh_token', refreshToken);
+      }
+      const email = await fetchGoogleUserEmail(token);
+      if (email) {
+        googleContext.state.googlePersonalEmail = email;
+        localStorage.setItem('google_personal_email', email);
+        sessionStorage.setItem('google_personal_email', email);
+      }
+    } else {
+      googleContext.state.googleWorkToken = token;
+      localStorage.setItem('google_work_token', token);
+      localStorage.setItem('google_work_expiry', String(expiryTimestamp));
+      sessionStorage.setItem('google_work_token', token);
+      sessionStorage.setItem('google_work_expiry', String(expiryTimestamp));
+      if (refreshToken) {
+        localStorage.setItem('google_work_refresh_token', refreshToken);
+        sessionStorage.setItem('google_work_refresh_token', refreshToken);
+      }
+      const email = await fetchGoogleUserEmail(token);
+      if (email) {
+        googleContext.state.googleWorkEmail = email;
+        localStorage.setItem('google_work_email', email);
+        sessionStorage.setItem('google_work_email', email);
+      }
+    }
+
+    if (googleContext.state.googleErrors) {
+      delete googleContext.state.googleErrors[targetAccount];
+    }
+
+    googleContext.state.googleClientToken = googleContext.state.googlePersonalToken || googleContext.state.googleWorkToken;
+    localStorage.setItem('google_access_token', googleContext.state.googleClientToken || '');
+    sessionStorage.setItem('google_access_token', googleContext.state.googleClientToken || '');
+
+    updateGoogleAuthStatus();
+    await fetchGoogleData();
+    return true;
+  } catch (err) {
+    console.error("Error during code exchange:", err);
+    return false;
+  }
+}
+
+export function initiateGoogleAuth(targetAccount) {
+  setGoogleLoginTarget(targetAccount);
+  const clientId = googleContext.state?.settings?.googleClientId;
+  const clientSecret = googleContext.state?.settings?.googleClientSecret;
+
+  if (!clientId) {
+    console.error("No Google Client ID provided");
+    return false;
+  }
+
+  // 1. In Local Development without clientSecret: use GIS popup client
+  if (isLocalDevelopment() && !clientSecret) {
+    if (typeof google !== 'undefined' && google?.accounts?.oauth2) {
+      try {
+        initGoogleOAuth();
+        if (googleTokenClient) {
+          googleTokenClient.requestAccessToken({ prompt: 'select_account' });
+          return true;
+        }
+      } catch (err) {
+        console.warn("GIS token client error, falling back to popup window:", err);
+      }
+    }
+  }
+
+  // 2. Production or fallback to standard OAuth popup window
+  const redirectUri = `${window.location.origin}/api/auth/google/callback`;
+  const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?` + new URLSearchParams({
+    client_id: clientId,
+    redirect_uri: redirectUri,
+    response_type: 'code',
+    scope: GOOGLE_SCOPES,
+    ...(clientSecret ? { access_type: 'offline', prompt: 'consent' } : { prompt: 'select_account' }),
+    state: targetAccount
+  }).toString();
+
+  const width = 520;
+  const height = 650;
+  const left = window.screenX + (window.outerWidth - width) / 2;
+  const top = window.screenY + (window.outerHeight - height) / 2;
+  const popup = window.open(
+    authUrl,
+    'GoogleAuthPopup',
+    `width=${width},height=${height},left=${left},top=${top},scrollbars=yes,status=1`
+  );
+
+  if (!popup || popup.closed || typeof popup.closed === 'undefined') {
+    window.location.href = authUrl;
+  }
+
+  return true;
+}
+
+// Global listeners for Google OAuth popup messages and redirect callback params
+if (typeof window !== 'undefined') {
+  window.addEventListener('message', async (event) => {
+    if (event.data && event.data.type === 'GOOGLE_AUTH_CODE') {
+      const { code, state, error } = event.data;
+      if (error) {
+        console.error("Google Auth error from popup:", error);
+        return;
+      }
+      if (code) {
+        await exchangeGoogleAuthCode(code, state || 'personal');
+      }
+    }
+  });
+
+  const urlParams = new URLSearchParams(window.location.search);
+  const codeParam = urlParams.get('google_code') || urlParams.get('code');
+  const stateParam = urlParams.get('state') || 'personal';
+  if (codeParam) {
+    exchangeGoogleAuthCode(codeParam, stateParam).then(() => {
+      const cleanUrl = window.location.pathname;
+      window.history.replaceState({}, document.title, cleanUrl);
+    });
   }
 }
 
@@ -77,73 +255,80 @@ export function initGoogleOAuth() {
     fetchGoogleTasks();
   }
 
-  if (typeof google === 'undefined' || !googleContext.state.settings.googleClientId) {
+  const clientId = googleContext.state?.settings?.googleClientId;
+  if (typeof google === 'undefined' || !google?.accounts?.oauth2 || !clientId) {
     return;
   }
 
-  googleTokenClient = google.accounts.oauth2.initTokenClient({
-    client_id: googleContext.state.settings.googleClientId,
-    scope: 'https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/gmail.readonly https://www.googleapis.com/auth/tasks.readonly https://www.googleapis.com/auth/calendar.readonly',
-    callback: async (response) => {
-      if (response.error) {
-        console.error("Google Auth error:", response.error);
+  try {
+    googleTokenClient = google.accounts.oauth2.initTokenClient({
+      client_id: clientId,
+      scope: GOOGLE_SCOPES,
+      callback: async (response) => {
+        if (response.error) {
+          console.error("Google Auth error:", response.error);
+          isRefreshingToken[googleLoginTarget] = false;
+          return;
+        }
+        
+        const token = response.access_token;
+        const expiresInSec = response.expires_in || 3600;
+        const expiryTimestamp = Date.now() + (expiresInSec * 1000) - 60000;
+        
+        if (googleLoginTarget === 'personal') {
+          googleContext.state.googlePersonalToken = token;
+          localStorage.setItem('google_personal_token', token);
+          localStorage.setItem('google_personal_expiry', String(expiryTimestamp));
+          sessionStorage.setItem('google_personal_token', token);
+          sessionStorage.setItem('google_personal_expiry', String(expiryTimestamp));
+          
+          let email = googleContext.state.googlePersonalEmail;
+          if (!email) {
+            email = await fetchGoogleUserEmail(token);
+            if (email) {
+              googleContext.state.googlePersonalEmail = email;
+              localStorage.setItem('google_personal_email', email);
+              sessionStorage.setItem('google_personal_email', email);
+            }
+          }
+        } else {
+          googleContext.state.googleWorkToken = token;
+          localStorage.setItem('google_work_token', token);
+          localStorage.setItem('google_work_expiry', String(expiryTimestamp));
+          sessionStorage.setItem('google_work_token', token);
+          sessionStorage.setItem('google_work_expiry', String(expiryTimestamp));
+          
+          let email = googleContext.state.googleWorkEmail;
+          if (!email) {
+            email = await fetchGoogleUserEmail(token);
+            if (email) {
+              googleContext.state.googleWorkEmail = email;
+              localStorage.setItem('google_work_email', email);
+              sessionStorage.setItem('google_work_email', email);
+            }
+          }
+        }
+        
+        // Keep googleClientToken for backward compatibility
+        googleContext.state.googleClientToken = googleContext.state.googlePersonalToken || googleContext.state.googleWorkToken;
+        localStorage.setItem('google_access_token', googleContext.state.googleClientToken || '');
+        sessionStorage.setItem('google_access_token', googleContext.state.googleClientToken || '');
+        
         isRefreshingToken[googleLoginTarget] = false;
-        return;
+        updateGoogleAuthStatus();
+        await fetchGoogleData();
       }
-      
-      const token = response.access_token;
-      const expiresInSec = response.expires_in || 3600;
-      const expiryTimestamp = Date.now() + (expiresInSec * 1000) - 60000;
-      
-      if (googleLoginTarget === 'personal') {
-        googleContext.state.googlePersonalToken = token;
-        localStorage.setItem('google_personal_token', token);
-        localStorage.setItem('google_personal_expiry', String(expiryTimestamp));
-        sessionStorage.setItem('google_personal_token', token);
-        
-        let email = googleContext.state.googlePersonalEmail;
-        if (!email) {
-          email = await fetchGoogleUserEmail(token);
-          if (email) {
-            googleContext.state.googlePersonalEmail = email;
-            localStorage.setItem('google_personal_email', email);
-            sessionStorage.setItem('google_personal_email', email);
-          }
-        }
-      } else {
-        googleContext.state.googleWorkToken = token;
-        localStorage.setItem('google_work_token', token);
-        localStorage.setItem('google_work_expiry', String(expiryTimestamp));
-        sessionStorage.setItem('google_work_token', token);
-        
-        let email = googleContext.state.googleWorkEmail;
-        if (!email) {
-          email = await fetchGoogleUserEmail(token);
-          if (email) {
-            googleContext.state.googleWorkEmail = email;
-            localStorage.setItem('google_work_email', email);
-            sessionStorage.setItem('google_work_email', email);
-          }
-        }
-      }
-      
-      // Keep googleClientToken for backward compatibility
-      googleContext.state.googleClientToken = googleContext.state.googlePersonalToken || googleContext.state.googleWorkToken;
-      localStorage.setItem('google_access_token', googleContext.state.googleClientToken || '');
-      sessionStorage.setItem('google_access_token', googleContext.state.googleClientToken || '');
-      
-      isRefreshingToken[googleLoginTarget] = false;
-      updateGoogleAuthStatus();
-      await fetchGoogleData();
-    }
-  });
+    });
+  } catch (e) {
+    console.warn("Failed to initialize Google Token Client:", e);
+  }
 
   checkAndFetchGoogleEmails();
   
   // Check if tokens need a silent refresh on initialization
   const now = Date.now();
-  const personalExpiry = Number(localStorage.getItem('google_personal_expiry') || 0);
-  const workExpiry = Number(localStorage.getItem('google_work_expiry') || 0);
+  const personalExpiry = Number(localStorage.getItem('google_personal_expiry') || sessionStorage.getItem('google_personal_expiry') || 0);
+  const workExpiry = Number(localStorage.getItem('google_work_expiry') || sessionStorage.getItem('google_work_expiry') || 0);
 
   if (googleContext.state.googlePersonalEmail && (!googleContext.state.googlePersonalToken || now >= personalExpiry)) {
     refreshGoogleToken('personal');
@@ -165,76 +350,186 @@ export function initGoogleOAuth() {
 
 let isRefreshingToken = { personal: false, work: false };
 
-export function refreshGoogleToken(accountType) {
+export async function refreshGoogleToken(accountType) {
   if (isRefreshingToken[accountType]) return;
-  if (typeof google === 'undefined' || !googleTokenClient) {
-    console.warn("Google Client not initialized for refresh");
-    return;
-  }
-  
-  const emailHint = accountType === 'personal' ? googleContext.state.googlePersonalEmail : googleContext.state.googleWorkEmail;
-  if (!emailHint) return;
-
-  console.log(`Attempting silent token refresh for ${accountType} (${emailHint})...`);
   isRefreshingToken[accountType] = true;
-  googleLoginTarget = accountType;
-  
-  try {
-    googleTokenClient.requestAccessToken({
-      hint: emailHint,
-      prompt: ''
-    });
-    setTimeout(() => { isRefreshingToken[accountType] = false; }, 8000);
-  } catch (e) {
-    console.error("Silent refresh failed", e);
-    isRefreshingToken[accountType] = false;
+
+  const refreshToken = localStorage.getItem(`google_${accountType}_refresh_token`) || sessionStorage.getItem(`google_${accountType}_refresh_token`);
+  const clientId = googleContext.state?.settings?.googleClientId;
+  const clientSecret = googleContext.state?.settings?.googleClientSecret;
+
+  // 1. Silent Background Refresh via refresh_token (Production / Offline mode)
+  if (refreshToken && clientId && clientSecret) {
+    try {
+      console.log(`Silent serverless refresh for ${accountType} with refresh_token...`);
+      const tokenUrl = 'https://oauth2.googleapis.com/token';
+      const proxyEndpoint = `/api/proxy?url=${encodeURIComponent(tokenUrl)}`;
+      const params = new URLSearchParams({
+        client_id: clientId,
+        client_secret: clientSecret,
+        refresh_token: refreshToken,
+        grant_type: 'refresh_token'
+      });
+
+      const res = await fetch(proxyEndpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: params.toString()
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        const token = data.access_token;
+        const expiresInSec = data.expires_in || 3600;
+        const expiryTimestamp = Date.now() + (expiresInSec * 1000) - 60000;
+
+        if (accountType === 'personal') {
+          googleContext.state.googlePersonalToken = token;
+          localStorage.setItem('google_personal_token', token);
+          localStorage.setItem('google_personal_expiry', String(expiryTimestamp));
+          sessionStorage.setItem('google_personal_token', token);
+          sessionStorage.setItem('google_personal_expiry', String(expiryTimestamp));
+        } else {
+          googleContext.state.googleWorkToken = token;
+          localStorage.setItem('google_work_token', token);
+          localStorage.setItem('google_work_expiry', String(expiryTimestamp));
+          sessionStorage.setItem('google_work_token', token);
+          sessionStorage.setItem('google_work_expiry', String(expiryTimestamp));
+        }
+
+        googleContext.state.googleClientToken = googleContext.state.googlePersonalToken || googleContext.state.googleWorkToken;
+        localStorage.setItem('google_access_token', googleContext.state.googleClientToken || '');
+        sessionStorage.setItem('google_access_token', googleContext.state.googleClientToken || '');
+
+        if (googleContext.state.googleErrors) {
+          delete googleContext.state.googleErrors[accountType];
+        }
+
+        isRefreshingToken[accountType] = false;
+        updateGoogleAuthStatus();
+        fetchGoogleData();
+        return;
+      } else {
+        const errData = await res.json().catch(() => null);
+        console.warn(`Silent refresh_token failed (${res.status}):`, errData);
+        // If refresh_token was revoked or expired (invalid_grant) or bad request, purge it
+        if (res.status === 400 || errData?.error === 'invalid_grant' || errData?.error === 'invalid_client') {
+          localStorage.removeItem(`google_${accountType}_refresh_token`);
+          sessionStorage.removeItem(`google_${accountType}_refresh_token`);
+        }
+      }
+    } catch (e) {
+      console.warn("Silent refresh_token exchange failed:", e);
+    }
   }
+
+  // 2. Local development GIS flow (localhost)
+  if (isLocalDevelopment() && typeof google !== 'undefined' && googleTokenClient) {
+    const emailHint = accountType === 'personal' ? googleContext.state.googlePersonalEmail : googleContext.state.googleWorkEmail;
+    if (emailHint) {
+      googleLoginTarget = accountType;
+      try {
+        googleTokenClient.requestAccessToken({
+          hint: emailHint,
+          prompt: ''
+        });
+        setTimeout(() => { isRefreshingToken[accountType] = false; }, 8000);
+        return;
+      } catch (e) {
+        console.error("Local GIS refresh failed", e);
+      }
+    }
+  }
+
+  isRefreshingToken[accountType] = false;
+
+  // 3. Mark session expired if cannot be refreshed silently
+  googleContext.state.googleErrors = googleContext.state.googleErrors || {};
+  googleContext.state.googleErrors[accountType] = t('google-session-expired');
+  updateGoogleAuthStatus();
 }
 
 export function handleInvalidToken(accountType) {
-  console.warn(`Token expired (401) for ${accountType} account. Attempting silent renewal.`);
-  const emailHint = accountType === 'personal' ? googleContext.state.googlePersonalEmail : googleContext.state.googleWorkEmail;
-  if (emailHint && typeof googleTokenClient !== 'undefined' && googleTokenClient) {
-    refreshGoogleToken(accountType);
-  } else {
-    googleContext.state.googleErrors = googleContext.state.googleErrors || {};
-    googleContext.state.googleErrors[accountType] = 'Token expired (401)';
-    if (accountType === 'personal') {
-      googleContext.state.googlePersonalToken = null;
-      localStorage.removeItem('google_personal_token');
-      localStorage.removeItem('google_personal_expiry');
-      sessionStorage.removeItem('google_personal_token');
-    } else {
-      googleContext.state.googleWorkToken = null;
-      localStorage.removeItem('google_work_token');
-      localStorage.removeItem('google_work_expiry');
-      sessionStorage.removeItem('google_work_token');
-    }
+  console.warn(`Token expired or invalid (401) for ${accountType} account.`);
+
+  // Invalidate and clear the expired token immediately so state does not falsely report "connected"
+  if (accountType === 'personal') {
+    googleContext.state.googlePersonalToken = null;
+    localStorage.removeItem('google_personal_token');
+    localStorage.removeItem('google_personal_expiry');
+    sessionStorage.removeItem('google_personal_token');
+    sessionStorage.removeItem('google_personal_expiry');
+  } else if (accountType === 'work') {
+    googleContext.state.googleWorkToken = null;
+    localStorage.removeItem('google_work_token');
+    localStorage.removeItem('google_work_expiry');
+    sessionStorage.removeItem('google_work_token');
+    sessionStorage.removeItem('google_work_expiry');
+  }
+
+  if (googleContext.state) {
     googleContext.state.googleClientToken = googleContext.state.googlePersonalToken || googleContext.state.googleWorkToken;
     localStorage.setItem('google_access_token', googleContext.state.googleClientToken || '');
     sessionStorage.setItem('google_access_token', googleContext.state.googleClientToken || '');
-    
-    updateGoogleAuthStatus();
   }
+
+  googleContext.state.googleErrors = googleContext.state.googleErrors || {};
+  googleContext.state.googleErrors[accountType] = t('google-session-expired');
+
+  updateGoogleAuthStatus();
+  refreshGoogleToken(accountType);
 }
 
 export function handleGoogleLogout(target) {
   if (target === 'personal') {
-    if (googleContext.state.googlePersonalToken && typeof google !== 'undefined' && google.accounts && google.accounts.oauth2) {
-      google.accounts.oauth2.revoke(googleContext.state.googlePersonalToken, () => {});
+    if (googleContext.state?.googlePersonalToken && typeof google !== 'undefined' && google?.accounts?.oauth2?.revoke) {
+      try {
+        google.accounts.oauth2.revoke(googleContext.state.googlePersonalToken, () => {});
+      } catch (e) {
+        console.warn('Failed to revoke Google personal token', e);
+      }
     }
-    googleContext.state.googlePersonalToken = null;
-    googleContext.state.googlePersonalEmail = '';
-    localStorage.removeItem('startpage_google_personal_token');
-    localStorage.removeItem('startpage_google_personal_email');
+    if (googleContext.state) {
+      googleContext.state.googlePersonalToken = null;
+      googleContext.state.googlePersonalEmail = null;
+      if (googleContext.state.googleErrors) delete googleContext.state.googleErrors.personal;
+    }
+    localStorage.removeItem('google_personal_token');
+    localStorage.removeItem('google_personal_refresh_token');
+    localStorage.removeItem('google_personal_email');
+    localStorage.removeItem('google_personal_expiry');
+    sessionStorage.removeItem('google_personal_token');
+    sessionStorage.removeItem('google_personal_refresh_token');
+    sessionStorage.removeItem('google_personal_email');
+    sessionStorage.removeItem('google_personal_expiry');
   } else if (target === 'work') {
-    if (googleContext.state.googleWorkToken && typeof google !== 'undefined' && google.accounts && google.accounts.oauth2) {
-      google.accounts.oauth2.revoke(googleContext.state.googleWorkToken, () => {});
+    if (googleContext.state?.googleWorkToken && typeof google !== 'undefined' && google?.accounts?.oauth2?.revoke) {
+      try {
+        google.accounts.oauth2.revoke(googleContext.state.googleWorkToken, () => {});
+      } catch (e) {
+        console.warn('Failed to revoke Google work token', e);
+      }
     }
-    googleContext.state.googleWorkToken = null;
-    googleContext.state.googleWorkEmail = '';
-    localStorage.removeItem('startpage_google_work_token');
-    localStorage.removeItem('startpage_google_work_email');
+    if (googleContext.state) {
+      googleContext.state.googleWorkToken = null;
+      googleContext.state.googleWorkEmail = null;
+      if (googleContext.state.googleErrors) delete googleContext.state.googleErrors.work;
+    }
+    localStorage.removeItem('google_work_token');
+    localStorage.removeItem('google_work_refresh_token');
+    localStorage.removeItem('google_work_email');
+    localStorage.removeItem('google_work_expiry');
+    sessionStorage.removeItem('google_work_token');
+    sessionStorage.removeItem('google_work_refresh_token');
+    sessionStorage.removeItem('google_work_email');
+    sessionStorage.removeItem('google_work_expiry');
+  }
+  if (googleContext.state) {
+    googleContext.state.googleClientToken = googleContext.state.googlePersonalToken || googleContext.state.googleWorkToken;
+    localStorage.setItem('google_access_token', googleContext.state.googleClientToken || '');
+    sessionStorage.setItem('google_access_token', googleContext.state.googleClientToken || '');
   }
   updateGoogleAuthStatus();
   fetchGoogleCalendar();
@@ -255,6 +550,12 @@ export function updateGoogleAuthStatus() {
       personalStatusEl.className = "auth-status connected";
       personalLoginBtn.classList.add('hidden');
       personalLogoutBtn.classList.remove('hidden');
+    } else if (googleContext.state.googleErrors?.personal) {
+      const emailStr = googleContext.state.googlePersonalEmail ? ` (${googleContext.state.googlePersonalEmail})` : '';
+      personalStatusEl.textContent = `${googleContext.state.googleErrors.personal}${emailStr}`;
+      personalStatusEl.className = "auth-status disconnected";
+      personalLoginBtn.classList.remove('hidden');
+      personalLogoutBtn.classList.add('hidden');
     } else {
       personalStatusEl.textContent = t('disconnected');
       personalStatusEl.className = "auth-status disconnected";
@@ -275,6 +576,12 @@ export function updateGoogleAuthStatus() {
       workStatusEl.className = "auth-status connected";
       workLoginBtn.classList.add('hidden');
       workLogoutBtn.classList.remove('hidden');
+    } else if (googleContext.state.googleErrors?.work) {
+      const emailStr = googleContext.state.googleWorkEmail ? ` (${googleContext.state.googleWorkEmail})` : '';
+      workStatusEl.textContent = `${googleContext.state.googleErrors.work}${emailStr}`;
+      workStatusEl.className = "auth-status disconnected";
+      workLoginBtn.classList.remove('hidden');
+      workLogoutBtn.classList.add('hidden');
     } else {
       workStatusEl.textContent = t('disconnected');
       workStatusEl.className = "auth-status disconnected";
@@ -296,9 +603,9 @@ export function updateGoogleAuthStatus() {
 
   const hasGoogleError = !!(googleContext.state.googleErrors && (googleContext.state.googleErrors.personal || googleContext.state.googleErrors.work || googleContext.state.googleErrors.tasks));
   const googleErrDetail = googleContext.state.googleErrors?.personal || googleContext.state.googleErrors?.work || googleContext.state.googleErrors?.tasks || '';
-  const googleWarningTooltip = googleErrDetail ? `${t('git-error-prefix')}${googleErrDetail}` : t('btn-failed');
+  const googleWarningTooltip = googleErrDetail || t('google-session-expired');
 
-  const googleWarningIconHTML = `<span class="status-warning-icon" data-tooltip="${googleContext.escapeHtml(googleWarningTooltip)}" onclick="event.stopPropagation(); window.openSettingsGoogleTab();">⚠️</span>`;
+  const googleWarningIconHTML = `<span class="status-warning-icon" data-tooltip="${googleContext.escapeHtml(googleWarningTooltip)}" onclick="event.stopPropagation(); window.openSettingsGoogleTab();" style="cursor:pointer;">⚠️</span>`;
 
   const indicatorsHTML = `
     ${hasGoogleError ? googleWarningIconHTML : ''}
@@ -374,6 +681,7 @@ export async function fetchGmail() {
       if (!res.ok) {
         if (res.status === 401) {
           handleInvalidToken(type);
+          throw new Error(t('google-session-expired'));
         }
         throw new Error(`HTTP ${res.status}`);
       }
@@ -384,7 +692,13 @@ export async function fetchGmail() {
         googleContext.safeFetch(`https://www.googleapis.com/gmail/v1/users/me/messages/${msg.id}`, {
           headers: { 'Authorization': `Bearer ${token}` }
         }).then(r => {
-          if (!r.ok) throw new Error(`HTTP ${r.status}`);
+          if (!r.ok) {
+            if (r.status === 401) {
+              handleInvalidToken(type);
+              throw new Error(t('google-session-expired'));
+            }
+            throw new Error(`HTTP ${r.status}`);
+          }
           return r.json();
         })
       );
@@ -393,7 +707,10 @@ export async function fetchGmail() {
     } catch (e) {
       console.error(`Error fetching Gmail for ${type}:`, e);
       googleContext.state.googleErrors = googleContext.state.googleErrors || {};
-      googleContext.state.googleErrors[type] = e.message || 'Gmail fetch error';
+      const msg = (e.message && (e.message.includes('401') || e.message === t('google-session-expired')))
+        ? t('google-session-expired')
+        : (e.message || 'Gmail fetch error');
+      googleContext.state.googleErrors[type] = msg;
       updateGoogleAuthStatus();
       return [];
     }
@@ -563,6 +880,7 @@ export async function fetchGoogleTasks() {
       if (!tasksRes.ok) {
         if (tasksRes.status === 401) {
           handleInvalidToken(type);
+          throw new Error(t('google-session-expired'));
         }
         throw new Error(`HTTP ${tasksRes.status}`);
       }
@@ -570,12 +888,24 @@ export async function fetchGoogleTasks() {
       const items = tasksData.items || [];
       return items.map(t => ({ ...t, accountType: type }));
     } catch (e) {
+      if (e.message === t('google-session-expired') || e.message?.includes('401')) {
+        googleContext.state.googleErrors = googleContext.state.googleErrors || {};
+        googleContext.state.googleErrors[type] = t('google-session-expired');
+        updateGoogleAuthStatus();
+        return [];
+      }
       console.warn(`Direct fetch from @default failed for ${type}, trying lists fallback...`, e);
       try {
         const listsRes = await fetch('https://www.googleapis.com/tasks/v1/users/@me/lists', {
           headers: { 'Authorization': `Bearer ${token}` }
         });
-        if (!listsRes.ok) throw new Error(`Fallback HTTP ${listsRes.status}`);
+        if (!listsRes.ok) {
+          if (listsRes.status === 401) {
+            handleInvalidToken(type);
+            throw new Error(t('google-session-expired'));
+          }
+          throw new Error(`Fallback HTTP ${listsRes.status}`);
+        }
         const listsData = await listsRes.json();
         if (!listsData.items || listsData.items.length === 0) return [];
 
@@ -583,14 +913,23 @@ export async function fetchGoogleTasks() {
         const tasksRes = await fetch(`https://www.googleapis.com/tasks/v1/lists/${listId}/tasks?showCompleted=false`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
-        if (!tasksRes.ok) throw new Error(`Fallback Tasks HTTP ${tasksRes.status}`);
+        if (!tasksRes.ok) {
+          if (tasksRes.status === 401) {
+            handleInvalidToken(type);
+            throw new Error(t('google-session-expired'));
+          }
+          throw new Error(`Fallback Tasks HTTP ${tasksRes.status}`);
+        }
         const tasksData = await tasksRes.json();
         const items = tasksData.items || [];
         return items.map(t => ({ ...t, accountType: type }));
       } catch (fallbackError) {
-        errors.push(`${type} account: ${fallbackError.message}`);
+        const msg = (fallbackError.message && (fallbackError.message.includes('401') || fallbackError.message === t('google-session-expired')))
+          ? t('google-session-expired')
+          : fallbackError.message;
+        errors.push(`${type} account: ${msg}`);
         googleContext.state.googleErrors = googleContext.state.googleErrors || {};
-        googleContext.state.googleErrors[type] = fallbackError.message;
+        googleContext.state.googleErrors[type] = msg;
         updateGoogleAuthStatus();
         return [];
       }
@@ -863,6 +1202,7 @@ export async function fetchGoogleCalendar() {
     if (!res.ok) {
       if (res.status === 401) {
         handleInvalidToken(type);
+        throw new Error(t('google-session-expired'));
       }
       throw new Error(`HTTP ${res.status}`);
     }
@@ -879,7 +1219,10 @@ export async function fetchGoogleCalendar() {
           .catch(err => {
             console.error("Error fetching personal calendar:", err);
             googleContext.state.googleErrors = googleContext.state.googleErrors || {};
-            googleContext.state.googleErrors.personal = err.message || 'Calendar error';
+            const msg = (err.message && (err.message.includes('401') || err.message === t('google-session-expired')))
+              ? t('google-session-expired')
+              : (err.message || 'Calendar error');
+            googleContext.state.googleErrors.personal = msg;
             updateGoogleAuthStatus();
             return [];
           })
@@ -891,7 +1234,10 @@ export async function fetchGoogleCalendar() {
           .catch(err => {
             console.error("Error fetching work calendar:", err);
             googleContext.state.googleErrors = googleContext.state.googleErrors || {};
-            googleContext.state.googleErrors.work = err.message || 'Calendar error';
+            const msg = (err.message && (err.message.includes('401') || err.message === t('google-session-expired')))
+              ? t('google-session-expired')
+              : (err.message || 'Calendar error');
+            googleContext.state.googleErrors.work = msg;
             updateGoogleAuthStatus();
             return [];
           })

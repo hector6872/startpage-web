@@ -40,6 +40,7 @@ export let state = {
     wikipediaType: "news",
     storageMode: "local",
     googleClientId: "",
+    googleClientSecret: "",
     showGoogleSchedule: true,
     showGoogleRecurringEvents: true,
     showGoogleEmails: true,

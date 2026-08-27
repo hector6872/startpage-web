@@ -1,6 +1,6 @@
 import { state } from "../utils/state.js";
 import { t } from "../locales/index.js";
-import { safeFetch, escapeHtml } from "../utils/helpers.js";
+import { safeFetch, escapeHtml, formatAuthErrorMessage, showFieldValidationError } from "../utils/helpers.js";
 import { saveSettings } from "./storage.js";
 import { translatePage } from "../ui/settings.js";
 
@@ -112,6 +112,7 @@ export function updateGitStatusIndicators(appState = state, escapeHtmlFn = escap
 export function startTestCooldown(provider, button) {
   if (button.dataset.cooldownInterval) {
     clearInterval(parseInt(button.dataset.cooldownInterval, 10));
+    delete button.dataset.cooldownInterval;
   }
 
   let remaining = 30;
@@ -121,8 +122,10 @@ export function startTestCooldown(provider, button) {
   button.style.borderColor = '#eb5757';
   button.style.cursor = 'not-allowed';
 
-  const originalText = t('btn-connect');
-  button.textContent = `${originalText} (${remaining}s)`;
+  const failedText = t('btn-failed');
+  const connectText = t('btn-connect');
+  button.textContent = `${failedText} (${remaining}s)`;
+  button.removeAttribute('data-i18n');
   
   const interval = setInterval(() => {
     remaining--;
@@ -130,7 +133,7 @@ export function startTestCooldown(provider, button) {
       clearInterval(interval);
       delete button.dataset.cooldownInterval;
       button.disabled = false;
-      button.textContent = originalText;
+      button.textContent = connectText;
       button.setAttribute('data-i18n', 'btn-connect');
       button.style.backgroundColor = '';
       button.style.color = '';
@@ -138,10 +141,10 @@ export function startTestCooldown(provider, button) {
       button.style.cursor = '';
       if (typeof translatePage === 'function') translatePage();
     } else {
-      button.textContent = `${originalText} (${remaining}s)`;
+      button.textContent = `${failedText} (${remaining}s)`;
     }
   }, 1000);
-  
+
   button.dataset.cooldownInterval = String(interval);
 }
 
@@ -156,9 +159,13 @@ export async function testGitConnection(provider, button) {
 
   try {
     if (provider === 'github') {
-      const token = document.getElementById('github-token').value.trim();
+      const tokenInput = document.getElementById('github-token');
+      const token = tokenInput ? tokenInput.value.trim() : '';
       if (!token) {
-        throw new Error(t('git-enter-token'));
+        if (tokenInput) showFieldValidationError(tokenInput, t('git-enter-token'));
+        button.textContent = originalText;
+        button.disabled = false;
+        return;
       }
 
       const headers = {
@@ -171,14 +178,24 @@ export async function testGitConnection(provider, button) {
         state.settings.githubToken = token;
         await saveSettings(state);
       } else {
-        throw new Error(`${res.status} ${res.statusText}`);
+        throw new Error(formatAuthErrorMessage(null, res.status));
       }
     } else if (provider === 'bitbucket') {
-      const workspace = document.getElementById('bitbucket-workspace').value.trim();
-      const email = document.getElementById('bitbucket-username').value.trim();
-      const token = document.getElementById('bitbucket-token').value.trim();
+      const wsInput = document.getElementById('bitbucket-workspace');
+      const userInput = document.getElementById('bitbucket-username');
+      const tokenInput = document.getElementById('bitbucket-token');
+
+      const workspace = wsInput ? wsInput.value.trim() : '';
+      const email = userInput ? userInput.value.trim() : '';
+      const token = tokenInput ? tokenInput.value.trim() : '';
+
       if (!workspace || !email || !token) {
-        throw new Error(t('git-fill-fields'));
+        if (wsInput && !workspace) showFieldValidationError(wsInput, t('form-required-field'));
+        if (userInput && !email) showFieldValidationError(userInput, t('form-required-field'));
+        if (tokenInput && !token) showFieldValidationError(tokenInput, t('form-required-field'));
+        button.textContent = originalText;
+        button.disabled = false;
+        return;
       }
 
       const auth = btoa(`${email}:${token}`);
@@ -200,10 +217,10 @@ export async function testGitConnection(provider, button) {
         if (userRes.status === 403) {
           throw new Error(t('git-token-scope'));
         }
-        throw new Error(`${userRes.status} ${userRes.statusText}`);
+        throw new Error(formatAuthErrorMessage(null, userRes.status));
       }
       if (!reposRes.ok) {
-        throw new Error(`${reposRes.status} ${reposRes.statusText}`);
+        throw new Error(formatAuthErrorMessage(null, reposRes.status));
       }
       success = true;
       state.settings.bitbucketWorkspace = workspace;
@@ -211,11 +228,19 @@ export async function testGitConnection(provider, button) {
       state.settings.bitbucketToken = token;
       await saveSettings(state);
     } else if (provider === 'gitlab') {
-      let host = document.getElementById('gitlab-host').value.trim() || 'https://gitlab.com';
+      const hostInput = document.getElementById('gitlab-host');
+      const tokenInput = document.getElementById('gitlab-token');
+
+      let host = hostInput ? hostInput.value.trim() : 'https://gitlab.com';
+      if (!host) host = 'https://gitlab.com';
       host = host.replace(/\/$/, "");
-      const token = document.getElementById('gitlab-token').value.trim();
+      const token = tokenInput ? tokenInput.value.trim() : '';
+
       if (!token) {
-        throw new Error(t('git-enter-token'));
+        if (tokenInput) showFieldValidationError(tokenInput, t('git-enter-token'));
+        button.textContent = originalText;
+        button.disabled = false;
+        return;
       }
 
       const headers = { 'PRIVATE-TOKEN': token };
@@ -226,11 +251,11 @@ export async function testGitConnection(provider, button) {
         state.settings.gitlabToken = token;
         await saveSettings(state);
       } else {
-        throw new Error(`${res.status} ${res.statusText}`);
+        throw new Error(formatAuthErrorMessage(null, res.status));
       }
     }
   } catch (e) {
-    errorMsg = e.message || String(e);
+    errorMsg = formatAuthErrorMessage(e);
   }
 
   // Update State Status and Error Message
@@ -243,9 +268,6 @@ export async function testGitConnection(provider, button) {
     if (provider === 'bitbucket') { state.bitbucketStatus = 'error'; state.bitbucketError = errorMsg; }
     if (provider === 'gitlab') { state.gitlabStatus = 'error'; state.gitlabError = errorMsg; }
   }
-
-  // Update Settings dot status and tooltips reactively
-  updateGitStatusIndicators(state, escapeHtml);
 
   if (success) {
     if (button.dataset.cooldownInterval) {
@@ -260,11 +282,12 @@ export async function testGitConnection(provider, button) {
     button.style.cursor = 'default';
     button.disabled = true;
     
-    // Refresh main list
+    updateGitStatusIndicators(state, escapeHtml);
     fetchAllPRs(state, safeFetch, escapeHtml);
   } else {
-    // 30s cooldown on failure
+    // 30s cooldown on failure - start cooldown BEFORE updating status indicators
     startTestCooldown(provider, button);
+    updateGitStatusIndicators(state, escapeHtml);
     fetchAllPRs(state, safeFetch, escapeHtml);
   }
 }
@@ -284,13 +307,10 @@ export async function fetchAllPRs(appState = state, safeFetchFn = safeFetch, esc
   const hasBitbucket = !!(state.settings.bitbucketToken && state.settings.bitbucketUsername && state.settings.bitbucketWorkspace);
   const hasGitlab = !!state.settings.gitlabToken;
 
-  // Initialize status before fetching
-  state.githubStatus = hasGithub ? 'connected' : 'disconnected';
-  state.githubError = '';
-  state.bitbucketStatus = hasBitbucket ? 'connected' : 'disconnected';
-  state.bitbucketError = '';
-  state.gitlabStatus = hasGitlab ? 'connected' : 'disconnected';
-  state.gitlabError = '';
+  // Do not assume connected before API response
+  if (!hasGithub) { state.githubStatus = 'disconnected'; state.githubError = ''; }
+  if (!hasBitbucket) { state.bitbucketStatus = 'disconnected'; state.bitbucketError = ''; }
+  if (!hasGitlab) { state.gitlabStatus = 'disconnected'; state.gitlabError = ''; }
   updateGitStatusIndicators(state, escapeHtml);
   
   if (state.settings.oooActive && (hasGithub || hasBitbucket || hasGitlab)) {
@@ -327,8 +347,10 @@ export async function fetchAllPRs(appState = state, safeFetchFn = safeFetch, esc
       const userRes = await fetch(`https://api.github.com/user`, { headers });
       if (!userRes.ok) {
         state.githubStatus = 'error';
-        state.githubError = `${userRes.status} ${userRes.statusText}`;
+        state.githubError = formatAuthErrorMessage(null, userRes.status);
       } else {
+        state.githubStatus = 'connected';
+        state.githubError = '';
         const userData = await userRes.json();
         const githubUserLogin = userData.login;
 
@@ -446,7 +468,7 @@ export async function fetchAllPRs(appState = state, safeFetchFn = safeFetch, esc
     } catch (e) {
       console.error("Error fetching GitHub PRs:", e);
       state.githubStatus = 'error';
-      state.githubError = e.message || String(e);
+      state.githubError = formatAuthErrorMessage(e);
     }
     updateGitStatusIndicators(state, escapeHtml);
   }
@@ -515,8 +537,10 @@ export async function fetchAllPRs(appState = state, safeFetchFn = safeFetch, esc
       const reposRes = await fetch(`https://api.bitbucket.org/2.0/repositories/${encodeURIComponent(workspace)}?sort=-updated_on&pagelen=10`, { headers });
       if (!reposRes.ok) {
         state.bitbucketStatus = 'error';
-        state.bitbucketError = `${reposRes.status} ${reposRes.statusText}`;
+        state.bitbucketError = formatAuthErrorMessage(null, reposRes.status);
       } else {
+        state.bitbucketStatus = 'connected';
+        state.bitbucketError = '';
         const reposData = await reposRes.json();
         const repos = reposData.values || [];
 
@@ -623,7 +647,7 @@ export async function fetchAllPRs(appState = state, safeFetchFn = safeFetch, esc
     } catch (e) {
       console.error("Error fetching Bitbucket PRs:", e);
       state.bitbucketStatus = 'error';
-      state.bitbucketError = e.message || String(e);
+      state.bitbucketError = formatAuthErrorMessage(e);
     }
     updateGitStatusIndicators(state, escapeHtml);
   }
@@ -639,8 +663,10 @@ export async function fetchAllPRs(appState = state, safeFetchFn = safeFetch, esc
       const userRes = await fetch(`${host}/api/v4/user`, { headers });
       if (!userRes.ok) {
         state.gitlabStatus = 'error';
-        state.gitlabError = `${userRes.status} ${userRes.statusText}`;
+        state.gitlabError = formatAuthErrorMessage(null, userRes.status);
       } else {
+        state.gitlabStatus = 'connected';
+        state.gitlabError = '';
         const userData = await userRes.json();
         const gitlabUsername = userData.username;
 
@@ -766,7 +792,7 @@ export async function fetchAllPRs(appState = state, safeFetchFn = safeFetch, esc
     } catch (e) {
       console.error("Error fetching GitLab MRs:", e);
       state.gitlabStatus = 'error';
-      state.gitlabError = e.message || String(e);
+      state.gitlabError = formatAuthErrorMessage(e);
     }
     updateGitStatusIndicators(state, escapeHtml);
   }

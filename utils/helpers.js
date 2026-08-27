@@ -198,3 +198,25 @@ export function showInputErrorFeedback(inputEl, errorMessage) {
     errorEl.remove();
   }, 2500);
 }
+
+export const showFieldValidationError = showInputErrorFeedback;
+
+export function formatAuthErrorMessage(error, status) {
+  if (status === 401 || status === 403) {
+    return t("error-could-not-connect");
+  }
+  if (!error) return t("error-could-not-connect");
+  const msg = typeof error === "string" ? error : (error.message || String(error));
+  if (
+    msg.includes("401") ||
+    msg.includes("403") ||
+    msg.toLowerCase().includes("unauthorized") ||
+    msg.toLowerCase().includes("forbidden") ||
+    msg.toLowerCase().includes("authentication failed") ||
+    msg.toLowerCase().includes("failed to fetch")
+  ) {
+    return t("error-could-not-connect");
+  }
+  return msg;
+}
+

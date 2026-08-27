@@ -14,7 +14,8 @@ A beautiful, modern, and minimalist productivity dashboard featuring task manage
 > ### 🔒 100% Local & Privacy-First
 > **Privacy is paramount — data never touches any external servers.** This dashboard operates completely client-side:
 > - 🚫 **Zero Server Storage**: No data is ever stored on external servers, remote databases, or tracking services.
-> - 🛡️ **Local Storage in the Browser**: All API keys, PATs, tokens, settings, notes, and tasks live strictly in the browser (`localStorage`) or in a chosen local/Google Drive JSON sync file.
+> - 🛡️ **Private Local Storage in Browser**: All API keys, PATs, tokens, and settings live strictly inside your local browser (`localStorage`).
+> - 🔒 **Zero Keys in Exported JSON Files**: Exported and synchronized JSON files are automatically sanitized to never include API tokens or secret credentials.
 > - ⚡ **Direct Official API Calls**: All integrations communicate directly from the browser to the official provider APIs (Google, GitHub, Bitbucket, GitLab, Jira).
 
 ---
@@ -90,22 +91,30 @@ Before creating credentials, the OAuth consent screen must be configured to defi
 1. Go directly to the [Google Cloud Credentials Page](https://console.cloud.google.com/apis/credentials).
 2. Click **Create Credentials** at the top and select **OAuth client ID**.
 3. Choose **Web application** as the Application type.
-4. Set a client name (e.g., `Web Client`).
+4. Set a client name (e.g., `Startpage Dashboard`).
 5. Under **Authorized JavaScript origins**, click **Add URI** and enter:
-   - `http://localhost:5173` (or the specific local/production URL where the dashboard is hosted).
-   - *Note: Wildcards and IP addresses are not permitted as Authorized JavaScript origins by Google. Always use localhost or a qualified domain name.*
-6. Click **Create**.
-7. Copy the generated **Client ID** (formatted as `xxxxxxxx.apps.googleusercontent.com`).
+   - `http://localhost:5173` (for local development)
+   - `https://your-domain.com` (for production)
+6. Under **Authorized redirect URIs**, click **Add URI** and enter:
+   - `http://localhost:5173/api/auth/google/callback` (for local testing)
+   - `https://your-domain.com/api/auth/google/callback` (for production deployments like Cloudflare Pages, Vercel, or Netlify)
+7. Click **Create**.
+8. Copy the generated **Client ID** and **Client Secret**.
 
 ### 5. ⚙️ Configure the Dashboard
 1. Open the dashboard in the browser.
-2. Click the settings gear icon (`⚙️`) in the bottom corner.
+2. Click the preferences gear icon (`⚙️`) in the bottom corner.
 3. Navigate to the **Google Integration** tab.
-4. Paste the **Google Client ID** into the input field and save settings.
-5. Click **Log In (Personal)** or **Log In (Work)** to authenticate with Google.
+4. Fill in the credentials:
+   - **Google Client ID**: Paste the Client ID generated above.
+   - **Google Client Secret**: Paste the Client Secret (used in production for 100% silent background token renewal without popups).
+5. Click **Connect (Personal)** or **Connect (Work)** to authenticate.
 
 > [!NOTE]
-> **Allow Browser Popups**: Google authentication opens the official Google Identity Services (GIS) OAuth login dialog inside a popup window. Ensure that **popups are allowed** for your dashboard URL (e.g. `http://localhost:5173` or your hosted domain) in the browser address bar / site settings so the authentication window is not blocked.
+> ### 🔄 Hybrid Authentication Architecture
+> - **Local Development (`localhost`)**: Runs via fast Google Identity Services (GIS) popups with auto-popup on load if not yet authenticated.
+> - **Production (`Cloudflare Pages` / `Vercel` / `Netlify` / `Node`)**: Uses offline Authorization Code flow (`access_type=offline`). Once connected, tokens are renewed 100% silently in the background without any annoying popups.
+> - **Zero Server Variables & 100% Privacy-First**: No environment variables are required on the server. All credentials live strictly in your local browser (`localStorage`) and are never sent to external tracking servers or included in exported JSON files.
 
 ---
 
