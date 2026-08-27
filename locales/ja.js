@@ -98,6 +98,7 @@ export default {
   "google-status": "認証ステータス:",
   "disconnected": "未接続",
   "connected": "接続済み",
+  "google-session-expired": "セッションの有効期限が切れました。再接続してください。",
   "google-login": "Google でログイン",
   "google-logout": "接続解除",
   "google-login-personal": "個人アカウントを接続",

@@ -98,6 +98,7 @@ export default {
   "google-status": "Authenticatiestatus:",
   "disconnected": "Niet Verbonden",
   "connected": "Verbonden",
+  "google-session-expired": "Sessie verlopen. Maak opnieuw verbinding.",
   "google-login": "Inloggen met Google",
   "google-logout": "Ontkoppelen",
   "google-login-personal": "Persoonlijk Account Koppelen",

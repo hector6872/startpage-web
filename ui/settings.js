@@ -1514,24 +1514,40 @@ export function setupEventListeners() {
   // Google OAuth Personal Login Action
   const loginBtnPersonal = document.getElementById('google-login-btn-personal');
   loginBtnPersonal.addEventListener('click', () => {
+    const clientIdInput = document.getElementById('google-client-id');
+    const clientSecretInput = document.getElementById('google-client-secret');
+    if (clientIdInput && clientIdInput.value.trim()) {
+      state.settings.googleClientId = clientIdInput.value.trim();
+    }
+    if (clientSecretInput) {
+      state.settings.googleClientSecret = clientSecretInput.value.trim();
+    }
     if (!state.settings.googleClientId) {
-      const clientIdInput = document.getElementById('google-client-id');
       const msg = t('form-enter-google-id');
       showInputErrorFeedback(clientIdInput, msg);
       return;
     }
+    saveSettings(state);
     initiateGoogleAuth('personal');
   });
 
   // Google OAuth Work Login Action
   const loginBtnWork = document.getElementById('google-login-btn-work');
   loginBtnWork.addEventListener('click', () => {
+    const clientIdInput = document.getElementById('google-client-id');
+    const clientSecretInput = document.getElementById('google-client-secret');
+    if (clientIdInput && clientIdInput.value.trim()) {
+      state.settings.googleClientId = clientIdInput.value.trim();
+    }
+    if (clientSecretInput) {
+      state.settings.googleClientSecret = clientSecretInput.value.trim();
+    }
     if (!state.settings.googleClientId) {
-      const clientIdInput = document.getElementById('google-client-id');
       const msg = t('form-enter-google-id');
       showInputErrorFeedback(clientIdInput, msg);
       return;
     }
+    saveSettings(state);
     initiateGoogleAuth('work');
   });
 

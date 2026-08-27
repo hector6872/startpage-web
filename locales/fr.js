@@ -98,6 +98,7 @@ export default {
   "google-status": "Statut d'Authentification :",
   "disconnected": "Déconnecté",
   "connected": "Connecté",
+  "google-session-expired": "Session expirée. Veuillez vous reconnecter.",
   "google-login": "Se connecter avec Google",
   "google-logout": "Se déconnecter",
   "google-login-personal": "Connecter Compte Personnel",

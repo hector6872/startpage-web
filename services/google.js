@@ -173,29 +173,33 @@ export function initiateGoogleAuth(targetAccount) {
   const clientSecret = googleContext.state?.settings?.googleClientSecret;
 
   if (!clientId) {
+    console.error("No Google Client ID provided");
     return false;
   }
 
-  // 1. In Local Development: use GIS client popup if no clientSecret
+  // 1. In Local Development without clientSecret: use GIS popup client
   if (isLocalDevelopment() && !clientSecret) {
-    if (getGoogleTokenClient()) {
-      getGoogleTokenClient().requestAccessToken({ prompt: 'select_account' });
-    } else {
-      initGoogleOAuth();
-      getGoogleTokenClient()?.requestAccessToken({ prompt: 'select_account' });
+    if (typeof google !== 'undefined' && google?.accounts?.oauth2) {
+      try {
+        initGoogleOAuth();
+        if (googleTokenClient) {
+          googleTokenClient.requestAccessToken({ prompt: 'select_account' });
+          return true;
+        }
+      } catch (err) {
+        console.warn("GIS token client error, falling back to popup window:", err);
+      }
     }
-    return true;
   }
 
-  // 2. In Production (or offline code flow with clientSecret):
+  // 2. Production or fallback to standard OAuth popup window
   const redirectUri = `${window.location.origin}/api/auth/google/callback`;
   const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?` + new URLSearchParams({
     client_id: clientId,
     redirect_uri: redirectUri,
     response_type: 'code',
     scope: GOOGLE_SCOPES,
-    access_type: 'offline',
-    prompt: 'consent',
+    ...(clientSecret ? { access_type: 'offline', prompt: 'consent' } : { prompt: 'select_account' }),
     state: targetAccount
   }).toString();
 
@@ -251,68 +255,73 @@ export function initGoogleOAuth() {
     fetchGoogleTasks();
   }
 
-  if (typeof google === 'undefined' || !googleContext.state.settings.googleClientId) {
+  const clientId = googleContext.state?.settings?.googleClientId;
+  if (typeof google === 'undefined' || !google?.accounts?.oauth2 || !clientId) {
     return;
   }
 
-  googleTokenClient = google.accounts.oauth2.initTokenClient({
-    client_id: googleContext.state.settings.googleClientId,
-    scope: GOOGLE_SCOPES,
-    callback: async (response) => {
-      if (response.error) {
-        console.error("Google Auth error:", response.error);
+  try {
+    googleTokenClient = google.accounts.oauth2.initTokenClient({
+      client_id: clientId,
+      scope: GOOGLE_SCOPES,
+      callback: async (response) => {
+        if (response.error) {
+          console.error("Google Auth error:", response.error);
+          isRefreshingToken[googleLoginTarget] = false;
+          return;
+        }
+        
+        const token = response.access_token;
+        const expiresInSec = response.expires_in || 3600;
+        const expiryTimestamp = Date.now() + (expiresInSec * 1000) - 60000;
+        
+        if (googleLoginTarget === 'personal') {
+          googleContext.state.googlePersonalToken = token;
+          localStorage.setItem('google_personal_token', token);
+          localStorage.setItem('google_personal_expiry', String(expiryTimestamp));
+          sessionStorage.setItem('google_personal_token', token);
+          sessionStorage.setItem('google_personal_expiry', String(expiryTimestamp));
+          
+          let email = googleContext.state.googlePersonalEmail;
+          if (!email) {
+            email = await fetchGoogleUserEmail(token);
+            if (email) {
+              googleContext.state.googlePersonalEmail = email;
+              localStorage.setItem('google_personal_email', email);
+              sessionStorage.setItem('google_personal_email', email);
+            }
+          }
+        } else {
+          googleContext.state.googleWorkToken = token;
+          localStorage.setItem('google_work_token', token);
+          localStorage.setItem('google_work_expiry', String(expiryTimestamp));
+          sessionStorage.setItem('google_work_token', token);
+          sessionStorage.setItem('google_work_expiry', String(expiryTimestamp));
+          
+          let email = googleContext.state.googleWorkEmail;
+          if (!email) {
+            email = await fetchGoogleUserEmail(token);
+            if (email) {
+              googleContext.state.googleWorkEmail = email;
+              localStorage.setItem('google_work_email', email);
+              sessionStorage.setItem('google_work_email', email);
+            }
+          }
+        }
+        
+        // Keep googleClientToken for backward compatibility
+        googleContext.state.googleClientToken = googleContext.state.googlePersonalToken || googleContext.state.googleWorkToken;
+        localStorage.setItem('google_access_token', googleContext.state.googleClientToken || '');
+        sessionStorage.setItem('google_access_token', googleContext.state.googleClientToken || '');
+        
         isRefreshingToken[googleLoginTarget] = false;
-        return;
+        updateGoogleAuthStatus();
+        await fetchGoogleData();
       }
-      
-      const token = response.access_token;
-      const expiresInSec = response.expires_in || 3600;
-      const expiryTimestamp = Date.now() + (expiresInSec * 1000) - 60000;
-      
-      if (googleLoginTarget === 'personal') {
-        googleContext.state.googlePersonalToken = token;
-        localStorage.setItem('google_personal_token', token);
-        localStorage.setItem('google_personal_expiry', String(expiryTimestamp));
-        sessionStorage.setItem('google_personal_token', token);
-        sessionStorage.setItem('google_personal_expiry', String(expiryTimestamp));
-        
-        let email = googleContext.state.googlePersonalEmail;
-        if (!email) {
-          email = await fetchGoogleUserEmail(token);
-          if (email) {
-            googleContext.state.googlePersonalEmail = email;
-            localStorage.setItem('google_personal_email', email);
-            sessionStorage.setItem('google_personal_email', email);
-          }
-        }
-      } else {
-        googleContext.state.googleWorkToken = token;
-        localStorage.setItem('google_work_token', token);
-        localStorage.setItem('google_work_expiry', String(expiryTimestamp));
-        sessionStorage.setItem('google_work_token', token);
-        sessionStorage.setItem('google_work_expiry', String(expiryTimestamp));
-        
-        let email = googleContext.state.googleWorkEmail;
-        if (!email) {
-          email = await fetchGoogleUserEmail(token);
-          if (email) {
-            googleContext.state.googleWorkEmail = email;
-            localStorage.setItem('google_work_email', email);
-            sessionStorage.setItem('google_work_email', email);
-          }
-        }
-      }
-      
-      // Keep googleClientToken for backward compatibility
-      googleContext.state.googleClientToken = googleContext.state.googlePersonalToken || googleContext.state.googleWorkToken;
-      localStorage.setItem('google_access_token', googleContext.state.googleClientToken || '');
-      sessionStorage.setItem('google_access_token', googleContext.state.googleClientToken || '');
-      
-      isRefreshingToken[googleLoginTarget] = false;
-      updateGoogleAuthStatus();
-      await fetchGoogleData();
-    }
-  });
+    });
+  } catch (e) {
+    console.warn("Failed to initialize Google Token Client:", e);
+  }
 
   checkAndFetchGoogleEmails();
   
@@ -327,17 +336,6 @@ export function initGoogleOAuth() {
 
   if (googleContext.state.googleWorkEmail && (!googleContext.state.googleWorkToken || now >= workExpiry)) {
     refreshGoogleToken('work');
-  }
-
-  // On localhost dev, if client ID is set and no tokens active, attempt auto popup
-  if (isLocalDevelopment() && !googleContext.state.settings.googleClientSecret) {
-    if (!googleContext.state.googlePersonalToken && !googleContext.state.googleWorkToken && googleContext.state.settings.googleClientId) {
-      try {
-        googleTokenClient.requestAccessToken({ prompt: 'select_account' });
-      } catch (e) {
-        console.warn("Auto-popup on localhost dev skipped:", e);
-      }
-    }
   }
 
   updateGoogleAuthStatus();
@@ -442,12 +440,38 @@ export async function refreshGoogleToken(accountType) {
 
   // 3. Mark session expired if cannot be refreshed silently
   googleContext.state.googleErrors = googleContext.state.googleErrors || {};
-  googleContext.state.googleErrors[accountType] = 'Session expired';
+  googleContext.state.googleErrors[accountType] = t('google-session-expired');
   updateGoogleAuthStatus();
 }
 
 export function handleInvalidToken(accountType) {
-  console.warn(`Token expired (401) for ${accountType} account. Attempting renewal.`);
+  console.warn(`Token expired or invalid (401) for ${accountType} account.`);
+
+  // Invalidate and clear the expired token immediately so state does not falsely report "connected"
+  if (accountType === 'personal') {
+    googleContext.state.googlePersonalToken = null;
+    localStorage.removeItem('google_personal_token');
+    localStorage.removeItem('google_personal_expiry');
+    sessionStorage.removeItem('google_personal_token');
+    sessionStorage.removeItem('google_personal_expiry');
+  } else if (accountType === 'work') {
+    googleContext.state.googleWorkToken = null;
+    localStorage.removeItem('google_work_token');
+    localStorage.removeItem('google_work_expiry');
+    sessionStorage.removeItem('google_work_token');
+    sessionStorage.removeItem('google_work_expiry');
+  }
+
+  if (googleContext.state) {
+    googleContext.state.googleClientToken = googleContext.state.googlePersonalToken || googleContext.state.googleWorkToken;
+    localStorage.setItem('google_access_token', googleContext.state.googleClientToken || '');
+    sessionStorage.setItem('google_access_token', googleContext.state.googleClientToken || '');
+  }
+
+  googleContext.state.googleErrors = googleContext.state.googleErrors || {};
+  googleContext.state.googleErrors[accountType] = t('google-session-expired');
+
+  updateGoogleAuthStatus();
   refreshGoogleToken(accountType);
 }
 
@@ -519,6 +543,12 @@ export function updateGoogleAuthStatus() {
       personalStatusEl.className = "auth-status connected";
       personalLoginBtn.classList.add('hidden');
       personalLogoutBtn.classList.remove('hidden');
+    } else if (googleContext.state.googleErrors?.personal) {
+      const emailStr = googleContext.state.googlePersonalEmail ? ` (${googleContext.state.googlePersonalEmail})` : '';
+      personalStatusEl.textContent = `${googleContext.state.googleErrors.personal}${emailStr}`;
+      personalStatusEl.className = "auth-status disconnected";
+      personalLoginBtn.classList.remove('hidden');
+      personalLogoutBtn.classList.add('hidden');
     } else {
       personalStatusEl.textContent = t('disconnected');
       personalStatusEl.className = "auth-status disconnected";
@@ -539,6 +569,12 @@ export function updateGoogleAuthStatus() {
       workStatusEl.className = "auth-status connected";
       workLoginBtn.classList.add('hidden');
       workLogoutBtn.classList.remove('hidden');
+    } else if (googleContext.state.googleErrors?.work) {
+      const emailStr = googleContext.state.googleWorkEmail ? ` (${googleContext.state.googleWorkEmail})` : '';
+      workStatusEl.textContent = `${googleContext.state.googleErrors.work}${emailStr}`;
+      workStatusEl.className = "auth-status disconnected";
+      workLoginBtn.classList.remove('hidden');
+      workLogoutBtn.classList.add('hidden');
     } else {
       workStatusEl.textContent = t('disconnected');
       workStatusEl.className = "auth-status disconnected";
@@ -560,9 +596,9 @@ export function updateGoogleAuthStatus() {
 
   const hasGoogleError = !!(googleContext.state.googleErrors && (googleContext.state.googleErrors.personal || googleContext.state.googleErrors.work || googleContext.state.googleErrors.tasks));
   const googleErrDetail = googleContext.state.googleErrors?.personal || googleContext.state.googleErrors?.work || googleContext.state.googleErrors?.tasks || '';
-  const googleWarningTooltip = googleErrDetail ? `${t('git-error-prefix')}${googleErrDetail}` : t('btn-failed');
+  const googleWarningTooltip = googleErrDetail || t('google-session-expired');
 
-  const googleWarningIconHTML = `<span class="status-warning-icon" data-tooltip="${googleContext.escapeHtml(googleWarningTooltip)}" onclick="event.stopPropagation(); window.openSettingsGoogleTab();">⚠️</span>`;
+  const googleWarningIconHTML = `<span class="status-warning-icon" data-tooltip="${googleContext.escapeHtml(googleWarningTooltip)}" onclick="event.stopPropagation(); window.openSettingsGoogleTab();" style="cursor:pointer;">⚠️</span>`;
 
   const indicatorsHTML = `
     ${hasGoogleError ? googleWarningIconHTML : ''}
@@ -638,6 +674,7 @@ export async function fetchGmail() {
       if (!res.ok) {
         if (res.status === 401) {
           handleInvalidToken(type);
+          throw new Error(t('google-session-expired'));
         }
         throw new Error(`HTTP ${res.status}`);
       }
@@ -648,7 +685,13 @@ export async function fetchGmail() {
         googleContext.safeFetch(`https://www.googleapis.com/gmail/v1/users/me/messages/${msg.id}`, {
           headers: { 'Authorization': `Bearer ${token}` }
         }).then(r => {
-          if (!r.ok) throw new Error(`HTTP ${r.status}`);
+          if (!r.ok) {
+            if (r.status === 401) {
+              handleInvalidToken(type);
+              throw new Error(t('google-session-expired'));
+            }
+            throw new Error(`HTTP ${r.status}`);
+          }
           return r.json();
         })
       );
@@ -657,7 +700,10 @@ export async function fetchGmail() {
     } catch (e) {
       console.error(`Error fetching Gmail for ${type}:`, e);
       googleContext.state.googleErrors = googleContext.state.googleErrors || {};
-      googleContext.state.googleErrors[type] = e.message || 'Gmail fetch error';
+      const msg = (e.message && (e.message.includes('401') || e.message === t('google-session-expired')))
+        ? t('google-session-expired')
+        : (e.message || 'Gmail fetch error');
+      googleContext.state.googleErrors[type] = msg;
       updateGoogleAuthStatus();
       return [];
     }
@@ -827,6 +873,7 @@ export async function fetchGoogleTasks() {
       if (!tasksRes.ok) {
         if (tasksRes.status === 401) {
           handleInvalidToken(type);
+          throw new Error(t('google-session-expired'));
         }
         throw new Error(`HTTP ${tasksRes.status}`);
       }
@@ -834,12 +881,24 @@ export async function fetchGoogleTasks() {
       const items = tasksData.items || [];
       return items.map(t => ({ ...t, accountType: type }));
     } catch (e) {
+      if (e.message === t('google-session-expired') || e.message?.includes('401')) {
+        googleContext.state.googleErrors = googleContext.state.googleErrors || {};
+        googleContext.state.googleErrors[type] = t('google-session-expired');
+        updateGoogleAuthStatus();
+        return [];
+      }
       console.warn(`Direct fetch from @default failed for ${type}, trying lists fallback...`, e);
       try {
         const listsRes = await fetch('https://www.googleapis.com/tasks/v1/users/@me/lists', {
           headers: { 'Authorization': `Bearer ${token}` }
         });
-        if (!listsRes.ok) throw new Error(`Fallback HTTP ${listsRes.status}`);
+        if (!listsRes.ok) {
+          if (listsRes.status === 401) {
+            handleInvalidToken(type);
+            throw new Error(t('google-session-expired'));
+          }
+          throw new Error(`Fallback HTTP ${listsRes.status}`);
+        }
         const listsData = await listsRes.json();
         if (!listsData.items || listsData.items.length === 0) return [];
 
@@ -847,14 +906,23 @@ export async function fetchGoogleTasks() {
         const tasksRes = await fetch(`https://www.googleapis.com/tasks/v1/lists/${listId}/tasks?showCompleted=false`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
-        if (!tasksRes.ok) throw new Error(`Fallback Tasks HTTP ${tasksRes.status}`);
+        if (!tasksRes.ok) {
+          if (tasksRes.status === 401) {
+            handleInvalidToken(type);
+            throw new Error(t('google-session-expired'));
+          }
+          throw new Error(`Fallback Tasks HTTP ${tasksRes.status}`);
+        }
         const tasksData = await tasksRes.json();
         const items = tasksData.items || [];
         return items.map(t => ({ ...t, accountType: type }));
       } catch (fallbackError) {
-        errors.push(`${type} account: ${fallbackError.message}`);
+        const msg = (fallbackError.message && (fallbackError.message.includes('401') || fallbackError.message === t('google-session-expired')))
+          ? t('google-session-expired')
+          : fallbackError.message;
+        errors.push(`${type} account: ${msg}`);
         googleContext.state.googleErrors = googleContext.state.googleErrors || {};
-        googleContext.state.googleErrors[type] = fallbackError.message;
+        googleContext.state.googleErrors[type] = msg;
         updateGoogleAuthStatus();
         return [];
       }
@@ -1127,6 +1195,7 @@ export async function fetchGoogleCalendar() {
     if (!res.ok) {
       if (res.status === 401) {
         handleInvalidToken(type);
+        throw new Error(t('google-session-expired'));
       }
       throw new Error(`HTTP ${res.status}`);
     }
@@ -1143,7 +1212,10 @@ export async function fetchGoogleCalendar() {
           .catch(err => {
             console.error("Error fetching personal calendar:", err);
             googleContext.state.googleErrors = googleContext.state.googleErrors || {};
-            googleContext.state.googleErrors.personal = err.message || 'Calendar error';
+            const msg = (err.message && (err.message.includes('401') || err.message === t('google-session-expired')))
+              ? t('google-session-expired')
+              : (err.message || 'Calendar error');
+            googleContext.state.googleErrors.personal = msg;
             updateGoogleAuthStatus();
             return [];
           })
@@ -1155,7 +1227,10 @@ export async function fetchGoogleCalendar() {
           .catch(err => {
             console.error("Error fetching work calendar:", err);
             googleContext.state.googleErrors = googleContext.state.googleErrors || {};
-            googleContext.state.googleErrors.work = err.message || 'Calendar error';
+            const msg = (err.message && (err.message.includes('401') || err.message === t('google-session-expired')))
+              ? t('google-session-expired')
+              : (err.message || 'Calendar error');
+            googleContext.state.googleErrors.work = msg;
             updateGoogleAuthStatus();
             return [];
           })

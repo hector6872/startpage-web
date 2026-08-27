@@ -98,6 +98,7 @@ export default {
   "google-status": "认证状态：",
   "disconnected": "未连接",
   "connected": "已连接",
+  "google-session-expired": "会话已过期，请重新连接。",
   "google-login": "通过 Google 登录",
   "google-logout": "断开连接",
   "google-login-personal": "连接个人账户",
