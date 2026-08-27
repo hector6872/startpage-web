@@ -199,6 +199,8 @@ export function showInputErrorFeedback(inputEl, errorMessage) {
   }, 2500);
 }
 
+export const showFieldValidationError = showInputErrorFeedback;
+
 export function formatAuthErrorMessage(error, status) {
   if (status === 401 || status === 403) {
     return t("error-could-not-connect");

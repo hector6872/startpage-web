@@ -187,7 +187,7 @@ export default {
   "btn-connect": "Conectar",
   "btn-connecting": "Conectando...",
   "btn-connected": "Conectado!",
-  "btn-failed": "Erro",
+  "btn-failed": "Falhou",
   "time-yesterday": "ontem",
   "time-days-ago": "há {n} dias",
   "time-in-days": "em {n} dias",

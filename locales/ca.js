@@ -187,7 +187,7 @@ export default {
   "btn-connect": "Connectar",
   "btn-connecting": "Connectant...",
   "btn-connected": "Connectat!",
-  "btn-failed": "Error",
+  "btn-failed": "Ha fallat",
   "time-yesterday": "ahir",
   "time-days-ago": "fa {n} dies",
   "time-in-days": "en {n} dies",

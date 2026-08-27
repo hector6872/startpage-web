@@ -1,5 +1,5 @@
 import { state as defaultState, state } from "../utils/state.js";
-import { safeFetch as defaultSafeFetch, escapeHtml as defaultEscapeHtml, safeFetch, escapeHtml, formatAuthErrorMessage } from "../utils/helpers.js";
+import { safeFetch as defaultSafeFetch, escapeHtml as defaultEscapeHtml, safeFetch, escapeHtml, formatAuthErrorMessage, showFieldValidationError } from "../utils/helpers.js";
 import { t } from "../locales/index.js";
 import { saveSettings } from "./storage.js";
 import { translatePage } from "../ui/settings.js";
@@ -44,6 +44,7 @@ export function getJiraAuthHeader(settings) {
 export function startJiraTestCooldown(button) {
   if (button.dataset.cooldownInterval) {
     clearInterval(parseInt(button.dataset.cooldownInterval, 10));
+    delete button.dataset.cooldownInterval;
   }
 
   let remaining = 30;
@@ -53,8 +54,10 @@ export function startJiraTestCooldown(button) {
   button.style.borderColor = '#eb5757';
   button.style.cursor = 'not-allowed';
 
-  const originalText = t('btn-connect');
-  button.textContent = `${originalText} (${remaining}s)`;
+  const failedText = t('btn-failed');
+  const connectText = t('btn-connect');
+  button.textContent = `${failedText} (${remaining}s)`;
+  button.removeAttribute('data-i18n');
   
   const interval = setInterval(() => {
     remaining--;
@@ -62,7 +65,7 @@ export function startJiraTestCooldown(button) {
       clearInterval(interval);
       delete button.dataset.cooldownInterval;
       button.disabled = false;
-      button.textContent = originalText;
+      button.textContent = connectText;
       button.setAttribute('data-i18n', 'btn-connect');
       button.style.backgroundColor = '';
       button.style.color = '';
@@ -70,7 +73,7 @@ export function startJiraTestCooldown(button) {
       button.style.cursor = '';
       if (typeof translatePage === 'function') translatePage();
     } else {
-      button.textContent = `${originalText} (${remaining}s)`;
+      button.textContent = `${failedText} (${remaining}s)`;
     }
   }, 1000);
   
@@ -88,14 +91,23 @@ export async function testJiraConnection(button) {
 
   try {
     const hostInputEl = document.getElementById('jira-host');
+    const emailInputEl = document.getElementById('jira-email');
+    const tokenInputEl = document.getElementById('jira-token');
+
     let host = sanitizeJiraHost(hostInputEl ? hostInputEl.value : '');
     if (hostInputEl && host) {
       hostInputEl.value = host;
     }
-    const email = document.getElementById('jira-email').value.trim();
-    const token = document.getElementById('jira-token').value.trim();
+    const email = emailInputEl ? emailInputEl.value.trim() : '';
+    const token = tokenInputEl ? tokenInputEl.value.trim() : '';
+
     if (!host || !email || !token) {
-      throw new Error(t('git-fill-fields'));
+      if (hostInputEl && !host) showFieldValidationError(hostInputEl, t('form-required-field'));
+      if (emailInputEl && !email) showFieldValidationError(emailInputEl, t('form-required-field'));
+      if (tokenInputEl && !token) showFieldValidationError(tokenInputEl, t('form-required-field'));
+      button.textContent = originalText;
+      button.disabled = false;
+      return;
     }
 
     const auth = btoa(`${email}:${token}`);
@@ -156,9 +168,6 @@ export async function testJiraConnection(button) {
     state.jiraError = errorMsg;
   }
 
-  // Update Settings dot status and warning icon reactively
-  updateJiraStatusIndicators(state, escapeHtml);
-
   if (success) {
     if (button.dataset.cooldownInterval) {
       clearInterval(parseInt(button.dataset.cooldownInterval, 10));
@@ -172,10 +181,12 @@ export async function testJiraConnection(button) {
     button.style.cursor = 'default';
     button.disabled = true;
     
+    updateJiraStatusIndicators(state, escapeHtml);
     fetchJira(state, safeFetch, escapeHtml);
   } else {
-    // 30s cooldown on failure
+    // 30s cooldown on failure - start cooldown BEFORE updating status indicators
     startJiraTestCooldown(button);
+    updateJiraStatusIndicators(state, escapeHtml);
     fetchJira(state, safeFetch, escapeHtml);
   }
 }
