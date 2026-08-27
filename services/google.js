@@ -352,6 +352,7 @@ let isRefreshingToken = { personal: false, work: false };
 
 export async function refreshGoogleToken(accountType) {
   if (isRefreshingToken[accountType]) return;
+  isRefreshingToken[accountType] = true;
 
   const refreshToken = localStorage.getItem(`google_${accountType}_refresh_token`) || sessionStorage.getItem(`google_${accountType}_refresh_token`);
   const clientId = googleContext.state?.settings?.googleClientId;
@@ -359,7 +360,6 @@ export async function refreshGoogleToken(accountType) {
 
   // 1. Silent Background Refresh via refresh_token (Production / Offline mode)
   if (refreshToken && clientId && clientSecret) {
-    isRefreshingToken[accountType] = true;
     try {
       console.log(`Silent serverless refresh for ${accountType} with refresh_token...`);
       const tokenUrl = 'https://oauth2.googleapis.com/token';
@@ -411,32 +411,39 @@ export async function refreshGoogleToken(accountType) {
         updateGoogleAuthStatus();
         fetchGoogleData();
         return;
+      } else {
+        const errData = await res.json().catch(() => null);
+        console.warn(`Silent refresh_token failed (${res.status}):`, errData);
+        // If refresh_token was revoked or expired (invalid_grant) or bad request, purge it
+        if (res.status === 400 || errData?.error === 'invalid_grant' || errData?.error === 'invalid_client') {
+          localStorage.removeItem(`google_${accountType}_refresh_token`);
+          sessionStorage.removeItem(`google_${accountType}_refresh_token`);
+        }
       }
     } catch (e) {
       console.warn("Silent refresh_token exchange failed:", e);
     }
-    isRefreshingToken[accountType] = false;
   }
 
   // 2. Local development GIS flow (localhost)
   if (isLocalDevelopment() && typeof google !== 'undefined' && googleTokenClient) {
     const emailHint = accountType === 'personal' ? googleContext.state.googlePersonalEmail : googleContext.state.googleWorkEmail;
-    if (!emailHint) return;
-
-    isRefreshingToken[accountType] = true;
-    googleLoginTarget = accountType;
-    try {
-      googleTokenClient.requestAccessToken({
-        hint: emailHint,
-        prompt: ''
-      });
-      setTimeout(() => { isRefreshingToken[accountType] = false; }, 8000);
-    } catch (e) {
-      console.error("Local GIS refresh failed", e);
-      isRefreshingToken[accountType] = false;
+    if (emailHint) {
+      googleLoginTarget = accountType;
+      try {
+        googleTokenClient.requestAccessToken({
+          hint: emailHint,
+          prompt: ''
+        });
+        setTimeout(() => { isRefreshingToken[accountType] = false; }, 8000);
+        return;
+      } catch (e) {
+        console.error("Local GIS refresh failed", e);
+      }
     }
-    return;
   }
+
+  isRefreshingToken[accountType] = false;
 
   // 3. Mark session expired if cannot be refreshed silently
   googleContext.state.googleErrors = googleContext.state.googleErrors || {};
