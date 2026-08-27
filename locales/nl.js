@@ -98,7 +98,7 @@ export default {
   "disconnected": "Niet Verbonden",
   "connected": "Verbonden",
   "google-login": "Inloggen met Google",
-  "google-logout": "Uitloggen",
+  "google-logout": "Ontkoppelen",
   "google-login-personal": "Persoonlijk Account Koppelen",
   "google-login-work": "Zakelijk Account Koppelen",
   "google-color": "Accountkleur:",

@@ -98,7 +98,7 @@ export default {
   "disconnected": "Desconectado",
   "connected": "Conectado",
   "google-login": "Entrar com Google",
-  "google-logout": "Sair",
+  "google-logout": "Desconectar",
   "google-login-personal": "Conectar Conta Pessoal",
   "google-login-work": "Conectar Conta de Trabalho",
   "google-color": "Cor da Conta:",

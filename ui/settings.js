@@ -1545,11 +1545,18 @@ export function setupEventListeners() {
 
   // Google OAuth Personal Logout Action
   document.getElementById('google-logout-btn-personal').addEventListener('click', () => {
-    if (state.googlePersonalToken) {
-      google.accounts.oauth2.revokeToken(state.googlePersonalToken, () => {});
+    if (state.googlePersonalToken && typeof google !== 'undefined' && google?.accounts?.oauth2?.revoke) {
+      try {
+        google.accounts.oauth2.revoke(state.googlePersonalToken, () => {});
+      } catch (e) {
+        console.warn('Failed to revoke Google personal token', e);
+      }
     }
     state.googlePersonalToken = null;
     state.googlePersonalEmail = null;
+    if (state.googleErrors) {
+      delete state.googleErrors.personal;
+    }
     localStorage.removeItem('google_personal_token');
     localStorage.removeItem('google_personal_email');
     localStorage.removeItem('google_personal_expiry');
@@ -1575,11 +1582,18 @@ export function setupEventListeners() {
 
   // Google OAuth Work Logout Action
   document.getElementById('google-logout-btn-work').addEventListener('click', () => {
-    if (state.googleWorkToken) {
-      google.accounts.oauth2.revokeToken(state.googleWorkToken, () => {});
+    if (state.googleWorkToken && typeof google !== 'undefined' && google?.accounts?.oauth2?.revoke) {
+      try {
+        google.accounts.oauth2.revoke(state.googleWorkToken, () => {});
+      } catch (e) {
+        console.warn('Failed to revoke Google work token', e);
+      }
     }
     state.googleWorkToken = null;
     state.googleWorkEmail = null;
+    if (state.googleErrors) {
+      delete state.googleErrors.work;
+    }
     localStorage.removeItem('google_work_token');
     localStorage.removeItem('google_work_email');
     localStorage.removeItem('google_work_expiry');

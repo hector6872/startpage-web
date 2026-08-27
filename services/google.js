@@ -220,21 +220,46 @@ export function handleInvalidToken(accountType) {
 
 export function handleGoogleLogout(target) {
   if (target === 'personal') {
-    if (googleContext.state.googlePersonalToken && typeof google !== 'undefined' && google.accounts && google.accounts.oauth2) {
-      google.accounts.oauth2.revoke(googleContext.state.googlePersonalToken, () => {});
+    if (googleContext.state?.googlePersonalToken && typeof google !== 'undefined' && google?.accounts?.oauth2?.revoke) {
+      try {
+        google.accounts.oauth2.revoke(googleContext.state.googlePersonalToken, () => {});
+      } catch (e) {
+        console.warn('Failed to revoke Google personal token', e);
+      }
     }
-    googleContext.state.googlePersonalToken = null;
-    googleContext.state.googlePersonalEmail = '';
-    localStorage.removeItem('startpage_google_personal_token');
-    localStorage.removeItem('startpage_google_personal_email');
+    if (googleContext.state) {
+      googleContext.state.googlePersonalToken = null;
+      googleContext.state.googlePersonalEmail = null;
+      if (googleContext.state.googleErrors) delete googleContext.state.googleErrors.personal;
+    }
+    localStorage.removeItem('google_personal_token');
+    localStorage.removeItem('google_personal_email');
+    localStorage.removeItem('google_personal_expiry');
+    sessionStorage.removeItem('google_personal_token');
+    sessionStorage.removeItem('google_personal_email');
   } else if (target === 'work') {
-    if (googleContext.state.googleWorkToken && typeof google !== 'undefined' && google.accounts && google.accounts.oauth2) {
-      google.accounts.oauth2.revoke(googleContext.state.googleWorkToken, () => {});
+    if (googleContext.state?.googleWorkToken && typeof google !== 'undefined' && google?.accounts?.oauth2?.revoke) {
+      try {
+        google.accounts.oauth2.revoke(googleContext.state.googleWorkToken, () => {});
+      } catch (e) {
+        console.warn('Failed to revoke Google work token', e);
+      }
     }
-    googleContext.state.googleWorkToken = null;
-    googleContext.state.googleWorkEmail = '';
-    localStorage.removeItem('startpage_google_work_token');
-    localStorage.removeItem('startpage_google_work_email');
+    if (googleContext.state) {
+      googleContext.state.googleWorkToken = null;
+      googleContext.state.googleWorkEmail = null;
+      if (googleContext.state.googleErrors) delete googleContext.state.googleErrors.work;
+    }
+    localStorage.removeItem('google_work_token');
+    localStorage.removeItem('google_work_email');
+    localStorage.removeItem('google_work_expiry');
+    sessionStorage.removeItem('google_work_token');
+    sessionStorage.removeItem('google_work_email');
+  }
+  if (googleContext.state) {
+    googleContext.state.googleClientToken = googleContext.state.googlePersonalToken || googleContext.state.googleWorkToken;
+    localStorage.setItem('google_access_token', googleContext.state.googleClientToken || '');
+    sessionStorage.setItem('google_access_token', googleContext.state.googleClientToken || '');
   }
   updateGoogleAuthStatus();
   fetchGoogleCalendar();

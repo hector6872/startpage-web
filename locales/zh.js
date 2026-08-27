@@ -98,7 +98,7 @@ export default {
   "disconnected": "未连接",
   "connected": "已连接",
   "google-login": "通过 Google 登录",
-  "google-logout": "退出登录",
+  "google-logout": "断开连接",
   "google-login-personal": "连接个人账户",
   "google-login-work": "连接工作账户",
   "google-color": "账户颜色：",

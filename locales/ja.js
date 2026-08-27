@@ -98,7 +98,7 @@ export default {
   "disconnected": "未接続",
   "connected": "接続済み",
   "google-login": "Google でログイン",
-  "google-logout": "ログアウト",
+  "google-logout": "接続解除",
   "google-login-personal": "個人アカウントを接続",
   "google-login-work": "仕事アカウントを接続",
   "google-color": "アカウントカラー:",
