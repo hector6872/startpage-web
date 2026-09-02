@@ -118,6 +118,26 @@ Before creating credentials, the OAuth consent screen must be configured to defi
 
 ---
 
+<a id="google-tasks-api-limitations--behavior"></a>
+## ⚠️ Google Tasks API Limitations & Behavior
+
+Google Tasks is a lightweight to-do service provided by Google. Due to architectural decisions in the official public **Google Tasks API (`v1`)**, certain capabilities differ from the native Google Tasks and Google Calendar web/mobile interfaces:
+
+### 1. 🕒 No Due Time Support
+- **API Limitation**: The `due` field in the Google Tasks API only stores date information (`YYYY-MM-DD`). Whenever a due date is retrieved or assigned, Google's API normalizes timestamps to midnight UTC (`T00:00:00.000Z`) and strips away any explicit time-of-day information.
+- **Dashboard Behavior**: Tasks for the current day share the same date timestamp. Consequently, they are prioritized by deadline (overdue first), then ordered by their last modification timestamp (`updated`).
+
+### 2. 🔁 Repeating / Recurring Tasks & Why We Built Task Filtering
+- **API Limitation**: The Google Tasks API does not expose recurrence rules (such as *daily*, *weekly*, or *monthly*), nor does it flag tasks as recurring. Furthermore, Google does not pre-generate future repeating task instances in advance; only one single active task exists for the current period.
+- **Motivation**: Repeating routine tasks (such as daily check-ins, routine habits, or recurring chores) often clutter daily dashboards or duplicate items already tracked elsewhere. Because Google's API provides no programmatic metadata to differentiate repeating tasks from one-off tasks, an automatic filter is not possible via the API alone.
+- **Filter Tasks Solution**:
+  - **Interactive Multi-select**: Navigate to **Preferences (`⚙️`) -> Google Workspace -> Show Tasks -> Filter Tasks**. A multi-select dropdown lists all your current Google Tasks alphabetically.
+  - **Single-Click Toggling (✓)**: Mark tasks you wish to hide from your dashboard. The dropdown conveniently stays open as you select multiple items.
+  - **Support for Missing / Deleted Tasks**: If you previously filtered a task that was later completed or removed from Google Tasks, it remains in your filter list with an inactive/dimmed style and a `(not found)` badge, allowing you to easily uncheck and remove it whenever you want.
+  - **100% Real-Time & Persistent**: Filter changes apply instantly to the dashboard and are preserved in local storage and your synchronized JSON configuration file.
+
+---
+
 ## 🐙 Git Integrations (GitHub, Bitbucket, GitLab)
 
 This dashboard supports aggregating pull requests and merge requests across multiple Git providers.

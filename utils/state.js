@@ -47,6 +47,7 @@ export let state = {
     showGoogleTasksToday: true,
     showGoogleTasksWeek: true,
     showGoogleTasksOverdue: true,
+    hiddenGoogleTasks: [],
     githubToken: "",
     githubUsername: "",
     bitbucketWorkspace: "",
