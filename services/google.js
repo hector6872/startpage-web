@@ -813,6 +813,7 @@ export async function fetchGoogleTasks() {
         <h3 class="card-subtitle">
           <span style="display: inline-flex; align-items: center; gap: 0.4rem;">
             <span>${t('google-tasks-today')}</span>
+            <span id="gtasks-today-count-badge" class="filter-badge hidden" style="margin-left: 0;"></span>
             <button type="button" class="card-action-btn btn-open-gtasks" data-tooltip="${t('google-open-tasks')}" aria-label="Open Google Tasks">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                 <line x1="12" y1="5" x2="12" y2="19"></line>
@@ -845,6 +846,7 @@ export async function fetchGoogleTasks() {
         <h3 class="card-subtitle">
           <span style="display: inline-flex; align-items: center; gap: 0.4rem;">
             <span>${t('google-tasks-week')}</span>
+            <span id="gtasks-week-count-badge" class="filter-badge hidden" style="margin-left: 0;"></span>
             <button type="button" class="card-action-btn btn-open-gtasks" data-tooltip="${t('google-open-tasks')}" aria-label="Open Google Tasks">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                 <line x1="12" y1="5" x2="12" y2="19"></line>
@@ -1064,6 +1066,7 @@ export async function fetchGoogleTasks() {
         <h3 class="card-subtitle">
           <span style="display: inline-flex; align-items: center; gap: 0.4rem;">
             <span>${t('google-tasks-today')}</span>
+            <span id="gtasks-today-count-badge" class="filter-badge ${todayGTasks.length > 0 ? '' : 'hidden'}" style="margin-left: 0;">${todayGTasks.length}</span>
             <button type="button" class="card-action-btn btn-open-gtasks" data-tooltip="${t('google-open-tasks')}" aria-label="Open Google Tasks">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                 <line x1="12" y1="5" x2="12" y2="19"></line>
@@ -1124,6 +1127,7 @@ export async function fetchGoogleTasks() {
         <h3 class="card-subtitle">
           <span style="display: inline-flex; align-items: center; gap: 0.4rem;">
             <span>${t('google-tasks-week')}</span>
+            <span id="gtasks-week-count-badge" class="filter-badge ${weekGTasks.length > 0 ? '' : 'hidden'}" style="margin-left: 0;">${weekGTasks.length}</span>
             <button type="button" class="card-action-btn btn-open-gtasks" data-tooltip="${t('google-open-tasks')}" aria-label="Open Google Tasks">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                 <line x1="12" y1="5" x2="12" y2="19"></line>
