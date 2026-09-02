@@ -948,6 +948,15 @@ export async function fetchGoogleTasks() {
     const results = await Promise.all(promises);
     const gTasks = results.flat();
 
+    // Cache available task titles for settings dropdown
+    googleContext.cachedTaskTitles = [...new Set(gTasks.map(t => (t.title || '').trim()).filter(Boolean))];
+    if (typeof googleContext.onTasksFetched === 'function') {
+      googleContext.onTasksFetched(googleContext.cachedTaskTitles);
+    }
+    if (typeof window !== 'undefined' && typeof window.updateGoogleTasksFilterDropdownFromService === 'function') {
+      window.updateGoogleTasksFilterDropdownFromService(googleContext.cachedTaskTitles);
+    }
+
     // Check if we had errors and update status indicators
     if (errors.length > 0 && gTasks.length === 0) {
       console.warn("Google Tasks fetch failed:", errors.join(' | '));
@@ -968,9 +977,15 @@ export async function fetchGoogleTasks() {
     const todayGTasks = [];
     const weekGTasks = [];
     const showOverdue = googleContext.state.settings.showGoogleTasksOverdue !== false;
+    const hiddenTasks = (googleContext.state.settings.hiddenGoogleTasks || [])
+      .map(s => (s || '').trim().toLowerCase())
+      .filter(Boolean);
 
     gTasks.forEach(t => {
       if (!t.title || t.title.trim() === '') return;
+
+      const cleanTitle = t.title.trim().toLowerCase();
+      if (hiddenTasks.includes(cleanTitle)) return;
 
       const isOverdue = t.due && new Date(t.due).getTime() < todayTime;
       if (isOverdue && !showOverdue) return;
@@ -1032,10 +1047,6 @@ export async function fetchGoogleTasks() {
       });
     }
 
-    function checkTaskRecurring(task) {
-      return !!(task.recurrence || task.recurring);
-    }
-
     if (showToday && todayGTasks.length > 0) {
       let gTodayCard = document.getElementById('gtasks-today');
       if (!gTodayCard) {
@@ -1069,7 +1080,7 @@ export async function fetchGoogleTasks() {
             const isOverdue = taskItem.due && new Date(taskItem.due).getTime() < todayTime;
             const dueLabel = isOverdue ? t('badge-overdue') : '';
             const timeText = getTaskTimeText(taskItem);
-            const isRecurring = checkTaskRecurring(taskItem);
+            const isRecurring = !!(taskItem.recurrence || taskItem.recurring);
             const recurringClass = isRecurring ? 'recurring' : '';
             const repeatIcon = isRecurring 
               ? `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="opacity: 0.65; display: inline-block; vertical-align: middle; margin-right: 0.25rem; flex-shrink: 0;"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>` 
@@ -1128,7 +1139,7 @@ export async function fetchGoogleTasks() {
             const badgeLabel = t(`badge-${taskItem.accountType}`);
             const timeText = getTaskTimeText(taskItem);
             const dateText = taskItem.due ? googleContext.formatDateShort(taskItem.due.split('T')[0]) : '';
-            const isRecurring = checkTaskRecurring(taskItem);
+            const isRecurring = !!(taskItem.recurrence || taskItem.recurring);
             const recurringClass = isRecurring ? 'recurring' : '';
             const repeatIcon = isRecurring 
               ? `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="opacity: 0.65; display: inline-block; vertical-align: middle; margin-right: 0.25rem; flex-shrink: 0;"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>` 

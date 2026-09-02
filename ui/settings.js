@@ -896,6 +896,118 @@ export function setupEventListeners() {
     });
   }
 
+  let cachedGoogleTaskTitles = [];
+
+  function renderGoogleTasksMultiselect(customTitles) {
+    if (Array.isArray(customTitles)) {
+      cachedGoogleTaskTitles = customTitles;
+    }
+    const container = document.getElementById('google-tasks-multiselect-options');
+    const summarySpan = document.getElementById('google-tasks-multiselect-summary');
+    if (!container) return;
+
+    const hiddenTasks = state.settings.hiddenGoogleTasks || [];
+    const hiddenSet = new Set(hiddenTasks.map(s => s.trim().toLowerCase()));
+    const activeSet = new Set((cachedGoogleTaskTitles || []).map(s => s.trim().toLowerCase()));
+
+    // Combine all available tasks and already hidden tasks into a unique list
+    const allTitles = [...new Set([...(cachedGoogleTaskTitles || []), ...(hiddenTasks || [])])].filter(Boolean);
+
+    // Sort alphabetically (case-insensitive, localized)
+    allTitles.sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base', numeric: true }));
+
+    // Update summary text
+    if (summarySpan) {
+      if (hiddenTasks.length === 0) {
+        summarySpan.textContent = t('google-tasks-filter-select-placeholder');
+      } else {
+        const countTemplate = t('google-tasks-filter-count') || '{n} tasks filtered';
+        summarySpan.textContent = countTemplate.replace('{n}', hiddenTasks.length);
+      }
+    }
+
+    container.innerHTML = '';
+    if (allTitles.length === 0) {
+      const emptyDiv = document.createElement('div');
+      emptyDiv.className = 'multiselect-empty';
+      emptyDiv.textContent = t('no-tasks') || 'No tasks available';
+      container.appendChild(emptyDiv);
+      return;
+    }
+
+    allTitles.forEach(title => {
+      const isSelected = hiddenSet.has(title.trim().toLowerCase());
+      const isMissing = isSelected && cachedGoogleTaskTitles.length > 0 && !activeSet.has(title.trim().toLowerCase());
+
+      const item = document.createElement('div');
+      item.className = `multiselect-item ${isSelected ? 'selected' : ''} ${isMissing ? 'missing' : ''}`;
+      item.setAttribute('role', 'option');
+      item.setAttribute('aria-selected', isSelected ? 'true' : 'false');
+      if (isMissing) {
+        item.title = `${title} - ${t('google-tasks-filter-not-found') || '(not found)'}`;
+      }
+
+      item.innerHTML = `
+        <span class="multiselect-checkbox">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="20 6 9 17 4 12"></polyline>
+          </svg>
+        </span>
+        <span class="multiselect-item-label" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"></span>
+        ${isMissing ? `<span class="multiselect-item-badge">${t('google-tasks-filter-not-found') || '(not found)'}</span>` : ''}
+      `;
+      item.querySelector('.multiselect-item-label').textContent = title;
+
+      item.addEventListener('click', async (e) => {
+        e.stopPropagation(); // Keep dropdown open when toggling items!
+        state.settings.hiddenGoogleTasks = state.settings.hiddenGoogleTasks || [];
+        const normTitle = title.trim().toLowerCase();
+        const exists = state.settings.hiddenGoogleTasks.some(s => s.trim().toLowerCase() === normTitle);
+
+        if (exists) {
+          state.settings.hiddenGoogleTasks = state.settings.hiddenGoogleTasks.filter(s => s.trim().toLowerCase() !== normTitle);
+        } else {
+          state.settings.hiddenGoogleTasks.push(title.trim());
+        }
+
+        await saveSettings(state);
+        renderGoogleTasksMultiselect();
+        fetchGoogleTasks();
+      });
+
+      container.appendChild(item);
+    });
+  }
+
+  window.updateGoogleTasksFilterDropdownFromService = (titles) => {
+    renderGoogleTasksMultiselect(titles);
+  };
+
+  const multiselectBtn = document.getElementById('google-tasks-multiselect-btn');
+  const multiselectMenu = document.getElementById('google-tasks-multiselect-menu');
+
+  if (multiselectBtn && multiselectMenu) {
+    multiselectBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const isHidden = multiselectMenu.classList.contains('hidden');
+      if (isHidden) {
+        multiselectMenu.classList.remove('hidden');
+        multiselectBtn.setAttribute('aria-expanded', 'true');
+      } else {
+        multiselectMenu.classList.add('hidden');
+        multiselectBtn.setAttribute('aria-expanded', 'false');
+      }
+    });
+
+    // Close when clicking outside
+    document.addEventListener('click', (e) => {
+      if (!multiselectBtn.contains(e.target) && !multiselectMenu.contains(e.target)) {
+        multiselectMenu.classList.add('hidden');
+        multiselectBtn.setAttribute('aria-expanded', 'false');
+      }
+    });
+  }
+
   // Settings Modal Open
   const settingsModal = document.getElementById('settings-modal');
   document.getElementById('settings-toggle').addEventListener('click', () => {
@@ -1019,6 +1131,7 @@ export function setupEventListeners() {
 
     renderSettingsEventsList();
     renderLayoutSettings();
+    renderGoogleTasksMultiselect();
     updateGitStatusIndicators(state);
     updateJiraStatusIndicators(state);
     openModalAccessible(settingsModal, document.querySelector('.settings-tabs .tab-btn.active'));

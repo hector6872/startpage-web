@@ -183,6 +183,7 @@ export async function loadState(state = defaultState) {
   }
 
   st.settings.customEvents = st.settings.customEvents || [];
+  st.settings.hiddenGoogleTasks = st.settings.hiddenGoogleTasks || [];
   st.settings.primaryColor = st.settings.primaryColor || "blue";
   st.settings.columnOrder = sanitizeOrderList(st.settings.columnOrder, ["col-today", "col-week", "col-tasks"]);
   st.settings.todayCardOrder = sanitizeOrderList(st.settings.todayCardOrder, ["today-events-card", "gmail-card", "gtasks-today"]);
