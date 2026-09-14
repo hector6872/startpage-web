@@ -93,7 +93,7 @@ function proxyMiddleware(req, res, next) {
   const forwardHeaders = {};
   for (const [headerKey, headerVal] of Object.entries(req.headers)) {
     const keyLower = headerKey.toLowerCase();
-    if (!['host', 'origin', 'referer', 'sec-fetch-mode', 'sec-fetch-site', 'sec-fetch-dest', 'connection'].includes(keyLower)) {
+    if (!['host', 'origin', 'referer', 'sec-fetch-mode', 'sec-fetch-site', 'sec-fetch-dest', 'connection', 'content-length'].includes(keyLower)) {
       forwardHeaders[headerKey] = headerVal;
     }
   }

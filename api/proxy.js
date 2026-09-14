@@ -20,14 +20,23 @@ export default async function handler(req, res) {
     const forwardHeaders = {};
     for (const [key, value] of Object.entries(req.headers)) {
       const lower = key.toLowerCase();
-      if (!['host', 'origin', 'referer', 'x-forwarded-for', 'x-vercel-id'].includes(lower)) {
+      if (!['host', 'origin', 'referer', 'x-forwarded-for', 'x-vercel-id', 'content-length'].includes(lower)) {
         forwardHeaders[key] = value;
       }
     }
 
     let requestBody = undefined;
     if (req.method !== 'GET' && req.method !== 'HEAD' && req.body) {
-      requestBody = typeof req.body === 'string' ? req.body : JSON.stringify(req.body);
+      if (typeof req.body === 'string' || Buffer.isBuffer(req.body)) {
+        requestBody = req.body;
+      } else {
+        const contentType = (req.headers['content-type'] || '').toLowerCase();
+        if (contentType.includes('application/x-www-form-urlencoded')) {
+          requestBody = new URLSearchParams(req.body).toString();
+        } else {
+          requestBody = JSON.stringify(req.body);
+        }
+      }
     }
 
     const response = await fetch(targetUrl, {

@@ -105,11 +105,11 @@ async function init() {
   renderCountdowns();
   updateNotesBadge();
 
+  // Initialize Google Auth (process OAuth redirects & proactive token refresh)
+  await initGoogleOAuth();
+
   // Initial API data fetch
   refreshDashboardIfStale(true);
-
-  // Load Google Auth
-  setTimeout(() => initGoogleOAuth(state, safeFetch, escapeHtml, formatDateShort, formatEventTime, getLocalDateString), 1000);
 
   // Pillar 1: Refetch on Visibility / Focus
   document.addEventListener("visibilitychange", () => {
