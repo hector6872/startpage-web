@@ -112,6 +112,7 @@ export default {
   "google-reconnect": "再接続",
   "google-reconnect-personal": "再接続 (個人用)",
   "google-reconnect-work": "再接続 (仕事用)",
+  "google-account-collision-warning": "選択したアカウント ({email}) は既に {target} としてリンクされています。{expected} のアカウントを選択してください。",
   "google-color": "アカウントカラー:",
   "badge-personal": "個人",
   "badge-work": "仕事",

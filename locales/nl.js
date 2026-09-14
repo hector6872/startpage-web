@@ -112,6 +112,7 @@ export default {
   "google-reconnect": "Opnieuw verbinden",
   "google-reconnect-personal": "Opnieuw verbinden (Persoonlijk)",
   "google-reconnect-work": "Opnieuw verbinden (Werk)",
+  "google-account-collision-warning": "Het geselecteerde account ({email}) is al gekoppeld als {target}. Selecteer uw {expected}-account.",
   "google-color": "Accountkleur:",
   "badge-personal": "Persoonlijk",
   "badge-work": "Werk",

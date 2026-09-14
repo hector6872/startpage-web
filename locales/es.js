@@ -112,6 +112,7 @@ export default {
   "google-reconnect": "Reconectar",
   "google-reconnect-personal": "Reconectar (Personal)",
   "google-reconnect-work": "Reconectar (Trabajo)",
+  "google-account-collision-warning": "La cuenta seleccionada ({email}) ya está vinculada como {target}. Por favor, selecciona tu cuenta de {expected}.",
   "google-color": "Color de Cuenta:",
   "badge-personal": "Personal",
   "badge-work": "Trabajo",

@@ -112,6 +112,7 @@ export default {
   "google-reconnect": "重新连接",
   "google-reconnect-personal": "重新连接 (个人)",
   "google-reconnect-work": "重新连接 (工作)",
+  "google-account-collision-warning": "所选账户 ({email}) 已绑定为 {target}。请选择您的 {expected} 账户。",
   "google-color": "账户颜色：",
   "badge-personal": "个人",
   "badge-work": "工作",

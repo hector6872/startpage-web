@@ -18,11 +18,13 @@ export function setupGoogleContext(context) {
 export let googleTokenClient = null;
 export let googleLoginTarget = "personal";
 
+const gisTokenClients = { personal: null, work: null };
+
 export function setGoogleLoginTarget(target) {
   googleLoginTarget = target;
 }
-export function getGoogleTokenClient() {
-  return googleTokenClient;
+export function getGoogleTokenClient(accountType = 'personal') {
+  return gisTokenClients[accountType] || googleTokenClient;
 }
 
 // Google APIs Integrations (Gmail, Tasks, Calendar)
@@ -253,12 +255,26 @@ export async function exchangeGoogleAuthCode(code, targetAccount = 'personal', r
   const data = await requestOAuthToken(params);
 
   if (data && data.access_token) {
-    let email = await fetchGoogleUserEmail(data.access_token);
+    const tokenEmail = await fetchGoogleUserEmail(data.access_token);
+
+    // Collision check: verify user didn't accidentally connect the same account to both personal & work
+    const otherAccount = (targetAccount === 'personal') ? 'work' : 'personal';
+    const otherEmail = (otherAccount === 'personal')
+      ? (googleContext.state?.googlePersonalEmail || localStorage.getItem('google_personal_email'))
+      : (googleContext.state?.googleWorkEmail || localStorage.getItem('google_work_email'));
+
+    if (tokenEmail && otherEmail && tokenEmail.toLowerCase() === otherEmail.toLowerCase()) {
+      const targetLabel = targetAccount === 'personal' ? t('google-personal') : t('google-work');
+      const otherLabel = otherAccount === 'personal' ? t('google-personal') : t('google-work');
+      alert(t('google-account-collision-warning', { email: tokenEmail, target: otherLabel, expected: targetLabel }));
+      return false;
+    }
+
     storeAccountTokens(targetAccount, {
       token: data.access_token,
       expiresInSec: data.expires_in || 3600,
       refreshToken: data.refresh_token,
-      email
+      email: tokenEmail
     });
     await fetchGoogleData();
     return true;
@@ -290,12 +306,21 @@ export function initiateGoogleAuth(targetAccount) {
     return false;
   }
 
-  // 1. If no clientSecret, prefer GIS popup client (works seamlessly on localhost and production)
+  const existingEmail = (targetAccount === 'personal')
+    ? (googleContext.state?.googlePersonalEmail || localStorage.getItem('google_personal_email'))
+    : (googleContext.state?.googleWorkEmail || localStorage.getItem('google_work_email'));
+
+  // 1. If no clientSecret, use GIS client with account-specific hints
   if (!clientSecret && typeof google !== 'undefined' && google?.accounts?.oauth2) {
     try {
-      initGoogleOAuthTokenClient();
-      if (googleTokenClient) {
-        googleTokenClient.requestAccessToken({ prompt: 'select_account' });
+      initGoogleOAuthTokenClient(targetAccount);
+      const client = getGoogleTokenClient(targetAccount);
+      if (client) {
+        const reqOptions = { prompt: 'select_account' };
+        if (existingEmail) {
+          reqOptions.hint = existingEmail;
+        }
+        client.requestAccessToken(reqOptions);
         return true;
       }
     } catch (err) {
@@ -303,17 +328,22 @@ export function initiateGoogleAuth(targetAccount) {
     }
   }
 
-  // 2. Production or fallback to standard OAuth popup window with offline refresh token
+  // 2. Production or with clientSecret: standard OAuth popup window with offline refresh token
   const redirectUri = `${window.location.origin}/api/auth/google/callback`;
-  const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?` + new URLSearchParams({
+  const authParams = {
     client_id: clientId,
     redirect_uri: redirectUri,
     response_type: 'code',
     scope: GOOGLE_SCOPES,
     access_type: 'offline',
-    prompt: 'consent',
+    prompt: 'select_account consent',
     state: targetAccount
-  }).toString();
+  };
+  if (existingEmail) {
+    authParams.login_hint = existingEmail;
+  }
+
+  const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?` + new URLSearchParams(authParams).toString();
 
   const width = 520;
   const height = 650;
@@ -321,7 +351,7 @@ export function initiateGoogleAuth(targetAccount) {
   const top = window.screenY + (window.outerHeight - height) / 2;
   const popup = window.open(
     authUrl,
-    'GoogleAuthPopup',
+    `GoogleAuthPopup_${targetAccount}`,
     `width=${width},height=${height},left=${left},top=${top},scrollbars=yes,status=1`
   );
 
@@ -340,24 +370,64 @@ export function renderGoogleEmptyState(fallbackConfigKey, specificTarget = null)
   const isWorkConfigured = !!(googleContext.state?.googleWorkEmail || localStorage.getItem('google_work_email') || localStorage.getItem('google_work_refresh_token'));
 
   if (isPersonalConfigured || isWorkConfigured) {
-    const target = specificTarget || (isPersonalConfigured ? 'personal' : 'work');
-    const email = (target === 'personal')
-      ? (googleContext.state?.googlePersonalEmail || localStorage.getItem('google_personal_email'))
-      : (googleContext.state?.googleWorkEmail || localStorage.getItem('google_work_email'));
-    const emailStr = email ? ` (${email})` : '';
+    if (specificTarget) {
+      const email = (specificTarget === 'personal')
+        ? (googleContext.state?.googlePersonalEmail || localStorage.getItem('google_personal_email'))
+        : (googleContext.state?.googleWorkEmail || localStorage.getItem('google_work_email'));
+      const emailStr = email ? ` (${email})` : '';
+      const label = specificTarget === 'personal'
+        ? (t('google-reconnect-personal') || `${t('google-reconnect')} (${t('google-personal')})`)
+        : (t('google-reconnect-work') || `${t('google-reconnect')} (${t('google-work')})`);
 
-    return `
-      <div class="empty-msg" style="margin: 0.6rem 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.45rem; text-align: center;">
-        <span style="color: var(--text-secondary); font-size: 0.85rem; display: inline-flex; align-items: center; gap: 0.3rem;">
-          <span>⚠️</span>
-          <span>${t('google-session-expired')}${googleContext.escapeHtml(emailStr)}</span>
-        </span>
-        <button type="button" class="btn-secondary" onclick="event.preventDefault(); window.initiateGoogleAuth('${target}');" style="padding: 0.3rem 0.85rem; font-size: 0.8rem; cursor: pointer; border-radius: 6px; display: inline-flex; align-items: center; gap: 0.35rem;">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
-          <span>${t('google-reconnect')}</span>
-        </button>
-      </div>
-    `;
+      return `
+        <div class="empty-msg" style="margin: 0.6rem 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.45rem; text-align: center;">
+          <span style="color: var(--text-secondary); font-size: 0.85rem; display: inline-flex; align-items: center; gap: 0.3rem;">
+            <span>⚠️</span>
+            <span>${t('google-session-expired')}${googleContext.escapeHtml(emailStr)}</span>
+          </span>
+          <button type="button" class="btn-secondary" onclick="event.preventDefault(); window.initiateGoogleAuth('${specificTarget}');" style="padding: 0.3rem 0.85rem; font-size: 0.8rem; cursor: pointer; border-radius: 6px; display: inline-flex; align-items: center; gap: 0.35rem;">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+            <span>${googleContext.escapeHtml(label)}</span>
+          </button>
+        </div>
+      `;
+    }
+
+    const expiredTargets = [];
+    if (isPersonalConfigured && !googleContext.state?.googlePersonalToken) {
+      expiredTargets.push('personal');
+    }
+    if (isWorkConfigured && !googleContext.state?.googleWorkToken) {
+      expiredTargets.push('work');
+    }
+
+    if (expiredTargets.length > 0) {
+      return `
+        <div class="empty-msg" style="margin: 0.6rem 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.5rem; text-align: center;">
+          <span style="color: var(--text-secondary); font-size: 0.85rem; display: inline-flex; align-items: center; gap: 0.3rem;">
+            <span>⚠️</span>
+            <span>${t('google-session-expired')}</span>
+          </span>
+          <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; justify-content: center;">
+            ${expiredTargets.map(tgt => {
+              const email = (tgt === 'personal')
+                ? (googleContext.state?.googlePersonalEmail || localStorage.getItem('google_personal_email'))
+                : (googleContext.state?.googleWorkEmail || localStorage.getItem('google_work_email'));
+              const emailStr = email ? ` (${email})` : '';
+              const label = tgt === 'personal'
+                ? (t('google-reconnect-personal') || `${t('google-reconnect')} (${t('google-personal')})`)
+                : (t('google-reconnect-work') || `${t('google-reconnect')} (${t('google-work')})`);
+              return `
+                <button type="button" class="btn-secondary" onclick="event.preventDefault(); window.initiateGoogleAuth('${tgt}');" title="${googleContext.escapeHtml(emailStr)}" style="padding: 0.3rem 0.85rem; font-size: 0.8rem; cursor: pointer; border-radius: 6px; display: inline-flex; align-items: center; gap: 0.35rem;">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+                  <span>${googleContext.escapeHtml(label)}</span>
+                </button>
+              `;
+            }).join('')}
+          </div>
+        </div>
+      `;
+    }
   }
 
   const configLinkText = t(fallbackConfigKey);
@@ -393,91 +463,64 @@ if (typeof window !== 'undefined') {
   });
 }
 
-let gisPendingResolvers = null;
-
-function requestGisSilentToken(accountType, emailHint) {
-  return new Promise((resolve) => {
-    if (!googleTokenClient) {
-      resolve(null);
-      return;
-    }
-
-    setGoogleLoginTarget(accountType);
-    gisPendingResolvers = resolve;
-
-    const timeoutId = setTimeout(() => {
-      if (gisPendingResolvers === resolve) {
-        gisPendingResolvers = null;
-        resolve(null);
-      }
-    }, 6000);
-
-    try {
-      googleTokenClient.requestAccessToken({
-        hint: emailHint,
-        prompt: ''
-      });
-    } catch (e) {
-      clearTimeout(timeoutId);
-      if (gisPendingResolvers === resolve) {
-        gisPendingResolvers = null;
-      }
-      resolve(null);
-    }
-  });
-}
-
-export function initGoogleOAuthTokenClient() {
+export function initGoogleOAuthTokenClient(specificAccount = null) {
   const clientId = googleContext.state?.settings?.googleClientId || JSON.parse(localStorage.getItem('dashboard_settings') || '{}').googleClientId;
   if (typeof google === 'undefined' || !google?.accounts?.oauth2 || !clientId) {
     return;
   }
-  if (googleTokenClient) return;
 
-  try {
-    googleTokenClient = google.accounts.oauth2.initTokenClient({
-      client_id: clientId,
-      scope: GOOGLE_SCOPES,
-      callback: async (response) => {
-        if (response.error) {
-          console.warn("GIS Token response error:", response.error);
-          if (gisPendingResolvers) {
-            const res = gisPendingResolvers;
-            gisPendingResolvers = null;
-            res(null);
-          }
-          return;
+  const targets = specificAccount ? [specificAccount] : ['personal', 'work'];
+  for (const acc of targets) {
+    if (gisTokenClients[acc]) continue;
+    try {
+      gisTokenClients[acc] = google.accounts.oauth2.initTokenClient({
+        client_id: clientId,
+        scope: GOOGLE_SCOPES,
+        callback: async (response) => {
+          await handleGisTokenResponse(acc, response);
         }
-
-        const token = response.access_token;
-        const expiresInSec = response.expires_in || 3600;
-
-        let email = (googleLoginTarget === 'personal')
-          ? googleContext.state?.googlePersonalEmail
-          : googleContext.state?.googleWorkEmail;
-
-        if (!email) {
-          email = await fetchGoogleUserEmail(token);
-        }
-
-        storeAccountTokens(googleLoginTarget, {
-          token,
-          expiresInSec,
-          email
-        });
-
-        if (gisPendingResolvers) {
-          const res = gisPendingResolvers;
-          gisPendingResolvers = null;
-          res(token);
-        }
-
-        await fetchGoogleData();
+      });
+      if (acc === 'personal') {
+        googleTokenClient = gisTokenClients.personal;
       }
-    });
-  } catch (e) {
-    console.warn("Failed to initialize Google Token Client:", e);
+    } catch (e) {
+      console.warn(`Failed to initialize Google Token Client for ${acc}:`, e);
+    }
   }
+}
+
+async function handleGisTokenResponse(accountType, response) {
+  if (response.error) {
+    console.warn(`GIS Token response error for ${accountType}:`, response.error);
+    return;
+  }
+
+  const token = response.access_token;
+  const expiresInSec = response.expires_in || 3600;
+
+  // Always fetch the real email from Google directly
+  const tokenEmail = await fetchGoogleUserEmail(token);
+
+  // Collision check: verify user didn't accidentally connect the same account to both personal & work
+  const otherAccount = (accountType === 'personal') ? 'work' : 'personal';
+  const otherEmail = (otherAccount === 'personal')
+    ? (googleContext.state?.googlePersonalEmail || localStorage.getItem('google_personal_email'))
+    : (googleContext.state?.googleWorkEmail || localStorage.getItem('google_work_email'));
+
+  if (tokenEmail && otherEmail && tokenEmail.toLowerCase() === otherEmail.toLowerCase()) {
+    const targetLabel = accountType === 'personal' ? t('google-personal') : t('google-work');
+    const otherLabel = otherAccount === 'personal' ? t('google-personal') : t('google-work');
+    alert(t('google-account-collision-warning', { email: tokenEmail, target: otherLabel, expected: targetLabel }));
+    return;
+  }
+
+  storeAccountTokens(accountType, {
+    token,
+    expiresInSec,
+    email: tokenEmail
+  });
+
+  await fetchGoogleData();
 }
 
 export async function ensureValidGoogleToken(accountType) {
@@ -495,12 +538,25 @@ export async function ensureValidGoogleToken(accountType) {
     return token;
   }
 
-  // Token is missing, expired, or about to expire: check if account is configured
+  // If refresh_token exists, perform silent background refresh via HTTP (zero popups)
   const refreshToken = localStorage.getItem(`google_${accountType}_refresh_token`) || sessionStorage.getItem(`google_${accountType}_refresh_token`);
-  const email = accountType === 'personal' ? googleContext.state.googlePersonalEmail : googleContext.state.googleWorkEmail;
-
-  if (token || refreshToken || email) {
+  if (refreshToken) {
     return await refreshGoogleToken(accountType);
+  }
+
+  // If no refresh token exists, but access token has not yet reached expiry timestamp, use it
+  if (token && expiry > now) {
+    return token;
+  }
+
+  // Token is expired and has no refresh token.
+  // Never attempt GIS silent token in background, as modern browsers block it as an unauthorized popup.
+  // Mark session as expired so user can click [ 🔄 Reconectar ] with a genuine user gesture.
+  const email = accountType === 'personal' ? googleContext.state.googlePersonalEmail : googleContext.state.googleWorkEmail;
+  if (token || email) {
+    googleContext.state.googleErrors = googleContext.state.googleErrors || {};
+    googleContext.state.googleErrors[accountType] = t('google-session-expired');
+    updateGoogleAuthStatus();
   }
 
   return null;
@@ -531,7 +587,7 @@ export function refreshGoogleToken(accountType) {
         } catch (e) {}
       }
 
-      // 1. Refresh via refresh_token (Offline OAuth flow)
+      // 1. Silent refresh via refresh_token (100% background HTTP request, zero popups)
       if (refreshToken && clientId) {
         const params = new URLSearchParams({
           client_id: clientId,
@@ -546,13 +602,13 @@ export function refreshGoogleToken(accountType) {
           storeAccountTokens(accountType, {
             token: data.access_token,
             expiresInSec: data.expires_in || 3600,
-            refreshToken: data.refresh_token // Google might return a refreshed or original token
+            refreshToken: data.refresh_token || refreshToken
           });
           return data.access_token;
         }
 
         console.warn(`Silent refresh_token failed for ${accountType}:`, data);
-        // Only permanently revoke if Google explicitly declared the refresh token invalid/revoked
+        // Only revoke if Google explicitly declared the refresh token invalid/revoked
         if (data?.error === 'invalid_grant' || data?.error === 'invalid_client') {
           clearAccountTokens(accountType, true);
           googleContext.state.googleErrors = googleContext.state.googleErrors || {};
@@ -562,24 +618,7 @@ export function refreshGoogleToken(accountType) {
         }
       }
 
-      // 2. Google Identity Services (GIS) Silent Refresh Fallback
-      if (typeof google !== 'undefined' && google?.accounts?.oauth2) {
-        initGoogleOAuthTokenClient();
-        if (googleTokenClient) {
-          const emailHint = accountType === 'personal'
-            ? (googleContext.state?.googlePersonalEmail || localStorage.getItem('google_personal_email'))
-            : (googleContext.state?.googleWorkEmail || localStorage.getItem('google_work_email'));
-
-          if (emailHint) {
-            const gisToken = await requestGisSilentToken(accountType, emailHint);
-            if (gisToken) {
-              return gisToken;
-            }
-          }
-        }
-      }
-
-      // 3. Mark session expired only if no valid token remains
+      // 2. No refresh token or unrecoverable error: do NOT call GIS in the background.
       const currentToken = accountType === 'personal'
         ? googleContext.state?.googlePersonalToken
         : googleContext.state?.googleWorkToken;
@@ -590,7 +629,7 @@ export function refreshGoogleToken(accountType) {
         updateGoogleAuthStatus();
       }
 
-      return null;
+      return currentToken || null;
     } catch (err) {
       console.warn(`Unexpected error during refresh for ${accountType}:`, err);
       return null;
