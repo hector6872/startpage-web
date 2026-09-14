@@ -97,10 +97,14 @@ When submitting a Pull Request, we expect the following:
 startpage-web/
 ├── api/            # Vercel serverless proxy functions
 ├── functions/      # Cloudflare Pages Edge proxy functions
+├── locales/        # Internationalization dictionaries (10 languages)
 ├── netlify/        # Netlify proxy functions
+├── services/       # External integrations (Google, Git, Jira, Weather, etc.)
+├── ui/             # UI components, modals, and settings management
+├── utils/          # State management, date formatting, and helpers
 ├── index.html      # Main HTML entry point
 ├── styles.css      # Core stylesheets & UI themes
-├── app.js          # Main client-side logic & integrations
+├── app.js          # Application entry point and orchestrator
 ├── vite.config.js  # Vite build configuration & local dev proxy
 └── package.json    # Project metadata and dependencies
 ```
