@@ -90,6 +90,8 @@ export function renderTodos() {
         badgeText = t("task-today");
       } else if (diffDays === 1) {
         badgeText = t("task-tomorrow");
+      } else if (diffDays === 2) {
+        badgeText = t("task-after-tomorrow");
       } else {
         badgeText = formatDateShort(todo.dueDate, state.lang);
       }
@@ -204,6 +206,8 @@ export function renderFocusCard() {
           badgeText = t("task-today");
         } else if (diffDays === 1) {
           badgeText = t("task-tomorrow");
+        } else if (diffDays === 2) {
+          badgeText = t("task-after-tomorrow");
         } else {
           badgeText = formatDateShort(focusedTodo.dueDate, state.lang);
         }

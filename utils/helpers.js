@@ -44,6 +44,8 @@ export function formatDateShort(dateStr, lang = "en") {
     return t("task-today", {}, lang);
   } else if (diffDays === 1) {
     return t("task-tomorrow", {}, lang);
+  } else if (diffDays === 2) {
+    return t("task-after-tomorrow", {}, lang);
   } else if (diffDays === -1) {
     return t("time-yesterday", {}, lang);
   }
@@ -132,7 +134,7 @@ export function getRelativeDateLabel(dateVal, lang = "en") {
   } else if (diffDays === 1) {
     return lang === "es" ? "Mañana" : (lang === "en" ? "Tomorrow" : t("task-tomorrow", {}, lang));
   } else if (diffDays === 2) {
-    return lang === "es" ? "Pasado mañana" : "Day after tomorrow";
+    return lang === "es" ? "Pasado mañana" : (lang === "en" ? "After tomorrow" : t("task-after-tomorrow", {}, lang));
   } else {
     const locale = getLocale(lang);
     const options = { weekday: "long", day: "numeric", month: "short" };

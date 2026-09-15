@@ -151,6 +151,7 @@ export default {
   "task-overdue": "Vencida",
   "task-today": "Hoy",
   "task-tomorrow": "Mañana",
+  "task-after-tomorrow": "Pasado mañana",
   "greeting-morning": "Buenos días",
   "greeting-afternoon": "Buenas tardes",
   "greeting-evening": "Buenas noches",
