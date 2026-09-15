@@ -40,6 +40,13 @@ export function refreshDashboardIfStale(force = false) {
 
   const now = Date.now();
 
+  // If Google had errors or tokens are missing, don't wait for the 5-minute TTL on user focus/visibility
+  const hasGoogleError = !!(state.googleErrors && (state.googleErrors.personal || state.googleErrors.work || state.googleErrors.tasks));
+  const hasPendingGoogleAccount = !!(
+    (state.googlePersonalEmail || localStorage.getItem('google_personal_email') || localStorage.getItem('google_personal_refresh_token')) && !state.googlePersonalToken ||
+    (state.googleWorkEmail || localStorage.getItem('google_work_email') || localStorage.getItem('google_work_refresh_token')) && !state.googleWorkToken
+  );
+
   // Pillar 2: Tiered refresh based on criticality / TTL
   // Git PRs (GitHub, Bitbucket, GitLab)
   if (force || now - lastFetchTimes.git >= TTL.git) {
@@ -54,7 +61,7 @@ export function refreshDashboardIfStale(force = false) {
   }
 
   // Google (Gmail, Tasks, Calendar)
-  if (force || now - lastFetchTimes.google >= TTL.google) {
+  if (force || hasGoogleError || hasPendingGoogleAccount || now - lastFetchTimes.google >= TTL.google) {
     lastFetchTimes.google = now;
     fetchGmail();
     fetchGoogleTasks();
@@ -123,6 +130,18 @@ async function init() {
   window.addEventListener("focus", () => {
     updateTimeAndGreeting();
     refreshDashboardIfStale();
+  });
+
+  // Refetch immediately when coming back online (e.g. WiFi reconnect after laptop sleep / Chrome start)
+  window.addEventListener("online", () => {
+    refreshDashboardIfStale(true);
+  });
+
+  // Refetch when tab is restored from BFCache or thawed by Chrome Memory Saver
+  window.addEventListener("pageshow", (e) => {
+    updateTimeAndGreeting();
+    updateOooBadges();
+    refreshDashboardIfStale(e.persisted);
   });
 
   // Periodic ticker (every 30s updates local clock and evaluates expired TTLs)

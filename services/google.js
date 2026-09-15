@@ -172,31 +172,8 @@ export async function requestOAuthToken(params) {
   const tokenUrl = 'https://oauth2.googleapis.com/token';
   const bodyStr = params.toString();
 
-  // 1. Try direct fetch to Google endpoint first
-  try {
-    const directRes = await fetch(tokenUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded'
-      },
-      body: bodyStr
-    });
-
-    if (directRes.ok) {
-      return await directRes.json();
-    }
-
-    if (directRes.status >= 400 && directRes.status < 500) {
-      const errJson = await directRes.json().catch(() => null);
-      if (errJson && errJson.error) {
-        return { error: errJson.error, error_description: errJson.error_description, status: directRes.status };
-      }
-    }
-  } catch (err) {
-    console.info("Direct OAuth token request not available (CORS/network), trying proxy endpoint...", err.message);
-  }
-
-  // 2. Fallback to /api/proxy
+  // 1. In browser environments, Google OAuth /token endpoint does not allow CORS from client JS.
+  // We route through the local/edge proxy /api/proxy.
   const proxyEndpoint = `/api/proxy?url=${encodeURIComponent(tokenUrl)}`;
   try {
     const proxyRes = await fetch(proxyEndpoint, {
@@ -218,7 +195,29 @@ export async function requestOAuthToken(params) {
       status: proxyRes.status
     };
   } catch (proxyErr) {
-    console.error("Proxy OAuth token request failed:", proxyErr);
+    // 2. Secondary fallback: try direct fetch in case of non-browser or special runtime
+    try {
+      const directRes = await fetch(tokenUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: bodyStr
+      });
+
+      if (directRes.ok) {
+        return await directRes.json();
+      }
+
+      const errJson = await directRes.json().catch(() => null);
+      if (errJson && errJson.error) {
+        return { error: errJson.error, error_description: errJson.error_description, status: directRes.status };
+      }
+    } catch (directErr) {
+      // Ignored
+    }
+
+    console.warn("OAuth token request failed (network or proxy unreachable):", proxyErr.message);
     return { error: 'network_error', error_description: proxyErr.message, status: 0 };
   }
 }
@@ -616,6 +615,12 @@ export function refreshGoogleToken(accountType) {
           updateGoogleAuthStatus();
           return null;
         }
+
+        // If network is offline or proxy returned 5xx, do not treat as expired session
+        if (data?.error === 'network_error' || data?.status === 0 || (data?.status && data.status >= 500)) {
+          console.warn(`Network unavailable during token refresh for ${accountType}, session preserved for retry.`);
+          return null;
+        }
       }
 
       // 2. No refresh token or unrecoverable error: do NOT call GIS in the background.
@@ -623,7 +628,10 @@ export function refreshGoogleToken(accountType) {
         ? googleContext.state?.googlePersonalToken
         : googleContext.state?.googleWorkToken;
 
-      if (!currentToken) {
+      const hasRefreshToken = !!(localStorage.getItem(`google_${accountType}_refresh_token`) || sessionStorage.getItem(`google_${accountType}_refresh_token`));
+
+      // Only mark as expired if there is genuinely no refresh token and no access token
+      if (!currentToken && !hasRefreshToken) {
         googleContext.state.googleErrors = googleContext.state.googleErrors || {};
         googleContext.state.googleErrors[accountType] = t('google-session-expired');
         updateGoogleAuthStatus();
@@ -652,10 +660,13 @@ export async function handleInvalidToken(accountType) {
     return newToken;
   }
 
-  // If refresh failed, mark session expired
-  googleContext.state.googleErrors = googleContext.state.googleErrors || {};
-  googleContext.state.googleErrors[accountType] = t('google-session-expired');
-  updateGoogleAuthStatus();
+  // Only mark session expired if we truly don't have a valid refresh token
+  const hasRefreshToken = !!(localStorage.getItem(`google_${accountType}_refresh_token`) || sessionStorage.getItem(`google_${accountType}_refresh_token`));
+  if (!hasRefreshToken) {
+    googleContext.state.googleErrors = googleContext.state.googleErrors || {};
+    googleContext.state.googleErrors[accountType] = t('google-session-expired');
+    updateGoogleAuthStatus();
+  }
   return null;
 }
 
@@ -984,92 +995,33 @@ export async function fetchGmail() {
 }
 
 export async function fetchGoogleTasks() {
-  const oldToday = document.getElementById('gtasks-today');
-  if (oldToday) oldToday.remove();
-  const oldWeek = document.getElementById('gtasks-week');
-  if (oldWeek) oldWeek.remove();
+  const showToday = googleContext.state?.settings?.showGoogleTasksToday !== false;
+  const showWeek = googleContext.state?.settings?.showGoogleTasksWeek !== false;
 
-  const showToday = googleContext.state.settings.showGoogleTasksToday !== false;
-  const showWeek = googleContext.state.settings.showGoogleTasksWeek !== false;
+  const gTodayCard = document.getElementById('gtasks-today');
+  const gWeekCard = document.getElementById('gtasks-week');
+  if (gTodayCard) gTodayCard.classList.toggle('hidden', !showToday);
+  if (gWeekCard) gWeekCard.classList.toggle('hidden', !showWeek);
 
   if (!showToday && !showWeek) {
     return;
   }
 
-  function showPlaceholder(messageHTML) {
-    if (showToday) {
-      let gTodayCard = document.getElementById('gtasks-today');
-      if (!gTodayCard) {
-        gTodayCard = document.createElement('div');
-        gTodayCard.id = 'gtasks-today';
-        gTodayCard.className = 'section-card';
-        const colContent = document.querySelector('#col-today .col-content');
-        if (colContent) colContent.appendChild(gTodayCard);
-      }
-      if (googleContext.state?.settings?.todayCardOrder) {
-        const idx = googleContext.state.settings.todayCardOrder.indexOf('gtasks-today');
-        if (idx !== -1) gTodayCard.style.order = idx;
-      }
-      gTodayCard.innerHTML = `
-        <h3 class="card-subtitle">
-          <span style="display: inline-flex; align-items: center; gap: 0.4rem;">
-            <span>${t('google-tasks-today')}</span>
-            <span id="gtasks-today-count-badge" class="filter-badge hidden" style="margin-left: 0;"></span>
-            <button type="button" class="card-action-btn btn-open-gtasks" data-tooltip="${t('google-open-tasks')}" aria-label="Open Google Tasks">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                <line x1="12" y1="5" x2="12" y2="19"></line>
-                <line x1="5" y1="12" x2="19" y2="12"></line>
-              </svg>
-            </button>
-          </span>
-          <span class="header-status-indicators" id="google-gtasks-today-status-indicators"></span>
-        </h3>
-        <div class="integration-list">
-          ${messageHTML}
-        </div>
-      `;
-    }
-
-    if (showWeek) {
-      let gWeekCard = document.getElementById('gtasks-week');
-      if (!gWeekCard) {
-        gWeekCard = document.createElement('div');
-        gWeekCard.id = 'gtasks-week';
-        gWeekCard.className = 'section-card';
-        const colContent = document.querySelector('#col-week .col-content');
-        if (colContent) colContent.appendChild(gWeekCard);
-      }
-      if (googleContext.state?.settings?.weekCardOrder) {
-        const idx = googleContext.state.settings.weekCardOrder.indexOf('gtasks-week');
-        if (idx !== -1) gWeekCard.style.order = idx;
-      }
-      gWeekCard.innerHTML = `
-        <h3 class="card-subtitle">
-          <span style="display: inline-flex; align-items: center; gap: 0.4rem;">
-            <span>${t('google-tasks-week')}</span>
-            <span id="gtasks-week-count-badge" class="filter-badge hidden" style="margin-left: 0;"></span>
-            <button type="button" class="card-action-btn btn-open-gtasks" data-tooltip="${t('google-open-tasks')}" aria-label="Open Google Tasks">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                <line x1="12" y1="5" x2="12" y2="19"></line>
-                <line x1="5" y1="12" x2="19" y2="12"></line>
-              </svg>
-            </button>
-          </span>
-          <span class="header-status-indicators" id="google-gtasks-week-status-indicators"></span>
-        </h3>
-        <div class="integration-list">
-          ${messageHTML}
-        </div>
-      `;
-    }
-    updateGoogleAuthStatus();
-  }
+  const todayContainer = document.getElementById('gtasks-today-container');
+  const weekContainer = document.getElementById('gtasks-week-container');
+  const todayBadge = document.getElementById('gtasks-today-count-badge');
+  const weekBadge = document.getElementById('gtasks-week-count-badge');
 
   const personalToken = await ensureValidGoogleToken('personal');
   const workToken = (!googleContext.state?.settings?.oooActive) ? await ensureValidGoogleToken('work') : null;
 
   if (!personalToken && !workToken) {
-    showPlaceholder(renderGoogleEmptyState('google-config-tasks'));
+    const emptyStateHTML = renderGoogleEmptyState('google-config-tasks');
+    if (todayContainer && showToday) todayContainer.innerHTML = emptyStateHTML;
+    if (weekContainer && showWeek) weekContainer.innerHTML = emptyStateHTML;
+    if (todayBadge) todayBadge.classList.add('hidden');
+    if (weekBadge) weekBadge.classList.add('hidden');
+    updateGoogleAuthStatus();
     return;
   }
 
@@ -1140,6 +1092,9 @@ export async function fetchGoogleTasks() {
     }
   }
 
+  let todayGTasks = [];
+  let weekGTasks = [];
+
   try {
     const promises = [];
     if (personalToken) {
@@ -1161,15 +1116,6 @@ export async function fetchGoogleTasks() {
       window.updateGoogleTasksFilterDropdownFromService(googleContext.cachedTaskTitles);
     }
 
-    // Check if we had errors and update status indicators
-    if (errors.length > 0 && gTasks.length === 0) {
-      console.warn("Google Tasks fetch failed:", errors.join(' | '));
-      updateGoogleAuthStatus();
-      return;
-    }
-
-    if (gTasks.length === 0) return;
-
     const todayStart = new Date();
     todayStart.setHours(0, 0, 0, 0);
     const todayTime = todayStart.getTime();
@@ -1178,10 +1124,8 @@ export async function fetchGoogleTasks() {
     weekEnd.setDate(weekEnd.getDate() + 7);
     const weekEndTime = weekEnd.getTime();
 
-    const todayGTasks = [];
-    const weekGTasks = [];
-    const showOverdue = googleContext.state.settings.showGoogleTasksOverdue !== false;
-    const hiddenTasks = (googleContext.state.settings.hiddenGoogleTasks || [])
+    const showOverdue = googleContext.state?.settings?.showGoogleTasksOverdue !== false;
+    const hiddenTasks = (googleContext.state?.settings?.hiddenGoogleTasks || [])
       .map(s => (s || '').trim().toLowerCase())
       .filter(Boolean);
 
@@ -1251,127 +1195,89 @@ export async function fetchGoogleTasks() {
       });
     }
 
-    if (showToday && todayGTasks.length > 0) {
-      let gTodayCard = document.getElementById('gtasks-today');
-      if (!gTodayCard) {
-        gTodayCard = document.createElement('div');
-        gTodayCard.id = 'gtasks-today';
-        gTodayCard.className = 'section-card';
-        const colContent = document.querySelector('#col-today .col-content');
-        if (colContent) colContent.appendChild(gTodayCard);
-      }
-      if (googleContext.state?.settings?.todayCardOrder) {
-        const idx = googleContext.state.settings.todayCardOrder.indexOf('gtasks-today');
-        if (idx !== -1) gTodayCard.style.order = idx;
-      }
-      gTodayCard.innerHTML = `
-        <h3 class="card-subtitle">
-          <span style="display: inline-flex; align-items: center; gap: 0.4rem;">
-            <span>${t('google-tasks-today')}</span>
-            <span id="gtasks-today-count-badge" class="filter-badge ${todayGTasks.length > 0 ? '' : 'hidden'}" style="margin-left: 0;">${todayGTasks.length}</span>
-            <button type="button" class="card-action-btn btn-open-gtasks" data-tooltip="${t('google-open-tasks')}" aria-label="Open Google Tasks">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                <line x1="12" y1="5" x2="12" y2="19"></line>
-                <line x1="5" y1="12" x2="19" y2="12"></line>
-              </svg>
-            </button>
-          </span>
-          <span class="header-status-indicators" id="google-gtasks-today-status-indicators"></span>
-        </h3>
-        <div class="integration-list">
-          ${todayGTasks.map(taskItem => {
-            const badgeClass = taskItem.accountType === 'personal' ? 'personal' : 'work';
-            const badgeLabel = t(`badge-${taskItem.accountType}`);
-            const isOverdue = taskItem.due && new Date(taskItem.due).getTime() < todayTime;
-            const dueLabel = isOverdue ? t('badge-overdue') : '';
-            const timeText = getTaskTimeText(taskItem);
-            const isRecurring = !!(taskItem.recurrence || taskItem.recurring);
-            const recurringClass = isRecurring ? 'recurring' : '';
-            const repeatIcon = isRecurring 
-              ? `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="opacity: 0.65; display: inline-block; vertical-align: middle; margin-right: 0.25rem; flex-shrink: 0;"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>` 
-              : '';
-            const tooltipText = taskItem.title + (isOverdue ? ` (${dueLabel})` : '') + (timeText ? `\n${timeText}` : '') + (isRecurring ? t('google-recurring-suffix') : '');
-            
-            const email = taskItem.accountType === 'personal' ? googleContext.state.googlePersonalEmail : googleContext.state.googleWorkEmail;
-            const tasksLink = email 
-              ? `https://tasks.google.com/?authuser=${encodeURIComponent(email)}` 
-              : 'https://tasks.google.com/';
+    // Render Today's Tasks
+    if (todayContainer && showToday) {
+      if (todayGTasks.length === 0) {
+        todayContainer.innerHTML = `<p class="empty-msg" data-i18n="no-tasks">${t('no-tasks') || 'No tasks'}</p>`;
+        if (todayBadge) todayBadge.classList.add('hidden');
+      } else {
+        if (todayBadge) {
+          todayBadge.textContent = todayGTasks.length;
+          todayBadge.classList.remove('hidden');
+        }
+        todayContainer.innerHTML = todayGTasks.map(taskItem => {
+          const badgeClass = taskItem.accountType === 'personal' ? 'personal' : 'work';
+          const badgeLabel = t(`badge-${taskItem.accountType}`);
+          const isOverdue = taskItem.due && new Date(taskItem.due).getTime() < todayTime;
+          const dueLabel = isOverdue ? t('badge-overdue') : '';
+          const timeText = getTaskTimeText(taskItem);
+          const isRecurring = !!(taskItem.recurrence || taskItem.recurring);
+          const recurringClass = isRecurring ? 'recurring' : '';
+          const repeatIcon = isRecurring 
+            ? `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="opacity: 0.65; display: inline-block; vertical-align: middle; margin-right: 0.25rem; flex-shrink: 0;"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>` 
+            : '';
+          const tooltipText = taskItem.title + (isOverdue ? ` (${dueLabel})` : '') + (timeText ? `\n${timeText}` : '') + (isRecurring ? t('google-recurring-suffix') : '');
+          
+          const email = taskItem.accountType === 'personal' ? googleContext.state.googlePersonalEmail : googleContext.state.googleWorkEmail;
+          const tasksLink = email 
+            ? `https://tasks.google.com/?authuser=${encodeURIComponent(email)}` 
+            : 'https://tasks.google.com/';
 
-            return `
-              <a href="${googleContext.escapeHtml(tasksLink)}" target="_blank" rel="noopener noreferrer" class="integration-item one-line ${recurringClass}" data-tooltip="${googleContext.escapeHtml(tooltipText)}">
-                <div style="display: flex; align-items: center; gap: 0.4rem; min-width: 0; flex: 1;">
-                  ${isOverdue ? `<span class="event-overdue-badge" style="margin-left: 0; flex-shrink: 0; padding: 0.05rem 0.25rem; font-size: 0.6rem;">${dueLabel}</span>` : ''}
-                  ${repeatIcon}
-                  <span class="item-title">${googleContext.escapeHtml(taskItem.title)}</span>
-                </div>
-                <span class="item-badge ${badgeClass}">${googleContext.escapeHtml(badgeLabel)}</span>
-              </a>
-            `;
-          }).join('')}
-        </div>
-      `;
+          return `
+            <a href="${googleContext.escapeHtml(tasksLink)}" target="_blank" rel="noopener noreferrer" class="integration-item one-line ${recurringClass}" data-tooltip="${googleContext.escapeHtml(tooltipText)}">
+              <div style="display: flex; align-items: center; gap: 0.4rem; min-width: 0; flex: 1;">
+                ${isOverdue ? `<span class="event-overdue-badge" style="margin-left: 0; flex-shrink: 0; padding: 0.05rem 0.25rem; font-size: 0.6rem;">${dueLabel}</span>` : ''}
+                ${repeatIcon}
+                <span class="item-title">${googleContext.escapeHtml(taskItem.title)}</span>
+              </div>
+              <span class="item-badge ${badgeClass}">${googleContext.escapeHtml(badgeLabel)}</span>
+            </a>
+          `;
+        }).join('');
+      }
     }
 
-    if (showWeek && weekGTasks.length > 0) {
-      let gWeekCard = document.getElementById('gtasks-week');
-      if (!gWeekCard) {
-        gWeekCard = document.createElement('div');
-        gWeekCard.id = 'gtasks-week';
-        gWeekCard.className = 'section-card';
-        const colContent = document.querySelector('#col-week .col-content');
-        if (colContent) colContent.appendChild(gWeekCard);
-      }
-      if (googleContext.state?.settings?.weekCardOrder) {
-        const idx = googleContext.state.settings.weekCardOrder.indexOf('gtasks-week');
-        if (idx !== -1) gWeekCard.style.order = idx;
-      }
-      gWeekCard.innerHTML = `
-        <h3 class="card-subtitle">
-          <span style="display: inline-flex; align-items: center; gap: 0.4rem;">
-            <span>${t('google-tasks-week')}</span>
-            <span id="gtasks-week-count-badge" class="filter-badge ${weekGTasks.length > 0 ? '' : 'hidden'}" style="margin-left: 0;">${weekGTasks.length}</span>
-            <button type="button" class="card-action-btn btn-open-gtasks" data-tooltip="${t('google-open-tasks')}" aria-label="Open Google Tasks">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                <line x1="12" y1="5" x2="12" y2="19"></line>
-                <line x1="5" y1="12" x2="19" y2="12"></line>
-              </svg>
-            </button>
-          </span>
-          <span class="header-status-indicators" id="google-gtasks-week-status-indicators"></span>
-        </h3>
-        <div class="integration-list">
-          ${weekGTasks.map(taskItem => {
-            const badgeClass = taskItem.accountType === 'personal' ? 'personal' : 'work';
-            const badgeLabel = t(`badge-${taskItem.accountType}`);
-            const timeText = getTaskTimeText(taskItem);
-            const dateText = taskItem.due ? googleContext.formatDateShort(taskItem.due.split('T')[0]) : '';
-            const isRecurring = !!(taskItem.recurrence || taskItem.recurring);
-            const recurringClass = isRecurring ? 'recurring' : '';
-            const repeatIcon = isRecurring 
-              ? `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="opacity: 0.65; display: inline-block; vertical-align: middle; margin-right: 0.25rem; flex-shrink: 0;"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>` 
-              : '';
-            const tooltipText = taskItem.title + (taskItem.due ? `\n${dateText}` : '') + (isRecurring ? t('google-recurring-suffix') : '');
-            
-            const email = taskItem.accountType === 'personal' ? googleContext.state.googlePersonalEmail : googleContext.state.googleWorkEmail;
-            const tasksLink = email 
-              ? `https://tasks.google.com/?authuser=${encodeURIComponent(email)}` 
-              : 'https://tasks.google.com/';
+    // Render Week's Tasks
+    if (weekContainer && showWeek) {
+      if (weekGTasks.length === 0) {
+        weekContainer.innerHTML = `<p class="empty-msg" data-i18n="no-tasks">${t('no-tasks') || 'No tasks'}</p>`;
+        if (weekBadge) weekBadge.classList.add('hidden');
+      } else {
+        if (weekBadge) {
+          weekBadge.textContent = weekGTasks.length;
+          weekBadge.classList.remove('hidden');
+        }
+        weekContainer.innerHTML = weekGTasks.map(taskItem => {
+          const badgeClass = taskItem.accountType === 'personal' ? 'personal' : 'work';
+          const badgeLabel = t(`badge-${taskItem.accountType}`);
+          const timeText = getTaskTimeText(taskItem);
+          const dateText = taskItem.due ? googleContext.formatDateShort(taskItem.due.split('T')[0]) : '';
+          const isRecurring = !!(taskItem.recurrence || taskItem.recurring);
+          const recurringClass = isRecurring ? 'recurring' : '';
+          const repeatIcon = isRecurring 
+            ? `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="opacity: 0.65; display: inline-block; vertical-align: middle; margin-right: 0.25rem; flex-shrink: 0;"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>` 
+            : '';
+          const tooltipText = taskItem.title + (taskItem.due ? `\n${dateText}` : '') + (isRecurring ? t('google-recurring-suffix') : '');
+          
+          const email = taskItem.accountType === 'personal' ? googleContext.state.googlePersonalEmail : googleContext.state.googleWorkEmail;
+          const tasksLink = email 
+            ? `https://tasks.google.com/?authuser=${encodeURIComponent(email)}` 
+            : 'https://tasks.google.com/';
 
-            return `
-              <a href="${googleContext.escapeHtml(tasksLink)}" target="_blank" rel="noopener noreferrer" class="integration-item one-line ${recurringClass}" data-tooltip="${googleContext.escapeHtml(tooltipText)}">
-                <div style="display: flex; align-items: center; gap: 0.4rem; min-width: 0; flex: 1;">
-                  ${repeatIcon}
-                  <span class="item-title">${googleContext.escapeHtml(taskItem.title)}</span>
-                </div>
-                <div style="display: flex; align-items: center; gap: 0.4rem; flex-shrink: 0;">
-                  ${dateText ? `<span style="font-size: 0.72rem; color: var(--text-secondary);">${googleContext.escapeHtml(dateText)}</span>` : ''}
-                  <span class="item-badge ${badgeClass}">${googleContext.escapeHtml(badgeLabel)}</span>
-                </div>
-              </a>
-            `;
-          }).join('')}
-        </div>
-      `;
+          return `
+            <a href="${googleContext.escapeHtml(tasksLink)}" target="_blank" rel="noopener noreferrer" class="integration-item one-line ${recurringClass}" data-tooltip="${googleContext.escapeHtml(tooltipText)}">
+              <div style="display: flex; align-items: center; gap: 0.4rem; min-width: 0; flex: 1;">
+                ${repeatIcon}
+                <span class="item-title">${googleContext.escapeHtml(taskItem.title)}</span>
+              </div>
+              <div style="display: flex; align-items: center; gap: 0.4rem; flex-shrink: 0;">
+                ${dateText ? `<span style="font-size: 0.72rem; color: var(--text-secondary);">${googleContext.escapeHtml(dateText)}</span>` : ''}
+                <span class="item-badge ${badgeClass}">${googleContext.escapeHtml(badgeLabel)}</span>
+              </div>
+            </a>
+          `;
+        }).join('');
+      }
     }
 
     updateGoogleAuthStatus();
@@ -1379,6 +1285,12 @@ export async function fetchGoogleTasks() {
     console.error("Error fetching Google Tasks", err);
     googleContext.state.googleErrors = googleContext.state.googleErrors || {};
     googleContext.state.googleErrors.tasks = err.message || 'Tasks error';
+    if (todayContainer && showToday && todayGTasks.length === 0) {
+      todayContainer.innerHTML = renderGoogleEmptyState('google-config-tasks');
+    }
+    if (weekContainer && showWeek && weekGTasks.length === 0) {
+      weekContainer.innerHTML = renderGoogleEmptyState('google-config-tasks');
+    }
     updateGoogleAuthStatus();
   }
 }

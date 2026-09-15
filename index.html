@@ -164,6 +164,25 @@
               <p class="empty-msg" data-i18n="no-emails">Inbox zero</p>
             </div>
           </div>
+          <div class="section-card" id="gtasks-today">
+            <h3 class="card-subtitle">
+              <span style="display: inline-flex; align-items: center; gap: 0.4rem;">
+                <span data-i18n="google-tasks-today">Tasks · Today</span>
+                <span id="gtasks-today-count-badge" class="filter-badge hidden" style="margin-left: 0;"></span>
+                <button type="button" class="card-action-btn btn-open-gtasks" data-tooltip="Open Google Tasks" data-i18n-title="google-open-tasks" aria-label="Open Google Tasks">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                  </svg>
+                </button>
+              </span>
+              <span class="header-status-indicators" id="google-gtasks-today-status-indicators"></span>
+            </h3>
+            <div id="gtasks-today-container" class="integration-list">
+              <!-- Dynamically populated -->
+              <p class="empty-msg" data-i18n="no-tasks">No tasks</p>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -191,6 +210,25 @@
             <div id="weekly-events-container" class="integration-list">
               <!-- Dynamically populated -->
               <p class="empty-msg" data-i18n="no-weekly-events">No upcoming events scheduled</p>
+            </div>
+          </div>
+          <div class="section-card" id="gtasks-week">
+            <h3 class="card-subtitle">
+              <span style="display: inline-flex; align-items: center; gap: 0.4rem;">
+                <span data-i18n="google-tasks-week">Tasks · This Week</span>
+                <span id="gtasks-week-count-badge" class="filter-badge hidden" style="margin-left: 0;"></span>
+                <button type="button" class="card-action-btn btn-open-gtasks" data-tooltip="Open Google Tasks" data-i18n-title="google-open-tasks" aria-label="Open Google Tasks">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                  </svg>
+                </button>
+              </span>
+              <span class="header-status-indicators" id="google-gtasks-week-status-indicators"></span>
+            </h3>
+            <div id="gtasks-week-container" class="integration-list">
+              <!-- Dynamically populated -->
+              <p class="empty-msg" data-i18n="no-tasks">No tasks</p>
             </div>
           </div>
         </div>
