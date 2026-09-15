@@ -8,6 +8,7 @@ import pt from './pt.js';
 import nl from './nl.js';
 import ja from './ja.js';
 import zh from './zh.js';
+import ru from './ru.js';
 export const translations = {
   en,
   es,
@@ -18,7 +19,8 @@ export const translations = {
   pt,
   nl,
   ja,
-  zh
+  zh,
+  ru
 };
 
 import { state } from '../utils/state.js';
@@ -34,7 +36,8 @@ export function getLocale(lang) {
     pt: 'pt-PT',
     nl: 'nl-NL',
     ja: 'ja-JP',
-    zh: 'zh-CN'
+    zh: 'zh-CN',
+    ru: 'ru-RU'
   };
   return localeMap[lang] || 'en-US';
 }

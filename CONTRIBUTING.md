@@ -97,7 +97,7 @@ When submitting a Pull Request, we expect the following:
 startpage-web/
 ├── api/            # Vercel serverless proxy functions
 ├── functions/      # Cloudflare Pages Edge proxy functions
-├── locales/        # Internationalization dictionaries (10 languages)
+├── locales/        # Internationalization dictionaries (11 languages)
 ├── netlify/        # Netlify proxy functions
 ├── services/       # External integrations (Google, Git, Jira, Weather, etc.)
 ├── ui/             # UI components, modals, and settings management

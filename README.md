@@ -23,7 +23,7 @@ A beautiful, modern, and minimalist productivity dashboard featuring task manage
 ## ✨ Features & Highlights
 
 - 🔒 **100% Local & Privacy-First**: Zero server storage, zero telemetry, and zero remote databases. All configurations and credentials remain strictly on the local device.
-- 🌍 **Full Internationalization (10 Languages)**: English (`en`), Español (`es`), Català (`ca`), Français (`fr`), Deutsch (`de`), Italiano (`it`), Português (`pt`), Nederlands (`nl`), 日本語 (`ja`), and 简体中文 (`zh`) with localized date & time formatting.
+- 🌍 **Full Internationalization (11 Languages)**: English (`en`), Español (`es`), Català (`ca`), Français (`fr`), Deutsch (`de`), Italiano (`it`), Português (`pt`), Nederlands (`nl`), 日本語 (`ja`), 简体中文 (`zh`), and Русский (`ru`) with localized date & time formatting.
 - 🐙 **Git Pull Requests Aggregator**: Real-time PR/MR tracking across GitHub, Bitbucket, and GitLab with provider indicator dots, automatic reviewer identity detection, and status badges (`Needs Review`, `Changes Requested`, `Conflicts`, `Tasks Open`, `In Review`).
 - 📅 **Google Workspace Integration**: Dual account support (Personal & Work) with calendar agenda, priority Gmail inbox, Google Tasks, proactive background session renewal, and direct 1-click reconnection.
 - ✅ **Intelligent Task Scheduling**: Google Tasks sorted chronologically by deadline first (overdue on top), then by most recently updated timestamp.
