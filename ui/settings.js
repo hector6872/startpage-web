@@ -8,7 +8,7 @@ import { loadWeather } from "../services/weather.js";
 import { loadWikipediaContent } from "../services/wikipedia.js";
 import { fetchAllPRs, testGitConnection, updateGitStatusIndicators } from "../services/git.js";
 import { fetchJira, testJiraConnection, updateJiraStatusIndicators, sanitizeJiraHost } from "../services/jira.js";
-import { initGoogleOAuth, updateGoogleAuthStatus, getGoogleTokenClient, setGoogleLoginTarget, fetchGoogleData, fetchGoogleCalendar, fetchGmail, fetchGoogleTasks, initiateGoogleAuth } from "../services/google.js";
+import { initGoogleOAuth, updateGoogleAuthStatus, getGoogleTokenClient, setGoogleLoginTarget, fetchGoogleData, fetchGoogleCalendar, fetchGmail, fetchGoogleTasks, initiateGoogleAuth, handleGoogleLogout } from "../services/google.js";
 import { saveSettings, saveTodos, writeDataToFile, readDataFromFile, exportStateToFile, saveFileHandle, setFileHandle, fileHandle, mergeSettingsWithLocalSecrets, clearFileHandle, checkOooExpiration } from "../services/storage.js";
 import { openModalAccessible, trapFocusInDialog, showInputErrorFeedback, ensureHttpUrl, lastActiveElementBeforeModal } from "../utils/helpers.js";
 
@@ -1681,84 +1681,12 @@ export function setupEventListeners() {
 
   // Google OAuth Personal Logout Action
   document.getElementById('google-logout-btn-personal').addEventListener('click', () => {
-    if (state.googlePersonalToken && typeof google !== 'undefined' && google?.accounts?.oauth2?.revoke) {
-      try {
-        google.accounts.oauth2.revoke(state.googlePersonalToken, () => {});
-      } catch (e) {
-        console.warn('Failed to revoke Google personal token', e);
-      }
-    }
-    state.googlePersonalToken = null;
-    state.googlePersonalEmail = null;
-    if (state.googleErrors) {
-      delete state.googleErrors.personal;
-    }
-    localStorage.removeItem('google_personal_token');
-    localStorage.removeItem('google_personal_refresh_token');
-    localStorage.removeItem('google_personal_email');
-    localStorage.removeItem('google_personal_expiry');
-    localStorage.removeItem('google_access_token');
-    sessionStorage.removeItem('google_personal_token');
-    sessionStorage.removeItem('google_personal_refresh_token');
-    sessionStorage.removeItem('google_personal_email');
-    sessionStorage.removeItem('google_personal_expiry');
-    
-    // Sync legacy/compatibility tokens
-    state.googleClientToken = state.googleWorkToken;
-    localStorage.setItem('google_access_token', state.googleClientToken || '');
-    sessionStorage.setItem('google_access_token', state.googleClientToken || '');
-    
-    updateGoogleAuthStatus();
-    
-    // Clear / Refetch Google components
-    if (state.googleWorkToken) {
-      fetchGoogleData();
-    } else {
-      fetchGoogleCalendar();
-      fetchGmail();
-      fetchGoogleTasks();
-    }
+    handleGoogleLogout('personal');
   });
 
   // Google OAuth Work Logout Action
   document.getElementById('google-logout-btn-work').addEventListener('click', () => {
-    if (state.googleWorkToken && typeof google !== 'undefined' && google?.accounts?.oauth2?.revoke) {
-      try {
-        google.accounts.oauth2.revoke(state.googleWorkToken, () => {});
-      } catch (e) {
-        console.warn('Failed to revoke Google work token', e);
-      }
-    }
-    state.googleWorkToken = null;
-    state.googleWorkEmail = null;
-    if (state.googleErrors) {
-      delete state.googleErrors.work;
-    }
-    localStorage.removeItem('google_work_token');
-    localStorage.removeItem('google_work_refresh_token');
-    localStorage.removeItem('google_work_email');
-    localStorage.removeItem('google_work_expiry');
-    localStorage.removeItem('google_access_token');
-    sessionStorage.removeItem('google_work_token');
-    sessionStorage.removeItem('google_work_refresh_token');
-    sessionStorage.removeItem('google_work_email');
-    sessionStorage.removeItem('google_work_expiry');
-    
-    // Sync legacy/compatibility tokens
-    state.googleClientToken = state.googlePersonalToken;
-    localStorage.setItem('google_access_token', state.googleClientToken || '');
-    sessionStorage.setItem('google_access_token', state.googleClientToken || '');
-    
-    updateGoogleAuthStatus();
-    
-    // Clear / Refetch Google components
-    if (state.googlePersonalToken) {
-      fetchGoogleData();
-    } else {
-      fetchGoogleCalendar();
-      fetchGmail();
-      fetchGoogleTasks();
-    }
+    handleGoogleLogout('work');
   });
 
   // Todo Form Submit (Add Task)

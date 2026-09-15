@@ -31,7 +31,7 @@ export async function onRequest(context) {
     const forwardHeaders = new Headers();
     for (const [key, value] of request.headers.entries()) {
       const lower = key.toLowerCase();
-      if (!['host', 'origin', 'referer', 'cf-connecting-ip', 'cf-ray', 'cf-visitor', 'sec-fetch-mode', 'sec-fetch-site', 'sec-fetch-dest'].includes(lower)) {
+      if (!['host', 'origin', 'referer', 'cf-connecting-ip', 'cf-ray', 'cf-visitor', 'sec-fetch-mode', 'sec-fetch-site', 'sec-fetch-dest', 'content-length'].includes(lower)) {
         forwardHeaders.set(key, value);
       }
     }

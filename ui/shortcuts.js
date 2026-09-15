@@ -320,6 +320,14 @@ export function updateOrganizerVisibility() {
   if (weeklyEventsCard) {
     weeklyEventsCard.classList.toggle('hidden', state.settings.showGoogleSchedule === false);
   }
+  const gtasksTodayCard = document.getElementById('gtasks-today');
+  if (gtasksTodayCard) {
+    gtasksTodayCard.classList.toggle('hidden', state.settings.showGoogleTasksToday === false);
+  }
+  const gtasksWeekCard = document.getElementById('gtasks-week');
+  if (gtasksWeekCard) {
+    gtasksWeekCard.classList.toggle('hidden', state.settings.showGoogleTasksWeek === false);
+  }
   const shortcutButtonsColumn = document.getElementById('shortcut-buttons-column') || document.querySelector('.shortcut-buttons-column');
   if (shortcutButtonsColumn) {
     shortcutButtonsColumn.classList.toggle('hidden', state.settings.showShortcuts === false);

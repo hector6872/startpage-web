@@ -66,6 +66,10 @@ export function renderCountdowns() {
         daysLabel = t("task-tomorrow");
         badgeClass = 'countdown-badge-red';
         relativeText = t("task-tomorrow").toLowerCase();
+      } else if (diffDays === 2) {
+        daysLabel = t("task-after-tomorrow");
+        badgeClass = 'countdown-badge-red';
+        relativeText = t("task-after-tomorrow").toLowerCase();
       } else if (diffDays < 7) {
         daysLabel = t("badge-in-days", { n: diffDays });
         badgeClass = 'countdown-badge-red';
@@ -233,6 +237,8 @@ export function updateUpcomingEventBanner() {
     let timeText = '';
     if (closest.daysLeft === 1) {
       timeText = t("task-tomorrow");
+    } else if (closest.daysLeft === 2) {
+      timeText = t("task-after-tomorrow");
     } else {
       timeText = t("time-in-days", { n: closest.daysLeft });
     }

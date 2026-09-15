@@ -427,43 +427,113 @@ export async function loadWikipediaContent() {
   function formatNewsHtml(cur, feedLang) {
     let rawHtml = cur.story || '';
     const linksMap = new Map();
+
+    function registerLink(key, data) {
+      if (!key) return;
+      const cleanKey = key.trim().toLowerCase();
+      if (cleanKey) {
+        linksMap.set(cleanKey, data);
+        linksMap.set(cleanKey.replace(/_/g, ' '), data);
+        linksMap.set(cleanKey.replace(/\s+/g, '_'), data);
+      }
+    }
+
     if (Array.isArray(cur.links)) {
       cur.links.forEach(item => {
         const title = item.title ? item.title.replace(/_/g, ' ') : '';
-        const url = item.content_urls?.desktop?.page || `https://${feedLang}.wikipedia.org/wiki/${encodeURIComponent(item.title || title)}`;
-        if (title) linksMap.set(title.toLowerCase(), { title, url, extract: item.extract || '' });
+        const rawTitle = item.title || '';
+        const url = item.content_urls?.desktop?.page || `https://${feedLang}.wikipedia.org/wiki/${encodeURIComponent(rawTitle || title)}`;
+        const data = { title: item.titles?.normalized || title || rawTitle, url, extract: item.extract || '' };
+
+        registerLink(title, data);
+        registerLink(rawTitle, data);
         if (item.displaytitle) {
           const cleanDisplay = item.displaytitle.replace(/<[^>]+>/g, '');
-          linksMap.set(cleanDisplay.toLowerCase(), { title: cleanDisplay, url, extract: item.extract || '' });
+          registerLink(cleanDisplay, data);
         }
       });
     }
+
     const temp = document.createElement('div');
     temp.innerHTML = rawHtml;
+
     temp.querySelectorAll('a').forEach(a => {
-      a.className = 'wiki-link'; a.target = '_blank'; a.rel = 'noopener noreferrer';
+      a.className = 'wiki-link';
+      a.target = '_blank';
+      a.rel = 'noopener noreferrer';
+
+      const rawHref = a.getAttribute('href') || '';
       const text = a.textContent.trim();
-      const matched = linksMap.get(text.toLowerCase());
-      if (matched) { a.href = matched.url; }
-      else if (a.getAttribute('href')?.startsWith('/wiki/')) a.href = `https://${feedLang}.wikipedia.org${a.getAttribute('href')}`;
+      const titleAttr = a.getAttribute('title') || '';
+
+      // Match against linksMap by title attribute, link text, or decoded href
+      let matched = null;
+      if (titleAttr) {
+        matched = linksMap.get(titleAttr.trim().toLowerCase()) ||
+                  linksMap.get(titleAttr.trim().toLowerCase().replace(/_/g, ' '));
+      }
+      if (!matched && text) {
+        matched = linksMap.get(text.toLowerCase()) ||
+                  linksMap.get(text.toLowerCase().replace(/_/g, ' '));
+      }
+      if (!matched && rawHref) {
+        const cleanHref = rawHref.replace(/^\.\//, '').replace(/^\/wiki\//, '').replace(/^\//, '');
+        try {
+          const decoded = decodeURIComponent(cleanHref).toLowerCase();
+          matched = linksMap.get(decoded) || linksMap.get(decoded.replace(/_/g, ' '));
+        } catch (e) {
+          matched = linksMap.get(cleanHref.toLowerCase());
+        }
+      }
+
+      if (matched) {
+        a.href = matched.url;
+      } else if (rawHref.startsWith('https://') || rawHref.startsWith('http://')) {
+        a.href = rawHref;
+      } else if (rawHref.startsWith('//')) {
+        a.href = `https:${rawHref}`;
+      } else if (rawHref.startsWith('/wiki/')) {
+        a.href = `https://${feedLang}.wikipedia.org${rawHref}`;
+      } else if (rawHref.startsWith('./')) {
+        a.href = `https://${feedLang}.wikipedia.org/wiki/${rawHref.slice(2)}`;
+      } else if (rawHref.startsWith('/')) {
+        a.href = `https://${feedLang}.wikipedia.org${rawHref}`;
+      } else if (rawHref.length > 0 && !rawHref.startsWith('#')) {
+        a.href = `https://${feedLang}.wikipedia.org/wiki/${rawHref}`;
+      } else if (titleAttr) {
+        a.href = `https://${feedLang}.wikipedia.org/wiki/${encodeURIComponent(titleAttr.replace(/\s+/g, '_'))}`;
+      } else if (text) {
+        a.href = `https://${feedLang}.wikipedia.org/wiki/${encodeURIComponent(text.replace(/\s+/g, '_'))}`;
+      }
     });
+
     temp.querySelectorAll('b, strong').forEach(b => {
       if (b.closest('a')) return;
       const text = b.textContent.trim();
-      const matched = linksMap.get(text.toLowerCase());
+      const matched = linksMap.get(text.toLowerCase()) || linksMap.get(text.toLowerCase().replace(/_/g, ' '));
       if (matched) {
-        const a = document.createElement('a'); a.className = 'wiki-link'; a.target = '_blank'; a.rel = 'noopener noreferrer';
-        a.href = matched.url; a.innerHTML = b.innerHTML; b.replaceWith(a);
+        const a = document.createElement('a');
+        a.className = 'wiki-link';
+        a.target = '_blank';
+        a.rel = 'noopener noreferrer';
+        a.href = matched.url;
+        a.innerHTML = b.innerHTML;
+        b.replaceWith(a);
       }
     });
+
     return temp.innerHTML;
   }
 
   async function renderNewsMode() {
     container.innerHTML = `<span class="quote-text">${t('wiki-loading')}</span>`;
+    let feedLang = lang;
     let data = await fetchFeaturedFeed(lang);
     if (!data || !data.news || data.news.length === 0) {
-      if (lang !== 'en') data = await fetchFeaturedFeed('en');
+      if (lang !== 'en') {
+        data = await fetchFeaturedFeed('en');
+        feedLang = 'en';
+      }
     }
     if (!data || !data.news || data.news.length === 0) {
       container.innerHTML = `<span class="quote-text">${t('wiki-error')}</span>`;
@@ -472,7 +542,7 @@ export async function loadWikipediaContent() {
     if (wikiNewsIndex >= data.news.length) wikiNewsIndex = 0;
     if (wikiNewsIndex < 0) wikiNewsIndex = data.news.length - 1;
     const cur = data.news[wikiNewsIndex];
-    const storyHtml = formatNewsHtml(cur, lang);
+    const storyHtml = formatNewsHtml(cur, feedLang);
     const plainStory = stripHtml(cur.story || '');
     const badgeTooltip = t('wiki-badge-tooltip');
     container.innerHTML = `
@@ -501,6 +571,7 @@ export async function loadWikipediaContent() {
     container.innerHTML = `<span class="quote-text">${t('wiki-loading')}</span>`;
     const cacheKey = `${lang}-${month}-${day}`;
     let events = wikiOnThisDayCache[cacheKey];
+    let onThisDayLang = lang;
     if (!events) {
       try {
         const res = await fetch(`https://${lang}.wikipedia.org/api/rest_v1/feed/onthisday/selected/${month}/${day}`);
@@ -515,6 +586,7 @@ export async function loadWikipediaContent() {
           if (res.ok) {
             const resData = await res.json();
             events = resData.selected || resData.events || [];
+            if (events && events.length > 0) onThisDayLang = 'en';
           }
         } catch (e) { console.warn('Failed to fetch English onthisday', e); }
       }
@@ -530,7 +602,7 @@ export async function loadWikipediaContent() {
     let pageLinkHtml = '';
     if (cur.pages && cur.pages.length > 0) {
       cur.pages.slice(0, 3).forEach(p => {
-        const pageUrl = p.content_urls?.desktop?.page || `https://${lang}.wikipedia.org/wiki/${encodeURIComponent(p.title)}`;
+        const pageUrl = p.content_urls?.desktop?.page || `https://${onThisDayLang}.wikipedia.org/wiki/${encodeURIComponent(p.title)}`;
         const pageTitle = p.titles?.normalized || p.title.replace(/_/g, ' ');
         pageLinkHtml += ` <a class="wiki-link" href="${pageUrl}" target="_blank" rel="noopener noreferrer">↗ ${pageTitle}</a>`;
       });

@@ -27,7 +27,7 @@ export default async (req, context) => {
     const forwardHeaders = new Headers();
     for (const [key, value] of req.headers.entries()) {
       const lower = key.toLowerCase();
-      if (!['host', 'origin', 'referer'].includes(lower)) {
+      if (!['host', 'origin', 'referer', 'content-length'].includes(lower)) {
         forwardHeaders.set(key, value);
       }
     }

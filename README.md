@@ -23,9 +23,9 @@ A beautiful, modern, and minimalist productivity dashboard featuring task manage
 ## ✨ Features & Highlights
 
 - 🔒 **100% Local & Privacy-First**: Zero server storage, zero telemetry, and zero remote databases. All configurations and credentials remain strictly on the local device.
-- 🌍 **Full Internationalization (10 Languages)**: English (`en`), Español (`es`), Català (`ca`), Français (`fr`), Deutsch (`de`), Italiano (`it`), Português (`pt`), Nederlands (`nl`), 日本語 (`ja`), and 简体中文 (`zh`) with localized date & time formatting.
+- 🌍 **Full Internationalization (11 Languages)**: English (`en`), Español (`es`), Català (`ca`), Français (`fr`), Deutsch (`de`), Italiano (`it`), Português (`pt`), Nederlands (`nl`), 日本語 (`ja`), 简体中文 (`zh`), and Русский (`ru`) with localized date & time formatting.
 - 🐙 **Git Pull Requests Aggregator**: Real-time PR/MR tracking across GitHub, Bitbucket, and GitLab with provider indicator dots, automatic reviewer identity detection, and status badges (`Needs Review`, `Changes Requested`, `Conflicts`, `Tasks Open`, `In Review`).
-- 📅 **Google Workspace Integration**: Dual account support (Personal & Work) with calendar agenda, priority Gmail inbox, and Google Tasks.
+- 📅 **Google Workspace Integration**: Dual account support (Personal & Work) with calendar agenda, priority Gmail inbox, Google Tasks, proactive background session renewal, and direct 1-click reconnection.
 - ✅ **Intelligent Task Scheduling**: Google Tasks sorted chronologically by deadline first (overdue on top), then by most recently updated timestamp.
 - 🎯 **Jira Integration**: Displays assigned open issues in real-time with priority badges, issue keys, and direct links.
 - 🏖️ **Out of Office (OOO) Mode**: Auto-hides work commitments, tasks, and notification feeds until the selected return date.
@@ -111,9 +111,11 @@ Before creating credentials, the OAuth consent screen must be configured to defi
 5. Click **Connect (Personal)** or **Connect (Work)** to authenticate.
 
 > [!NOTE]
-> ### 🔄 Hybrid Authentication Architecture
+> ### 🔄 Hybrid Authentication & Auto-Refresh Architecture
+> - **Proactive Background Token Refresh**: Automatically verifies token validity before API requests (with a 2-minute safety buffer) and deduplicates concurrent refresh calls to prevent unnecessary API failures or 401 storms.
 > - **Local Development (`localhost`)**: Runs via fast Google Identity Services (GIS) popups with auto-popup on load if not yet authenticated.
 > - **Production (`Cloudflare Pages` / `Vercel` / `Netlify` / `Node`)**: Uses offline Authorization Code flow (`access_type=offline`). Once connected, tokens are renewed 100% silently in the background without any annoying popups.
+> - **1-Click Reconnect on Dashboard Cards**: If a session ever expires, widget cards differentiate between unconfigured accounts and expired sessions, providing a direct **`[ 🔄 Reconnect ]`** button right on the card without needing to navigate to Settings.
 > - **Zero Server Variables & 100% Privacy-First**: No environment variables are required on the server. All credentials live strictly in your local browser (`localStorage`) and are never sent to external tracking servers or included in exported JSON files.
 
 ---
